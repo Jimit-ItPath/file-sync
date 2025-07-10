@@ -13,7 +13,12 @@ import {
 } from '../../store/slices/dropbox.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { decodeToken, formatDate, formatFileSize } from '../../utils/helper';
+import {
+  decodeToken,
+  formatDate,
+  formatFileSize,
+  getMimeTypeFromExtension,
+} from '../../utils/helper';
 import { Menu } from '../../components';
 import { ICONS } from '../../assets/icons';
 
@@ -156,37 +161,44 @@ const useDropbox = () => {
 
   // File data transformation
   const transformFiles = useCallback((files: any[]) => {
-    return files.map(
-      file =>
-        ({
-          id: file.id,
-          name: file.name,
-          path_lower: file.path_lower,
-          path_display: file.path_display,
-          icon: getFileIcon(file['.tag']),
-          owner: {
-            display_name: 'You', // Not provided in response, defaulting
-            profile_photo_url: undefined,
-            team_member_id: undefined,
-          },
-          client_modified: file.client_modified,
-          server_modified: file.server_modified,
-          size: file.size,
-          '.tag': file['.tag'],
-          rev: file.rev,
-          content_hash: file.content_hash,
-          shared: false, // Not provided in response
-          is_downloadable: file.is_downloadable,
-          downloadLink:
-            file['.tag'] === 'file' && file.is_downloadable
-              ? `https://content.dropboxapi.com/2/files/download?arg={"path":"${file.path_lower}"}`
-              : undefined,
-          previewLink:
-            file['.tag'] === 'file'
-              ? `https://content.dropboxapi.com/2/files/get_preview?arg={"path":"${file.path_lower}"}`
-              : undefined,
-        }) as FileRow
-    );
+    return files.map(file => {
+      // Determine mimeType based on file extension for files
+      let mimeType = file['.tag']; // Default to tag (folder/file)
+
+      if (file['.tag'] === 'file') {
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        mimeType = getMimeTypeFromExtension(extension) || 'file';
+      }
+
+      return {
+        id: file.id,
+        name: file.name,
+        path_lower: file.path_lower,
+        path_display: file.path_display,
+        icon: getFileIcon(mimeType),
+        owner: {
+          display_name: 'You',
+          profile_photo_url: undefined,
+          team_member_id: undefined,
+        },
+        client_modified: file.client_modified,
+        server_modified: file.server_modified,
+        size: file.size,
+        '.tag': file['.tag'],
+        rev: file.rev,
+        content_hash: file.content_hash,
+        shared: false,
+        is_downloadable: file.is_downloadable,
+        downloadLink:
+          file['.tag'] === 'file' && file.is_downloadable
+            ? `https://www.dropbox.com/scl/fi/${file.id}/${encodeURIComponent(file.name)}?dl=1`
+            : undefined,
+        previewLink:
+          file['.tag'] === 'file'
+            ? `https://www.dropbox.com/preview${file.path_lower}`
+            : undefined,
+      } as FileRow;
+    });
   }, []);
 
   const transformedFiles = useMemo(
@@ -196,13 +208,26 @@ const useDropbox = () => {
 
   // File actions
   const handleMenuItemClick = (actionId: string, row: FileRow) => {
-    if (actionId === 'download') {
+    if (actionId === 'download' && row.downloadLink) {
+      // Direct download link
       window.open(row.downloadLink, '_blank');
-    } else if (actionId === 'view' && row.previewLink) {
-      window.open(row.previewLink, '_blank');
+    } else if (actionId === 'view') {
+      if (row['.tag'] === 'folder') {
+        // For folders, open in Dropbox
+        window.open(
+          `https://www.dropbox.com/home${row.path_display}`,
+          '_blank'
+        );
+      } else if (row.previewLink) {
+        // For files, open preview
+        window.open(row.previewLink, '_blank');
+      }
     } else if (actionId === 'share' && row.path_display) {
-      // For sharing
-      window.open(`https://www.dropbox.com/home${row.path_display}`, '_blank');
+      // Sharing link
+      window.open(
+        `https://www.dropbox.com/home${row.path_display}?preview=${encodeURIComponent(row.name)}`,
+        '_blank'
+      );
     } else if (actionId === 'delete') {
       setItemToDelete(row);
       setDeleteModalOpen(true);
