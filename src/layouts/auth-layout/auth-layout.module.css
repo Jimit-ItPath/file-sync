@@ -1,0 +1,13 @@
+.container {
+  @media (max-width: $mantine-breakpoint-md) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.leftSection {
+  @media (min-width: $mantine-breakpoint-md) {
+    border-right: rem(1px) solid var(--mantine-color-gray-3);
+  }
+}
