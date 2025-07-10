@@ -105,14 +105,11 @@ const cloudAccounts = [
 ];
 
 const NavBar = ({ mobileDrawerHandler }: any) => {
-  // const accessibleNavItems = DASHBOARD_NAV_ITEMS.filter(({ roles }) =>
-  //   roles?.includes(role)
-  // );
   const location = useLocation();
 
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
-    []
+    [location.pathname]
   );
 
   const accessibleNavItems = DASHBOARD_NAV_ITEMS;

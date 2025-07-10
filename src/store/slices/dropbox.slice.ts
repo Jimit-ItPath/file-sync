@@ -135,9 +135,23 @@ export const dropboxSlice = createSlice({
       //   })
       .addCase(createDropboxFolder.fulfilled, (state, action) => {
         // state.isLoading = false;
-        state.files = [...state.files, action.payload?.data];
+        state.files = [
+          ...state.files,
+          { ...(action.payload?.data?.metadata || []) },
+        ];
       })
       .addCase(createDropboxFolder.rejected, (state, action) => {
+        // state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      //   .addCase(uploadDropboxFiles.pending, state => {
+      //     state.isLoading = true;
+      //   })
+      .addCase(uploadDropboxFiles.fulfilled, (state, action) => {
+        // state.isLoading = false;
+        state.files = [...state.files, { ...(action.payload?.data || []) }];
+      })
+      .addCase(uploadDropboxFiles.rejected, (state, action) => {
         // state.isLoading = false;
         state.error = action.payload as string;
       });

@@ -135,23 +135,23 @@ export const googleDriveSlice = createSlice({
       //   })
       .addCase(createGoogleDriveFolder.fulfilled, (state, action) => {
         // state.isLoading = false;
-        state.files = [...state.files, action.payload?.data];
+        state.files = [...state.files, { ...(action.payload?.data || []) }];
       })
       .addCase(createGoogleDriveFolder.rejected, (state, action) => {
         // state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // .addCase(uploadGoogleDriveFiles.pending, state => {
+      //   state.isLoading = true;
+      // })
+      .addCase(uploadGoogleDriveFiles.fulfilled, (state, action) => {
+        // state.isLoading = false;
+        state.files = [...state.files, { ...(action.payload?.data || []) }];
+      })
+      .addCase(uploadGoogleDriveFiles.rejected, (state, action) => {
+        // state.isLoading = false;
+        state.error = action.payload as string;
       });
-    //   .addCase(uploadGoogleDriveFiles.pending, state => {
-    //     state.isLoading = true;
-    //   })
-    // .addCase(uploadGoogleDriveFiles.fulfilled, (state, action) => {
-    //   state.isLoading = false;
-    //   state.files = [...state.files, ...action.payload?.data];
-    // })
-    // .addCase(uploadGoogleDriveFiles.rejected, (state, action) => {
-    //   // state.isLoading = false;
-    //   state.error = action.payload as string;
-    // })
   },
 });
 

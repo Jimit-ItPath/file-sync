@@ -237,7 +237,10 @@ const useGoogleDrive = () => {
         await dispatch(fetchGoogleDriveFiles());
         setModalOpen(false);
       } catch (error) {
-        console.error('Failed to create folder:', error);
+        notifications.show({
+          message: 'Failed to create folder',
+          color: 'red',
+        });
       }
     }
   );
@@ -257,7 +260,10 @@ const useGoogleDrive = () => {
         setUploadedFiles([]);
         setModalOpen(false);
       } catch (error) {
-        console.error('Failed to upload files:', error);
+        notifications.show({
+          message: 'Failed to upload files',
+          color: 'red',
+        });
       }
     }
   );

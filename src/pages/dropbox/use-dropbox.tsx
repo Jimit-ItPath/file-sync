@@ -245,7 +245,10 @@ const useDropbox = () => {
         await dispatch(fetchDropboxFiles());
         setModalOpen(false);
       } catch (error) {
-        console.error('Failed to create folder:', error);
+        notifications.show({
+          message: 'Failed to create folder',
+          color: 'red',
+        });
       }
     }
   );
@@ -265,7 +268,10 @@ const useDropbox = () => {
         setUploadedFiles([]);
         setModalOpen(false);
       } catch (error) {
-        console.error('Failed to upload files:', error);
+        notifications.show({
+          message: 'Failed to upload files',
+          color: 'red',
+        });
       }
     }
   );
