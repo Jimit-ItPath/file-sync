@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../../api';
 import useAsyncOperation from '../../../hooks/use-async-operation';
-import { passwordRequirements } from '../../../components/inputs/password-input';
 import { notifications } from '@mantine/notifications';
+import { passwordRequirements } from '../../../utils/constants';
 
 // Define Zod schema for form validation
 const registerSchema = z.object({

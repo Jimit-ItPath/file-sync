@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router';
 import { api } from '../../../api';
 import { AUTH_ROUTES } from '../../../routing/routes';
 import useAsyncOperation from '../../../hooks/use-async-operation';
-import { passwordRequirements } from '../../../components/inputs/password-input';
 import { notifications } from '@mantine/notifications';
+import { passwordRequirements } from '../../../utils/constants';
 
 interface ResetPasswordProps {
   email: string | null;

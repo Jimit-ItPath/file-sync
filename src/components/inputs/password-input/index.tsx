@@ -13,16 +13,9 @@ import Icon from '../../../assets/icons/icon';
 import { ICONS } from '../../../assets/icons';
 import { useDisclosure } from '@mantine/hooks';
 import { generateRandomPassword } from '../../../utils/helper';
-import { regex } from '../../../utils/validations/regex';
 import { Popover } from '../../popover';
 import { Tooltip } from '../../tooltip';
-
-export const passwordRequirements = [
-  { re: regex.hasUppercaseLetter, label: 'Includes uppercase letter' },
-  { re: regex.hasLowercaseLetter, label: 'Includes lowercase letter' },
-  { re: regex.hasDigit, label: 'Includes number' },
-  { re: regex.hasSpecialChar, label: 'Includes special symbol' },
-];
+import { passwordRequirements } from '../../../utils/constants';
 
 type PasswordInputProps = {
   field: any;

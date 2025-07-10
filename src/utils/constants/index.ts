@@ -1,6 +1,7 @@
 import { rem } from '@mantine/core';
 import dayjs from 'dayjs';
 import { capitalize } from '../helper';
+import { regex } from '../validations/regex';
 
 export const DASHBOARD_HEADER_HEIGHT = rem(60);
 export const DASHBOARD_FOOTER_HEIGHT = rem(40);
@@ -80,4 +81,11 @@ export const ACTION_MESSAGES = {
 export const STATUS_OPTIONS = [
   { value: 'true', label: 'Active' },
   { value: 'false', label: 'Inactive' },
+];
+
+export const passwordRequirements = [
+  { re: regex.hasUppercaseLetter, label: 'Includes uppercase letter' },
+  { re: regex.hasLowercaseLetter, label: 'Includes lowercase letter' },
+  { re: regex.hasDigit, label: 'Includes number' },
+  { re: regex.hasSpecialChar, label: 'Includes special symbol' },
 ];
