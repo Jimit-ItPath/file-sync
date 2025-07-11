@@ -108,12 +108,12 @@ const Dropbox: React.FC = () => {
             idKey="id"
             emptyMessage="No files available in Dropbox. Please upload files to see them here."
           />
-          {hasMore && (
+          {hasMore && !isLoading && (
             <Button
               onClick={loadMoreFiles}
               loading={isLoading}
               disabled={isLoading}
-              variant="transparent"
+              variant="outline"
               mt={10}
             >
               Load More

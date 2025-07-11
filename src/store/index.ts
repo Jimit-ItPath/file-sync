@@ -19,6 +19,7 @@ import {
 import authReducer from './slices/auth.slice';
 import googleDriveReducer from './slices/google-drive.slice';
 import dropboxReducer from './slices/dropbox.slice';
+import oneDriveReducer from './slices/onedrive.slice';
 
 const persistConfig = {
   key: LOCAL_STORAGE_KEY,
@@ -30,6 +31,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   googleDrive: googleDriveReducer,
   dropbox: dropboxReducer,
+  oneDrive: oneDriveReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

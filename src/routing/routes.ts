@@ -70,4 +70,10 @@ export const PRIVATE_ROUTES = {
     title: 'Dropbox',
     url: '/dropbox',
   },
+  ONEDRIVE: {
+    path: '/onedrive',
+    roles: Object.values(ROLES),
+    title: 'OneDrive',
+    url: '/onedrive',
+  },
 };

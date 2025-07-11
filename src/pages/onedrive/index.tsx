@@ -1,18 +1,18 @@
 import React from 'react';
 import { Table } from '../../components/table';
 import { Button, Form, Modal } from '../../components';
-import useGoogleDrive from './use-google-drive';
 import { LoaderOverlay } from '../../components/loader';
 import { Group, Stack, Text, TextInput } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
 import { Dropzone } from '../../components/inputs/dropzone';
+import useOneDrive from './use-onedrive';
 
-const GoogleDrive: React.FC = () => {
+const OneDrive: React.FC = () => {
   const {
     isLoading,
     files,
     hasAccess,
-    connectWithGoogleDrive,
+    connectWithOneDrive,
     columns,
     onSelectAll,
     // onSelectRow,
@@ -35,8 +35,8 @@ const GoogleDrive: React.FC = () => {
     removeFileLoading,
     setDeleteModalOpen,
     loadMoreFiles,
-    pageToken,
-  } = useGoogleDrive();
+    nextLink,
+  } = useOneDrive();
 
   return (
     <>
@@ -106,9 +106,9 @@ const GoogleDrive: React.FC = () => {
             // onSelectRow={onSelectRow}
             onSelectAll={onSelectAll}
             idKey="id"
-            emptyMessage="No files available in Google Drive"
+            emptyMessage="No files available in OneDrive. Please upload files to see them here."
           />
-          {pageToken && !isLoading && (
+          {nextLink && !isLoading && (
             <Button
               onClick={loadMoreFiles}
               loading={isLoading}
@@ -173,12 +173,11 @@ const GoogleDrive: React.FC = () => {
           <Modal
             opened={deleteModalOpen}
             onClose={() => setDeleteModalOpen(false)}
-            title={`Delete ${itemToDelete?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+            title={`Delete ${itemToDelete?.['.tag'] === 'folder' ? 'Folder' : 'File'}`}
           >
             <Text mb="md">
               Are you sure you want to delete "{itemToDelete?.name}"?
-              {itemToDelete?.mimeType ===
-                'application/vnd.google-apps.folder' &&
+              {itemToDelete?.['.tag'] === 'folder' &&
                 ' All contents will be deleted permanently.'}
             </Text>
             <Group>
@@ -201,10 +200,10 @@ const GoogleDrive: React.FC = () => {
           </Modal>
         </>
       ) : (
-        <Button onClick={connectWithGoogleDrive}>Connect Google Drive</Button>
+        <Button onClick={connectWithOneDrive}>Connect OneDrive</Button>
       )}
     </>
   );
 };
 
-export default GoogleDrive;
+export default OneDrive;
