@@ -57,6 +57,42 @@ export const api = {
         method: METHODS.GET,
         ...configs,
       }),
+    fetchProfile: () =>
+      client({
+        url: `/user/profile`,
+        method: METHODS.GET,
+      }),
+    updateProfile: ({
+      data,
+      ...configs
+    }: {
+      data: FormData;
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/user/profile`,
+        method: METHODS.PUT,
+        data,
+        ...configs,
+      }),
+    removeProfileImage: () =>
+      client({
+        url: `/user/remove-profile-pic`,
+        method: METHODS.DELETE,
+      }),
+    removeAccess: ({
+      data,
+      ...configs
+    }: {
+      data: { type: 'drive' | 'dropbox' | 'onedrive' };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/user/remove-storage-access`,
+        method: METHODS.PATCH,
+        data,
+        ...configs,
+      }),
   },
   googleDrive: {
     hasAccess: () =>

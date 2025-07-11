@@ -28,6 +28,7 @@ import OAuthCallback from '../pages/auth/OAuthCallback';
 import GoogleDrive from '../pages/google-drive';
 import Dropbox from '../pages/dropbox';
 import OneDrive from '../pages/onedrive';
+import Profile from '../pages/user/profile';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -118,6 +119,11 @@ export const router = createBrowserRouter([
         ...PRIVATE_ROUTES.ONEDRIVE,
         Component: OneDrive,
         loader: dashboardPageLoader(PRIVATE_ROUTES.ONEDRIVE.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.PROFILE,
+        Component: Profile,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.PROFILE.roles),
       },
     ],
   },

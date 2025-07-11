@@ -2,6 +2,7 @@ import { useDisclosure } from '@mantine/hooks';
 import {
   ActionIcon,
   AppShell,
+  Avatar,
   Box,
   Burger,
   Container,
@@ -9,31 +10,44 @@ import {
   TextInput,
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
-import useProfileStore from '../../pages/account/profile/use-profile-store';
-// import useFetchWithAbort from '../../hooks/use-fetch-with-abort';
 import { usePageData } from '../../hooks/use-page-data';
 import useAuth from '../../auth/use-auth';
 import { ICONS } from '../../assets/icons';
-import { AUTH_ROUTES } from '../../routing/routes';
+import { AUTH_ROUTES, PRIVATE_ROUTES } from '../../routing/routes';
 import NavBar from './navbar';
 import { Menu } from '../../components';
 import { ConfirmModal } from '../../components/confirm-modal';
 import Icon from '../../assets/icons/icon';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { fetchProfile } from '../../store/slices/user.slice';
+import useAsyncOperation from '../../hooks/use-async-operation';
 
 const DashboardLayout = () => {
   usePageData();
   const [mobileDrawerOpened, mobileDrawerHandler] = useDisclosure();
   const [logoutConfirmOpened, logoutConfirmHandler] = useDisclosure();
 
-  // const { data, getData } = useProfileStore();
-  const { data } = useProfileStore();
-  // const [fetchData] = useFetchWithAbort(getData);
-
-  // const { user, logout } = useAuth() as any;
   const { logout } = useAuth() as any;
+  const dispatch = useAppDispatch();
+  const { userProfile } = useAppSelector(state => state.user);
 
-  const fullName =
-    `${data?.first_name || ''} ${data?.last_name || ''}`.trim() || '';
+  const getUserProfile = useCallback(async () => {
+    await dispatch(fetchProfile());
+  }, [dispatch]);
+
+  const [getProfile] = useAsyncOperation(getUserProfile);
+
+  useEffect(() => {
+    getProfile({});
+  }, []);
+
+  const fullName = useMemo(
+    () =>
+      `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() ||
+      '',
+    [userProfile?.first_name, userProfile?.last_name]
+  );
 
   const navigate = useNavigate();
 
@@ -43,9 +57,9 @@ const DashboardLayout = () => {
   ];
 
   const onItemClick = (id: string) => {
-    // if (id === 'profile') {
-    //   navigate(PRIVATE_ROUTES.ACCOUNT.url);
-    // }
+    if (id === 'profile') {
+      navigate(PRIVATE_ROUTES.PROFILE.url);
+    }
     if (id === 'logout') {
       logoutConfirmHandler.open();
     }
@@ -56,12 +70,6 @@ const DashboardLayout = () => {
     navigate(AUTH_ROUTES.LOGIN.url);
     logoutConfirmHandler.close();
   };
-
-  // useEffect(() => {
-  //   if (user?.id) {
-  //     fetchData({ id: user?.id });
-  //   }
-  // }, [fetchData, user?.id]);
 
   return (
     <>
@@ -135,16 +143,27 @@ const DashboardLayout = () => {
                     color="blue"
                     radius="xl"
                     aria-label="User"
-                    style={{ fontWeight: 600, fontSize: 14 }}
                   >
-                    {fullName
-                      ? fullName
-                          .split(' ')
-                          .map(n => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2)
-                      : 'JS'}
+                    {userProfile?.profile ? (
+                      <Avatar
+                        src={`${import.meta.env.VITE_REACT_APP_BASE_URL}/user-profile/${userProfile.profile}`}
+                        alt={fullName}
+                        radius="xl"
+                        size="md"
+                        style={{ objectFit: 'contain' }}
+                      />
+                    ) : (
+                      <Box style={{ fontWeight: 600, fontSize: 14 }}>
+                        {fullName
+                          ? fullName
+                              .split(' ')
+                              .map(n => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2)
+                          : 'JS'}
+                      </Box>
+                    )}
                   </ActionIcon>
                 </Menu>
               </Group>

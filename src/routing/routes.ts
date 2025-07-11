@@ -76,4 +76,10 @@ export const PRIVATE_ROUTES = {
     title: 'OneDrive',
     url: '/onedrive',
   },
+  PROFILE: {
+    path: '/profile',
+    roles: Object.values(ROLES),
+    title: 'Profile',
+    url: '/profile',
+  },
 };
