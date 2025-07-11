@@ -88,7 +88,9 @@ const InputComponent = ({
       {...{ value, onBlur, visible }}
       ref={element => {
         ref(element);
-        inputRef.current = element;
+        if(inputRef?.current) {
+          inputRef.current = element;
+        }
       }}
       onChange={e => {
         onChange(e.target.value);

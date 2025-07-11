@@ -69,10 +69,11 @@ export const api = {
         url: '/google/drive/auth',
         method: METHODS.GET,
       }),
-    getFiles: () =>
+    getFiles: (params: { pageToken?: string; folderId?: string }) =>
       client({
         url: '/google-drive/files',
         method: METHODS.GET,
+        params,
       }),
     createFolder: ({
       data,
@@ -124,10 +125,11 @@ export const api = {
         url: '/dropbox/auth',
         method: METHODS.GET,
       }),
-    getFiles: () =>
+    getFiles: (params: { cursor?: string }) =>
       client({
         url: '/dropbox/list',
         method: METHODS.GET,
+        params,
       }),
     createFolder: ({
       data,
@@ -164,6 +166,62 @@ export const api = {
     }) =>
       client({
         url: `/dropbox/delete-item/${data.id}`,
+        method: METHODS.DELETE,
+        ...configs,
+      }),
+  },
+  oneDrive: {
+    hasAccess: () =>
+      client({
+        url: `/onedrive/has-access`,
+        method: METHODS.GET,
+      }),
+    auth: () =>
+      client({
+        url: '/onedrive/auth',
+        method: METHODS.GET,
+      }),
+    getFiles: (params: { nextLink?: string; parentId?: string }) =>
+      client({
+        url: '/onedrive/list',
+        method: METHODS.GET,
+        params,
+      }),
+    createFolder: ({
+      data,
+      ...configs
+    }: {
+      data: { folder_name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/onedrive/create-folder',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    uploadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: FormData;
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/onedrive/upload-file',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    deleteFile: ({
+      data,
+      ...configs
+    }: {
+      data: { id: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/onedrive/delete-item/${data.id}`,
         method: METHODS.DELETE,
         ...configs,
       }),

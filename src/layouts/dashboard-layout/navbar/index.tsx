@@ -91,7 +91,7 @@ const cloudAccounts = [
   },
   {
     id: 'onedrive',
-    url: PRIVATE_ROUTES.GOOGLE_DRIVE.url,
+    url: PRIVATE_ROUTES.ONEDRIVE.url,
     icon: (
       <ICONS.IconBrandOnedrive
         size={18}
@@ -206,7 +206,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               }}
             >
               {icon}
-              <span style={{ color: '#000', marginLeft: '6px' }}>{title}</span>
+              <span style={{ color: '#000', marginLeft: '10px' }}>{title}</span>
             </Link>
           );
         })}
@@ -235,6 +235,8 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
             mobileDrawerHandler?.close();
           }}
           mt={20}
+          fz={14}
+          align='center'
           style={{ flexDirection: 'row' }}
         >
           <ICONS.IconFolder size={18} stroke={1.25} /> Documents
@@ -245,6 +247,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
             mobileDrawerHandler?.close();
           }}
           mt={20}
+          fz={14}
           style={{ flexDirection: 'row' }}
         >
           <ICONS.IconFolder size={18} stroke={1.25} /> Images
@@ -255,6 +258,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
             mobileDrawerHandler?.close();
           }}
           mt={20}
+          fz={14}
           style={{ flexDirection: 'row' }}
         >
           <ICONS.IconFolder size={18} stroke={1.25} /> Videos

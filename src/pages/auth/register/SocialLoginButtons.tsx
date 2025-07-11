@@ -4,7 +4,7 @@ import { Button } from '../../../components';
 import useSocialLogin from '../useSocialLogin';
 
 export const SocialLoginButtons: React.FC = () => {
-  const { handleFacebookResponse, handleGoogleLogin } = useSocialLogin();
+  const { handleFacebookLogin, handleGoogleLogin } = useSocialLogin();
 
   return (
     <Stack gap={12} mb={6}>
@@ -21,7 +21,7 @@ export const SocialLoginButtons: React.FC = () => {
         Continue with Google
       </Button>
       <Button
-        onClick={handleFacebookResponse}
+        onClick={handleFacebookLogin}
         variant="default"
         leftSection={<ICONS.IconBrandFacebook size={18} color="#1877f3" />}
         fullWidth

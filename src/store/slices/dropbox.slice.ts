@@ -6,6 +6,8 @@ interface DropboxState {
   isLoading: boolean;
   error: string | null;
   files: any[];
+  cursor: string | null;
+  hasMore: boolean;
 }
 
 const initialState: DropboxState = {
@@ -13,6 +15,8 @@ const initialState: DropboxState = {
   isLoading: false,
   error: null,
   files: [],
+  cursor: null,
+  hasMore: false,
 };
 
 export const checkDropboxAccess = createAsyncThunk(
@@ -41,9 +45,9 @@ export const authenticateDropbox = createAsyncThunk(
 
 export const fetchDropboxFiles = createAsyncThunk(
   'dropbox/fetchDropboxFiles',
-  async (_, { rejectWithValue }) => {
+  async (params: { cursor?: string }, { rejectWithValue }) => {
     try {
-      const response = await api.dropbox.getFiles();
+      const response = await api.dropbox.getFiles({ cursor: params.cursor });
       return response.data;
     } catch (error) {
       return rejectWithValue('Failed to fetch Dropbox files');
@@ -122,13 +126,22 @@ export const dropboxSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchDropboxFiles.fulfilled, (state, action) => {
+        const { entries, cursor, has_more } = action.payload?.data;
         state.isLoading = false;
-        state.files = action.payload?.data?.entries || [];
+        if (action.meta.arg.cursor) {
+          state.files = [...state.files, ...entries];
+        } else {
+          state.files = entries;
+        }
+        state.cursor = cursor;
+        state.hasMore = has_more;
       })
       .addCase(fetchDropboxFiles.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
         state.files = [];
+        state.cursor = null;
+        state.hasMore = false;
       })
       //   .addCase(createDropboxFolder.pending, state => {
       //     state.isLoading = true;
@@ -155,17 +168,6 @@ export const dropboxSlice = createSlice({
         // state.isLoading = false;
         state.error = action.payload as string;
       });
-    //   .addCase(removeDropboxFiles.pending, state => {
-    //     state.isLoading = true;
-    //   })
-    //   .addCase(removeDropboxFiles.fulfilled, (state, action) => {
-    //     state.isLoading = false;
-    //     state.files = [...state.files, ...action.payload?.data];
-    //   })
-    //   .addCase(removeDropboxFiles.rejected, (state, action) => {
-    //     state.isLoading = false;
-    //     state.error = action.payload as string;
-    //   })
   },
 });
 

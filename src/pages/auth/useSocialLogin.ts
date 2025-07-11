@@ -72,6 +72,13 @@ const useSocialLogin = () => {
     );
   }, []);
 
+  const handleFacebookLogin = useCallback(() => {
+    window.open(
+      `${import.meta.env.VITE_REACT_APP_BASE_URL}/facebook/auth`,
+      '_self' // same window
+    );
+  }, []);
+
   const handleGoogleError = useCallback(() => {
     // Handle error (show notification, etc.)
   }, []);
@@ -109,6 +116,7 @@ const useSocialLogin = () => {
     googleLogin,
     handleFacebookResponse,
     handleGoogleLogin,
+    handleFacebookLogin
   };
 };
 

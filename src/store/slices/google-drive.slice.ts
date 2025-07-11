@@ -6,6 +6,7 @@ interface GoogleDriveState {
   isLoading: boolean;
   error: string | null;
   files: any[];
+  pageToken: string | null;
 }
 
 const initialState: GoogleDriveState = {
@@ -13,6 +14,7 @@ const initialState: GoogleDriveState = {
   isLoading: false,
   error: null,
   files: [],
+  pageToken: null,
 };
 
 export const checkGoogleDriveAccess = createAsyncThunk(
@@ -41,9 +43,15 @@ export const authenticateGoogleDrive = createAsyncThunk(
 
 export const fetchGoogleDriveFiles = createAsyncThunk(
   'googleDrive/fetchGoogleDriveFiles',
-  async (_, { rejectWithValue }) => {
+  async (
+    params: { pageToken?: string; folderId?: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await api.googleDrive.getFiles();
+      const response = await api.googleDrive.getFiles({
+        pageToken: params.pageToken,
+        folderId: params.folderId,
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue('Failed to fetch Google Drive files');
@@ -122,13 +130,20 @@ export const googleDriveSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchGoogleDriveFiles.fulfilled, (state, action) => {
+        const { files, pageToken } = action.payload?.data;
         state.isLoading = false;
-        state.files = action.payload?.data?.files || [];
+        if (action.meta.arg.pageToken) {
+          state.files = [...state.files, ...files];
+        } else {
+          state.files = files;
+        }
+        state.pageToken = pageToken;
       })
       .addCase(fetchGoogleDriveFiles.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
         state.files = [];
+        state.pageToken = null;
       })
       //   .addCase(createGoogleDriveFolder.pending, state => {
       //     state.isLoading = true;

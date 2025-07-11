@@ -46,7 +46,7 @@ type FolderFormData = z.infer<typeof folderSchema>;
 
 const useGoogleDrive = () => {
   const dispatch = useAppDispatch();
-  const { hasAccess, isLoading, files } = useAppSelector(
+  const { hasAccess, isLoading, files, pageToken } = useAppSelector(
     state => state.googleDrive
   );
 
@@ -72,7 +72,7 @@ const useGoogleDrive = () => {
   const initializeGoogleDrive = useCallback(async () => {
     const resultAction = await dispatch(checkGoogleDriveAccess());
     if (resultAction?.payload?.data?.hasAccess) {
-      await dispatch(fetchGoogleDriveFiles());
+      await dispatch(fetchGoogleDriveFiles({}));
     }
   }, [dispatch]);
 
@@ -81,6 +81,12 @@ const useGoogleDrive = () => {
   useEffect(() => {
     onInitialize({});
   }, []);
+
+  const loadMoreFiles = useCallback(() => {
+    if (pageToken && !isLoading) {
+      dispatch(fetchGoogleDriveFiles({ pageToken }));
+    }
+  }, [pageToken, isLoading, dispatch]);
 
   const connectWithGoogleDrive = useCallback(() => {
     window.open(
@@ -234,7 +240,7 @@ const useGoogleDrive = () => {
           createGoogleDriveFolder({ folder_name: folderName })
         ).unwrap();
         resetFolderForm();
-        await dispatch(fetchGoogleDriveFiles());
+        await dispatch(fetchGoogleDriveFiles({}));
         setModalOpen(false);
       } catch (error) {
         notifications.show({
@@ -256,7 +262,7 @@ const useGoogleDrive = () => {
         const formData = new FormData();
         files.forEach(file => formData.append('file', file));
         await dispatch(uploadGoogleDriveFiles(formData)).unwrap();
-        await dispatch(fetchGoogleDriveFiles());
+        await dispatch(fetchGoogleDriveFiles({}));
         setUploadedFiles([]);
         setModalOpen(false);
       } catch (error) {
@@ -279,7 +285,7 @@ const useGoogleDrive = () => {
     async (fileId: string) => {
       try {
         await dispatch(removeGoogleDriveFiles({ field: fileId })).unwrap();
-        await dispatch(fetchGoogleDriveFiles());
+        await dispatch(fetchGoogleDriveFiles({}));
         notifications.show({
           message: 'File deleted successfully',
           color: 'green',
@@ -412,6 +418,8 @@ const useGoogleDrive = () => {
     handleDeleteConfirm,
     itemToDelete,
     removeFileLoading,
+    loadMoreFiles,
+    pageToken
   };
 };
 

@@ -34,6 +34,8 @@ const GoogleDrive: React.FC = () => {
     itemToDelete,
     removeFileLoading,
     setDeleteModalOpen,
+    loadMoreFiles,
+    pageToken,
   } = useGoogleDrive();
 
   return (
@@ -106,6 +108,17 @@ const GoogleDrive: React.FC = () => {
             idKey="id"
             emptyMessage="No files available in Google Drive"
           />
+          {pageToken && (
+            <Button
+              onClick={loadMoreFiles}
+              loading={isLoading}
+              disabled={isLoading}
+              variant="transparent"
+              mt={10}
+            >
+              Load More
+            </Button>
+          )}
 
           <Modal
             opened={modalOpen}

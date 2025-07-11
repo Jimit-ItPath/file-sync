@@ -61,7 +61,7 @@ type FolderFormData = z.infer<typeof folderSchema>;
 
 const useDropbox = () => {
   const dispatch = useAppDispatch();
-  const { hasAccess, isLoading, files } = useAppSelector(
+  const { hasAccess, isLoading, files, cursor, hasMore } = useAppSelector(
     state => state.dropbox
   );
 
@@ -87,7 +87,7 @@ const useDropbox = () => {
   const initializeDropbox = useCallback(async () => {
     const resultAction = await dispatch(checkDropboxAccess());
     if (resultAction?.payload?.data?.hasAccess) {
-      await dispatch(fetchDropboxFiles());
+      await dispatch(fetchDropboxFiles({}));
     }
   }, [dispatch]);
 
@@ -96,6 +96,12 @@ const useDropbox = () => {
   useEffect(() => {
     onInitialize({});
   }, []);
+
+  const loadMoreFiles = useCallback(() => {
+    if (hasMore && !isLoading && cursor) {
+      dispatch(fetchDropboxFiles({ cursor }));
+    }
+  }, [cursor, hasMore, isLoading, dispatch]);
 
   const connectWithDropbox = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -242,7 +248,7 @@ const useDropbox = () => {
           createDropboxFolder({ folder_name: folderName })
         ).unwrap();
         resetFolderForm();
-        await dispatch(fetchDropboxFiles());
+        await dispatch(fetchDropboxFiles({}));
         setModalOpen(false);
       } catch (error) {
         notifications.show({
@@ -264,7 +270,7 @@ const useDropbox = () => {
         const formData = new FormData();
         files.forEach(file => formData.append('file', file));
         await dispatch(uploadDropboxFiles(formData)).unwrap();
-        await dispatch(fetchDropboxFiles());
+        await dispatch(fetchDropboxFiles({}));
         setUploadedFiles([]);
         setModalOpen(false);
       } catch (error) {
@@ -287,7 +293,7 @@ const useDropbox = () => {
     async (fileId: string) => {
       try {
         await dispatch(removeDropboxFiles({ id: fileId })).unwrap();
-        await dispatch(fetchDropboxFiles());
+        await dispatch(fetchDropboxFiles({}));
         notifications.show({
           message: 'File deleted successfully',
           color: 'green',
@@ -454,6 +460,8 @@ const useDropbox = () => {
     handleDeleteConfirm,
     itemToDelete,
     removeFileLoading,
+    loadMoreFiles,
+    hasMore,
   };
 };
 

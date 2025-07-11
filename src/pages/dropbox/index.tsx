@@ -34,6 +34,8 @@ const Dropbox: React.FC = () => {
     itemToDelete,
     removeFileLoading,
     setDeleteModalOpen,
+    hasMore,
+    loadMoreFiles,
   } = useDropbox();
 
   return (
@@ -106,6 +108,17 @@ const Dropbox: React.FC = () => {
             idKey="id"
             emptyMessage="No files available in Dropbox. Please upload files to see them here."
           />
+          {hasMore && (
+            <Button
+              onClick={loadMoreFiles}
+              loading={isLoading}
+              disabled={isLoading}
+              variant="transparent"
+              mt={10}
+            >
+              Load More
+            </Button>
+          )}
 
           <Modal
             opened={modalOpen}
