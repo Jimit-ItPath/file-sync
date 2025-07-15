@@ -8,13 +8,20 @@ import {
   checkGoogleDriveAccess,
   createGoogleDriveFolder,
   fetchGoogleDriveFiles,
+  initializeGoogleDriveFromStorage,
+  navigateToFolder,
   removeGoogleDriveFiles,
   renameGoogleDriveFile,
+  resetGDriveFolder,
   uploadGoogleDriveFiles,
 } from '../../store/slices/google-drive.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { formatDate, formatFileSize } from '../../utils/helper';
+import {
+  formatDate,
+  formatFileSize,
+  removeLocalStorage,
+} from '../../utils/helper';
 import { Menu } from '../../components';
 import { ICONS } from '../../assets/icons';
 
@@ -54,9 +61,14 @@ type RenameFormData = z.infer<typeof renameSchema>;
 
 const useGoogleDrive = () => {
   const dispatch = useAppDispatch();
-  const { hasAccess, isLoading, files, pageToken } = useAppSelector(
-    state => state.googleDrive
-  );
+  const {
+    hasAccess,
+    isLoading,
+    files,
+    pageToken,
+    currentPath,
+    currentFolderId,
+  } = useAppSelector(state => state.googleDrive);
 
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -88,7 +100,7 @@ const useGoogleDrive = () => {
   const initializeGoogleDrive = useCallback(async () => {
     const resultAction = await dispatch(checkGoogleDriveAccess());
     if (resultAction?.payload?.data?.hasAccess) {
-      await dispatch(fetchGoogleDriveFiles({}));
+      await dispatch(initializeGoogleDriveFromStorage());
     }
   }, [dispatch]);
 
@@ -96,6 +108,11 @@ const useGoogleDrive = () => {
 
   useEffect(() => {
     onInitialize({});
+
+    return () => {
+      dispatch(resetGDriveFolder());
+      removeLocalStorage('googleDrivePath');
+    };
   }, []);
 
   const loadMoreFiles = useCallback(() => {
@@ -234,12 +251,44 @@ const useGoogleDrive = () => {
     [files, transformFiles]
   );
 
+  const navigateToFolderFn = useCallback(
+    (folder: { id?: string; name: string } | null) => {
+      if (folder?.id) {
+        dispatch(
+          navigateToFolder({
+            id: String(folder?.id),
+            name: String(folder?.name),
+          })
+        );
+      } else {
+        dispatch(navigateToFolder(null));
+      }
+    },
+    [dispatch]
+  );
+
+  const handleRowDoubleClick = useCallback(
+    (row: FileRow) => {
+      if (row.mimeType === 'application/vnd.google-apps.folder') {
+        navigateToFolderFn({ id: row.id, name: row.name });
+      }
+    },
+    [navigateToFolderFn]
+  );
+
   // File actions
   const handleMenuItemClick = (actionId: string, row: FileRow) => {
-    if (actionId === 'download') {
+    if (
+      actionId === 'download' &&
+      row.mimeType !== 'application/vnd.google-apps.folder'
+    ) {
       window.open(row.webContentLink, '_blank');
-    } else if (actionId === 'view' && row.webViewLink) {
-      window.open(row.webViewLink, '_blank');
+    } else if (actionId === 'view') {
+      if (row.mimeType === 'application/vnd.google-apps.folder') {
+        navigateToFolderFn({ id: row.id, name: row.name });
+      } else if (row.webViewLink) {
+        window.open(row.webViewLink, '_blank');
+      }
     } else if (actionId === 'rename') {
       setItemToRename(row);
       setRenameModalOpen(true);
@@ -257,7 +306,12 @@ const useGoogleDrive = () => {
     async (folderName: string) => {
       try {
         await dispatch(
-          createGoogleDriveFolder({ folder_name: folderName })
+          createGoogleDriveFolder({
+            folder_name: folderName,
+            ...(currentFolderId && {
+              folderId: currentFolderId,
+            }),
+          })
         ).unwrap();
         resetFolderForm();
         await dispatch(fetchGoogleDriveFiles({}));
@@ -281,6 +335,9 @@ const useGoogleDrive = () => {
       try {
         const formData = new FormData();
         files.forEach(file => formData.append('file', file));
+        if (currentFolderId) {
+          formData.append('folderId', currentFolderId);
+        }
         await dispatch(uploadGoogleDriveFiles(formData)).unwrap();
         await dispatch(fetchGoogleDriveFiles({}));
         setUploadedFiles([]);
@@ -474,6 +531,9 @@ const useGoogleDrive = () => {
     renameMethods,
     handleRenameConfirm,
     renameFileLoading,
+    currentPath,
+    handleRowDoubleClick,
+    navigateToFolderFn,
   };
 };
 

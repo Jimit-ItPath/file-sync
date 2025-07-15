@@ -27,6 +27,7 @@ type TableProps<T> = {
   columns: Column<T>[];
   onSelectRow?: (id: string, checked: boolean) => void;
   onSelectAll?: (checked: boolean) => void;
+  onRowDoubleClick?: (row: T) => void;
   selectedRows?: string[];
   title: string;
   idKey: keyof T; // key to identify row id
@@ -42,6 +43,7 @@ export function Table<T extends Record<string, any>>({
   title,
   idKey,
   emptyMessage = 'No data available',
+  onRowDoubleClick,
 }: TableProps<T>) {
   const [allChecked, setAllChecked] = useState(false);
 
@@ -108,7 +110,13 @@ export function Table<T extends Record<string, any>>({
                 </TableThead>
                 <TableTbody>
                   {data.map(row => (
-                    <TableTr key={row[idKey] as string}>
+                    <TableTr
+                      key={row[idKey] as string}
+                      onDoubleClick={() => onRowDoubleClick?.(row)}
+                      style={{
+                        cursor: onRowDoubleClick ? 'pointer' : 'default',
+                      }}
+                    >
                       {onSelectRow && (
                         <TableTd>
                           <Checkbox

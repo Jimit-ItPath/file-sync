@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Table } from '../../components/table';
 import { ICONS } from '../../assets/icons';
-import { Menu } from '../../components';
+import { Menu, Table } from '../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 
 type FileRow = {

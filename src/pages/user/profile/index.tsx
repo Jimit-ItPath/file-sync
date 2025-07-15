@@ -34,14 +34,21 @@ const Profile = () => {
     closeRemoveProfilePicModal,
     openRemoveProfilePicModal,
     openRemoveProfileImageModal,
+    connectedAccounts,
+    loading,
   } = useProfile();
   const {
     formState: { errors },
   } = methods;
   const [isHovering, setIsHovering] = useState(false);
 
-  if (isLoading || removeAccessLoading) {
-    return <LoaderOverlay visible={isLoading} opacity={1} />;
+  if (isLoading || removeAccessLoading || loading) {
+    return (
+      <LoaderOverlay
+        visible={isLoading || removeAccessLoading || loading}
+        opacity={1}
+      />
+    );
   }
 
   return (
@@ -182,47 +189,153 @@ const Profile = () => {
         {/* Cloud Storage Access Card */}
         <Card radius="lg" shadow="sm" withBorder>
           <Stack gap="sm">
-            <Title order={4} fw={600}>
-              Connected Services
-            </Title>
-            <Text c="dimmed" size="sm" mb="sm">
-              Manage your cloud storage integrations
-            </Text>
+            <Box>
+              <Title order={4} fw={600}>
+                Connected Services
+              </Title>
+              <Text c="dimmed" size="sm">
+                Manage your cloud storage integrations
+              </Text>
+            </Box>
 
-            <Group gap="sm">
-              <Button
-                variant="outline"
-                color="red"
-                onClick={() => removeAccess({ type: 'drive' })}
-                leftSection={<ICONS.IconBrandGoogle size={16} />}
-                radius="md"
-                disabled={removeAccessLoading}
-              >
-                Remove Google Drive
-              </Button>
+            {connectedAccounts.length === 0 ? (
+              <Card withBorder radius="md" bg="gray.0">
+                <Group gap="sm">
+                  <ICONS.IconCloudOff
+                    size={24}
+                    color="var(--mantine-color-gray-5)"
+                  />
+                  <Text size="sm" c="dimmed">
+                    No cloud storage accounts connected yet
+                  </Text>
+                </Group>
+              </Card>
+            ) : (
+              <Grid gutter="md">
+                {connectedAccounts.map(account => {
+                  type AccountConfig = {
+                    icon: React.ReactNode;
+                    color: string;
+                    label: string;
+                    bg: string;
+                  };
 
-              <Button
-                variant="outline"
-                color="blue"
-                onClick={() => removeAccess({ type: 'dropbox' })}
-                leftSection={<ICONS.IconDroplets size={16} />}
-                radius="md"
-                disabled={removeAccessLoading}
-              >
-                Remove Dropbox
-              </Button>
+                  const accountConfigs: Record<string, AccountConfig> = {
+                    google_drive: {
+                      icon: <ICONS.IconBrandGoogle size={24} />,
+                      color: 'red',
+                      label: 'Google Drive',
+                      bg: 'rgba(234, 67, 53, 0.1)',
+                    },
+                    dropbox: {
+                      icon: <ICONS.IconDroplets size={24} />,
+                      color: 'blue',
+                      label: 'Dropbox',
+                      bg: 'rgba(0, 97, 255, 0.1)',
+                    },
+                    onedrive: {
+                      icon: <ICONS.IconBrandOnedrive size={24} />,
+                      color: 'indigo',
+                      label: 'OneDrive',
+                      bg: 'rgba(0, 120, 215, 0.1)',
+                    },
+                  };
 
-              <Button
-                variant="outline"
-                color="indigo"
-                onClick={() => removeAccess({ type: 'onedrive' })}
-                leftSection={<ICONS.IconBrandOnedrive size={16} />}
-                radius="md"
-                disabled={removeAccessLoading}
-              >
-                Remove OneDrive
-              </Button>
-            </Group>
+                  const accountConfig = accountConfigs[account.account_type];
+
+                  // Fallback for unknown account types
+                  if (!accountConfig) {
+                    return (
+                      <Grid.Col
+                        key={account.id}
+                        span={{ base: 12, sm: 6, lg: 4 }}
+                      >
+                        <Card withBorder radius="md" p="lg" bg="gray.1">
+                          <Text>
+                            Unknown account type: {account.account_type}
+                          </Text>
+                        </Card>
+                      </Grid.Col>
+                    );
+                  }
+
+                  return (
+                    <Grid.Col
+                      key={account.id}
+                      span={{ base: 12, sm: 6, lg: 4 }}
+                    >
+                      <Card
+                        withBorder
+                        radius="md"
+                        p="lg"
+                        bg={accountConfig.bg}
+                        style={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                        }}
+                      >
+                        <Box style={{ flex: 1 }}>
+                          <Group justify="space-between" align="flex-start">
+                            <Group gap="sm">
+                              <Avatar
+                                color={accountConfig.color}
+                                radius="sm"
+                                size="lg"
+                              >
+                                {accountConfig.icon}
+                              </Avatar>
+                              <Stack gap={2}>
+                                <Text fw={600}>{account.account_name}</Text>
+                                <Text size="sm" c="dimmed">
+                                  {accountConfig.label}
+                                </Text>
+                                <Text size="xs" c="dimmed">
+                                  Connected on{' '}
+                                  {new Date(
+                                    account.createdAt
+                                  ).toLocaleDateString()}
+                                </Text>
+                              </Stack>
+                            </Group>
+                            <Tooltip
+                              label={`Disconnect ${accountConfig.label}`}
+                            >
+                              <ActionIcon
+                                variant="subtle"
+                                color="red"
+                                onClick={() =>
+                                  removeAccess({
+                                    id: account.id,
+                                  })
+                                }
+                                loading={removeAccessLoading}
+                              >
+                                <ICONS.IconTrash size={18} />
+                              </ActionIcon>
+                            </Tooltip>
+                          </Group>
+
+                          {account.token_expires && (
+                            <Box mt="sm">
+                              <Group gap={4}>
+                                <ICONS.IconClock size={14} />
+                                <Text size="xs">
+                                  Expires{' '}
+                                  {new Date(
+                                    parseInt(account.token_expires)
+                                  ).toLocaleString()}
+                                </Text>
+                              </Group>
+                            </Box>
+                          )}
+                        </Box>
+                      </Card>
+                    </Grid.Col>
+                  );
+                })}
+              </Grid>
+            )}
           </Stack>
         </Card>
       </Stack>

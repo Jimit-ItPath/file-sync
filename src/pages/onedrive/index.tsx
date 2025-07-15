@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table } from '../../components/table';
+import { Table } from '../../components';
 import { Button, Form, Modal } from '../../components';
 import { LoaderOverlay } from '../../components/loader';
 import { Group, Stack, Text, TextInput } from '@mantine/core';

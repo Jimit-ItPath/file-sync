@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table } from '../../components/table';
+import { Breadcrumbs, Table } from '../../components';
 import { Button, Form, Modal } from '../../components';
 import useGoogleDrive from './use-google-drive';
 import { LoaderOverlay } from '../../components/loader';
@@ -42,6 +42,9 @@ const GoogleDrive: React.FC = () => {
     renameMethods,
     renameModalOpen,
     setRenameModalOpen,
+    currentPath,
+    handleRowDoubleClick,
+    navigateToFolderFn,
   } = useGoogleDrive();
 
   return (
@@ -49,70 +52,90 @@ const GoogleDrive: React.FC = () => {
       <LoaderOverlay visible={isLoading} opacity={1} />
       {hasAccess ? (
         <>
-          <Group gap={12} mb={32} wrap="wrap">
-            <Button
-              leftSection={<ICONS.IconUpload size={20} color="#2563eb" />}
-              onClick={() => openModal('files')}
-              radius="md"
-              size="md"
-              px={20}
-              style={{
-                minWidth: 130,
-                height: 48,
-                fontWeight: 500,
-                fontSize: 14,
-                backgroundColor: '#fff',
-                color: '#1e293b',
-                border: '1px solid #e5e7eb',
+          <Group justify="space-between" mb="md">
+            <Breadcrumbs
+              items={currentPath}
+              onNavigate={folderId => {
+                if (!folderId || folderId === null) {
+                  navigateToFolderFn(null);
+                } else {
+                  const folder = currentPath.find(f => f.id === folderId);
+                  if (folder) {
+                    navigateToFolderFn(folder);
+                  }
+                }
               }}
-            >
-              Upload Files
-            </Button>
-            <Button
-              leftSection={<ICONS.IconFolderPlus size={20} color="#2563eb" />}
-              onClick={() => openModal('folder')}
-              radius="md"
-              size="md"
-              px={20}
-              style={{
-                minWidth: 130,
-                height: 48,
-                fontWeight: 500,
-                fontSize: 14,
-                backgroundColor: '#fff',
-                color: '#1e293b',
-                border: '1px solid #e5e7eb',
-              }}
-            >
-              New Folder
-            </Button>
-            <Button
-              leftSection={<ICONS.IconDownload size={20} color="#2563eb" />}
-              radius="md"
-              size="md"
-              px={20}
-              style={{
-                minWidth: 130,
-                height: 48,
-                fontWeight: 500,
-                fontSize: 14,
-                backgroundColor: '#fff',
-                color: '#1e293b',
-                border: '1px solid #e5e7eb',
-              }}
-            >
-              Download
-            </Button>
+            />
+            <Group gap={12} mb={32} wrap="wrap">
+              <Button
+                leftSection={<ICONS.IconUpload size={20} color="#2563eb" />}
+                onClick={() => openModal('files')}
+                radius="md"
+                size="md"
+                px={20}
+                style={{
+                  minWidth: 130,
+                  height: 48,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  backgroundColor: '#fff',
+                  color: '#1e293b',
+                  border: '1px solid #e5e7eb',
+                }}
+              >
+                Upload Files
+              </Button>
+              <Button
+                leftSection={<ICONS.IconFolderPlus size={20} color="#2563eb" />}
+                onClick={() => openModal('folder')}
+                radius="md"
+                size="md"
+                px={20}
+                style={{
+                  minWidth: 130,
+                  height: 48,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  backgroundColor: '#fff',
+                  color: '#1e293b',
+                  border: '1px solid #e5e7eb',
+                }}
+              >
+                New Folder
+              </Button>
+              <Button
+                leftSection={<ICONS.IconDownload size={20} color="#2563eb" />}
+                radius="md"
+                size="md"
+                px={20}
+                style={{
+                  minWidth: 130,
+                  height: 48,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  backgroundColor: '#fff',
+                  color: '#1e293b',
+                  border: '1px solid #e5e7eb',
+                }}
+              >
+                Download
+              </Button>
+            </Group>
           </Group>
           <Table
-            title="All Files"
+            title={
+              currentPath.length
+                ? currentPath[currentPath.length - 1].name
+                : 'My Drive'
+            }
             data={files}
             columns={columns}
             selectedRows={selectedRows}
+            onRowDoubleClick={handleRowDoubleClick}
             // onSelectRow={onSelectRow}
             onSelectAll={onSelectAll}
             idKey="id"
-            emptyMessage="No files available in Google Drive"
+            emptyMessage="No files available in Google Drive. Please upload files to see them here."
           />
           {pageToken && !isLoading && (
             <Button

@@ -49,6 +49,42 @@ export const api = {
         url: '/google/auth',
         method: METHODS.GET,
       }),
+    connectAccount: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        id: number;
+        account_type: 'google_drive' | 'dropbox' | 'onedrive';
+        account_name: string;
+      };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/auth/connect-account',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    getConnectedAccount: () =>
+      client({
+        url: '/connected-account',
+        method: METHODS.GET,
+      }),
+    removeAccount: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        id: number;
+      };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/connected-account/${data.id}`,
+        method: METHODS.DELETE,
+        ...configs,
+      }),
   },
   user: {
     get: ({ id, ...configs }: { id: string; [key: string]: any }) =>
@@ -105,7 +141,7 @@ export const api = {
         url: '/google/drive/auth',
         method: METHODS.GET,
       }),
-    getFiles: (params: { pageToken?: string; folderId?: string }) =>
+    getFiles: (params: { pageToken?: string; folderId?: string | null }) =>
       client({
         url: '/google-drive/files',
         method: METHODS.GET,

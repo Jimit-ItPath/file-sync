@@ -9,8 +9,11 @@ import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   fetchProfile,
   removeProfileImage,
-  removeStorageAccess,
 } from '../../../store/slices/user.slice';
+import {
+  getConnectedAccount,
+  removeAccountAccess,
+} from '../../../store/slices/auth.slice';
 
 const profileSchema = z.object({
   firstName: z
@@ -29,6 +32,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 const UseProfile = () => {
   const { isLoading, userProfile } = useAppSelector(state => state.user);
+  const { connectedAccounts, loading } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const [preview, setPreview] = useState<string | null>(null);
   const [openRemoveProfileImageModal, setOpenRemoveProfileImageModal] =
@@ -52,8 +56,15 @@ const UseProfile = () => {
 
   const [getProfile] = useAsyncOperation(getUserProfile);
 
+  const getAccounts = useCallback(async () => {
+    await dispatch(getConnectedAccount());
+  }, [dispatch]);
+
+  const [onInitialize] = useAsyncOperation(getAccounts);
+
   useEffect(() => {
     getProfile({});
+    onInitialize({});
   }, []);
 
   useEffect(() => {
@@ -138,19 +149,21 @@ const UseProfile = () => {
   }, []);
 
   const [removeAccess, removeAccessLoading] = useAsyncOperation(
-    async (data: { type: 'drive' | 'dropbox' | 'onedrive' }) => {
-      const res = await dispatch(removeStorageAccess({ type: data.type }));
-      if (res.payload?.success) {
-        notifications.show({
-          title: 'Success',
-          message: res.payload?.message || 'Access removed successfully',
-          color: 'green',
-        });
-        await getProfile({});
-      } else {
+    async (data: { id: number }) => {
+      try {
+        const res = await dispatch(removeAccountAccess(data)).unwrap();
+        if (res?.success) {
+          notifications.show({
+            title: 'Success',
+            message: res?.message || 'Access removed successfully',
+            color: 'green',
+          });
+          await onInitialize({});
+        }
+      } catch (error: any) {
         notifications.show({
           title: 'Error',
-          message: res.payload?.message || 'Error removing access',
+          message: error || 'Error removing access',
           color: 'red',
         });
       }
@@ -228,6 +241,8 @@ const UseProfile = () => {
     openRemoveProfileImageModal,
     openRemoveProfilePicModal,
     closeRemoveProfilePicModal,
+    connectedAccounts,
+    loading,
   };
 };
 

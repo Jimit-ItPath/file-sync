@@ -81,6 +81,7 @@ import {
   IconCode,
   IconVideo,
   IconDeviceAudioTape,
+  IconCloudOff
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -166,4 +167,5 @@ export const ICONS = {
   IconCode,
   IconVideo,
   IconDeviceAudioTape,
+  IconCloudOff
 };
