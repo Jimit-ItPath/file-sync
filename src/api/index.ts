@@ -124,6 +124,19 @@ export const api = {
         data,
         ...configs,
       }),
+    renameFile: ({
+      data,
+      ...configs
+    }: {
+      data: { file_id: string; name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/google-drive/rename-file-or-folder',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
     uploadFiles: ({
       data,
       ...configs
@@ -180,6 +193,19 @@ export const api = {
         data,
         ...configs,
       }),
+    renameFile: ({
+      data,
+      ...configs
+    }: {
+      data: { id: string; name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/dropbox/rename-item',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
     uploadFiles: ({
       data,
       ...configs
@@ -232,6 +258,19 @@ export const api = {
     }) =>
       client({
         url: '/onedrive/create-folder',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    renameFile: ({
+      data,
+      ...configs
+    }: {
+      data: { id: string; name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/onedrive/rename-item',
         method: METHODS.POST,
         data,
         ...configs,

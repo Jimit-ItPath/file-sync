@@ -36,6 +36,12 @@ const OneDrive: React.FC = () => {
     setDeleteModalOpen,
     loadMoreFiles,
     nextLink,
+    handleRenameConfirm,
+    itemToRename,
+    renameFileLoading,
+    renameMethods,
+    renameModalOpen,
+    setRenameModalOpen,
   } = useOneDrive();
 
   return (
@@ -120,6 +126,7 @@ const OneDrive: React.FC = () => {
             </Button>
           )}
 
+          {/* Create folder / upload file modal */}
           <Modal
             opened={modalOpen}
             onClose={closeModal}
@@ -170,6 +177,7 @@ const OneDrive: React.FC = () => {
             )}
           </Modal>
 
+          {/* Delete file modal */}
           <Modal
             opened={deleteModalOpen}
             onClose={() => setDeleteModalOpen(false)}
@@ -197,6 +205,35 @@ const OneDrive: React.FC = () => {
                 Delete
               </Button>
             </Group>
+          </Modal>
+
+          {/* rename file/folder modal */}
+          <Modal
+            opened={renameModalOpen}
+            onClose={() => setRenameModalOpen(false)}
+            title={`Rename ${itemToRename?.['.tag'] === 'folder' ? 'Folder' : 'File'}`}
+          >
+            <Form methods={renameMethods} onSubmit={handleRenameConfirm}>
+              <Stack gap="md">
+                <TextInput
+                  placeholder={`${itemToRename?.['.tag'] === 'folder' ? 'Folder' : 'File'} name`}
+                  label={`${itemToRename?.['.tag'] === 'folder' ? 'Folder' : 'File'} Name`}
+                  {...renameMethods.register('newName')}
+                  error={renameMethods.formState.errors.newName?.message}
+                  withAsterisk
+                />
+                <Button
+                  type="submit"
+                  loading={renameFileLoading}
+                  maw={150}
+                  disabled={
+                    !renameMethods.formState.isValid || renameFileLoading
+                  }
+                >
+                  Rename
+                </Button>
+              </Stack>
+            </Form>
           </Modal>
         </>
       ) : (

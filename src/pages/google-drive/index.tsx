@@ -36,6 +36,12 @@ const GoogleDrive: React.FC = () => {
     setDeleteModalOpen,
     loadMoreFiles,
     pageToken,
+    handleRenameConfirm,
+    itemToRename,
+    renameFileLoading,
+    renameMethods,
+    renameModalOpen,
+    setRenameModalOpen,
   } = useGoogleDrive();
 
   return (
@@ -120,6 +126,7 @@ const GoogleDrive: React.FC = () => {
             </Button>
           )}
 
+          {/* Create folder / upload file modal */}
           <Modal
             opened={modalOpen}
             onClose={closeModal}
@@ -170,6 +177,7 @@ const GoogleDrive: React.FC = () => {
             )}
           </Modal>
 
+          {/* delete file/folder modal */}
           <Modal
             opened={deleteModalOpen}
             onClose={() => setDeleteModalOpen(false)}
@@ -198,6 +206,35 @@ const GoogleDrive: React.FC = () => {
                 Delete
               </Button>
             </Group>
+          </Modal>
+
+          {/* rename file/folder modal */}
+          <Modal
+            opened={renameModalOpen}
+            onClose={() => setRenameModalOpen(false)}
+            title={`Rename ${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+          >
+            <Form methods={renameMethods} onSubmit={handleRenameConfirm}>
+              <Stack gap="md">
+                <TextInput
+                  placeholder={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} name`}
+                  label={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} Name`}
+                  {...renameMethods.register('newName')}
+                  error={renameMethods.formState.errors.newName?.message}
+                  withAsterisk
+                />
+                <Button
+                  type="submit"
+                  loading={renameFileLoading}
+                  maw={150}
+                  disabled={
+                    !renameMethods.formState.isValid || renameFileLoading
+                  }
+                >
+                  Rename
+                </Button>
+              </Stack>
+            </Form>
           </Modal>
         </>
       ) : (

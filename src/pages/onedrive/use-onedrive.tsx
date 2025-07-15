@@ -9,6 +9,7 @@ import {
   createOneDriveFolder,
   fetchOneDriveFiles,
   removeOneDriveFiles,
+  renameOneDriveFile,
   uploadOneDriveFiles,
 } from '../../store/slices/onedrive.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
@@ -41,6 +42,7 @@ type FileRow = {
 // Constants
 const MENU_ITEMS = [
   { id: 'view', label: 'View', icon: ICONS.IconEye },
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
   { id: 'download', label: 'Download', icon: ICONS.IconDownload },
   { id: 'share', label: 'Share', icon: ICONS.IconShare },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
@@ -50,7 +52,13 @@ const folderSchema = z.object({
   folderName: z.string().min(1, 'Folder name is required'),
 });
 
+const renameSchema = z.object({
+  newName: z.string().min(1, 'New name is required'),
+});
+
 type FolderFormData = z.infer<typeof folderSchema>;
+
+type RenameFormData = z.infer<typeof renameSchema>;
 
 const useOneDrive = () => {
   const dispatch = useAppDispatch();
@@ -64,6 +72,8 @@ const useOneDrive = () => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<FileRow | null>(null);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [itemToRename, setItemToRename] = useState<FileRow | null>(null);
 
   // Form handling
   const folderMethods = useForm<FolderFormData>({
@@ -74,7 +84,13 @@ const useOneDrive = () => {
     },
   });
 
+  const renameMethods = useForm<RenameFormData>({
+    resolver: zodResolver(renameSchema),
+    mode: 'onChange',
+  });
+
   const { reset: resetFolderForm } = folderMethods;
+  const { reset: resetRenameForm } = renameMethods;
 
   // Initialization and connection
   const initializeOneDrive = useCallback(async () => {
@@ -200,6 +216,10 @@ const useOneDrive = () => {
     } else if (actionId === 'view') {
       // Open in OneDrive web interface
       window.open(row.webUrl, '_blank');
+    } else if (actionId === 'rename') {
+      setItemToRename(row);
+      setRenameModalOpen(true);
+      resetRenameForm({ newName: row.name });
     } else if (actionId === 'share') {
       // OneDrive sharing link
       window.open(`${row.webUrl}?web=1`, '_blank');
@@ -256,6 +276,34 @@ const useOneDrive = () => {
       uploadFiles(uploadedFiles);
     }
   }, [uploadFiles, uploadedFiles]);
+
+  // File rename functionality
+  const [renameFile, renameFileLoading] = useAsyncOperation(
+    async ({ fileId, newName }: { fileId: string; newName: string }) => {
+      try {
+        await dispatch(
+          renameOneDriveFile({ id: fileId, name: newName })
+        ).unwrap();
+        await dispatch(fetchOneDriveFiles({}));
+        notifications.show({
+          message: 'File renamed successfully',
+          color: 'green',
+        });
+        setRenameModalOpen(false);
+      } catch (error) {
+        notifications.show({
+          message: 'Failed to rename file',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleRenameConfirm = renameMethods.handleSubmit(data => {
+    if (itemToRename?.id) {
+      renameFile({ fileId: itemToRename.id, newName: data.newName });
+    }
+  });
 
   // File deletion functionality
   const [removeFile, removeFileLoading] = useAsyncOperation(
@@ -414,6 +462,12 @@ const useOneDrive = () => {
     removeFileLoading,
     loadMoreFiles,
     nextLink,
+    renameModalOpen,
+    setRenameModalOpen,
+    itemToRename,
+    renameMethods,
+    handleRenameConfirm,
+    renameFileLoading,
   };
 };
 

@@ -79,6 +79,18 @@ export const uploadDropboxFiles = createAsyncThunk(
   }
 );
 
+export const renameDropboxFile = createAsyncThunk(
+  'dropbox/renameDropboxFile',
+  async (data: { id: string; name: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.dropbox.renameFile({ data });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Failed to rename Dropbox file');
+    }
+  }
+);
+
 export const removeDropboxFiles = createAsyncThunk(
   'dropbox/removeDropboxFiles',
   async (data: { id: string }, { rejectWithValue }) => {

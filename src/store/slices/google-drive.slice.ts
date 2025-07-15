@@ -71,6 +71,18 @@ export const createGoogleDriveFolder = createAsyncThunk(
   }
 );
 
+export const renameGoogleDriveFile = createAsyncThunk(
+  'googleDrive/renameGoogleDriveFile',
+  async (data: { file_id: string; name: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.googleDrive.renameFile({ data });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Failed to rename Google Drive file');
+    }
+  }
+);
+
 export const uploadGoogleDriveFiles = createAsyncThunk(
   'googleDrive/uploadGoogleDriveFiles',
   async (data: FormData, { rejectWithValue }) => {

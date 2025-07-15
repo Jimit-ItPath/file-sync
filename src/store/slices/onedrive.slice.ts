@@ -138,6 +138,18 @@ export const uploadOneDriveFiles = createAsyncThunk(
   }
 );
 
+export const renameOneDriveFile = createAsyncThunk(
+  'onedrive/renameOneDriveFile',
+  async (data: { id: string; name: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.oneDrive.renameFile({ data });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Failed to rename OneDrive file');
+    }
+  }
+);
+
 export const removeOneDriveFiles = createAsyncThunk(
   'onedrive/removeOneDriveFiles',
   async (data: { id: string }, { rejectWithValue }) => {

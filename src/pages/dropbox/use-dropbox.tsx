@@ -9,6 +9,7 @@ import {
   createDropboxFolder,
   fetchDropboxFiles,
   removeDropboxFiles,
+  renameDropboxFile,
   uploadDropboxFiles,
 } from '../../store/slices/dropbox.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
@@ -48,6 +49,7 @@ type FileRow = {
 // Constants
 const MENU_ITEMS = [
   { id: 'view', label: 'View', icon: ICONS.IconEye },
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
   { id: 'download', label: 'Download', icon: ICONS.IconDownload },
   { id: 'share', label: 'Share', icon: ICONS.IconShare },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
@@ -57,7 +59,13 @@ const folderSchema = z.object({
   folderName: z.string().min(1, 'Folder name is required'),
 });
 
+const renameSchema = z.object({
+  newName: z.string().min(1, 'New name is required'),
+});
+
 type FolderFormData = z.infer<typeof folderSchema>;
+
+type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDropbox = () => {
   const dispatch = useAppDispatch();
@@ -71,6 +79,8 @@ const useDropbox = () => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<FileRow | null>(null);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [itemToRename, setItemToRename] = useState<FileRow | null>(null);
 
   // Form handling
   const folderMethods = useForm<FolderFormData>({
@@ -81,7 +91,13 @@ const useDropbox = () => {
     },
   });
 
+  const renameMethods = useForm<RenameFormData>({
+    resolver: zodResolver(renameSchema),
+    mode: 'onChange',
+  });
+
   const { reset: resetFolderForm } = folderMethods;
+  const { reset: resetRenameForm } = renameMethods;
 
   // Initialization and connection
   const initializeDropbox = useCallback(async () => {
@@ -228,6 +244,10 @@ const useDropbox = () => {
         // For files, open preview
         window.open(row.previewLink, '_blank');
       }
+    } else if (actionId === 'rename') {
+      setItemToRename(row);
+      setRenameModalOpen(true);
+      resetRenameForm({ newName: row.name });
     } else if (actionId === 'share' && row.path_display) {
       // Sharing link
       window.open(
@@ -287,6 +307,34 @@ const useDropbox = () => {
       uploadFiles(uploadedFiles);
     }
   }, [uploadFiles, uploadedFiles]);
+
+  // File rename functionality
+  const [renameFile, renameFileLoading] = useAsyncOperation(
+    async ({ fileId, newName }: { fileId: string; newName: string }) => {
+      try {
+        await dispatch(
+          renameDropboxFile({ id: fileId, name: newName })
+        ).unwrap();
+        await dispatch(fetchDropboxFiles({}));
+        notifications.show({
+          message: 'File renamed successfully',
+          color: 'green',
+        });
+        setRenameModalOpen(false);
+      } catch (error) {
+        notifications.show({
+          message: 'Failed to rename file',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleRenameConfirm = renameMethods.handleSubmit(data => {
+    if (itemToRename?.id) {
+      renameFile({ fileId: itemToRename.id, newName: data.newName });
+    }
+  });
 
   // File deletion functionality
   const [removeFile, removeFileLoading] = useAsyncOperation(
@@ -462,6 +510,12 @@ const useDropbox = () => {
     removeFileLoading,
     loadMoreFiles,
     hasMore,
+    renameModalOpen,
+    setRenameModalOpen,
+    itemToRename,
+    renameMethods,
+    handleRenameConfirm,
+    renameFileLoading,
   };
 };
 

@@ -9,6 +9,7 @@ import {
   createGoogleDriveFolder,
   fetchGoogleDriveFiles,
   removeGoogleDriveFiles,
+  renameGoogleDriveFile,
   uploadGoogleDriveFiles,
 } from '../../store/slices/google-drive.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
@@ -33,6 +34,7 @@ type FileRow = {
 // Constants
 const MENU_ITEMS = [
   { id: 'view', label: 'View', icon: ICONS.IconEye },
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
   { id: 'download', label: 'Download', icon: ICONS.IconDownload },
   { id: 'share', label: 'Share', icon: ICONS.IconShare },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
@@ -42,7 +44,13 @@ const folderSchema = z.object({
   folderName: z.string().min(1, 'Folder name is required'),
 });
 
+const renameSchema = z.object({
+  newName: z.string().min(1, 'New name is required'),
+});
+
 type FolderFormData = z.infer<typeof folderSchema>;
+
+type RenameFormData = z.infer<typeof renameSchema>;
 
 const useGoogleDrive = () => {
   const dispatch = useAppDispatch();
@@ -56,6 +64,8 @@ const useGoogleDrive = () => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<FileRow | null>(null);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [itemToRename, setItemToRename] = useState<FileRow | null>(null);
 
   // Form handling
   const folderMethods = useForm<FolderFormData>({
@@ -66,7 +76,13 @@ const useGoogleDrive = () => {
     },
   });
 
+  const renameMethods = useForm<RenameFormData>({
+    resolver: zodResolver(renameSchema),
+    mode: 'onChange',
+  });
+
   const { reset: resetFolderForm } = folderMethods;
+  const { reset: resetRenameForm } = renameMethods;
 
   // Initialization and connection
   const initializeGoogleDrive = useCallback(async () => {
@@ -224,6 +240,10 @@ const useGoogleDrive = () => {
       window.open(row.webContentLink, '_blank');
     } else if (actionId === 'view' && row.webViewLink) {
       window.open(row.webViewLink, '_blank');
+    } else if (actionId === 'rename') {
+      setItemToRename(row);
+      setRenameModalOpen(true);
+      resetRenameForm({ newName: row.name });
     } else if (actionId === 'share' && row.webViewLink) {
       window.open(`https://drive.google.com/file/d/${row.id}/share`, '_blank');
     } else if (actionId === 'delete') {
@@ -279,6 +299,34 @@ const useGoogleDrive = () => {
       uploadFiles(uploadedFiles);
     }
   }, [uploadFiles, uploadedFiles]);
+
+  // File rename functionality
+  const [renameFile, renameFileLoading] = useAsyncOperation(
+    async ({ fileId, newName }: { fileId: string; newName: string }) => {
+      try {
+        await dispatch(
+          renameGoogleDriveFile({ file_id: fileId, name: newName })
+        ).unwrap();
+        await dispatch(fetchGoogleDriveFiles({}));
+        notifications.show({
+          message: 'File renamed successfully',
+          color: 'green',
+        });
+        setRenameModalOpen(false);
+      } catch (error) {
+        notifications.show({
+          message: 'Failed to rename file',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleRenameConfirm = renameMethods.handleSubmit(data => {
+    if (itemToRename?.id) {
+      renameFile({ fileId: itemToRename.id, newName: data.newName });
+    }
+  });
 
   // File deletion functionality
   const [removeFile, removeFileLoading] = useAsyncOperation(
@@ -419,7 +467,13 @@ const useGoogleDrive = () => {
     itemToDelete,
     removeFileLoading,
     loadMoreFiles,
-    pageToken
+    pageToken,
+    renameModalOpen,
+    setRenameModalOpen,
+    itemToRename,
+    renameMethods,
+    handleRenameConfirm,
+    renameFileLoading,
   };
 };
 
