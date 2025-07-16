@@ -36,6 +36,9 @@ const Profile = () => {
     openRemoveProfileImageModal,
     connectedAccounts,
     loading,
+    closeRemoveAccessModal,
+    openRemoveAccessModal,
+    removeAccessModalOpen,
   } = useProfile();
   const {
     formState: { errors },
@@ -305,9 +308,7 @@ const Profile = () => {
                                 variant="subtle"
                                 color="red"
                                 onClick={() =>
-                                  removeAccess({
-                                    id: account.id,
-                                  })
+                                  openRemoveAccessModal(account.id)
                                 }
                                 loading={removeAccessLoading}
                               >
@@ -316,7 +317,7 @@ const Profile = () => {
                             </Tooltip>
                           </Group>
 
-                          {account.token_expires && (
+                          {/* {account.token_expires && (
                             <Box mt="sm">
                               <Group gap={4}>
                                 <ICONS.IconClock size={14} />
@@ -328,7 +329,7 @@ const Profile = () => {
                                 </Text>
                               </Group>
                             </Box>
-                          )}
+                          )} */}
                         </Box>
                       </Card>
                     </Grid.Col>
@@ -340,6 +341,7 @@ const Profile = () => {
         </Card>
       </Stack>
 
+      {/* Remove Profile Pic Modal */}
       <Modal
         opened={openRemoveProfileImageModal}
         onClose={closeRemoveProfilePicModal}
@@ -366,6 +368,32 @@ const Profile = () => {
             radius="md"
             disabled={removeProfileImageLoading}
             loading={removeProfileImageLoading}
+          >
+            Remove
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* Remove Access Modal */}
+      <Modal
+        opened={removeAccessModalOpen}
+        onClose={closeRemoveAccessModal}
+        title="Remove Access"
+      >
+        <Text mb="md">Are you sure you want to remove account access?</Text>
+        <Group>
+          <Button
+            variant="outline"
+            onClick={closeRemoveAccessModal}
+            disabled={removeAccessLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="red"
+            onClick={removeAccess}
+            loading={removeAccessLoading}
+            disabled={removeAccessLoading}
           >
             Remove
           </Button>

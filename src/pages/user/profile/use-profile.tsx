@@ -37,6 +37,10 @@ const UseProfile = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [openRemoveProfileImageModal, setOpenRemoveProfileImageModal] =
     useState(false);
+  const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
+    null
+  );
 
   const methods = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -148,27 +152,38 @@ const UseProfile = () => {
     setOpenRemoveProfileImageModal(false);
   }, []);
 
-  const [removeAccess, removeAccessLoading] = useAsyncOperation(
-    async (data: { id: number }) => {
-      try {
-        const res = await dispatch(removeAccountAccess(data)).unwrap();
-        if (res?.success) {
-          notifications.show({
-            title: 'Success',
-            message: res?.message || 'Access removed successfully',
-            color: 'green',
-          });
-          await onInitialize({});
-        }
-      } catch (error: any) {
+  const openRemoveAccessModal = useCallback((id: number) => {
+    setSelectedAccountId(id);
+    setRemoveAccessModalOpen(true);
+  }, []);
+
+  const closeRemoveAccessModal = useCallback(() => {
+    setSelectedAccountId(null);
+    setRemoveAccessModalOpen(false);
+  }, []);
+
+  const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
+    try {
+      const res = await dispatch(
+        removeAccountAccess({ id: Number(selectedAccountId) })
+      ).unwrap();
+      if (res?.success) {
         notifications.show({
-          title: 'Error',
-          message: error || 'Error removing access',
-          color: 'red',
+          title: 'Success',
+          message: res?.message || 'Access removed successfully',
+          color: 'green',
         });
+        await onInitialize({});
+        closeRemoveAccessModal();
       }
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error || 'Error removing access',
+        color: 'red',
+      });
     }
-  );
+  });
 
   const [removeProfilePic, removeProfileImageLoading] = useAsyncOperation(
     async () => {
@@ -236,6 +251,9 @@ const UseProfile = () => {
     handleAvatarChange,
     removeAccess,
     removeAccessLoading,
+    openRemoveAccessModal,
+    closeRemoveAccessModal,
+    removeAccessModalOpen,
     removeProfilePic,
     removeProfileImageLoading,
     openRemoveProfileImageModal,

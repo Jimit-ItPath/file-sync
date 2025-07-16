@@ -1,11 +1,13 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { api } from '../../api';
 
+export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
+
 type ConnectedAccountTyoe = {
   id: number;
   user_id: string;
   account_name: string;
-  account_type: string;
+  account_type: AccountType;
   state_token: string;
   access_token: null;
   refresh_token: null;

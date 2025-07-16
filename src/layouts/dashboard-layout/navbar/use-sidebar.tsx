@@ -27,6 +27,9 @@ const useSidebar = () => {
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState(false);
   const [hoveredAccountId, setHoveredAccountId] = useState<number | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
+    null
+  );
 
   const methods = useForm<ConnectAccountFormData>({
     resolver: zodResolver(connectAccountSchema),
@@ -92,19 +95,20 @@ const useSidebar = () => {
 
   const openRemoveAccessModal = useCallback((id: number) => {
     setHoveredAccountId(id);
+    setSelectedAccountId(id);
     setRemoveAccessModalOpen(true);
-    reset();
   }, []);
 
   const closeRemoveAccessModal = useCallback(() => {
     setRemoveAccessModalOpen(false);
+    setSelectedAccountId(null);
     setHoveredAccountId(null);
-  }, [reset]);
+  }, []);
 
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
       const res = await dispatch(
-        removeAccountAccess({ id: Number(hoveredAccountId) })
+        removeAccountAccess({ id: Number(selectedAccountId) })
       ).unwrap();
       if (res?.success) {
         notifications.show({
