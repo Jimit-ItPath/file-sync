@@ -136,18 +136,31 @@ const useDashboard = () => {
     (id: string, event: React.MouseEvent) => {
       const idx = getIndexById(id);
 
-      if (event.shiftKey && lastSelectedIndex !== null) {
-        // Range selection
+      // Check if this is a checkbox click (no need for modifier keys)
+      const isCheckboxClick = (event.target as HTMLElement).closest(
+        '[type="checkbox"]'
+      );
+
+      if (isCheckboxClick) {
+        // For checkbox clicks, simply toggle the selection
+        setSelectedIds(prev =>
+          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+        setLastSelectedIndex(idx);
+      } else if (event.shiftKey && lastSelectedIndex !== null) {
+        // Range selection for row clicks with shift key
         const start = Math.min(lastSelectedIndex, idx);
         const end = Math.max(lastSelectedIndex, idx);
         const rangeIds = allIds.slice(start, end + 1);
         setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
       } else if (event.ctrlKey || event.metaKey) {
+        // Multi-selection for row clicks with ctrl/cmd key
         setSelectedIds(prev =>
           prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
         setLastSelectedIndex(idx);
       } else {
+        // Single selection for regular row clicks
         setSelectedIds([id]);
         setLastSelectedIndex(idx);
       }
@@ -196,7 +209,30 @@ const useDashboard = () => {
 
   const handleUnselectAll = useCallback(() => {
     setSelectedIds([]);
+    setLastSelectedIndex(null);
   }, []);
+
+  // Handle row selection
+  const onSelectRow = useCallback(
+    (id: string, checked: boolean) => {
+      setSelectedIds(prev =>
+        checked ? [...prev, id] : prev.filter(i => i !== id)
+      );
+      setLastSelectedIndex(getIndexById(id));
+    },
+    [getIndexById]
+  );
+
+  const onSelectAll = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        handleSelectAll();
+      } else {
+        handleUnselectAll();
+      }
+    },
+    [handleSelectAll, handleUnselectAll]
+  );
 
   // Actions for selected items
   const handleDeleteSelected = useCallback(() => {
@@ -226,6 +262,8 @@ const useDashboard = () => {
     handleDownloadSelected,
     handleShareSelected,
     getIndexById,
+    onSelectAll,
+    onSelectRow,
   };
 };
 

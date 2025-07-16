@@ -46,7 +46,6 @@ const Dashboard = () => {
     handleDeleteSelected,
     handleDownloadSelected,
     handleSelect,
-    handleSelectAll,
     handleShareSelected,
     handleUnselectAll,
     selectedIds,
@@ -54,6 +53,8 @@ const Dashboard = () => {
     setSelectedIds,
     setLastSelectedIndex,
     getIndexById,
+    onSelectAll,
+    onSelectRow,
   } = useDashboard();
   return (
     <Box bg="#fff" h="100vh">
@@ -127,11 +128,10 @@ const Dashboard = () => {
               {...{
                 files,
                 handleSelect,
-                selectedIds,
                 handleKeyDown,
-                handleSelectAll,
-                handleUnselectAll,
-                setSelectedIds,
+                onSelectAll,
+                onSelectRow,
+                selectedIds
               }}
             />
           ) : (
