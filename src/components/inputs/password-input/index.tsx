@@ -50,7 +50,9 @@ const PasswordRequirement = ({
 };
 
 const getStrength = (password: string) => {
-  if (!password) {return 0;}
+  if (!password) {
+    return 0;
+  }
   let multiplier = password.length > 5 ? 0 : 1;
 
   passwordRequirements.forEach(requirement => {
@@ -88,7 +90,7 @@ const InputComponent = ({
       {...{ value, onBlur, visible }}
       ref={element => {
         ref(element);
-        if(inputRef?.current) {
+        if (inputRef?.current) {
           inputRef.current = element;
         }
       }}

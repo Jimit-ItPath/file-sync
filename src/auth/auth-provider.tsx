@@ -13,7 +13,7 @@ interface AuthProviderProps {
 const AuthProvider = ({ children }: AuthProviderProps) => {
   // const [token, setToken, removeToken] = useLocalStorage(LOCAL_STORAGE_KEY, '');
   // const [token, setToken, removeToken] = useLocalStorage('token', '');
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(localStorage.getItem('token'));
   // const token = localStorage.getItem('token');
 
   const [user, setUser] = useState(() => {

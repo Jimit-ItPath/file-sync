@@ -116,7 +116,7 @@ const useSocialLogin = () => {
     googleLogin,
     handleFacebookResponse,
     handleGoogleLogin,
-    handleFacebookLogin
+    handleFacebookLogin,
   };
 };
 

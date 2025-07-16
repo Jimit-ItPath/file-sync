@@ -22,7 +22,7 @@ function App() {
               defaultColorScheme: 'light',
             }}
           >
-            <Notifications position='top-right' />
+            <Notifications position="top-right" />
             <AuthProvider>
               <Routing />
             </AuthProvider>
