@@ -25,11 +25,11 @@ type Column<T> = {
 type TableProps<T> = {
   data: T[];
   columns: Column<T>[];
-  onSelectRow?: (id: string, checked: boolean) => void;
+  onSelectRow?: (id: string, checked: boolean, e?: any) => void;
   onSelectAll?: (checked: boolean) => void;
   onRowDoubleClick?: (row: T) => void;
   selectedRows?: string[];
-  title: string;
+  title?: string;
   idKey: keyof T; // key to identify row id
   emptyMessage?: string;
 };
@@ -40,7 +40,7 @@ export function Table<T extends Record<string, any>>({
   onSelectRow,
   onSelectAll,
   selectedRows = [],
-  title,
+  title = '',
   idKey,
   emptyMessage = 'No data available',
   onRowDoubleClick,
@@ -58,12 +58,14 @@ export function Table<T extends Record<string, any>>({
 
   return (
     <Box>
-      <Group justify="space-between" mb="xs">
-        <Text fw={600} fz="lg">
-          {title}
-        </Text>
-        {/* Add your filter/search UI here if needed */}
-      </Group>
+      {title ? (
+        <Group justify="space-between" mb="xs">
+          <Text fw={600} fz="lg">
+            {title}
+          </Text>
+          {/* Add your filter/search UI here if needed */}
+        </Group>
+      ) : null}
       <Card>
         <ScrollArea>
           <Box>
@@ -126,7 +128,8 @@ export function Table<T extends Record<string, any>>({
                             onChange={e =>
                               onSelectRow?.(
                                 row[idKey] as string,
-                                e.currentTarget.checked
+                                e.currentTarget.checked,
+                                e
                               )
                             }
                             aria-label="Select row"

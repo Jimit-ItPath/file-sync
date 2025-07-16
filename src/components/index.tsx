@@ -18,3 +18,4 @@ export { Tooltip } from './tooltip';
 export { Notification } from './notification';
 export { Alert } from './alert';
 export { Breadcrumbs } from './breadcrumb';
+export { SelectionBar } from './selection-bar';

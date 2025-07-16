@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ICONS } from '../../../assets/icons';
 import { Menu, Table } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
@@ -23,22 +23,56 @@ const MENU_ITEMS = [
 type FileTableProps = {
   files: FileType[];
   iconSize?: number;
+  selectedIds: string[];
+  handleSelect: (id: string, event: React.MouseEvent) => void;
+  handleKeyDown: (event: React.KeyboardEvent) => void;
+  handleSelectAll: () => void;
+  handleUnselectAll: () => void;
 };
 
-const FileTable: React.FC<FileTableProps> = ({ files, iconSize = 24 }) => {
+const FileTable: React.FC<FileTableProps> = ({
+  files,
+  iconSize = 24,
+  handleSelect = () => {},
+  handleKeyDown = () => {},
+  selectedIds = [],
+  handleSelectAll = () => {},
+  handleUnselectAll = () => {},
+}) => {
   // State for selected rows
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // Handle row selection
-  const onSelectRow = useCallback((id: string, checked: boolean) => {
-    setSelectedRows(prev =>
-      checked ? [...prev, id] : prev.filter(rowId => rowId !== id)
-    );
-  }, []);
+  const onSelectRow = useCallback(
+    (id: string, checked: boolean, event?: React.MouseEvent) => {
+      setSelectedRows(prev =>
+        checked ? [...prev, id] : prev.filter(rowId => rowId !== id)
+      );
+      // if (event && (event.ctrlKey || event.metaKey)) {
+      //   handleSelect(id, event);
+      // } else {
+      //   // Simulate a click event with no ctrl/meta for single select
+      //   handleSelect(id, {
+      //     ctrlKey: false,
+      //     shiftKey: false,
+      //     metaKey: false,
+      //   } as any);
+      // }
+    },
+    [handleSelect]
+  );
 
-  const onSelectAll = useCallback((checked: boolean) => {
-    setSelectedRows(checked ? files.map(file => file.id) : []);
-  }, []);
+  const onSelectAll = useCallback(
+    (checked: boolean) => {
+      // setSelectedRows(checked ? files.map(file => file.id) : []);
+      if (checked) {
+        handleSelectAll();
+      } else {
+        handleUnselectAll();
+      }
+    },
+    [handleSelectAll, handleUnselectAll]
+  );
 
   // Handle menu item click
   const handleMenuItemClick = (actionId: string, _: FileRow) => {
@@ -110,19 +144,24 @@ const FileTable: React.FC<FileTableProps> = ({ files, iconSize = 24 }) => {
         ),
       },
     ],
-    [handleMenuItemClick, iconSize]
+    [handleMenuItemClick, iconSize, selectedIds]
   );
 
   return (
-    <Table
-      title="All Files"
-      data={files}
-      columns={columns}
-      selectedRows={selectedRows}
-      onSelectRow={onSelectRow}
-      onSelectAll={onSelectAll}
-      idKey="id"
-    />
+    <div tabIndex={0} onKeyDown={handleKeyDown} style={{ outline: 'none' }}>
+      <Table
+        // title="All Files"
+        data={files}
+        columns={columns}
+        selectedRows={selectedRows}
+        // selectedRows={selectedIds}
+        // onSelectRow={onSelectRow}
+        onSelectAll={onSelectAll}
+        onSelectRow={(id, checked, event) => onSelectRow(id, checked, event)}
+        idKey="id"
+        emptyMessage="No files available. Please upload files to see them here."
+      />
+    </div>
   );
 };
 

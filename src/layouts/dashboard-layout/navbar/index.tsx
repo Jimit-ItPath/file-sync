@@ -243,80 +243,81 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
             </Link>
           );
         })} */}
-        {cloudAccounts?.length &&
-          cloudAccounts?.map(({ id, url, icon, title }) => {
-            const isActive = isActiveRoute(url);
+        {cloudAccounts?.length
+          ? cloudAccounts?.map(({ id, url, icon, title }) => {
+              const isActive = isActiveRoute(url);
 
-            return (
-              <Group
-                key={id}
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                }}
-                onMouseEnter={() => setHoveredAccountId(id)}
-                onMouseLeave={() => setHoveredAccountId(null)}
-              >
-                <Link
-                  to={url}
+              return (
+                <Group
+                  key={id}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '8px',
-                    borderRadius: 'var(--mantine-radius-default)',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    transition: 'background-color 0.2s',
-                    backgroundColor: isActive
-                      ? 'var(--mantine-color-gray-0)'
-                      : undefined,
-                    cursor: 'pointer',
-                    fontSize: '14px',
+                    position: 'relative',
                     width: '100%',
                   }}
-                  onClick={() => {
-                    mobileDrawerHandler?.close();
-                  }}
-                  onMouseEnter={e => {
-                    if (!isActive) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor =
-                        'var(--mantine-color-gray-0)';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor =
-                        '';
-                    }
-                  }}
+                  onMouseEnter={() => setHoveredAccountId(id)}
+                  onMouseLeave={() => setHoveredAccountId(null)}
                 >
-                  {icon}
-                  <span style={{ color: '#000', marginLeft: '10px' }}>
-                    {title}
-                  </span>
-                </Link>
-                {hoveredAccountId === id && (
-                  <Tooltip label="Remove Access" position="right" withArrow>
-                    <Box
-                      style={{
-                        position: 'absolute',
-                        right: 8,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        cursor: 'pointer',
-                      }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        openRemoveAccessModal(id);
-                      }}
-                    >
-                      <ICONS.IconTrash size={16} color="red" />
-                    </Box>
-                  </Tooltip>
-                )}
-              </Group>
-            );
-          })}
+                  <Link
+                    to={url}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px',
+                      borderRadius: 'var(--mantine-radius-default)',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      transition: 'background-color 0.2s',
+                      backgroundColor: isActive
+                        ? 'var(--mantine-color-gray-0)'
+                        : undefined,
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      width: '100%',
+                    }}
+                    onClick={() => {
+                      mobileDrawerHandler?.close();
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.backgroundColor =
+                          'var(--mantine-color-gray-0)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.backgroundColor =
+                          '';
+                      }
+                    }}
+                  >
+                    {icon}
+                    <span style={{ color: '#000', marginLeft: '10px' }}>
+                      {title}
+                    </span>
+                  </Link>
+                  {hoveredAccountId === id && (
+                    <Tooltip label="Remove Access" position="right" withArrow>
+                      <Box
+                        style={{
+                          position: 'absolute',
+                          right: 8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          cursor: 'pointer',
+                        }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          openRemoveAccessModal(id);
+                        }}
+                      >
+                        <ICONS.IconTrash size={16} color="red" />
+                      </Box>
+                    </Tooltip>
+                  )}
+                </Group>
+              );
+            })
+          : null}
 
         <Stack
           mt={20}

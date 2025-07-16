@@ -3,7 +3,7 @@ import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
 // import RecentFiles from './RecentFiles';
 import useDashboard from './use-dashboard';
-import { Button, Tooltip } from '../../components';
+import { Button, SelectionBar, Tooltip } from '../../components';
 import { ICONS } from '../../assets/icons';
 import FileGrid from './components/FileGrid';
 
@@ -37,7 +37,24 @@ const lastIconButtonStyles = (active: boolean) => ({
 });
 
 const Dashboard = () => {
-  const { layout, switchLayout, files, folders, regularFiles } = useDashboard();
+  const {
+    layout,
+    switchLayout,
+    files,
+    folders,
+    regularFiles,
+    handleDeleteSelected,
+    handleDownloadSelected,
+    handleSelect,
+    handleSelectAll,
+    handleShareSelected,
+    handleUnselectAll,
+    selectedIds,
+    handleKeyDown,
+    setSelectedIds,
+    setLastSelectedIndex,
+    getIndexById,
+  } = useDashboard();
   return (
     <Box bg="#fff" h="100vh">
       <ScrollArea h="100vh">
@@ -96,10 +113,41 @@ const Dashboard = () => {
               </ActionIcon>
             </Tooltip>
           </Group> */}
+          {selectedIds.length > 0 && (
+            <SelectionBar
+              count={selectedIds.length}
+              onCancel={handleUnselectAll}
+              onDelete={handleDeleteSelected}
+              onDownload={handleDownloadSelected}
+              onShare={handleShareSelected}
+            />
+          )}
           {layout === 'list' ? (
-            <FileTable files={files} />
+            <FileTable
+              {...{
+                files,
+                handleSelect,
+                selectedIds,
+                handleKeyDown,
+                handleSelectAll,
+                handleUnselectAll,
+                setSelectedIds,
+              }}
+            />
           ) : (
-            <FileGrid files={regularFiles} folders={folders} />
+            <FileGrid
+              {...{
+                files: regularFiles,
+                handleSelect,
+                selectedIds,
+                folders,
+                handleKeyDown,
+                handleUnselectAll,
+                getIndexById,
+                setLastSelectedIndex,
+                setSelectedIds,
+              }}
+            />
           )}
         </Box>
       </ScrollArea>

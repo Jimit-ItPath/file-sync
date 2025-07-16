@@ -8,11 +8,10 @@ import {
   Group,
   FileButton,
   Container,
-  Tooltip,
   Card,
   ActionIcon,
 } from '@mantine/core';
-import { Button, Form, Input, Modal } from '../../../components';
+import { Button, Form, Input, Modal, Tooltip } from '../../../components';
 import useProfile from './use-profile';
 import { ICONS } from '../../../assets/icons';
 import { useState } from 'react';

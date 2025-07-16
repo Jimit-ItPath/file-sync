@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ICONS } from '../../assets/icons';
 import { getLocalStorage, setLocalStorage } from '../../utils/helper';
+import { useMediaQuery } from '@mantine/hooks';
 
 const initialFiles = [
   {
@@ -94,6 +95,16 @@ const useDashboard = () => {
     return savedLayout ? savedLayout : 'list';
   });
   const [files, setFiles] = useState<FileType[]>(initialFiles);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
+    null
+  );
+
+  const isXs = useMediaQuery('(max-width: 575px)');
+  const isSm = useMediaQuery('(min-width: 576px) and (max-width: 767px)');
+  const isMd = useMediaQuery('(min-width: 768px) and (max-width: 991px)');
+
+  const gridColumns = isXs ? 1 : isSm ? 2 : isMd ? 3 : 4;
 
   useEffect(() => {
     setLocalStorage('dashboardLayout', layout);
@@ -112,6 +123,91 @@ const useDashboard = () => {
     [files]
   );
 
+  const allIds = useMemo(() => files.map(f => f.id), [files]);
+
+  // Helper to get index by id
+  const getIndexById = useCallback(
+    (id: string) => allIds.findIndex(i => i === id),
+    [allIds]
+  );
+
+  // Multi-select handler
+  const handleSelect = useCallback(
+    (id: string, event: React.MouseEvent) => {
+      const idx = getIndexById(id);
+
+      if (event.shiftKey && lastSelectedIndex !== null) {
+        // Range selection
+        const start = Math.min(lastSelectedIndex, idx);
+        const end = Math.max(lastSelectedIndex, idx);
+        const rangeIds = allIds.slice(start, end + 1);
+        setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
+      } else if (event.ctrlKey || event.metaKey) {
+        setSelectedIds(prev =>
+          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+        setLastSelectedIndex(idx);
+      } else {
+        setSelectedIds([id]);
+        setLastSelectedIndex(idx);
+      }
+    },
+    [allIds, lastSelectedIndex, getIndexById]
+  );
+
+  // Shift+arrow key selection
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (!selectedIds.length) return;
+
+      const currentIdx =
+        lastSelectedIndex ?? getIndexById(selectedIds[selectedIds.length - 1]);
+      let nextIdx = currentIdx;
+
+      if (event.shiftKey) {
+        if (event.key === 'ArrowDown') {
+          nextIdx = Math.min(currentIdx + gridColumns, allIds.length - 1);
+        } else if (event.key === 'ArrowUp') {
+          nextIdx = Math.max(currentIdx - gridColumns, 0);
+        } else if (event.key === 'ArrowRight') {
+          nextIdx = Math.min(currentIdx + 1, allIds.length - 1);
+        } else if (event.key === 'ArrowLeft') {
+          nextIdx = Math.max(currentIdx - 1, 0);
+        }
+        if (nextIdx !== currentIdx) {
+          const rangeStart =
+            selectedIds.length === 1
+              ? currentIdx
+              : getIndexById(selectedIds[0]);
+          const start = Math.min(rangeStart, nextIdx);
+          const end = Math.max(rangeStart, nextIdx);
+          const rangeIds = allIds.slice(start, end + 1);
+          setSelectedIds(rangeIds);
+          setLastSelectedIndex(nextIdx);
+        }
+      }
+    },
+    [selectedIds, lastSelectedIndex, allIds, getIndexById, gridColumns]
+  );
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(files.map(f => f.id));
+  }, [files]);
+
+  const handleUnselectAll = useCallback(() => {
+    setSelectedIds([]);
+  }, []);
+
+  // Actions for selected items
+  const handleDeleteSelected = useCallback(() => {
+    setFiles(prev => prev.filter(f => !selectedIds.includes(f.id)));
+    setSelectedIds([]);
+  }, [selectedIds]);
+
+  const handleDownloadSelected = useCallback(() => {}, [selectedIds]);
+
+  const handleShareSelected = useCallback(() => {}, [selectedIds]);
+
   return {
     layout,
     switchLayout,
@@ -119,6 +215,17 @@ const useDashboard = () => {
     setFiles,
     folders,
     regularFiles,
+    selectedIds,
+    setSelectedIds,
+    setLastSelectedIndex,
+    handleSelect,
+    handleKeyDown,
+    handleSelectAll,
+    handleUnselectAll,
+    handleDeleteSelected,
+    handleDownloadSelected,
+    handleShareSelected,
+    getIndexById,
   };
 };
 
