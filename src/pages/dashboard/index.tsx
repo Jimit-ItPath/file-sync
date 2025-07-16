@@ -1,9 +1,9 @@
-import { Box, Group, ScrollArea } from '@mantine/core';
+import { Box, Group, ScrollArea, SegmentedControl } from '@mantine/core';
 import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
 // import RecentFiles from './RecentFiles';
 import useDashboard from './use-dashboard';
-import { Button, SelectionBar, Tooltip } from '../../components';
+import { SelectionBar, Tooltip } from '../../components';
 import { ICONS } from '../../assets/icons';
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
@@ -79,66 +79,44 @@ const Dashboard = () => {
             ) : (
               <Box style={{ flex: 1, marginRight: 12 }} />
             )}
-
-            <Box
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                background: 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
-                border: '1px solid #a5b4fc',
-                overflow: 'hidden',
-                height: 45,
-                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
-              }}
-            >
-              <Tooltip label="List View" withArrow fz="xs">
-                <Button
-                  style={{
-                    background: layout === 'list' ? '#4f46e5' : 'transparent',
-                    border: 'none',
-                    borderRight: '1px solid #a5b4fc',
-                    padding: '0 14px',
-                    height: '100%',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    transition: 'background-color 0.3s ease',
-                  }}
-                  borderRadius={0}
-                  onClick={() => switchLayout('list')}
-                  aria-label="List View"
-                >
-                  <ICONS.IconList
-                    size={20}
-                    color={layout === 'list' ? '#e0e7ff' : '#64748b'}
-                  />
-                </Button>
-              </Tooltip>
-              <Tooltip label="Grid View" withArrow fz="xs">
-                <Button
-                  style={{
-                    background: layout === 'grid' ? '#4f46e5' : 'transparent',
-                    border: 'none',
-                    padding: '0 14px',
-                    height: '100%',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    transition: 'background-color 0.3s ease',
-                  }}
-                  bdrs={0}
-                  onClick={() => switchLayout('grid')}
-                  aria-label="Grid View"
-                >
-                  <ICONS.IconGridDots
-                    size={20}
-                    color={layout === 'grid' ? '#e0e7ff' : '#64748b'}
-                  />
-                </Button>
-              </Tooltip>
-            </Box>
+            <SegmentedControl
+              value={layout}
+              onChange={(value: string) =>
+                switchLayout(value as 'list' | 'grid')
+              }
+              p={7}
+              color="#1c7ed6"
+              data={[
+                {
+                  value: 'list',
+                  label: (
+                    <Tooltip label="List View" withArrow fz="xs">
+                      <ICONS.IconList
+                        // size={20}
+                        color={layout === 'list' ? '#ffffff' : '#1c7ed6'}
+                      />
+                    </Tooltip>
+                  ),
+                },
+                {
+                  value: 'grid',
+                  label: (
+                    <Tooltip label="Grid View" withArrow fz="xs">
+                      <ICONS.IconGridDots
+                        // size={20}
+                        color={layout === 'grid' ? '#ffffff' : '#1c7ed6'}
+                      />
+                    </Tooltip>
+                  ),
+                },
+              ]}
+              styles={() => ({
+                root: {
+                  // backgroundColor: theme.colors.gray[2],
+                  backgroundColor: '#f3f4f6'
+                },
+              })}
+            />
           </Group>
           {layout === 'list' ? (
             <FileTable
