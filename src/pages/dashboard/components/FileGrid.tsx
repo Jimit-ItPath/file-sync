@@ -1,74 +1,146 @@
-import { Card, Group, Avatar, Text, Grid, ActionIcon } from '@mantine/core';
+import {
+  Card,
+  Group,
+  Text,
+  Grid,
+  ActionIcon,
+  Box,
+  Image,
+  Stack,
+} from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import type { FileType } from '../use-dashboard';
-import { Menu } from '../../../components';
+import { Menu, Tooltip } from '../../../components';
 
 type FileGridProps = {
+  folders: FileType[];
   files: FileType[];
-};
-
-const getIcon = (type: string) => {
-  switch (type) {
-    case 'folder':
-      return <ICONS.IconFolder size={32} color="#38bdf8" />;
-    case 'pdf':
-      return <ICONS.IconFileTypePdf size={32} color="#ef4444" />;
-    // Add more types as needed
-    default:
-      return <ICONS.IconFile size={32} color="#64748b" />;
-  }
+  iconSize?: number;
 };
 
 const MENU_ITEMS = [{ id: 'delete', label: 'Delete', icon: ICONS.IconTrash }];
 
-const FileGrid: React.FC<FileGridProps> = ({ files }) => (
-  <Grid gutter={20}>
-    {files.map(file => (
-      <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 3 }} key={file.id}>
-        <Card
-          radius="md"
-          shadow="sm"
-          p="lg"
-          style={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            background: '#f6faff',
-            border: '1px solid #e5e7eb',
-          }}
-        >
-          <Group justify="space-between" mb={12}>
-            {getIcon(file.icon)}
-            <Menu items={MENU_ITEMS} onItemClick={() => {}}>
-              <ActionIcon variant="subtle" color="gray">
-                <ICONS.IconDotsVertical size={18} />
-              </ActionIcon>
-            </Menu>
-          </Group>
-          <Text fw={600} fz="sm" mb={4} truncate>
-            {file.name}
-          </Text>
-          <Group gap={8} mt={8}>
-            <Avatar src={file.owner.avatar} radius="xl" size="sm" color="blue">
-              {file.owner.initials}
-            </Avatar>
-            <Text size="sm" truncate>
-              {file.owner.name}
-            </Text>
-          </Group>
-          <Group justify="space-between" mt={8}>
-            <Text size="xs" c="gray.6">
-              {file.lastModified}
-            </Text>
-            <Text size="xs" c="gray.6">
-              {file.size}
-            </Text>
-          </Group>
-        </Card>
-      </Grid.Col>
-    ))}
-  </Grid>
+const FOLDER_CARD_HEIGHT = 70;
+// const FILE_CARD_WIDTH = 260;
+// const FILE_CARD_HEIGHT = 260;
+
+const FileGrid: React.FC<FileGridProps> = ({
+  folders,
+  files,
+  iconSize = 24,
+}) => (
+  <Stack>
+    {/* Folders */}
+    <Grid gutter={20}>
+      {folders.map(folder => (
+        <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 3 }} key={folder.id}>
+          <Card
+            radius="md"
+            shadow="sm"
+            p="md"
+            style={{
+              height: FOLDER_CARD_HEIGHT,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#f6faff',
+              border: '1px solid #e5e7eb',
+            }}
+          >
+            <Group gap={12} style={{ width: '100%' }}>
+              {folder.icon(iconSize)}
+              <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
+                <Text fw={600} fz="sm" truncate style={{ flex: 1 }}>
+                  {folder.name}
+                </Text>
+              </Tooltip>
+              <Menu items={MENU_ITEMS} onItemClick={() => {}}>
+                <ActionIcon variant="subtle" color="gray">
+                  <ICONS.IconDotsVertical size={18} />
+                </ActionIcon>
+              </Menu>
+            </Group>
+          </Card>
+        </Grid.Col>
+      ))}
+    </Grid>
+    {/* Files */}
+    <Grid gutter={20} mt={folders.length > 0 ? 12 : 0}>
+      {files.map(file => (
+        <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 3 }} key={file.id}>
+          <Card
+            radius="md"
+            shadow="sm"
+            p="md"
+            // w={FILE_CARD_WIDTH}
+            // h={FILE_CARD_HEIGHT}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              background: '#f6faff',
+              border: '1px solid #e5e7eb',
+            }}
+          >
+            <Group justify="space-between" mb={8}>
+              <Group gap={8}>
+                {file.icon(iconSize)}
+                <Tooltip label={file.name} withArrow={false} fz={'xs'}>
+                  <Text fw={600} fz="sm" truncate>
+                    {file.name}
+                  </Text>
+                </Tooltip>
+              </Group>
+              <Menu items={MENU_ITEMS} onItemClick={() => {}}>
+                <ActionIcon variant="subtle" color="gray">
+                  <ICONS.IconDotsVertical size={18} />
+                </ActionIcon>
+              </Menu>
+            </Group>
+            <Box
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 8,
+                marginTop: 8,
+              }}
+            >
+              {file.preview ? (
+                <Image
+                  src={file.preview}
+                  alt={file.name}
+                  radius="md"
+                  fit="cover"
+                  h={180}
+                  w="100%"
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <Box
+                  style={{
+                    width: '100%',
+                    height: 120,
+                    background: '#e5e7eb',
+                    borderRadius: 8,
+                  }}
+                />
+              )}
+            </Box>
+            <Group justify="space-between" mt={8}>
+              <Text size="xs" c="gray.6">
+                {file.lastModified}
+              </Text>
+              <Text size="xs" c="gray.6">
+                {file.size}
+              </Text>
+            </Group>
+          </Card>
+        </Grid.Col>
+      ))}
+    </Grid>
+  </Stack>
 );
 
 export default FileGrid;

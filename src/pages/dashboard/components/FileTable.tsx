@@ -7,7 +7,7 @@ import type { FileType } from '../use-dashboard';
 type FileRow = {
   id: string;
   name: string;
-  icon: React.ReactNode;
+  icon: (size: number) => React.ReactNode;
   owner: { name: string; avatar: string | null; initials: string };
   lastModified: string;
   size: string;
@@ -22,9 +22,10 @@ const MENU_ITEMS = [
 
 type FileTableProps = {
   files: FileType[];
+  iconSize?: number;
 };
 
-const FileTable: React.FC<FileTableProps> = ({ files }) => {
+const FileTable: React.FC<FileTableProps> = ({ files, iconSize = 24 }) => {
   // State for selected rows
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
@@ -59,8 +60,8 @@ const FileTable: React.FC<FileTableProps> = ({ files }) => {
         width: '30%',
         render: (row: FileRow) => (
           <Group gap={8} wrap="nowrap">
-            {row.icon}
-            <Text fw={600} truncate>
+            {row.icon(iconSize)}
+            <Text fw={600} fz={'sm'} truncate>
               {row.name}
             </Text>
           </Group>
@@ -109,7 +110,7 @@ const FileTable: React.FC<FileTableProps> = ({ files }) => {
         ),
       },
     ],
-    [handleMenuItemClick]
+    [handleMenuItemClick, iconSize]
   );
 
   return (

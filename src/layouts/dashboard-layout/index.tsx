@@ -40,6 +40,15 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     getProfile({});
+
+    // const handleBeforeUnload = () => {
+    //   removeLocalStorage('googleDrivePath');
+    // };
+
+    // window.addEventListener('beforeunload', handleBeforeUnload);
+    // return () => {
+    //   window.removeEventListener('beforeunload', handleBeforeUnload);
+    // };
   }, []);
 
   const fullName = useMemo(
@@ -76,7 +85,7 @@ const DashboardLayout = () => {
       <AppShell
         header={{ height: 60 }}
         navbar={{
-          width: 300,
+          width: 250,
           breakpoint: 'sm',
           collapsed: { mobile: !mobileDrawerOpened },
         }}
