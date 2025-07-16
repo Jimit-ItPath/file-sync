@@ -1,11 +1,10 @@
 import React from 'react';
-import { Breadcrumbs, Table } from '../../components';
+import { Breadcrumbs, Dropzone, Table } from '../../components';
 import { Button, Form, Modal } from '../../components';
 import useGoogleDrive from './use-google-drive';
 import { LoaderOverlay } from '../../components/loader';
 import { Group, Stack, Text, TextInput } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
-import { Dropzone } from '../../components/inputs/dropzone';
 
 const GoogleDrive: React.FC = () => {
   const {

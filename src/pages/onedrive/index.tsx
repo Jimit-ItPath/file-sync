@@ -1,10 +1,9 @@
 import React from 'react';
 import { Table } from '../../components';
-import { Button, Form, Modal } from '../../components';
+import { Button, Form, Modal, Dropzone } from '../../components';
 import { LoaderOverlay } from '../../components/loader';
 import { Group, Stack, Text, TextInput } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
-import { Dropzone } from '../../components/inputs/dropzone';
 import useOneDrive from './use-onedrive';
 
 const OneDrive: React.FC = () => {

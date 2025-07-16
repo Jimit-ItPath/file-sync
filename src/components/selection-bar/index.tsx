@@ -28,7 +28,7 @@ export const SelectionBar = ({
     bg="#f3f4f6"
     p={12}
     pl={20}
-    mb={16}
+    w={'100%'}
     style={{
       borderRadius: 12,
       display: 'flex',
@@ -36,7 +36,6 @@ export const SelectionBar = ({
       justifyContent: 'space-between',
       boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
       backgroundColor: '#fff',
-      // background: '#f6faff',
       border: '1px solid #e5e7eb',
     }}
   >

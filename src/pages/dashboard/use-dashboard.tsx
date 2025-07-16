@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ICONS } from '../../assets/icons';
-import { getLocalStorage, setLocalStorage } from '../../utils/helper';
+import {
+  formatFileSize,
+  getLocalStorage,
+  setLocalStorage,
+} from '../../utils/helper';
 import { useMediaQuery } from '@mantine/hooks';
+import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
 
 const initialFiles = [
   {
@@ -89,6 +94,48 @@ const initialFiles = [
 
 export type FileType = (typeof initialFiles)[number];
 
+const getFileIcon = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+
+  switch (extension) {
+    case 'pdf':
+      return (size: number) => (
+        <ICONS.IconFileTypePdf size={size} color="#ef4444" />
+      );
+    case 'doc':
+    case 'docx':
+      return (size: number) => (
+        <ICONS.IconFileTypeDoc size={size} color="#2563eb" />
+      );
+    case 'xls':
+    case 'xlsx':
+      return (size: number) => (
+        <ICONS.IconFileTypeXls size={size} color="#22c55e" />
+      );
+    case 'ppt':
+    case 'pptx':
+      return (size: number) => (
+        <ICONS.IconFileTypePpt size={size} color="#f59e0b" />
+      );
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'gif':
+    case 'svg':
+      return (size: number) => <ICONS.IconPhoto size={size} color="#a78bfa" />;
+    case 'txt':
+      return (size: number) => (
+        <ICONS.IconFileTypeDoc size={size} color="#64748b" />
+      );
+    default:
+      return (size: number) => <ICONS.IconFile size={size} color="#64748b" />;
+  }
+};
+
+const generateId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
 const useDashboard = () => {
   const [layout, setLayout] = useState<'list' | 'grid'>(() => {
     const savedLayout = getLocalStorage('dashboardLayout');
@@ -99,12 +146,132 @@ const useDashboard = () => {
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null
   );
+  const [uploadProgress, setUploadProgress] = useState<{
+    [key: string]: number;
+  }>({});
+  const [uploadingFiles, setUploadingFiles] = useState<{
+    [key: string]: { name: string; size: string };
+  }>({});
+
+  const [cancelledUploads, setCancelledUploads] = useState<Set<string>>(
+    new Set()
+  );
 
   const isXs = useMediaQuery('(max-width: 575px)');
   const isSm = useMediaQuery('(min-width: 576px) and (max-width: 767px)');
   const isMd = useMediaQuery('(min-width: 768px) and (max-width: 991px)');
 
   const gridColumns = isXs ? 1 : isSm ? 2 : isMd ? 3 : 4;
+
+  const handleFileUpload = useCallback(
+    (uploadedFiles: File[]) => {
+      const newFiles: FileType[] = [];
+
+      uploadedFiles.forEach(file => {
+        const fileId = generateId();
+
+        // Add to uploading files state
+        setUploadingFiles(prev => ({
+          ...prev,
+          [fileId]: {
+            name: file.name,
+            size: formatFileSize(file.size?.toString()),
+          },
+        }));
+
+        // Initialize progress
+        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+
+        // Create file object
+        const fileObj: FileType = {
+          id: fileId,
+          name: file.name,
+          type: 'file',
+          icon: getFileIcon(file.name),
+          owner: { name: 'You', avatar: null, initials: 'JS' },
+          lastModified: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }),
+          size: formatFileSize(file.size?.toString()),
+          preview: file.type.startsWith('image/')
+            ? URL.createObjectURL(file)
+            : undefined,
+        };
+
+        newFiles.push(fileObj);
+
+        // Simulate upload progress
+        let progress = 0;
+        const interval = setInterval(() => {
+          // Check if upload was cancelled
+          if (cancelledUploads.has(fileId)) {
+            clearInterval(interval);
+            setUploadProgress(prev => {
+              const newProgress = { ...prev };
+              delete newProgress[fileId];
+              return newProgress;
+            });
+            setUploadingFiles(prev => {
+              const newUploading = { ...prev };
+              delete newUploading[fileId];
+              return newUploading;
+            });
+            setCancelledUploads(prev => {
+              const newCancelled = new Set(prev);
+              newCancelled.delete(fileId);
+              return newCancelled;
+            });
+            return;
+          }
+
+          // Simulate realistic upload progress
+          const increment = Math.random() * 15 + 5; // 5-20% increments
+          progress = Math.min(progress + increment, 100);
+
+          if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+
+            // Remove from progress after a delay to show completion
+            setTimeout(() => {
+              setUploadProgress(prev => {
+                const newProgress = { ...prev };
+                delete newProgress[fileId];
+                return newProgress;
+              });
+              setUploadingFiles(prev => {
+                const newUploading = { ...prev };
+                delete newUploading[fileId];
+                return newUploading;
+              });
+            }, 2000); // Keep completed state for 2 seconds
+          }
+
+          setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
+        }, 300); // Update every 300ms for smooth progress
+      });
+
+      // Add files to the main list immediately (they'll show with progress)
+      setFiles(prev => [...newFiles, ...prev]);
+    },
+    [cancelledUploads]
+  );
+
+  const handleCancelUpload = useCallback((fileId: string) => {
+    setCancelledUploads(prev => new Set(prev).add(fileId));
+
+    // Remove the file from the files list
+    setFiles(prev => prev.filter(f => f.id !== fileId));
+  }, []);
+
+  // Drag and drop functionality
+  const { dragRef, isDragging } = useDragDrop({
+    onFileDrop: handleFileUpload,
+    acceptedFileTypes: ['*'], // Accept all file types
+    maxFileSize: 100 * 1024 * 1024, // 100MB limit
+  });
 
   useEffect(() => {
     setLocalStorage('dashboardLayout', layout);
@@ -264,6 +431,12 @@ const useDashboard = () => {
     getIndexById,
     onSelectAll,
     onSelectRow,
+    dragRef,
+    isDragging,
+    handleFileUpload,
+    uploadProgress,
+    uploadingFiles,
+    handleCancelUpload
   };
 };
 
