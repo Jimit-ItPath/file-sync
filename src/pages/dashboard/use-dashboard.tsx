@@ -20,6 +20,15 @@ const initialFiles = [
   },
   {
     id: '2',
+    name: 'Photos',
+    type: 'folder',
+    icon: (size: number) => <ICONS.IconFolder size={size} color="#38bdf8" />,
+    owner: { name: 'You', avatar: null, initials: 'JS' },
+    lastModified: 'Jun 10, 2023',
+    size: '–',
+  },
+  {
+    id: '3',
     name: 'Project_Report.pdf',
     type: 'file',
     icon: (size: number) => (
@@ -30,15 +39,6 @@ const initialFiles = [
     size: '4.2 MB',
     preview:
       'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80', // Example preview
-  },
-  {
-    id: '3',
-    name: 'Photos',
-    type: 'folder',
-    icon: (size: number) => <ICONS.IconFolder size={size} color="#38bdf8" />,
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 10, 2023',
-    size: '–',
   },
   {
     id: '4',
