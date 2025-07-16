@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { ICONS } from '../../assets/icons';
-import { Menu, Table } from '../../components';
+import { ICONS } from '../../../assets/icons';
+import { Menu, Table } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
+import type { FileType } from '../use-dashboard';
 
 type FileRow = {
   id: string;
@@ -13,32 +14,17 @@ type FileRow = {
   actions?: React.ReactNode;
 };
 
-const files = [
-  {
-    id: '1',
-    name: 'Documents',
-    icon: <ICONS.IconFolder size={20} color="#38bdf8" />,
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 15, 2023',
-    size: '–',
-  },
-  {
-    id: '2',
-    name: 'Project_Report.pdf',
-    icon: <ICONS.IconFileTypePdf size={20} color="#ef4444" />,
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 27, 2023',
-    size: '4.2 MB',
-  },
-];
-
 const MENU_ITEMS = [
-  { id: 'download', label: 'Download', icon: ICONS.IconDownload },
-  { id: 'share', label: 'Share', icon: ICONS.IconShare },
+  // { id: 'download', label: 'Download', icon: ICONS.IconDownload },
+  // { id: 'share', label: 'Share', icon: ICONS.IconShare },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
 ];
 
-const FileTable: React.FC = () => {
+type FileTableProps = {
+  files: FileType[];
+};
+
+const FileTable: React.FC<FileTableProps> = ({ files }) => {
   // State for selected rows
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 

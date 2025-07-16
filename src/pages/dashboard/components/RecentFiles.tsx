@@ -1,6 +1,6 @@
 import { Group, Box, Text, Grid } from '@mantine/core';
-import { ICONS } from '../../assets/icons';
-import { Button, Card } from '../../components';
+import { ICONS } from '../../../assets/icons';
+import { Button, Card } from '../../../components';
 
 const recentFiles = [
   {

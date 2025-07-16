@@ -1,6 +1,6 @@
 import { Group } from '@mantine/core';
-import { ICONS } from '../../assets/icons';
-import { Button } from '../../components';
+import { ICONS } from '../../../assets/icons';
+import { Button } from '../../../components';
 
 const actionButtons = [
   {
@@ -14,14 +14,14 @@ const actionButtons = [
     icon: ICONS.IconFolderPlus,
     label: 'New Folder',
   },
-  {
-    icon: ICONS.IconDownload,
-    label: 'Download',
-  },
-  {
-    icon: ICONS.IconShare,
-    label: 'Share',
-  },
+  // {
+  //   icon: ICONS.IconDownload,
+  //   label: 'Download',
+  // },
+  // {
+  //   icon: ICONS.IconShare,
+  //   label: 'Share',
+  // },
   {
     icon: ICONS.IconRefresh,
     label: 'Sync',
