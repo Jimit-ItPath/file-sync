@@ -6,12 +6,14 @@ interface UploadProgressProps {
   uploadProgress: { [key: string]: number };
   uploadingFiles: { [key: string]: { name: string; size: string } };
   onCancelUpload: (fileId: string) => void;
+  onClose: () => void;
 }
 
 const UploadProgress: React.FC<UploadProgressProps> = ({
   uploadProgress,
   uploadingFiles,
-  onCancelUpload,
+  onCancelUpload = () => {},
+  onClose = () => {},
 }) => {
   const activeUploads = Object.entries(uploadProgress);
 
@@ -49,6 +51,14 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
             {activeUploads.filter(([_, progress]) => progress === 100).length}{' '}
             of {activeUploads.length} complete
           </Text>
+          <ActionIcon
+            onClick={onClose}
+            color="gray"
+            bdrs={9999}
+            variant="subtle"
+          >
+            <ICONS.IconX size={16} />
+          </ActionIcon>
         </Group>
       </Box>
 

@@ -11,7 +11,7 @@ import {
   TableTbody,
   TableTd,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ICONS } from '../../assets/icons';
 import { Card } from '../card';
 
@@ -27,7 +27,10 @@ type TableProps<T> = {
   columns: Column<T>[];
   onSelectRow?: (id: string, checked: boolean, e?: any) => void;
   onSelectAll?: (checked: boolean) => void;
-  onRowDoubleClick?: (row: T) => void;
+  onRowDoubleClick?: (
+    row: T,
+    e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>
+  ) => void;
   selectedRows?: string[];
   title?: string;
   idKey: keyof T; // key to identify row id
@@ -68,7 +71,7 @@ export function Table<T extends Record<string, any>>({
       ) : null}
       <Card>
         <ScrollArea>
-          <Box>
+          <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
             {data?.length ? (
               <MantineTable
                 verticalSpacing="sm"
@@ -76,8 +79,8 @@ export function Table<T extends Record<string, any>>({
                 withColumnBorders={false}
                 striped={false}
                 styles={{
-                  th: { padding: '12px 16px' },
-                  td: { padding: '12px 16px' },
+                  th: { padding: '12px 16px', whiteSpace: 'nowrap' },
+                  td: { padding: '12px 16px', whiteSpace: 'nowrap' },
                 }}
               >
                 <TableThead>
@@ -105,16 +108,13 @@ export function Table<T extends Record<string, any>>({
                         )}
                       </TableTh>
                     ))}
-                    {!columns.some(col => col.key === 'actions') && (
-                      <TableTh style={{ width: 40 }} />
-                    )}
                   </TableTr>
                 </TableThead>
                 <TableTbody>
                   {data.map(row => (
                     <TableTr
                       key={row[idKey] as string}
-                      onDoubleClick={() => onRowDoubleClick?.(row)}
+                      onDoubleClick={e => onRowDoubleClick?.(row, e)}
                       style={{
                         cursor: onRowDoubleClick ? 'pointer' : 'default',
                       }}
@@ -136,14 +136,19 @@ export function Table<T extends Record<string, any>>({
                           />
                         </TableTd>
                       )}
-                      {columns.map(({ key, render }, idx) => (
-                        <TableTd key={idx}>
+                      {columns.map(({ key, render, width }, idx) => (
+                        <TableTd
+                          key={idx}
+                          style={{
+                            width,
+                            maxWidth: width,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
                           {render ? render(row) : String(row[key as keyof T])}
                         </TableTd>
                       ))}
-                      {!columns.some(col => col.key === 'actions') && (
-                        <TableTd>{/* Your default action menu here */}</TableTd>
-                      )}
                     </TableTr>
                   ))}
                 </TableTbody>

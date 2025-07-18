@@ -7,10 +7,14 @@ import useAsyncOperation from '../../../hooks/use-async-operation';
 import { notifications } from '@mantine/notifications';
 import {
   connectCloudAccount,
+  fetchStorageDetails,
   getConnectedAccount,
   removeAccountAccess,
 } from '../../../store/slices/auth.slice';
 import { decodeToken } from '../../../utils/helper';
+import { PRIVATE_ROUTES } from '../../../routing/routes';
+import { ICONS } from '../../../assets/icons';
+import { generatePath } from 'react-router';
 
 const connectAccountSchema = z.object({
   accountName: z.string().min(1, 'Account name is required'),
@@ -21,9 +25,50 @@ const connectAccountSchema = z.object({
 
 type ConnectAccountFormData = z.infer<typeof connectAccountSchema>;
 
+const accountTypeConfig = {
+  google_drive: {
+    url: PRIVATE_ROUTES.GOOGLE_DRIVE.url,
+    icon: (
+      <ICONS.IconBrandGoogle
+        size={18}
+        color="#ef4444"
+        stroke={1.25}
+        fill="#ef4444"
+      />
+    ),
+    title: 'Google Drive',
+  },
+  dropbox: {
+    url: PRIVATE_ROUTES.DROPBOX.url,
+    icon: (
+      <ICONS.IconDroplets
+        size={18}
+        color="#007ee5"
+        stroke={1.25}
+        fill="#007ee5"
+      />
+    ),
+    title: 'Dropbox',
+  },
+  onedrive: {
+    url: PRIVATE_ROUTES.ONEDRIVE.url,
+    icon: (
+      <ICONS.IconBrandOnedrive
+        size={18}
+        color="#0078d4"
+        stroke={1.25}
+        fill="#0078d4"
+      />
+    ),
+    title: 'OneDrive',
+  },
+};
+
 const useSidebar = () => {
   const dispatch = useAppDispatch();
-  const { connectedAccounts, loading } = useAppSelector(state => state.auth);
+  const { connectedAccounts, loading, checkStorageDetails } = useAppSelector(
+    state => state.auth
+  );
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState(false);
   const [hoveredAccountId, setHoveredAccountId] = useState<number | null>(null);
@@ -50,8 +95,15 @@ const useSidebar = () => {
 
   const [onInitialize] = useAsyncOperation(getAccounts);
 
+  const getStorageDetails = useCallback(async () => {
+    await dispatch(fetchStorageDetails());
+  }, [dispatch]);
+
+  const [fetchStorageData] = useAsyncOperation(getStorageDetails);
+
   useEffect(() => {
     onInitialize({});
+    fetchStorageData({});
   }, []);
 
   const [connectAccount, connectAccountLoading] = useAsyncOperation(
@@ -143,6 +195,20 @@ const useSidebar = () => {
     [errors]
   );
 
+  const cloudAccountsWithStorage = connectedAccounts?.map(account => {
+    const storageInfo = checkStorageDetails.find(
+      detail => detail.id === account.id.toString()
+    );
+    const config = accountTypeConfig[account.account_type];
+    return {
+      id: account.id,
+      url: generatePath(config.url, { id: account.id }),
+      icon: config.icon,
+      title: account.account_name || config.title,
+      storageInfo: storageInfo?.storage_details,
+    };
+  });
+
   return {
     methods,
     isConnectModalOpen,
@@ -160,6 +226,7 @@ const useSidebar = () => {
     removeAccessModalOpen,
     setHoveredAccountId,
     hoveredAccountId,
+    cloudAccountsWithStorage,
   };
 };
 

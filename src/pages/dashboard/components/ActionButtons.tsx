@@ -1,45 +1,68 @@
 import { Group } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
-import { Button } from '../../../components';
+import { Breadcrumbs, Button } from '../../../components';
+import type React from 'react';
 
-const actionButtons = [
-  {
-    icon: ICONS.IconUpload,
-    label: 'Upload Files',
-    color: 'blue',
-    variant: 'filled',
-    isPrimary: true,
-  },
-  {
-    icon: ICONS.IconFolderPlus,
-    label: 'New Folder',
-  },
-  // {
-  //   icon: ICONS.IconDownload,
-  //   label: 'Download',
-  // },
-  // {
-  //   icon: ICONS.IconShare,
-  //   label: 'Share',
-  // },
-  {
-    icon: ICONS.IconRefresh,
-    label: 'Sync',
-  },
-];
+interface ActionBtnsProps {
+  currentPath: {
+    id?: string;
+    name: string;
+  }[];
+  navigateToFolderFn: (
+    folder: {
+      id?: string;
+      name: string;
+    } | null
+  ) => void;
+  openModal: (type: 'folder' | 'files') => void;
+}
 
-const ActionButtons = () => {
+const ActionButtons: React.FC<ActionBtnsProps> = ({
+  currentPath = [],
+  navigateToFolderFn = () => {},
+  openModal = () => {},
+}) => {
   return (
-    <Group gap={12} mb={32} wrap="wrap">
-      {actionButtons.map(({ icon: Icon, label, isPrimary }) => (
-        <Button
-          key={label}
-          leftSection={
-            <Icon
-              size={20}
-              color={isPrimary ? '#fff' : '#2563eb'} // blue-600 for icons
-            />
-          }
+    // <Group justify="space-between" mb="md">
+    <Group gap={12} mb={20} wrap="wrap">
+      <Button
+        leftSection={<ICONS.IconUpload size={20} color="#2563eb" />}
+        onClick={() => openModal('files')}
+        radius="md"
+        size="md"
+        px={20}
+        style={{
+          minWidth: 130,
+          height: 48,
+          fontWeight: 500,
+          fontSize: 14,
+          backgroundColor: '#fff',
+          color: '#1e293b',
+          border: '1px solid #e5e7eb',
+        }}
+      >
+        Upload Files
+      </Button>
+      <Button
+        leftSection={<ICONS.IconFolderPlus size={20} color="#2563eb" />}
+        onClick={() => openModal('folder')}
+        radius="md"
+        size="md"
+        px={20}
+        style={{
+          minWidth: 130,
+          height: 48,
+          fontWeight: 500,
+          fontSize: 14,
+          backgroundColor: '#fff',
+          color: '#1e293b',
+          border: '1px solid #e5e7eb',
+        }}
+      >
+        New Folder
+      </Button>
+      {/* <Button
+          leftSection={<ICONS.IconDownload size={20} color="#2563eb" />}
           radius="md"
           size="md"
           px={20}
@@ -48,16 +71,15 @@ const ActionButtons = () => {
             height: 48,
             fontWeight: 500,
             fontSize: 14,
-            backgroundColor: isPrimary ? '#2563eb' : '#fff',
-            color: isPrimary ? '#fff' : '#1e293b',
-            border: isPrimary ? 'none' : '1px solid #e5e7eb',
-            boxShadow: isPrimary ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+            backgroundColor: '#fff',
+            color: '#1e293b',
+            border: '1px solid #e5e7eb',
           }}
         >
-          {label}
-        </Button>
-      ))}
+          Download
+        </Button> */}
     </Group>
+    /* </Group> */
   );
 };
 

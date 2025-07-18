@@ -30,7 +30,7 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
           separator: { margin: '0 6px' },
         }}
       >
-        {[{ id: null, name: 'My Drive' }, ...items].map((item, index) => {
+        {[{ id: null, name: 'All Files' }, ...items].map((item, index) => {
           const isLast = index === items.length;
           return (
             <Anchor

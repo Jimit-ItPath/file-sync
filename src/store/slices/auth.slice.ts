@@ -16,6 +16,18 @@ type ConnectedAccountTyoe = {
   updatedAt: string;
 };
 
+type checkStorageDetailsType = {
+  id: string;
+  user_id: string;
+  email: string;
+  account_name: string;
+  account_type: AccountType;
+  storage_details: {
+    used: string;
+    total: string;
+  };
+};
+
 type AuthState = {
   isLoggedIn: boolean;
   user: {};
@@ -24,6 +36,7 @@ type AuthState = {
   connectedAccounts: ConnectedAccountTyoe[];
   loading: boolean;
   error: string | null;
+  checkStorageDetails: checkStorageDetailsType[];
 };
 
 const initialState: AuthState = {
@@ -32,6 +45,7 @@ const initialState: AuthState = {
   isTemporary: false,
   activeUI: '',
   connectedAccounts: [],
+  checkStorageDetails: [],
   loading: false,
   error: null,
 };
@@ -64,6 +78,20 @@ export const getConnectedAccount = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(
         error?.message || 'Failed to get connected account'
+      );
+    }
+  }
+);
+
+export const fetchStorageDetails = createAsyncThunk(
+  'auth/fetchStorageDetails',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.auth.checkStorageDetails();
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.message || 'Failed to check storage details'
       );
     }
   }
@@ -115,6 +143,19 @@ export const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.connectedAccounts = [];
+      })
+      // .addCase(fetchStorageDetails.pending, state => {
+      //   state.loading = true;
+      //   state.error = null;
+      // })
+      .addCase(fetchStorageDetails.fulfilled, (state, action) => {
+        // state.loading = false;
+        state.checkStorageDetails = action.payload?.data || [];
+      })
+      .addCase(fetchStorageDetails.rejected, (state, action) => {
+        // state.loading = false;
+        state.error = action.payload as string;
+        state.checkStorageDetails = [];
       });
   },
 });

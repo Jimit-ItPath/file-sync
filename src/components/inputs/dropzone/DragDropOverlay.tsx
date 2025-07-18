@@ -32,7 +32,7 @@ const DragDropOverlay: React.FC<DragDropOverlayProps> = ({
       }}
     >
       <Center h="100%">
-        <Stack align="center" h='100%' justify='end' gap={16} pb={20}>
+        <Stack align="center" h='100%' justify='center' gap={16} pb={20}>
           <Box
             style={{
               padding: '20px',

@@ -59,22 +59,22 @@ export const PRIVATE_ROUTES = {
     url: DASHBOARD_PATH,
   },
   GOOGLE_DRIVE: {
-    path: '/google-drive',
+    path: '/google-drive/:id',
     roles: Object.values(ROLES),
     title: 'Google Drive',
-    url: '/google-drive',
+    url: '/google-drive/:id',
   },
   DROPBOX: {
-    path: '/dropbox',
+    path: '/dropbox/:id',
     roles: Object.values(ROLES),
     title: 'Dropbox',
-    url: '/dropbox',
+    url: '/dropbox/:id',
   },
   ONEDRIVE: {
-    path: '/onedrive',
+    path: '/onedrive/:id',
     roles: Object.values(ROLES),
     title: 'OneDrive',
-    url: '/onedrive',
+    url: '/onedrive/:id',
   },
   PROFILE: {
     path: '/profile',

@@ -1,161 +1,295 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ICONS } from '../../assets/icons';
 import {
+  formatDate,
   formatFileSize,
   getLocalStorage,
+  removeLocalStorage,
   setLocalStorage,
 } from '../../utils/helper';
 import { useMediaQuery } from '@mantine/hooks';
 import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
+import { v4 as uuidv4 } from 'uuid';
+import { useAppDispatch, useAppSelector } from '../../store';
+import {
+  createCloudStorageFolder,
+  fetchCloudStorageFiles,
+  navigateToFolder,
+  removeCloudStorageFiles,
+  renameCloudStorageFile,
+  resetCloudStorageFolder,
+  uploadCloudStorageFiles,
+} from '../../store/slices/cloudStorage.slice';
+import useAsyncOperation from '../../hooks/use-async-operation';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { notifications } from '@mantine/notifications';
 
-const initialFiles = [
-  {
-    id: '1',
-    name: 'Documents',
-    type: 'folder',
-    icon: (size: number) => <ICONS.IconFolder size={size} color="#38bdf8" />,
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 15, 2023',
-    size: '–',
-  },
-  {
-    id: '2',
-    name: 'Photos',
-    type: 'folder',
-    icon: (size: number) => <ICONS.IconFolder size={size} color="#38bdf8" />,
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 10, 2023',
-    size: '–',
-  },
-  {
-    id: '3',
-    name: 'Project_Report.pdf',
-    type: 'file',
-    icon: (size: number) => (
-      <ICONS.IconFileTypePdf size={size} color="#ef4444" />
-    ),
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 27, 2023',
-    size: '4.2 MB',
-    preview:
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80', // Example preview
-  },
-  {
-    id: '4',
-    name: 'Resume.docx',
-    type: 'file',
-    icon: (size: number) => (
-      <ICONS.IconFileTypeDoc size={size} color="#2563eb" />
-    ),
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 20, 2023',
-    size: '1.1 MB',
-    preview:
-      'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: '5',
-    name: 'Financial_Data.xlsx',
-    type: 'file',
-    icon: (size: number) => (
-      <ICONS.IconFileTypeXls size={size} color="#22c55e" />
-    ),
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 25, 2023',
-    size: '2.8 MB',
-    preview:
-      'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: '6',
-    name: 'Marketing_Strategy.pptx',
-    type: 'file',
-    icon: (size: number) => (
-      <ICONS.IconFileTypePpt size={size} color="#f59e0b" />
-    ),
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 30, 2023',
-    size: '3.5 MB',
-    preview:
-      'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: '7',
-    name: 'Design_Mockup.png',
-    type: 'file',
-    icon: (size: number) => <ICONS.IconPhoto size={size} color="#a78bfa" />,
-    owner: { name: 'You', avatar: null, initials: 'JS' },
-    lastModified: 'Jun 28, 2023',
-    size: '8.5 MB',
-    preview:
-      'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=400&q=80',
-  },
-];
-
-export type FileType = (typeof initialFiles)[number];
-
-const getFileIcon = (fileName: string) => {
-  const extension = fileName.split('.').pop()?.toLowerCase();
-
-  switch (extension) {
-    case 'pdf':
-      return (size: number) => (
-        <ICONS.IconFileTypePdf size={size} color="#ef4444" />
-      );
-    case 'doc':
-    case 'docx':
-      return (size: number) => (
-        <ICONS.IconFileTypeDoc size={size} color="#2563eb" />
-      );
-    case 'xls':
-    case 'xlsx':
-      return (size: number) => (
-        <ICONS.IconFileTypeXls size={size} color="#22c55e" />
-      );
-    case 'ppt':
-    case 'pptx':
-      return (size: number) => (
-        <ICONS.IconFileTypePpt size={size} color="#f59e0b" />
-      );
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-    case 'gif':
-    case 'svg':
-      return (size: number) => <ICONS.IconPhoto size={size} color="#a78bfa" />;
-    case 'txt':
-      return (size: number) => (
-        <ICONS.IconFileTypeDoc size={size} color="#64748b" />
-      );
-    default:
-      return (size: number) => <ICONS.IconFile size={size} color="#64748b" />;
-  }
+export type FileType = {
+  id: string;
+  name: string;
+  type: 'folder' | 'file';
+  icon: (size: number) => React.ReactNode;
+  owner: { name: string; avatar: string | null; initials: string };
+  lastModified: string;
+  size: string | null;
+  preview?: string;
+  mimeType?: string;
+  fileExtension?: string | null;
+  download_url: string | null;
 };
 
-const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+const getFileIcon = (item: {
+  entry_type: string;
+  mime_type?: string;
+  file_extension?: string | null;
+  name?: string;
+}) => {
+  const getIconComponent = (size: number) => {
+    const iconSize = size || 20;
+
+    // First handle folders
+    if (
+      item.entry_type === 'folder' ||
+      item.mime_type === 'folder' ||
+      item.mime_type === 'application/vnd.google-apps.folder'
+    ) {
+      return <ICONS.IconFolder size={iconSize} color="#38bdf8" />;
+    }
+
+    // Then handle by mime_type if available
+    if (item.mime_type) {
+      switch (true) {
+        case item.mime_type.startsWith('image/'):
+          return <ICONS.IconPhoto size={iconSize} color="#3b82f6" />;
+        case item.mime_type === 'application/pdf':
+          return <ICONS.IconFileTypePdf size={iconSize} color="#ef4444" />;
+        case [
+          'application/vnd.google-apps.document',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/rtf',
+          'text/rtf',
+        ].includes(item.mime_type):
+          return <ICONS.IconFileTypeDoc size={iconSize} color="#2563eb" />;
+        case [
+          'application/vnd.google-apps.spreadsheet',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.oasis.opendocument.spreadsheet',
+        ].includes(item.mime_type):
+          return <ICONS.IconFileTypeXls size={iconSize} color="#16a34a" />;
+        case [
+          'application/vnd.google-apps.presentation',
+          'application/vnd.ms-powerpoint',
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'application/vnd.oasis.opendocument.presentation',
+        ].includes(item.mime_type):
+          return <ICONS.IconFileTypePpt size={iconSize} color="#e11d48" />;
+        case ['text/plain', 'text/markdown', 'text/x-markdown'].includes(
+          item.mime_type
+        ):
+          return <ICONS.IconFileTypeTxt size={iconSize} color="#64748b" />;
+        case item.mime_type === 'text/csv':
+          return <ICONS.IconFileTypeCsv size={iconSize} color="#16a34a" />;
+        case [
+          'application/zip',
+          'application/x-zip-compressed',
+          'application/x-rar-compressed',
+          'application/x-7z-compressed',
+          'application/x-tar',
+          'application/gzip',
+        ].includes(item.mime_type):
+          return <ICONS.IconFileTypeZip size={iconSize} color="#7c3aed" />;
+        case item.mime_type.startsWith('audio/'):
+          return <ICONS.IconDeviceAudioTape size={iconSize} color="#9333ea" />;
+        case item.mime_type.startsWith('video/'):
+          return <ICONS.IconVideo size={iconSize} color="#dc2626" />;
+        case [
+          'text/html',
+          'text/css',
+          'text/javascript',
+          'application/javascript',
+          'application/json',
+          'application/xml',
+          'text/x-python',
+          'text/x-java-source',
+          'text/x-c',
+          'text/x-c++',
+          'text/x-php',
+          'text/x-ruby',
+          'text/x-shellscript',
+          'application/x-httpd-php',
+          'application/x-sh',
+          'application/x-typescript',
+        ].includes(item.mime_type):
+          return <ICONS.IconCode size={iconSize} color="#f59e0b" />;
+        case [
+          'application/x-sql',
+          'application/sql',
+          'application/x-sqlite3',
+          'application/x-mdb',
+        ].includes(item.mime_type):
+          return <ICONS.IconDatabase size={iconSize} color="#10b981" />;
+        case [
+          'application/x-msdownload',
+          'application/x-ms-dos-executable',
+          'application/x-executable',
+          'application/x-mach-binary',
+        ].includes(item.mime_type):
+          return <ICONS.IconBinary size={iconSize} color="#6b7280" />;
+        case [
+          'application/epub+zip',
+          'application/x-mobipocket-ebook',
+          'application/vnd.amazon.ebook',
+        ].includes(item.mime_type):
+          return <ICONS.IconBook size={iconSize} color="#14b8a6" />;
+      }
+    }
+
+    // Fall back to file extension if mime_type is not provided or not matched
+    const extension =
+      item.file_extension || item.name?.split('.')?.pop()?.toLowerCase();
+
+    switch (extension) {
+      case 'pdf':
+        return <ICONS.IconFileTypePdf size={iconSize} color="#ef4444" />;
+      case 'doc':
+      case 'docx':
+        return <ICONS.IconFileTypeDoc size={iconSize} color="#2563eb" />;
+      case 'xls':
+      case 'xlsx':
+        return <ICONS.IconFileTypeXls size={iconSize} color="#16a34a" />;
+      case 'ppt':
+      case 'pptx':
+        return <ICONS.IconFileTypePpt size={iconSize} color="#e11d48" />;
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+      case 'gif':
+      case 'svg':
+      case 'webp':
+        return <ICONS.IconPhoto size={iconSize} color="#3b82f6" />;
+      case 'txt':
+      case 'md':
+        return <ICONS.IconFileTypeTxt size={iconSize} color="#64748b" />;
+      case 'csv':
+        return <ICONS.IconFileTypeCsv size={iconSize} color="#16a34a" />;
+      case 'zip':
+      case 'rar':
+      case '7z':
+      case 'tar':
+      case 'gz':
+        return <ICONS.IconFileTypeZip size={iconSize} color="#7c3aed" />;
+      // Audio extensions
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+      case 'flac':
+      case 'aac':
+      case 'm4a':
+        return <ICONS.IconDeviceAudioTape size={iconSize} color="#9333ea" />;
+      // Video extensions
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+      case 'mkv':
+      case 'flv':
+      case 'webm':
+        return <ICONS.IconVideo size={iconSize} color="#dc2626" />;
+      // Code extensions
+      case 'html':
+      case 'css':
+      case 'js':
+      case 'jsx':
+      case 'ts':
+      case 'tsx':
+      case 'json':
+      case 'xml':
+      case 'py':
+      case 'java':
+      case 'c':
+      case 'cpp':
+      case 'php':
+      case 'rb':
+      case 'sh':
+        return <ICONS.IconCode size={iconSize} color="#f59e0b" />;
+      // Database extensions
+      case 'sql':
+      case 'db':
+      case 'sqlite':
+      case 'mdb':
+        return <ICONS.IconDatabase size={iconSize} color="#10b981" />;
+      // Executable extensions
+      case 'exe':
+      case 'dmg':
+      case 'app':
+      case 'msi':
+        return <ICONS.IconBinary size={iconSize} color="#6b7280" />;
+      // Ebook extensions
+      case 'epub':
+      case 'mobi':
+      case 'azw':
+        return <ICONS.IconBook size={iconSize} color="#14b8a6" />;
+      default:
+        return <ICONS.IconFile size={iconSize} color="#64748b" />;
+    }
+  };
+
+  return getIconComponent;
 };
+
+const folderSchema = z.object({
+  folderName: z.string().min(1, 'Folder name is required'),
+});
+
+const renameSchema = z.object({
+  newName: z.string().min(1, 'New name is required'),
+});
+
+type FolderFormData = z.infer<typeof folderSchema>;
+
+type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = () => {
   const [layout, setLayout] = useState<'list' | 'grid'>(() => {
     const savedLayout = getLocalStorage('dashboardLayout');
     return savedLayout ? savedLayout : 'list';
   });
-  const [files, setFiles] = useState<FileType[]>(initialFiles);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null
   );
+  const [showUploadProgress, setShowUploadProgress] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     [key: string]: number;
   }>({});
   const [uploadingFiles, setUploadingFiles] = useState<{
     [key: string]: { name: string; size: string };
   }>({});
+  const uploadControllers = useRef<{ [key: string]: AbortController }>({});
+  const cancelledUploadsRef = useRef<Set<string>>(new Set());
+  const uploadsInProgressRef = useRef(false);
 
-  const [cancelledUploads, setCancelledUploads] = useState<Set<string>>(
-    new Set()
-  );
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'folder' | 'files'>('folder');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<FileType | null>(null);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [itemToRename, setItemToRename] = useState<FileType | null>(null);
+  const [removeFilesModalOpen, setRemoveFilesModalOpen] = useState(false);
+
+  const { cloudStorage, loading, pagination, currentFolderId, currentPath } =
+    useAppSelector(state => state.cloudStorage);
+  const dispatch = useAppDispatch();
 
   const isXs = useMediaQuery('(max-width: 575px)');
   const isSm = useMediaQuery('(min-width: 576px) and (max-width: 767px)');
@@ -163,114 +297,406 @@ const useDashboard = () => {
 
   const gridColumns = isXs ? 1 : isSm ? 2 : isMd ? 3 : 4;
 
+  const folderMethods = useForm<FolderFormData>({
+    resolver: zodResolver(folderSchema),
+    mode: 'onChange',
+    defaultValues: {
+      folderName: '',
+    },
+  });
+
+  const renameMethods = useForm<RenameFormData>({
+    resolver: zodResolver(renameSchema),
+    mode: 'onChange',
+  });
+
+  const { reset: resetFolderForm } = folderMethods;
+  const { reset: resetRenameForm } = renameMethods;
+  const folderId = getLocalStorage('folderId');
+
+  const getCloudStorageFiles = useCallback(async () => {
+    await dispatch(
+      fetchCloudStorageFiles({
+        ...(folderId && {
+          id: folderId,
+        }),
+      })
+    );
+  }, [dispatch]);
+
+  const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
+
+  useEffect(() => {
+    onInitialize({});
+
+    return () => {
+      dispatch(resetCloudStorageFolder());
+      removeLocalStorage('cloudStoragePath');
+      removeLocalStorage('folderId');
+    };
+  }, []);
+
+  // const loadMoreFiles = useCallback(() => {
+  //   if (pagination && pagination.page_no && !loading) {
+  //     dispatch(fetchCloudStorageFiles({ page: pagination.page_no + 1 }));
+  //   }
+  // }, [pagination, loading, dispatch]);
+
+  // Convert cloud storage data to FileType format
+  const files = useMemo(() => {
+    return cloudStorage.map(item => ({
+      id: item.id,
+      name: item.name,
+      type: item.entry_type === 'folder' ? 'folder' : 'file',
+      // icon: getFileIcon(item.name, item.mime_type),
+      icon: getFileIcon({
+        entry_type: item.entry_type,
+        mime_type: item.mime_type,
+        file_extension: item.file_extension,
+        name: item.name,
+      }),
+      owner: { name: 'You', avatar: null, initials: 'JS' },
+      lastModified: formatDate(item.modified_at),
+      size: item.size ? formatFileSize(item.size.toString()) : null,
+      mimeType: item.mime_type,
+      fileExtension: item.file_extension,
+      preview: item.download_url,
+    }));
+  }, [cloudStorage]);
+
+  const navigateToFolderFn = useCallback(
+    (folder: { id?: string; name: string } | null) => {
+      if (folder?.id) {
+        dispatch(
+          navigateToFolder({
+            id: String(folder?.id),
+            name: String(folder?.name),
+          })
+        );
+      } else {
+        dispatch(navigateToFolder(null));
+      }
+    },
+    [dispatch]
+  );
+
+  const handleRowDoubleClick = useCallback(
+    (row: FileType, e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
+      if (
+        row.mimeType === 'application/vnd.google-apps.folder' ||
+        row.type === 'folder'
+      ) {
+        setSelectedIds([]);
+        setLastSelectedIndex(null);
+        navigateToFolderFn({ id: row.id, name: row.name });
+      }
+    },
+    [navigateToFolderFn]
+  );
+
+  const handleMenuItemClick = (actionId: string, row: FileType) => {
+    if (
+      actionId === 'download' &&
+      (row.type !== 'folder' ||
+        row.mimeType !== 'application/vnd.google-apps.folder') &&
+      row.download_url
+    ) {
+      window.open(row.download_url, '_blank');
+    }
+    // else if (actionId === 'view') {
+    //   if (row.mimeType === 'application/vnd.google-apps.folder') {
+    //     navigateToFolderFn({ id: row.id, name: row.name });
+    //   } else if (row.webViewLink) {
+    //     window.open(row.webViewLink, '_blank');
+    //   }
+    // }
+    else if (actionId === 'rename') {
+      setItemToRename(row);
+      setRenameModalOpen(true);
+      resetRenameForm({ newName: row.name });
+    }
+    // else if (actionId === 'share' && row.webViewLink) {
+    //   window.open(`https://drive.google.com/file/d/${row.id}/share`, '_blank');
+    // }
+    else if (actionId === 'delete') {
+      setItemToDelete(row);
+      setDeleteModalOpen(true);
+    }
+  };
+
+  // Folder creation functionality
+  const [createFolder, createFolderLoading] = useAsyncOperation(
+    async (folderName: string) => {
+      try {
+        await dispatch(
+          createCloudStorageFolder({
+            name: folderName,
+            ...(currentFolderId && {
+              id: currentFolderId,
+            }),
+          })
+        ).unwrap();
+        resetFolderForm();
+        await dispatch(
+          fetchCloudStorageFiles({
+            ...(folderId && {
+              id: folderId,
+            }),
+          })
+        );
+        setModalOpen(false);
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to create folder',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleCreateFolder = folderMethods.handleSubmit(data => {
+    createFolder(data.folderName);
+  });
+
+  const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
+    async (files: File[]) => {
+      try {
+        const formData = new FormData();
+        files.forEach(file => formData.append('file', file));
+        if (currentFolderId) {
+          formData.append('id', currentFolderId);
+        }
+        await dispatch(uploadCloudStorageFiles(formData)).unwrap();
+        await dispatch(
+          fetchCloudStorageFiles({
+            ...(folderId && {
+              id: folderId,
+            }),
+          })
+        );
+        setUploadedFiles([]);
+        setModalOpen(false);
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to upload files',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  // const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
+  //   async (files: File[]) => {
+  //     try {
+  //       setShowUploadProgress(true);
+  //       const formData = new FormData();
+  //       const fileIds = files.map(() => uuidv4());
+
+  //       files.forEach((file, index) => {
+  //         formData.append('file', file);
+  //         setUploadingFiles(prev => ({
+  //           ...prev,
+  //           [fileIds[index]]: {
+  //             name: file.name,
+  //             size: formatFileSize(file.size.toString()),
+  //           },
+  //         }));
+  //         setUploadProgress(prev => ({ ...prev, [fileIds[index]]: 0 }));
+  //       });
+
+  //       if (currentFolderId) {
+  //         formData.append('id', currentFolderId);
+  //       }
+
+  //       await dispatch(
+  //         uploadCloudStorageFiles({
+  //           data: formData,
+  //           onUploadProgress: (progressEvent: ProgressEvent) => {
+  //             const percentCompleted = Math.round(
+  //               (progressEvent.loaded * 100) / progressEvent.total
+  //             );
+  //             files.forEach((_, index) => {
+  //               setUploadProgress(prev => ({
+  //                 ...prev,
+  //                 [fileIds[index]]: percentCompleted,
+  //               }));
+  //             });
+  //           },
+  //         })
+  //       ).unwrap();
+
+  //       await dispatch(
+  //         fetchCloudStorageFiles({
+  //           ...(folderId && { id: folderId }),
+  //         })
+  //       );
+
+  //       setUploadedFiles([]);
+  //       setModalOpen(false);
+  //       setUploadProgress({});
+  //       setUploadingFiles({});
+  //       setShowUploadProgress(false);
+  //     } catch (error: any) {
+  //       notifications.show({
+  //         message: error?.message || 'Failed to upload files',
+  //         color: 'red',
+  //       });
+  //     }
+  //   }
+  // );
+
+  // File rename functionality
+  const [renameFile, renameFileLoading] = useAsyncOperation(
+    async ({ fileId, newName }: { fileId: string; newName: string }) => {
+      try {
+        await dispatch(
+          renameCloudStorageFile({ id: fileId, name: newName })
+        ).unwrap();
+        await dispatch(
+          fetchCloudStorageFiles({
+            ...(folderId && {
+              id: folderId,
+            }),
+          })
+        );
+        notifications.show({
+          message: 'File renamed successfully',
+          color: 'green',
+        });
+        setRenameModalOpen(false);
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to rename file',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleRenameConfirm = renameMethods.handleSubmit(data => {
+    if (itemToRename?.id) {
+      renameFile({ fileId: itemToRename.id, newName: data.newName });
+    }
+  });
+
+  // File deletion functionality
+  const [removeFile, removeFileLoading] = useAsyncOperation(
+    async (fileId: string) => {
+      try {
+        await dispatch(removeCloudStorageFiles({ ids: [fileId] })).unwrap();
+        await dispatch(
+          fetchCloudStorageFiles({
+            ...(folderId && {
+              id: folderId,
+            }),
+          })
+        );
+        notifications.show({
+          message: 'File deleted successfully',
+          color: 'green',
+        });
+        setDeleteModalOpen(false);
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to delete file',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (itemToDelete?.id) {
+      removeFile(itemToDelete.id);
+    }
+  }, [itemToDelete, removeFile]);
+
   const handleFileUpload = useCallback(
-    (uploadedFiles: File[]) => {
-      const newFiles: FileType[] = [];
+    async (files: File[]) => {
+      const filesToUpload = files?.length ? files : uploadedFiles;
+      if (filesToUpload.length === 0) return;
 
-      uploadedFiles.forEach(file => {
-        const fileId = generateId();
+      uploadsInProgressRef.current = true;
+      setShowUploadProgress(true);
 
-        // Add to uploading files state
+      filesToUpload.forEach(file => {
+        const fileId = uuidv4();
+        const controller = new AbortController();
+        uploadControllers.current[fileId] = controller;
+
         setUploadingFiles(prev => ({
           ...prev,
           [fileId]: {
             name: file.name,
-            size: formatFileSize(file.size?.toString()),
+            size: formatFileSize(file.size.toString()),
+            fileObject: file,
           },
         }));
 
-        // Initialize progress
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-
-        // Create file object
-        const fileObj: FileType = {
-          id: fileId,
-          name: file.name,
-          type: 'file',
-          icon: getFileIcon(file.name),
-          owner: { name: 'You', avatar: null, initials: 'JS' },
-          lastModified: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          }),
-          size: formatFileSize(file.size?.toString()),
-          preview: file.type.startsWith('image/')
-            ? URL.createObjectURL(file)
-            : undefined,
-        };
-
-        newFiles.push(fileObj);
-
-        // Simulate upload progress
-        let progress = 0;
-        const interval = setInterval(() => {
-          // Check if upload was cancelled
-          if (cancelledUploads.has(fileId)) {
-            clearInterval(interval);
-            setUploadProgress(prev => {
-              const newProgress = { ...prev };
-              delete newProgress[fileId];
-              return newProgress;
-            });
-            setUploadingFiles(prev => {
-              const newUploading = { ...prev };
-              delete newUploading[fileId];
-              return newUploading;
-            });
-            setCancelledUploads(prev => {
-              const newCancelled = new Set(prev);
-              newCancelled.delete(fileId);
-              return newCancelled;
-            });
-            return;
-          }
-
-          // Simulate realistic upload progress
-          const increment = Math.random() * 15 + 5; // 5-20% increments
-          progress = Math.min(progress + increment, 100);
-
-          if (progress >= 100) {
-            progress = 100;
-            clearInterval(interval);
-
-            // Remove from progress after a delay to show completion
-            setTimeout(() => {
-              setUploadProgress(prev => {
-                const newProgress = { ...prev };
-                delete newProgress[fileId];
-                return newProgress;
-              });
-              setUploadingFiles(prev => {
-                const newUploading = { ...prev };
-                delete newUploading[fileId];
-                return newUploading;
-              });
-            }, 2000); // Keep completed state for 2 seconds
-          }
-
-          setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
-        }, 300); // Update every 300ms for smooth progress
+        // setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
       });
-
-      // Add files to the main list immediately (they'll show with progress)
-      setFiles(prev => [...newFiles, ...prev]);
+      uploadFiles(filesToUpload);
     },
-    [cancelledUploads]
+    [uploadFiles]
   );
 
-  const handleCancelUpload = useCallback((fileId: string) => {
-    setCancelledUploads(prev => new Set(prev).add(fileId));
+  const cleanupUpload = (fileId: string) => {
+    setUploadProgress(prev => {
+      const updated = { ...prev };
+      delete updated[fileId];
+      return updated;
+    });
+    setUploadingFiles(prev => {
+      const updated = { ...prev };
+      delete updated[fileId];
+      return updated;
+    });
+    delete uploadControllers.current[fileId];
+    cancelledUploadsRef.current.delete(fileId);
+    // checkUploadsComplete();
+  };
 
-    // Remove the file from the files list
-    setFiles(prev => prev.filter(f => f.id !== fileId));
+  // const checkUploadsComplete = () => {
+  //   if (
+  //     Object.keys(uploadProgress).length === 0 &&
+  //     Object.keys(uploadingFiles).length === 0
+  //   ) {
+  //     uploadsInProgressRef.current = false;
+  //   }
+  // };
+
+  const handleCancelUpload = useCallback((fileId: string) => {
+    cancelledUploadsRef.current.add(fileId);
+    if (uploadControllers.current[fileId]) {
+      uploadControllers.current[fileId].abort();
+    }
+    cleanupUpload(fileId);
+  }, []);
+
+  const handleCloseUploadProgress = useCallback(() => {
+    // Cancel all ongoing uploads when closing the progress panel
+    Object.keys(uploadControllers.current).forEach(fileId => {
+      uploadControllers.current[fileId].abort();
+    });
+    setShowUploadProgress(false);
+    setUploadProgress({});
+    setUploadingFiles({});
+    uploadsInProgressRef.current = false;
+    cancelledUploadsRef.current.clear();
+    uploadControllers.current = {};
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      uploadsInProgressRef.current = false;
+    };
   }, []);
 
   // Drag and drop functionality
   const { dragRef, isDragging } = useDragDrop({
     onFileDrop: handleFileUpload,
-    acceptedFileTypes: ['*'], // Accept all file types
-    maxFileSize: 100 * 1024 * 1024, // 100MB limit
+    acceptedFileTypes: ['*'],
+    // maxFileSize: 100 * 1024 * 1024,
   });
 
   useEffect(() => {
@@ -403,19 +829,62 @@ const useDashboard = () => {
 
   // Actions for selected items
   const handleDeleteSelected = useCallback(() => {
-    setFiles(prev => prev.filter(f => !selectedIds.includes(f.id)));
-    setSelectedIds([]);
+    setRemoveFilesModalOpen(true);
   }, [selectedIds]);
+
+  const closeRemoveFilesModal = useCallback(() => {
+    setRemoveFilesModalOpen(false);
+  }, [setRemoveFilesModalOpen]);
+
+  const [handleRemoveFilesConfirm, removeFilesLoading] = useAsyncOperation(
+    async () => {
+      try {
+        await dispatch(removeCloudStorageFiles({ ids: selectedIds }));
+        await dispatch(
+          fetchCloudStorageFiles({
+            ...(folderId && {
+              id: folderId,
+            }),
+          })
+        );
+        notifications.show({
+          message: `${selectedIds?.length > 1 ? 'Items' : 'Item'} deleted successfully`,
+          color: 'green',
+        });
+        setSelectedIds([]);
+        setLastSelectedIndex(null);
+        closeRemoveFilesModal();
+      } catch (error: any) {
+        notifications.show({
+          message:
+            error ||
+            `Failed to delete ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+          color: 'red',
+        });
+      }
+    }
+  );
 
   const handleDownloadSelected = useCallback(() => {}, [selectedIds]);
 
   const handleShareSelected = useCallback(() => {}, [selectedIds]);
 
+  const openModal = useCallback((type: 'folder' | 'files') => {
+    setModalType(type);
+    setModalOpen(true);
+    setUploadedFiles([]);
+    resetFolderForm();
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+  }, []);
+
   return {
     layout,
     switchLayout,
     files,
-    setFiles,
+    loading,
     folders,
     regularFiles,
     selectedIds,
@@ -436,7 +905,44 @@ const useDashboard = () => {
     handleFileUpload,
     uploadProgress,
     uploadingFiles,
-    handleCancelUpload
+    handleCancelUpload,
+    handleCloseUploadProgress,
+    showUploadProgress,
+
+    // create file / folder
+    createFolderLoading,
+    handleCreateFolder,
+    uploadFilesLoading,
+    openModal,
+    closeModal,
+    currentPath,
+    navigateToFolderFn,
+    modalOpen,
+    modalType,
+    folderMethods,
+    setUploadedFiles,
+    uploadedFiles,
+    getFileIcon,
+
+    deleteModalOpen,
+    setDeleteModalOpen,
+    itemToDelete,
+    removeFileLoading,
+    handleDeleteConfirm,
+    removeFilesModalOpen,
+    removeFilesLoading,
+
+    renameModalOpen,
+    setRenameModalOpen,
+    itemToRename,
+    renameMethods,
+    handleRenameConfirm,
+    renameFileLoading,
+    handleRemoveFilesConfirm,
+    closeRemoveFilesModal,
+
+    handleMenuItemClick,
+    handleRowDoubleClick,
   };
 };
 

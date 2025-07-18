@@ -60,7 +60,7 @@ axiosInstance.interceptors.response.use(
 
     if ([401].includes(status)) {
       localStorage.clear();
-      window.location.href = AUTH_ROUTES.LOGIN.url;
+      // window.location.href = AUTH_ROUTES.LOGIN.url;
       return Promise.reject(customError);
     }
 

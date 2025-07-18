@@ -1,10 +1,9 @@
 import React from 'react';
-import { Table } from '../../components/table';
+import { Dropzone, Table } from '../../components';
 import { Button, Form, Modal } from '../../components';
 import { LoaderOverlay } from '../../components/loader';
-import { Group, Stack, Text, TextInput } from '@mantine/core';
+import { Box, Group, Stack, Text, TextInput } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
-import { Dropzone } from '../../components/inputs/dropzone';
 import useDropbox from './use-dropbox';
 
 const Dropbox: React.FC = () => {
@@ -68,6 +67,35 @@ const Dropbox: React.FC = () => {
             >
               Upload Files
             </Button>
+            {/* <Card pb={0} w={128}>
+              <Stack
+                gap={1}
+                justify="center"
+                align="center"
+                bdrs={12}
+                onClick={() => openModal('files')}
+              >
+                <ICONS.IconUpload size={30} color="#2563eb" />
+                <Button
+                  // leftSection={<ICONS.IconUpload size={20} color="#2563eb" />}
+                  // onClick={() => openModal('files')}
+                  radius="md"
+                  size="md"
+                  px={20}
+                  style={{
+                    minWidth: 130,
+                    height: 48,
+                    fontWeight: 500,
+                    fontSize: 14,
+                    backgroundColor: '#fff',
+                    color: '#1e293b',
+                    // border: '1px solid #e5e7eb',
+                  }}
+                >
+                  Upload Files
+                </Button>
+              </Stack>
+            </Card> */}
             <Button
               leftSection={<ICONS.IconFolderPlus size={20} color="#2563eb" />}
               onClick={() => openModal('folder')}
@@ -237,7 +265,11 @@ const Dropbox: React.FC = () => {
           </Modal>
         </>
       ) : (
-        <Button onClick={connectWithDropbox}>Connect Dropbox</Button>
+        <Box ta={'center'}>
+          <Button onClick={connectWithDropbox} ta={'center'}>
+            Connect Dropbox
+          </Button>
+        </Box>
       )}
     </>
   );

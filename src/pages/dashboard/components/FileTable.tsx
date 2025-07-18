@@ -4,19 +4,10 @@ import { Menu, Table } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
 
-type FileRow = {
-  id: string;
-  name: string;
-  icon: (size: number) => React.ReactNode;
-  owner: { name: string; avatar: string | null; initials: string };
-  lastModified: string;
-  size: string;
-  actions?: React.ReactNode;
-};
-
 const MENU_ITEMS = [
   // { id: 'download', label: 'Download', icon: ICONS.IconDownload },
   // { id: 'share', label: 'Share', icon: ICONS.IconShare },
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
 ];
 
@@ -28,6 +19,15 @@ type FileTableProps = {
   onSelectAll: (checked: boolean) => void;
   onSelectRow: (id: string, checked: boolean) => void;
   selectedIds: string[];
+  currentPath: {
+    id?: string;
+    name: string;
+  }[];
+  handleMenuItemClick: (actionId: string, row: FileType) => void;
+  handleRowDoubleClick: (
+    row: FileType,
+    e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>
+  ) => void;
 };
 
 const FileTable: React.FC<FileTableProps> = ({
@@ -37,29 +37,30 @@ const FileTable: React.FC<FileTableProps> = ({
   onSelectAll = () => {},
   onSelectRow = () => {},
   selectedIds = [],
+  currentPath = [],
+  handleMenuItemClick = () => {},
+  handleRowDoubleClick = () => {},
 }) => {
-  // Handle menu item click
-  const handleMenuItemClick = (actionId: string, _: FileRow) => {
-    // Implement your logic for each action here
-    if (actionId === 'download') {
-      // Download logic for row
-    } else if (actionId === 'share') {
-      // Share logic for row
-    } else if (actionId === 'delete') {
-      // Delete logic for row
-    }
-  };
-
   const columns = useMemo(
     () => [
       {
         key: 'name',
         label: 'Name',
         width: '30%',
-        render: (row: FileRow) => (
-          <Group gap={8} wrap="nowrap">
+        render: (row: FileType) => (
+          <Group
+            gap={8}
+            wrap="nowrap"
+            maw={'100%'}
+            style={{ overflow: 'hidden' }}
+          >
             {row.icon(iconSize)}
-            <Text fw={600} fz={'sm'} truncate>
+            <Text
+              fw={600}
+              fz={'sm'}
+              truncate
+              // style={{ maxWidth: 'calc(100% - 40px)' }}
+            >
               {row.name}
             </Text>
           </Group>
@@ -68,9 +69,9 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'owner',
         label: 'Owner',
-        width: '20%',
-        render: (row: FileRow) => (
-          <Group gap={8} wrap="nowrap">
+        width: '15%',
+        render: (row: FileType) => (
+          <Group gap={8} wrap="nowrap" style={{ maxWidth: '200px' }}>
             <Avatar src={row.owner.avatar} radius="xl" size="sm" color="blue">
               {row.owner.initials}
             </Avatar>
@@ -84,19 +85,20 @@ const FileTable: React.FC<FileTableProps> = ({
         key: 'lastModified',
         label: 'Last Modified',
         width: '20%',
-        render: (row: FileRow) => <Text size="sm">{row.lastModified}</Text>,
+        render: (row: FileType) => <Text size="sm">{row.lastModified}</Text>,
       },
       {
         key: 'size',
         label: 'Size',
-        width: '15%',
-        render: (row: FileRow) => <Text size="sm">{row.size}</Text>,
+        width: '10%',
+        render: (row: FileType) => <Text size="sm">{row.size}</Text>,
       },
       {
         key: 'actions',
         label: '',
-        width: 40,
-        render: (row: FileRow) => (
+        // width: 40,
+        width: '10%',
+        render: (row: FileType) => (
           <Menu
             items={MENU_ITEMS}
             onItemClick={actionId => handleMenuItemClick(actionId, row)}
@@ -112,14 +114,26 @@ const FileTable: React.FC<FileTableProps> = ({
   );
 
   return (
-    <div tabIndex={0} onKeyDown={handleKeyDown} style={{ outline: 'none' }}>
+    <div
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      style={{ outline: 'none', marginTop: '10px' }}
+    >
       <Table
-        // title="All Files"
+        // title={
+        //   currentPath.length
+        //     ? currentPath[currentPath.length - 1].name
+        //     : 'All Files'
+        // }
         data={files}
         columns={columns}
         selectedRows={selectedIds}
         onSelectRow={onSelectRow}
         onSelectAll={onSelectAll}
+        onRowDoubleClick={(row, e) => {
+          e?.stopPropagation();
+          handleRowDoubleClick(row);
+        }}
         idKey="id"
         emptyMessage="No files available. Please upload files to see them here."
       />

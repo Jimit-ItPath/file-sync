@@ -1,5 +1,5 @@
 import { generatePath, NavLink as Link, useLocation } from 'react-router';
-import { Box, Group, NavLink, rem, Stack, Text } from '@mantine/core';
+import { Box, Group, NavLink, Progress, rem, Stack, Text } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import Icon from '../../../assets/icons/icon';
@@ -8,6 +8,7 @@ import useSidebar from './use-sidebar';
 import { Button, Form, Input, Modal, Tooltip } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
 import { LoaderOverlay } from '../../../components/loader';
+import { formatBytes } from '../../../utils/helper';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -65,45 +66,6 @@ type AccessibleNavItemProps = NavItem & {
   url: string;
 };
 
-const accountTypeConfig = {
-  google_drive: {
-    url: PRIVATE_ROUTES.GOOGLE_DRIVE.url,
-    icon: (
-      <ICONS.IconBrandGoogle
-        size={18}
-        color="#ef4444"
-        stroke={1.25}
-        fill="#ef4444"
-      />
-    ),
-    title: 'Google Drive',
-  },
-  dropbox: {
-    url: PRIVATE_ROUTES.DROPBOX.url,
-    icon: (
-      <ICONS.IconDroplets
-        size={18}
-        color="#007ee5"
-        stroke={1.25}
-        fill="#007ee5"
-      />
-    ),
-    title: 'Dropbox',
-  },
-  onedrive: {
-    url: PRIVATE_ROUTES.ONEDRIVE.url,
-    icon: (
-      <ICONS.IconBrandOnedrive
-        size={18}
-        color="#0078d4"
-        stroke={1.25}
-        fill="#0078d4"
-      />
-    ),
-    title: 'OneDrive',
-  },
-};
-
 const NavBar = ({ mobileDrawerHandler }: any) => {
   const location = useLocation();
   const {
@@ -123,17 +85,8 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     removeAccessModalOpen,
     hoveredAccountId,
     setHoveredAccountId,
+    cloudAccountsWithStorage,
   } = useSidebar();
-
-  const cloudAccounts = connectedAccounts?.map(account => {
-    const config = accountTypeConfig[account.account_type];
-    return {
-      id: account.id,
-      url: generatePath(config.url, { id: account.id }),
-      icon: config.icon,
-      title: account.account_name || config.title,
-    };
-  });
 
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
@@ -243,80 +196,109 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
             </Link>
           );
         })} */}
-        {cloudAccounts?.length
-          ? cloudAccounts?.map(({ id, url, icon, title }) => {
-              const isActive = isActiveRoute(url);
+        {cloudAccountsWithStorage?.length
+          ? cloudAccountsWithStorage?.map(
+              ({ id, url, icon, title, storageInfo }) => {
+                const isActive = isActiveRoute(url);
 
-              return (
-                <Group
-                  key={id}
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                  }}
-                  onMouseEnter={() => setHoveredAccountId(id)}
-                  onMouseLeave={() => setHoveredAccountId(null)}
-                >
-                  <Link
-                    to={url}
+                return (
+                  <Group
+                    key={id}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '8px',
-                      borderRadius: 'var(--mantine-radius-default)',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      transition: 'background-color 0.2s',
-                      backgroundColor: isActive
-                        ? 'var(--mantine-color-gray-0)'
-                        : undefined,
-                      cursor: 'pointer',
-                      fontSize: '14px',
+                      position: 'relative',
                       width: '100%',
                     }}
-                    onClick={() => {
-                      mobileDrawerHandler?.close();
-                    }}
-                    onMouseEnter={e => {
-                      if (!isActive) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor =
-                          'var(--mantine-color-gray-0)';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!isActive) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor =
-                          '';
-                      }
-                    }}
+                    onMouseEnter={() => setHoveredAccountId(id)}
+                    onMouseLeave={() => setHoveredAccountId(null)}
                   >
-                    {icon}
-                    <span style={{ color: '#000', marginLeft: '10px' }}>
-                      {title}
-                    </span>
-                  </Link>
-                  {hoveredAccountId === id && (
-                    <Tooltip label="Remove Access" position="right" withArrow>
-                      <Box
+                    <Stack style={{ flexDirection: 'row' }}>
+                      <Link
+                        to={url}
                         style={{
-                          position: 'absolute',
-                          right: 8,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '8px',
+                          borderRadius: 'var(--mantine-radius-default)',
+                          textDecoration: 'none',
+                          color: 'inherit',
+                          transition: 'background-color 0.2s',
+                          backgroundColor: isActive
+                            ? 'var(--mantine-color-gray-0)'
+                            : undefined,
                           cursor: 'pointer',
+                          fontSize: '14px',
+                          width: '100%',
                         }}
-                        onClick={e => {
-                          e.stopPropagation();
-                          openRemoveAccessModal(id);
+                        onClick={() => {
+                          mobileDrawerHandler?.close();
+                        }}
+                        onMouseEnter={e => {
+                          if (!isActive) {
+                            (
+                              e.currentTarget as HTMLElement
+                            ).style.backgroundColor =
+                              'var(--mantine-color-gray-0)';
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!isActive) {
+                            (
+                              e.currentTarget as HTMLElement
+                            ).style.backgroundColor = '';
+                          }
                         }}
                       >
-                        <ICONS.IconTrash size={16} color="red" />
+                        {icon}
+                        <span style={{ color: '#000', marginLeft: '10px' }}>
+                          {title}
+                        </span>
+                      </Link>
+                      {hoveredAccountId === id && (
+                        <Tooltip
+                          label="Remove Access"
+                          position="right"
+                          withArrow
+                        >
+                          <Box
+                            style={{
+                              position: 'absolute',
+                              right: 8,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              cursor: 'pointer',
+                            }}
+                            onClick={e => {
+                              e.stopPropagation();
+                              openRemoveAccessModal(id);
+                            }}
+                          >
+                            <ICONS.IconTrash size={16} color="red" />
+                          </Box>
+                        </Tooltip>
+                      )}
+                    </Stack>
+
+                    {/* {storageInfo && (
+                      <Box style={{ width: '100%', padding: '0 8px 8px' }}>
+                        <Progress
+                          value={
+                            (Number(storageInfo.used) /
+                              Number(storageInfo.total)) *
+                            100
+                          }
+                          size="sm"
+                          radius="xl"
+                        />
+                        <Text size="xs" mt={4}>
+                          {formatBytes(Number(storageInfo.used))} of{' '}
+                          {formatBytes(Number(storageInfo.total))} used
+                        </Text>
                       </Box>
-                    </Tooltip>
-                  )}
-                </Group>
-              );
-            })
+                    )} */}
+                  </Group>
+                );
+              }
+            )
           : null}
 
         <Stack

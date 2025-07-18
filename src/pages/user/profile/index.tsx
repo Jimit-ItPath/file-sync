@@ -16,6 +16,8 @@ import useProfile from './use-profile';
 import { ICONS } from '../../../assets/icons';
 import { useState } from 'react';
 import { LoaderOverlay } from '../../../components/loader';
+import useSidebar from '../../../layouts/dashboard-layout/navbar/use-sidebar';
+import AccountTypeSelector from '../../../layouts/dashboard-layout/navbar/AccountTypeSelector';
 
 const Profile = () => {
   const {
@@ -39,6 +41,17 @@ const Profile = () => {
     openRemoveAccessModal,
     removeAccessModalOpen,
   } = useProfile();
+
+  const {
+    openAccountModal,
+    isConnectModalOpen,
+    closeAccountModal,
+    handleConnectAccount,
+    connectAccountFormData,
+    methods: connectAccountMethods,
+    connectAccountLoading,
+  } = useSidebar();
+
   const {
     formState: { errors },
   } = methods;
@@ -211,6 +224,16 @@ const Profile = () => {
                     No cloud storage accounts connected yet
                   </Text>
                 </Group>
+                <Button
+                  mt={20}
+                  leftSection={<ICONS.IconPlus size={18} />}
+                  maw={200}
+                  onClick={openAccountModal}
+                >
+                  <span style={{ fontSize: '14px', color: '##0284C7' }}>
+                    Connect Account
+                  </span>
+                </Button>
               </Card>
             ) : (
               <Grid gutter="md">
@@ -397,6 +420,62 @@ const Profile = () => {
             Remove
           </Button>
         </Group>
+      </Modal>
+
+      {/*Add Account Modal */}
+      <Modal
+        opened={isConnectModalOpen}
+        onClose={closeAccountModal}
+        title="Connect Cloud Account"
+      >
+        <Form onSubmit={handleConnectAccount} methods={connectAccountMethods}>
+          <Stack>
+            {connectAccountFormData?.map(
+              ({ id, name, placeholder, type, label, error, isRequired }) => (
+                <Input
+                  key={id}
+                  name={name}
+                  label={label}
+                  placeholder={placeholder}
+                  type={type}
+                  error={error}
+                  radius="md"
+                  withAsterisk={isRequired}
+                />
+              )
+            )}
+
+            <AccountTypeSelector
+              value={connectAccountMethods.watch('accountType')}
+              onChange={val =>
+                connectAccountMethods.setValue(
+                  'accountType',
+                  val as 'google_drive' | 'dropbox' | 'onedrive'
+                )
+              }
+              error={
+                connectAccountMethods.formState.errors.accountType?.message
+              }
+            />
+
+            <Button
+              type="submit"
+              maw="fit-content"
+              loading={Boolean(connectAccountLoading)}
+              disabled={Boolean(connectAccountLoading)}
+              radius="md"
+              style={{
+                fontWeight: 500,
+                fontSize: 16,
+                background: '#0284c7',
+                color: '#fff',
+                marginTop: 8,
+              }}
+            >
+              Connect Account
+            </Button>
+          </Stack>
+        </Form>
       </Modal>
     </Container>
   );

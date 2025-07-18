@@ -20,9 +20,17 @@ type FileGridProps = {
   handleSelect: (id: string, event: React.MouseEvent) => void;
   handleKeyDown: (event: React.KeyboardEvent) => void;
   handleUnselectAll: () => void;
+  handleMenuItemClick: (actionId: string, row: FileType) => void;
+  handleRowDoubleClick: (
+    row: FileType,
+    e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>
+  ) => void;
 };
 
-const MENU_ITEMS = [{ id: 'delete', label: 'Delete', icon: ICONS.IconTrash }];
+const MENU_ITEMS = [
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
+  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
+];
 
 const FileGrid: React.FC<FileGridProps> = ({
   folders,
@@ -32,19 +40,25 @@ const FileGrid: React.FC<FileGridProps> = ({
   handleKeyDown = () => {},
   selectedIds = [],
   handleUnselectAll = () => {},
+  handleMenuItemClick = () => {},
+  handleRowDoubleClick = () => {},
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
-  const handleStackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === stackRef.current) {
-      handleUnselectAll();
-    }
-    if (
-      (e.target as HTMLElement).classList.contains('mantine-Grid-root') ||
-      (e.target as HTMLElement).classList.contains('mantine-Grid-col')
-    ) {
-      handleUnselectAll();
-    }
+  // const handleStackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  //   if (e.target === stackRef.current) {
+  //     handleUnselectAll();
+  //   }
+  //   if (
+  //     (e.target as HTMLElement).classList.contains('mantine-Grid-root') ||
+  //     (e.target as HTMLElement).classList.contains('mantine-Grid-col')
+  //   ) {
+  //     handleUnselectAll();
+  //   }
+  // };
+
+  const handleStackClick = (_: React.MouseEvent<HTMLDivElement>) => {
+    handleUnselectAll();
   };
 
   return (
@@ -54,10 +68,16 @@ const FileGrid: React.FC<FileGridProps> = ({
       style={{ outline: 'none' }}
       onClick={handleStackClick}
       ref={stackRef}
+      mt={10}
     >
+      {!folders?.length && !files?.length && (
+        <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
+          No files available. Please upload files to see them here.
+        </Text>
+      )}
       {/* Folders */}
       <Grid gutter={20}>
-        {folders.map(folder => (
+        {folders?.map(folder => (
           <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 3 }} key={folder.id}>
             <Card
               radius="md"
@@ -72,17 +92,31 @@ const FileGrid: React.FC<FileGridProps> = ({
                 border: '1px solid #e5e7eb',
                 ...(selectedIds.includes(folder.id) ? selectedCardStyle : {}),
                 cursor: 'pointer',
+                userSelect: 'none',
               }}
-              onClick={(e: React.MouseEvent) => handleSelect(folder.id, e)}
+              // onClick={(e: React.MouseEvent) => handleSelect(folder.id, e)}
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation(); // <-- Prevents Stack's onClickCapture
+                handleSelect(folder.id, e);
+              }}
+              onDoubleClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                handleRowDoubleClick(folder);
+              }}
             >
               <Group gap={12} style={{ width: '100%' }}>
-                {folder.icon(iconSize)}
+                {folder?.icon(iconSize)}
                 <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
                   <Text fw={600} fz="sm" truncate style={{ flex: 1 }}>
                     {folder.name}
                   </Text>
                 </Tooltip>
-                <Menu items={MENU_ITEMS} onItemClick={() => {}}>
+                <Menu
+                  items={MENU_ITEMS}
+                  onItemClick={actionId =>
+                    handleMenuItemClick(actionId, folder)
+                  }
+                >
                   <ActionIcon variant="subtle" color="gray">
                     <ICONS.IconDotsVertical size={18} />
                   </ActionIcon>
@@ -115,19 +149,31 @@ const FileGrid: React.FC<FileGridProps> = ({
                 ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
                 cursor: 'pointer',
                 transition: 'box-shadow 0.2s ease',
+                userSelect: 'none',
               }}
-              onClick={(e: React.MouseEvent) => handleSelect(file.id, e)}
+              // onClick={(e: React.MouseEvent) => handleSelect(file.id, e)}
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation(); // <-- Prevents Stack's onClickCapture
+                handleSelect(file.id, e);
+              }}
+              onDoubleClick={(e: any) => {
+                e.stopPropagation();
+                handleRowDoubleClick(file);
+              }}
             >
               <Group justify="space-between" mb={8}>
-                <Group gap={8}>
+                <Group gap={8} w={'80%'}>
                   {file.icon(iconSize)}
                   <Tooltip label={file.name} withArrow={false} fz={'xs'}>
-                    <Text fw={600} fz="sm" truncate>
+                    <Text fw={600} fz="sm" truncate w={'80%'}>
                       {file.name}
                     </Text>
                   </Tooltip>
                 </Group>
-                <Menu items={MENU_ITEMS} onItemClick={() => {}}>
+                <Menu
+                  items={MENU_ITEMS}
+                  onItemClick={actionId => handleMenuItemClick(actionId, file)}
+                >
                   <ActionIcon variant="subtle" color="gray">
                     <ICONS.IconDotsVertical size={18} />
                   </ActionIcon>

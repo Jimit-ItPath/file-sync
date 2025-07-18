@@ -71,6 +71,11 @@ export const api = {
         url: '/connected-account',
         method: METHODS.GET,
       }),
+    checkStorageDetails: () =>
+      client({
+        url: `/connected-account/with-storage`,
+        method: METHODS.GET,
+      }),
     removeAccount: ({
       data,
       ...configs
@@ -334,6 +339,73 @@ export const api = {
       client({
         url: `/onedrive/delete-item/${data.id}`,
         method: METHODS.DELETE,
+        ...configs,
+      }),
+  },
+  cloudStorage: {
+    getFiles: (params: {
+      account_id?: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      client({
+        url: '/cloud-storage?limit=500',
+        method: METHODS.GET,
+        params,
+      }),
+    createFolder: ({
+      data,
+      ...configs
+    }: {
+      data: { name: string; id?: string | null };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/create-folder',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    renameFile: ({
+      data,
+      ...configs
+    }: {
+      data: { id: string; name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/rename',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    uploadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: FormData;
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/upload-file',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    deleteFile: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/delete`,
+        method: METHODS.DELETE,
+        data,
         ...configs,
       }),
   },
