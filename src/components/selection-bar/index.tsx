@@ -26,39 +26,41 @@ export const SelectionBar = ({
 }) => (
   <Box
     bg="#f3f4f6"
-    p={12}
-    pl={20}
-    w={'100%'}
+    p={8}
+    pl={16}
+    w="100%"
     style={{
-      borderRadius: 12,
+      borderRadius: 8,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
       backgroundColor: '#fff',
       border: '1px solid #e5e7eb',
     }}
   >
-    <Group gap={16}>
-      <Text fw={600}>{count} selected</Text>
-      <Tooltip label="Download" fz={'xs'}>
+    <Group gap={12}>
+      <Text fw={500} size="sm">
+        {count} selected
+      </Text>
+      <Tooltip label="Download" fz="xs">
         <ActionIcon style={iconStyle} onClick={onDownload}>
-          <ICONS.IconDownload size={20} />
+          <ICONS.IconDownload size={18} />
         </ActionIcon>
       </Tooltip>
-      <Tooltip label="Share" fz={'xs'}>
+      <Tooltip label="Share" fz="xs">
         <ActionIcon style={iconStyle} onClick={onShare}>
-          <ICONS.IconShare size={20} />
+          <ICONS.IconShare size={18} />
         </ActionIcon>
       </Tooltip>
-      <Tooltip label="Delete" fz={'xs'}>
+      <Tooltip label="Delete" fz="xs">
         <ActionIcon style={iconStyle} color="red" onClick={onDelete}>
-          <ICONS.IconTrash size={20} />
+          <ICONS.IconTrash size={18} />
         </ActionIcon>
       </Tooltip>
     </Group>
     <ActionIcon style={iconStyle} onClick={onCancel}>
-      <ICONS.IconX size={20} />
+      <ICONS.IconX size={18} />
     </ActionIcon>
   </Box>
 );
