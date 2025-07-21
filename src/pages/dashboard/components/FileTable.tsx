@@ -93,7 +93,7 @@ const FileTable: React.FC<FileTableProps> = ({
         key: 'size',
         label: 'Size',
         width: '10%',
-        render: (row: FileType) => <Text size="sm">{row.size}</Text>,
+        render: (row: FileType) => <Text size="sm">{row.size || '-'}</Text>,
       },
       {
         key: 'actions',

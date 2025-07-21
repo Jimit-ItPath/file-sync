@@ -2,88 +2,141 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api';
 import { getLocalStorage, setLocalStorage } from '../../utils/helper';
 
+type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
+
+type GDriveStorageType = {
+  id: string;
+  account_id: string;
+  account_type: string;
+  external_id: string;
+  parent_id: null | string;
+  name: string;
+  entry_type: 'folder' | 'file';
+  mime_type: string;
+  file_extension: null | string;
+  size: null | string;
+  path: null | string;
+  created_at: string;
+  modified_at: string;
+  download_url: null | string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 interface GoogleDriveState {
-  hasAccess: boolean;
+  gDriveFiles: GDriveStorageType[];
+  pagination: {
+    total: number;
+    total_pages: number;
+    page_no: number;
+    page_length: number;
+    page_limit: number;
+  } | null;
   isLoading: boolean;
   error: string | null;
-  files: any[];
-  pageToken: string | null;
   currentFolderId: string | null;
   currentPath: Array<{ id?: string; name: string }>;
+  uploadLoading: boolean;
+  searchTerm: string;
 }
 
 const initialState: GoogleDriveState = {
-  hasAccess: false,
+  gDriveFiles: [],
+  pagination: null,
   isLoading: false,
   error: null,
-  files: [],
-  pageToken: null,
   currentFolderId: null,
-  currentPath: [],
+  currentPath: localStorage.getItem('gDrivePath')
+    ? JSON.parse(localStorage.getItem('gDrivePath') || '')
+    : [],
+  uploadLoading: false,
+  searchTerm: '',
 };
-
-export const checkGoogleDriveAccess = createAsyncThunk(
-  'googleDrive/checkGoogleDriveAccess',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await api.googleDrive.hasAccess();
-      return response.data;
-    } catch (error) {
-      return rejectWithValue('Failed to check Google Drive access');
-    }
-  }
-);
-
-export const authenticateGoogleDrive = createAsyncThunk(
-  'googleDrive/authenticateGoogleDrive',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await api.googleDrive.auth();
-      return response.data;
-    } catch (error) {
-      return rejectWithValue('Failed to authenticate Google Drive');
-    }
-  }
-);
 
 export const fetchGoogleDriveFiles = createAsyncThunk(
   'googleDrive/fetchGoogleDriveFiles',
   async (
-    params: { pageToken?: string; folderId?: string | null },
-    { rejectWithValue, getState }
+    params: {
+      account_id: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    },
+    { rejectWithValue }
   ) => {
     try {
-      const state = getState() as { googleDrive: GoogleDriveState };
-      const folderId = params.folderId ?? state.googleDrive.currentFolderId;
-      const response = await api.googleDrive.getFiles({
-        pageToken: params.pageToken,
-        folderId,
-      });
+      const response = await api.googleDrive.getFiles(params);
       return response.data;
-    } catch (error) {
-      return rejectWithValue('Failed to fetch Google Drive files');
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch files');
     }
   }
 );
 
 export const navigateToFolder = createAsyncThunk(
   'googleDrive/navigateToFolder',
-  async (folder: { id: string; name: string } | null, { dispatch }) => {
-    if (folder === null) {
-      dispatch(resetGDriveFolder());
-      await dispatch(fetchGoogleDriveFiles({}));
-      return { folderId: null, folderName: 'My Drive', isRoot: true };
+  async (
+    data: {
+      id?: string;
+      account_type?: AccountType;
+      account_id: number | string;
+      name?: string;
+      page?: number;
+      limit?: number;
+      searchTerm?: string;
+    },
+    { dispatch }
+  ) => {
+    const defaultPage = 1;
+    const defaultLimit = 10;
+    if (!data?.id) {
+      dispatch(resetGoogleDriveFolder());
+      await dispatch(
+        fetchGoogleDriveFiles({
+          page: defaultPage,
+          limit: defaultLimit,
+          account_id: data.account_id,
+        })
+      );
+      return { folderId: null, folderName: 'All Files', isRoot: true };
     } else {
-      await dispatch(fetchGoogleDriveFiles({ folderId: folder.id }));
-      return { folderId: folder.id, folderName: folder.name, isRoot: false };
+      await dispatch(
+        fetchGoogleDriveFiles({
+          id: data.id,
+          account_type: data.account_type,
+          account_id: data.account_id,
+          page: data.page ?? defaultPage,
+          limit: data.limit ?? defaultLimit,
+          searchTerm: data.searchTerm,
+        })
+      );
+      return {
+        folderId: data.id,
+        folderName: data.name,
+        isRoot: false,
+      };
     }
   }
 );
 
 export const initializeGoogleDriveFromStorage = createAsyncThunk(
   'googleDrive/initializeGoogleDriveFromStorage',
-  async (_, { dispatch }) => {
-    const savedPath = getLocalStorage('googleDrivePath');
+  async (
+    data: {
+      page?: number;
+      limit?: number;
+      id?: string;
+      searchTerm?: string;
+      account_type?: string;
+      account_id: number | string;
+    },
+    { dispatch }
+  ) => {
+    const savedPath = getLocalStorage('gDrivePath');
+    const defaultPage = 1;
+    const defaultLimit = 10;
     if (savedPath && savedPath.length > 0) {
       // Navigate to the last folder in the path
       const lastFolder = savedPath[savedPath.length - 1];
@@ -91,13 +144,27 @@ export const initializeGoogleDriveFromStorage = createAsyncThunk(
         await dispatch(
           navigateToFolder({
             id: lastFolder.id,
+            account_id: lastFolder.account_id,
             name: lastFolder.name,
+            page: data.page ?? defaultPage,
+            limit: data.limit ?? defaultLimit,
+            account_type: lastFolder.account_type,
+            searchTerm: data.searchTerm,
           })
         );
       }
     } else {
       // Load root if no saved path
-      await dispatch(fetchGoogleDriveFiles({}));
+      await dispatch(
+        fetchGoogleDriveFiles({
+          id: data.id,
+          page: data.page ?? defaultPage,
+          limit: data.limit ?? defaultLimit,
+          account_type: data.account_type as AccountType,
+          searchTerm: data.searchTerm,
+          account_id: data.account_id,
+        })
+      );
     }
   }
 );
@@ -105,50 +172,84 @@ export const initializeGoogleDriveFromStorage = createAsyncThunk(
 export const createGoogleDriveFolder = createAsyncThunk(
   'googleDrive/createGoogleDriveFolder',
   async (
-    data: { folder_name: string; folderId?: string | null },
+    data: { name: string; id?: string | null; account_id: number | string },
     { rejectWithValue }
   ) => {
     try {
       const response = await api.googleDrive.createFolder({ data });
       return response.data;
-    } catch (error) {
-      return rejectWithValue('Failed to create Google Drive folder');
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.message || 'Failed to create Google Drive folder'
+      );
     }
   }
 );
 
 export const renameGoogleDriveFile = createAsyncThunk(
   'googleDrive/renameGoogleDriveFile',
-  async (data: { file_id: string; name: string }, { rejectWithValue }) => {
+  async (
+    data: { id: string; name: string; account_id: number | string },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await api.googleDrive.renameFile({ data });
       return response.data;
-    } catch (error) {
-      return rejectWithValue('Failed to rename Google Drive file');
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.message || 'Failed to rename Google Drive file'
+      );
     }
   }
 );
 
 export const uploadGoogleDriveFiles = createAsyncThunk(
   'googleDrive/uploadGoogleDriveFiles',
-  async (data: FormData, { rejectWithValue }) => {
+  async (
+    {
+      data,
+      onUploadProgress,
+    }: {
+      data: FormData;
+      onUploadProgress?: (progressEvent: ProgressEvent) => void;
+    },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await api.googleDrive.uploadFiles({ data });
+      const response = await api.googleDrive.uploadFiles({
+        data,
+        onUploadProgress,
+      });
       return response.data;
-    } catch (error) {
-      return rejectWithValue('Failed to upload Google Drive files');
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.message || 'Failed to upload Google Drive files'
+      );
     }
   }
 );
 
 export const removeGoogleDriveFiles = createAsyncThunk(
   'googleDrive/removeGoogleDriveFiles',
-  async (data: { field: string }, { rejectWithValue }) => {
+  async (data: { ids: string[]; account_id: number | string }) => {
     try {
       const response = await api.googleDrive.deleteFile({ data });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue('Failed to remove Google Drive files');
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const downloadGoogleDriveFiles = createAsyncThunk(
+  'googleDrive/downloadGoogleDriveFiles',
+  async (data: { ids: string[]; account_id: number | string }) => {
+    try {
+      const response = await api.googleDrive.downloadFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+      // return rejectWithValue(error?.message || 'Failed to download files');
     }
   }
 );
@@ -157,56 +258,43 @@ export const googleDriveSlice = createSlice({
   name: 'googleDrive',
   initialState,
   reducers: {
-    resetGDriveFolder: state => {
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+    },
+    resetGoogleDriveFolder: state => {
       state.currentFolderId = null;
       state.currentPath = [];
     },
   },
   extraReducers: builder => {
     builder
-      .addCase(checkGoogleDriveAccess.pending, state => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(checkGoogleDriveAccess.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasAccess = action.payload.data?.hasAccess;
-      })
-      .addCase(checkGoogleDriveAccess.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(authenticateGoogleDrive.pending, state => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(authenticateGoogleDrive.fulfilled, state => {
-        state.isLoading = false;
-        state.hasAccess = true;
-      })
-      .addCase(authenticateGoogleDrive.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      })
       .addCase(fetchGoogleDriveFiles.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchGoogleDriveFiles.fulfilled, (state, action) => {
-        const { files, pageToken } = action.payload?.data;
+        const { data = [], paging = null } = action.payload?.data;
         state.isLoading = false;
-        if (action.meta.arg.pageToken) {
-          state.files = [...state.files, ...files];
+
+        // Get the folder id from the action
+        const newFolderId = action.meta.arg?.id ?? null;
+
+        // If folder id changed, replace data; if same, append for pagination
+        if (state.currentFolderId !== newFolderId) {
+          state.gDriveFiles = data;
+          state.currentFolderId = newFolderId;
+        } else if (action.meta.arg.page && action.meta.arg.page > 1) {
+          state.gDriveFiles = [...state.gDriveFiles, ...data];
         } else {
-          state.files = files;
+          state.gDriveFiles = data;
         }
-        state.pageToken = pageToken;
+        state.pagination = paging;
       })
       .addCase(fetchGoogleDriveFiles.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-        state.files = [];
-        state.pageToken = null;
+        state.gDriveFiles = [];
+        state.pagination = null;
       })
       .addCase(navigateToFolder.pending, state => {
         state.isLoading = true;
@@ -230,11 +318,15 @@ export const googleDriveSlice = createSlice({
             // Navigated to a new folder
             state.currentPath = [
               ...state.currentPath,
-              { id: folderId ? String(folderId) : undefined, name: folderName },
+              {
+                id: folderId ? String(folderId) : undefined,
+                name: String(folderName),
+              },
             ];
           }
         }
-        setLocalStorage('googleDrivePath', state.currentPath);
+        setLocalStorage('gDrivePath', state.currentPath);
+        setLocalStorage('gDriveFolderId', state.currentFolderId);
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
         state.isLoading = false;
@@ -247,7 +339,10 @@ export const googleDriveSlice = createSlice({
       //   })
       .addCase(createGoogleDriveFolder.fulfilled, (state, action) => {
         // state.isLoading = false;
-        state.files = [...state.files, { ...(action.payload?.data || []) }];
+        state.gDriveFiles = [
+          ...state.gDriveFiles,
+          { ...(action.payload?.data || []) },
+        ];
       })
       .addCase(createGoogleDriveFolder.rejected, (state, action) => {
         // state.isLoading = false;
@@ -258,7 +353,10 @@ export const googleDriveSlice = createSlice({
       // })
       .addCase(uploadGoogleDriveFiles.fulfilled, (state, action) => {
         // state.isLoading = false;
-        state.files = [...state.files, { ...(action.payload?.data || []) }];
+        state.gDriveFiles = [
+          ...state.gDriveFiles,
+          { ...(action.payload?.data || []) },
+        ];
       })
       .addCase(uploadGoogleDriveFiles.rejected, (state, action) => {
         // state.isLoading = false;
@@ -267,6 +365,7 @@ export const googleDriveSlice = createSlice({
   },
 });
 
-export const { resetGDriveFolder } = googleDriveSlice.actions;
+export const { resetGoogleDriveFolder, setSearchTerm } =
+  googleDriveSlice.actions;
 
 export default googleDriveSlice.reducer;

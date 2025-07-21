@@ -202,7 +202,7 @@ const useSidebar = () => {
         name: 'accountName',
         placeholder: 'Enter account name',
         type: 'text',
-        label: 'Account name',
+        label: 'Account name (Alias)',
         isRequired: true,
         error: errors.accountName?.message,
       },

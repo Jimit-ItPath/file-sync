@@ -51,7 +51,6 @@ const Dashboard = () => {
     uploadingFiles,
     showUploadProgress,
     handleCloseUploadProgress,
-    loading,
     closeModal,
     createFolderLoading,
     handleCreateFolder,

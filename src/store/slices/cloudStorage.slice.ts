@@ -72,7 +72,7 @@ export const fetchCloudStorageFiles = createAsyncThunk(
       const response = await api.cloudStorage.getFiles(params);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error?.message || 'Failed to connect account');
+      return rejectWithValue(error?.message || 'Failed to fetch files');
     }
   }
 );
@@ -177,7 +177,7 @@ export const createCloudStorageFolder = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error?.message || 'Failed to create Google Drive folder'
+        error?.message || 'Failed to create folder'
       );
     }
   }
@@ -191,7 +191,7 @@ export const renameCloudStorageFile = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error?.message || 'Failed to rename Google Drive file'
+        error?.message || 'Failed to rename file'
       );
     }
   }
@@ -217,7 +217,7 @@ export const uploadCloudStorageFiles = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error?.message || 'Failed to upload Google Drive files'
+        error?.message || 'Failed to upload files'
       );
     }
   }
@@ -231,7 +231,7 @@ export const removeCloudStorageFiles = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error?.message || 'Failed to remove Google Drive files'
+        error?.message || 'Failed to remove files'
       );
     }
   }
