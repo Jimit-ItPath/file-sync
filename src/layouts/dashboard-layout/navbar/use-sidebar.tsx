@@ -196,7 +196,7 @@ const useSidebar = () => {
   );
 
   const cloudAccountsWithStorage = connectedAccounts?.map(account => {
-    const storageInfo = checkStorageDetails.find(
+    const storageInfo = checkStorageDetails?.result?.find(
       detail => detail.id === account.id.toString()
     );
     const config = accountTypeConfig[account.account_type];
@@ -227,6 +227,7 @@ const useSidebar = () => {
     setHoveredAccountId,
     hoveredAccountId,
     cloudAccountsWithStorage,
+    checkStorageDetails
   };
 };
 

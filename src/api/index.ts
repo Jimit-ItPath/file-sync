@@ -408,5 +408,19 @@ export const api = {
         data,
         ...configs,
       }),
+    downloadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/download`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
+        ...configs,
+      }),
   },
 };

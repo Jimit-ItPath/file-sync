@@ -1,11 +1,4 @@
-import {
-  Box,
-  Group,
-  SegmentedControl,
-  Stack,
-  Text,
-  TextInput,
-} from '@mantine/core';
+import { Box, Group, Select, Stack, Text, TextInput } from '@mantine/core';
 import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
 // import RecentFiles from './RecentFiles';
@@ -17,14 +10,13 @@ import {
   Form,
   Modal,
   SelectionBar,
-  Tooltip,
 } from '../../components';
-import { ICONS } from '../../assets/icons';
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
 import UploadProgress from './components/UploadProgress';
-import { LoaderOverlay } from '../../components/loader';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
+import CustomToggle from './components/CustomToggle';
+import type { AccountType } from '../../store/slices/cloudStorage.slice';
 
 const controlBoxStyles = {
   height: 40,
@@ -64,7 +56,6 @@ const Dashboard = () => {
     createFolderLoading,
     handleCreateFolder,
     handleFileUpload,
-    handleSelectAll,
     openModal,
     uploadFilesLoading,
     currentPath,
@@ -92,100 +83,184 @@ const Dashboard = () => {
     handleRemoveFilesConfirm,
     removeFilesModalOpen,
     removeFilesLoading,
+    handleScroll,
+    scrollBoxRef,
+    accountType,
+    handleAccountTypeChange,
+    handleSearchChange,
+    searchTerm,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
+  // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
+
   return (
-    <Box bg="#fff" h="100vh">
-      <LoaderOverlay visible={loading} opacity={1} />
-      {/* <ScrollArea h="100vh"> */}
+    <Box>
+      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
+      {/* <ScrollArea> */}
       <Box
         px={32}
-        py={20}
+        pb={20}
         bg="#f8fafc"
-        ref={dragRef}
+        // ref={dragRef}
+        ref={el => {
+          dragRef.current = el;
+          scrollBoxRef.current = el;
+        }}
         style={{
           position: 'relative',
-          minHeight: 'calc(100vh - 120px)',
+          height: 'calc(100vh - 120px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          // minHeight: 'calc(100vh - 120px)',
           transition: 'all 0.2s ease-in-out',
           ...(isDragging && {
             backgroundColor: 'rgba(37, 99, 235, 0.05)',
           }),
         }}
+        onScroll={handleScroll}
       >
-        <DragDropOverlay
-          isDragging={isDragging}
-          message="Drop files here to upload"
-          subMessage="Support for PDF, DOC, XLS, PPT, images and more"
-        />
-        {connectedAccounts?.length ? (
-          <ActionButtons {...{ currentPath, navigateToFolderFn, openModal }} />
-        ) : null}
-        {/* <RecentFiles /> */}
-        <Group mb={20} align="center" style={{ width: '100%' }}>
-          {selectedIds.length > 0 ? (
-            <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
-              <SelectionBar
-                count={selectedIds.length}
-                onCancel={handleUnselectAll}
-                onDelete={handleDeleteSelected}
-                onDownload={handleDownloadSelected}
-                onShare={handleShareSelected}
+        {/* Sticky Section */}
+        <Box
+          style={{
+            position: 'sticky',
+            top: 0,
+            ...(files?.length || folders?.length ? { zIndex: 5 } : {}),
+            backgroundColor: '#ffffff',
+            padding: '16px 24px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            borderBottom: '1px solid #e5e7eb',
+          }}
+        >
+          <DragDropOverlay
+            isDragging={isDragging}
+            message="Drop files here to upload"
+            subMessage="Support for PDF, DOC, XLS, PPT, images and more"
+          />
+          {connectedAccounts?.length ? (
+            <ActionButtons
+              {...{ currentPath, navigateToFolderFn, openModal }}
+            />
+          ) : null}
+          {/* <RecentFiles /> */}
+          <Group mb={20} align="center" style={{ width: '100%' }}>
+            {selectedIds.length > 0 ? (
+              <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
+                <SelectionBar
+                  count={selectedIds.length}
+                  onCancel={handleUnselectAll}
+                  onDelete={handleDeleteSelected}
+                  onDownload={handleDownloadSelected}
+                  onShare={handleShareSelected}
+                />
+              </Box>
+            ) : (
+              <Box style={{ flex: 1, marginRight: 12 }} />
+            )}
+            <CustomToggle
+              value={layout}
+              onChange={(value: 'list' | 'grid') => switchLayout(value)}
+            />
+            {/* <SegmentedControl
+              value={layout}
+              onChange={(value: string) =>
+                switchLayout(value as 'list' | 'grid')
+              }
+              p={4}
+              color="#1c7ed6"
+              data={[
+                {
+                  value: 'list',
+                  label: (
+                    <Tooltip label="List View" withArrow fz="xs">
+                      <ICONS.IconList
+                        size={18} // Adjusted size for compactness
+                        color={layout === 'list' ? '#ffffff' : '#1c7ed6'}
+                      />
+                    </Tooltip>
+                  ),
+                },
+                {
+                  value: 'grid',
+                  label: (
+                    <Tooltip label="Grid View" withArrow fz="xs">
+                      <ICONS.IconGridDots
+                        size={18} // Adjusted size for compactness
+                        color={layout === 'grid' ? '#ffffff' : '#1c7ed6'}
+                      />
+                    </Tooltip>
+                  ),
+                },
+              ]}
+              styles={() => ({
+                root: {
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: 8,
+                  padding: '4px',
+                  height: '40px', // Match the height of the SelectionBar
+                  display: 'flex',
+                  alignItems: 'center', // Ensure vertical centering
+                },
+                control: {
+                  height: '32px', // Adjusted for compactness
+                  width: '40px', // Make controls square for better alignment
+                  display: 'flex',
+                  alignItems: 'center', // Center icon vertically
+                  justifyContent: 'center', // Center icon horizontally
+                  borderRadius: 6,
+                  transition: 'background-color 0.2s ease',
+                },
+                active: {
+                  backgroundColor: '#1c7ed6', // Active background color
+                  display: 'flex',
+                  alignItems: 'center', // Ensure vertical centering in active state
+                  justifyContent: 'center', // Ensure horizontal centering in active state
+                },
+                label: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
+              })}
+            /> */}
+          </Group>
+          <Group align="center" w={'100%'} mt={16}>
+            <Box style={{ flexGrow: 1 }}>
+              <Breadcrumbs
+                items={currentPath}
+                onNavigate={folderId => {
+                  if (!folderId || folderId === null) {
+                    navigateToFolderFn(null);
+                  } else {
+                    const folder = currentPath.find(f => f.id === folderId);
+                    if (folder) {
+                      navigateToFolderFn(folder);
+                    }
+                  }
+                }}
               />
             </Box>
-          ) : (
-            <Box style={{ flex: 1, marginRight: 12 }} />
-          )}
-          <SegmentedControl
-            value={layout}
-            onChange={(value: string) => switchLayout(value as 'list' | 'grid')}
-            p={7}
-            color="#1c7ed6"
-            data={[
-              {
-                value: 'list',
-                label: (
-                  <Tooltip label="List View" withArrow fz="xs">
-                    <ICONS.IconList
-                      // size={20}
-                      color={layout === 'list' ? '#ffffff' : '#1c7ed6'}
-                    />
-                  </Tooltip>
-                ),
-              },
-              {
-                value: 'grid',
-                label: (
-                  <Tooltip label="Grid View" withArrow fz="xs">
-                    <ICONS.IconGridDots
-                      // size={20}
-                      color={layout === 'grid' ? '#ffffff' : '#1c7ed6'}
-                    />
-                  </Tooltip>
-                ),
-              },
-            ]}
-            styles={() => ({
-              root: {
-                // backgroundColor: theme.colors.gray[2],
-                backgroundColor: '#f3f4f6',
-              },
-            })}
-          />
-        </Group>
-        <Breadcrumbs
-          items={currentPath}
-          onNavigate={folderId => {
-            if (!folderId || folderId === null) {
-              navigateToFolderFn(null);
-            } else {
-              const folder = currentPath.find(f => f.id === folderId);
-              if (folder) {
-                navigateToFolderFn(folder);
+            <Select
+              value={accountType}
+              onChange={(value: AccountType | 'all') =>
+                handleAccountTypeChange(value)
               }
-            }
-          }}
-        />
+              data={[
+                { value: 'all', label: 'All Accounts' },
+                { value: 'google_drive', label: 'Google Drive' },
+                { value: 'dropbox', label: 'Dropbox' },
+                { value: 'onedrive', label: 'OneDrive' },
+              ]}
+              style={{ width: '150px' }}
+            />
+            <TextInput
+              placeholder="Search files..."
+              value={searchTerm}
+              onChange={event => handleSearchChange(event.currentTarget.value)}
+              style={{ width: '200px' }}
+            />
+          </Group>
+        </Box>
         {layout === 'list' ? (
           <FileTable
             {...{

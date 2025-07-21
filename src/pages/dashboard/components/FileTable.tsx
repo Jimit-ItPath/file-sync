@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ICONS } from '../../../assets/icons';
-import { Menu, Table } from '../../../components';
+import { Menu, Table, Tooltip } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
 
@@ -55,14 +55,16 @@ const FileTable: React.FC<FileTableProps> = ({
             style={{ overflow: 'hidden' }}
           >
             {row.icon(iconSize)}
-            <Text
-              fw={600}
-              fz={'sm'}
-              truncate
-              // style={{ maxWidth: 'calc(100% - 40px)' }}
-            >
-              {row.name}
-            </Text>
+            <Tooltip label={row.name} fz={'xs'}>
+              <Text
+                fw={600}
+                fz={'sm'}
+                truncate
+                style={{ maxWidth: 'calc(100% - 40px)' }}
+              >
+                {row.name}
+              </Text>
+            </Tooltip>
           </Group>
         ),
       },

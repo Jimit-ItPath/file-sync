@@ -145,6 +145,7 @@ const DashboardLayout = () => {
                   onItemClick={onItemClick}
                   position="bottom-end"
                   items={PROFILE_MENU_ITEMS}
+                  zIndex={10}
                 >
                   <ActionIcon
                     variant="filled"

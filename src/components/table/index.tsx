@@ -77,7 +77,7 @@ export function Table<T extends Record<string, any>>({
                 verticalSpacing="sm"
                 highlightOnHover
                 withColumnBorders={false}
-                striped={false}
+                striped
                 styles={{
                   th: { padding: '12px 16px', whiteSpace: 'nowrap' },
                   td: { padding: '12px 16px', whiteSpace: 'nowrap' },
@@ -86,7 +86,7 @@ export function Table<T extends Record<string, any>>({
                 <TableThead>
                   <TableTr>
                     {onSelectRow && (
-                      <TableTh style={{ width: 40 }}>
+                      <TableTh w={20} maw={20} miw={20}>
                         <Checkbox
                           checked={allChecked}
                           onChange={e =>
@@ -120,7 +120,7 @@ export function Table<T extends Record<string, any>>({
                       }}
                     >
                       {onSelectRow && (
-                        <TableTd>
+                        <TableTd w={20} maw={20} miw={20}>
                           <Checkbox
                             checked={selectedRows.includes(
                               row[idKey] as string

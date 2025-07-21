@@ -3,7 +3,7 @@ import { api } from '../../api';
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
-type ConnectedAccountTyoe = {
+type ConnectedAccountType = {
   id: number;
   user_id: string;
   account_name: string;
@@ -16,7 +16,12 @@ type ConnectedAccountTyoe = {
   updatedAt: string;
 };
 
-type checkStorageDetailsType = {
+type StorageDetailsType = {
+  total: number;
+  used: number;
+};
+
+type CheckStorageDetailsType = {
   id: string;
   user_id: string;
   email: string;
@@ -33,10 +38,13 @@ type AuthState = {
   user: {};
   isTemporary: boolean;
   activeUI: string;
-  connectedAccounts: ConnectedAccountTyoe[];
+  connectedAccounts: ConnectedAccountType[];
   loading: boolean;
   error: string | null;
-  checkStorageDetails: checkStorageDetailsType[];
+  checkStorageDetails: {
+    result: CheckStorageDetailsType[];
+    storage_details: StorageDetailsType;
+  } | null;
 };
 
 const initialState: AuthState = {
@@ -45,7 +53,7 @@ const initialState: AuthState = {
   isTemporary: false,
   activeUI: '',
   connectedAccounts: [],
-  checkStorageDetails: [],
+  checkStorageDetails: null,
   loading: false,
   error: null,
 };
@@ -150,12 +158,12 @@ export const authSlice = createSlice({
       // })
       .addCase(fetchStorageDetails.fulfilled, (state, action) => {
         // state.loading = false;
-        state.checkStorageDetails = action.payload?.data || [];
+        state.checkStorageDetails = action.payload?.data || null;
       })
       .addCase(fetchStorageDetails.rejected, (state, action) => {
         // state.loading = false;
         state.error = action.payload as string;
-        state.checkStorageDetails = [];
+        state.checkStorageDetails = null;
       });
   },
 });
