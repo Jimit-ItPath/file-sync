@@ -71,9 +71,13 @@ const FileGrid: React.FC<FileGridProps> = ({
       mt={10}
     >
       {!folders?.length && !files?.length && (
-        <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
-          No files available. Please upload files to see them here.
-        </Text>
+        <Card>
+          <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
+            <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
+              No files available. Please upload files to see them here.
+            </Text>
+          </Box>
+        </Card>
       )}
       {/* Folders */}
       <Grid gutter={20}>
