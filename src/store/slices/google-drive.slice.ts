@@ -188,10 +188,7 @@ export const createGoogleDriveFolder = createAsyncThunk(
 
 export const renameGoogleDriveFile = createAsyncThunk(
   'googleDrive/renameGoogleDriveFile',
-  async (
-    data: { id: string; name: string; account_id: number | string },
-    { rejectWithValue }
-  ) => {
+  async (data: { id: string; name: string }, { rejectWithValue }) => {
     try {
       const response = await api.googleDrive.renameFile({ data });
       return response.data;
@@ -231,7 +228,7 @@ export const uploadGoogleDriveFiles = createAsyncThunk(
 
 export const removeGoogleDriveFiles = createAsyncThunk(
   'googleDrive/removeGoogleDriveFiles',
-  async (data: { ids: string[]; account_id: number | string }) => {
+  async (data: { ids: string[] }) => {
     try {
       const response = await api.googleDrive.deleteFile({ data });
       return response;
@@ -243,7 +240,7 @@ export const removeGoogleDriveFiles = createAsyncThunk(
 
 export const downloadGoogleDriveFiles = createAsyncThunk(
   'googleDrive/downloadGoogleDriveFiles',
-  async (data: { ids: string[]; account_id: number | string }) => {
+  async (data: { ids: string[] }) => {
     try {
       const response = await api.googleDrive.downloadFiles({ data });
       return response;

@@ -166,7 +166,7 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { id: string; name: string; account_id: number | string };
+      data: { id: string; name: string };
       [key: string]: any;
     }) =>
       client({
@@ -192,7 +192,7 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { ids: string[]; account_id: number | string };
+      data: { ids: string[] };
       [key: string]: any;
     }) =>
       client({
@@ -205,7 +205,7 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { ids: string[]; account_id: number | string };
+      data: { ids: string[] };
       [key: string]: any;
     }) =>
       client({

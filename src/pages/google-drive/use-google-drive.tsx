@@ -467,7 +467,6 @@ const useGoogleDrive = () => {
           renameGoogleDriveFile({
             id: fileId,
             name: newName,
-            account_id: Number(accountId),
           })
         ).unwrap();
         await dispatch(
@@ -506,7 +505,6 @@ const useGoogleDrive = () => {
         const res = await dispatch(
           removeGoogleDriveFiles({
             ids: [fileId],
-            account_id: Number(accountId),
           })
         );
         if (res?.payload?.status === 200) {
@@ -769,7 +767,6 @@ const useGoogleDrive = () => {
         const res = await dispatch(
           removeGoogleDriveFiles({
             ids: selectedIds,
-            account_id: Number(accountId),
           })
         );
         if (res?.payload?.status === 200) {
@@ -826,7 +823,6 @@ const useGoogleDrive = () => {
       const res = await dispatch(
         downloadGoogleDriveFiles({
           ids: selectedIds,
-          account_id: Number(accountId),
         })
       );
       if (res?.payload?.status !== 200) {
