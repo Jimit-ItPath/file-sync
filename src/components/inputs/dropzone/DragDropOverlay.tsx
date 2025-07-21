@@ -18,21 +18,26 @@ const DragDropOverlay: React.FC<DragDropOverlayProps> = ({
   return (
     <Box
       style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
+        // position: 'absolute',
+        // top: 0,
+        // left: 0,
+        // right: 0,
+        // bottom: 0,
+        position: 'fixed',
+        top: 60,
+        left: 250,
+        right: 32,
         bottom: 0,
         backgroundColor: 'rgba(37, 99, 235, 0.1)',
         border: '3px solid #2563eb',
         borderRadius: '12px',
-        zIndex: 1000,
+        zIndex: 2000,
         pointerEvents: 'none',
         transition: 'all 0.2s ease-in-out',
       }}
     >
       <Center h="100%">
-        <Stack align="center" h='100%' justify='center' gap={16} pb={20}>
+        <Stack align="center" h="100%" justify="center" gap={16} pb={20}>
           <Box
             style={{
               padding: '20px',

@@ -1,41 +1,23 @@
 import { Group } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
-import { Breadcrumbs, Button } from '../../../components';
+import { Button } from '../../../components';
 import type React from 'react';
 
-interface ActionBtnsProps {
-  currentPath: {
-    id?: string;
-    name: string;
-  }[];
-  navigateToFolderFn: (
-    folder: {
-      id?: string;
-      name: string;
-    } | null
-  ) => void;
+const ActionButtons: React.FC<{
   openModal: (type: 'folder' | 'files') => void;
-}
-
-const ActionButtons: React.FC<ActionBtnsProps> = ({
-  currentPath = [],
-  navigateToFolderFn = () => {},
-  openModal = () => {},
-}) => {
+}> = ({ openModal }) => {
   return (
-    // <Group justify="space-between" mb="md">
-    <Group gap={12} mb={20} wrap="wrap">
+    <Group gap={8} mb={16} wrap="wrap">
       <Button
-        leftSection={<ICONS.IconUpload size={20} color="#2563eb" />}
+        leftSection={<ICONS.IconUpload size={16} color="#2563eb" />}
         onClick={() => openModal('files')}
         radius="md"
-        size="md"
-        px={20}
+        size="sm"
+        px={16}
         style={{
-          minWidth: 130,
-          height: 48,
+          height: 40,
           fontWeight: 500,
-          fontSize: 14,
+          fontSize: 13,
           backgroundColor: '#fff',
           color: '#1e293b',
           border: '1px solid #e5e7eb',
@@ -44,16 +26,15 @@ const ActionButtons: React.FC<ActionBtnsProps> = ({
         Upload Files
       </Button>
       <Button
-        leftSection={<ICONS.IconFolderPlus size={20} color="#2563eb" />}
+        leftSection={<ICONS.IconFolderPlus size={16} color="#2563eb" />}
         onClick={() => openModal('folder')}
         radius="md"
-        size="md"
-        px={20}
+        size="sm"
+        px={16}
         style={{
-          minWidth: 130,
-          height: 48,
+          height: 40,
           fontWeight: 500,
-          fontSize: 14,
+          fontSize: 13,
           backgroundColor: '#fff',
           color: '#1e293b',
           border: '1px solid #e5e7eb',
@@ -61,25 +42,7 @@ const ActionButtons: React.FC<ActionBtnsProps> = ({
       >
         New Folder
       </Button>
-      {/* <Button
-          leftSection={<ICONS.IconDownload size={20} color="#2563eb" />}
-          radius="md"
-          size="md"
-          px={20}
-          style={{
-            minWidth: 130,
-            height: 48,
-            fontWeight: 500,
-            fontSize: 14,
-            backgroundColor: '#fff',
-            color: '#1e293b',
-            border: '1px solid #e5e7eb',
-          }}
-        >
-          Download
-        </Button> */}
     </Group>
-    /* </Group> */
   );
 };
 

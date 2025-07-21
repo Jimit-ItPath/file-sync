@@ -352,7 +352,7 @@ export const api = {
       limit?: number;
     }) =>
       client({
-        url: '/cloud-storage?limit=500',
+        url: '/cloud-storage',
         method: METHODS.GET,
         params,
       }),
