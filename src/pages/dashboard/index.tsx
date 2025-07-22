@@ -271,6 +271,7 @@ const Dashboard = () => {
               currentPath,
               handleMenuItemClick,
               handleRowDoubleClick,
+              handleUnselectAll,
             }}
           />
         ) : (

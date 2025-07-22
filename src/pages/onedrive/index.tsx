@@ -197,6 +197,7 @@ const OneDrive = () => {
               currentPath,
               handleMenuItemClick,
               handleRowDoubleClick,
+              handleUnselectAll,
             }}
           />
         ) : (

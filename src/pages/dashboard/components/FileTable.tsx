@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { ICONS } from '../../../assets/icons';
 import { Menu, Table, Tooltip } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
@@ -28,6 +28,7 @@ type FileTableProps = {
     row: FileType,
     e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>
   ) => void;
+  handleUnselectAll: () => void;
 };
 
 const FileTable: React.FC<FileTableProps> = ({
@@ -39,7 +40,29 @@ const FileTable: React.FC<FileTableProps> = ({
   selectedIds = [],
   handleMenuItemClick = () => {},
   handleRowDoubleClick = () => {},
+  handleUnselectAll = () => {},
 }) => {
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        tableRef.current &&
+        !tableRef.current.contains(event.target as Node) &&
+        !target.closest('.stickey-box')
+      ) {
+        handleUnselectAll();
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [handleUnselectAll]);
+
   const columns = useMemo(
     () => [
       {
@@ -117,6 +140,7 @@ const FileTable: React.FC<FileTableProps> = ({
   return (
     <div
       tabIndex={0}
+      ref={tableRef}
       // onKeyDown={handleKeyDown}
       style={{ outline: 'none', marginTop: '10px' }}
     >

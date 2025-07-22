@@ -198,6 +198,7 @@ const Dropbox = () => {
               currentPath,
               handleMenuItemClick,
               handleRowDoubleClick,
+              handleUnselectAll,
             }}
           />
         ) : (

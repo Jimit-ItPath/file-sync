@@ -198,6 +198,7 @@ const GoogleDrive = () => {
               currentPath,
               handleMenuItemClick,
               handleRowDoubleClick,
+              handleUnselectAll,
             }}
           />
         ) : (
