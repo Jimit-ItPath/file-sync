@@ -102,6 +102,7 @@ const useGoogleDrive = () => {
     currentPath,
     uploadLoading,
     searchTerm,
+    navigateLoading,
   } = useAppSelector(state => state.googleDrive);
   const dispatch = useAppDispatch();
 
@@ -262,6 +263,8 @@ const useGoogleDrive = () => {
       } else {
         dispatch(navigateToFolder({ account_id: Number(accountId) }));
       }
+      setSelectedIds([]);
+      setLastSelectedIndex(null);
     },
     [dispatch, currentPath]
   );
@@ -903,6 +906,7 @@ const useGoogleDrive = () => {
     lastSelectedIndex,
     pagination,
     loadMoreFiles,
+    navigateLoading,
   };
 };
 

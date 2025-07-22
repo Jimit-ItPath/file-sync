@@ -101,6 +101,7 @@ const useOneDrive = () => {
     currentPath,
     uploadLoading,
     searchTerm,
+    navigateLoading,
   } = useAppSelector(state => state.oneDrive);
   const dispatch = useAppDispatch();
 
@@ -259,6 +260,8 @@ const useOneDrive = () => {
       } else {
         dispatch(navigateToFolder({ account_id: Number(accountId) }));
       }
+      setSelectedIds([]);
+      setLastSelectedIndex(null);
     },
     [dispatch, currentPath]
   );
@@ -899,6 +902,7 @@ const useOneDrive = () => {
     allIds,
     loadMoreFiles,
     pagination,
+    navigateLoading,
   };
 };
 

@@ -15,6 +15,7 @@ import UploadProgress from '../dashboard/components/UploadProgress';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from '../dashboard/components/CustomToggle';
 import useGoogleDrive from './use-google-drive';
+import { LoaderOverlay } from '../../components/loader';
 
 const controlBoxStyles = {
   height: 40,
@@ -87,6 +88,7 @@ const GoogleDrive = () => {
     lastSelectedIndex,
     loadMoreFiles,
     pagination,
+    navigateLoading,
   } = useGoogleDrive();
   const { connectedAccounts } = useSidebar();
 
@@ -94,8 +96,7 @@ const GoogleDrive = () => {
 
   return (
     <Box>
-      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
-      {/* <ScrollArea> */}
+      <LoaderOverlay visible={navigateLoading} opacity={1} />
       <Box
         px={32}
         pb={20}
@@ -129,6 +130,7 @@ const GoogleDrive = () => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             borderBottom: '1px solid #e5e7eb',
           }}
+          className="stickey-box"
         >
           <DragDropOverlay
             isDragging={isDragging}
@@ -224,7 +226,6 @@ const GoogleDrive = () => {
           </>
         )}
       </Box>
-      {/* </ScrollArea> */}
       {showUploadProgress ? (
         <UploadProgress
           uploadProgress={uploadProgress}
@@ -317,12 +318,11 @@ const GoogleDrive = () => {
       <Modal
         opened={removeFilesModalOpen}
         onClose={closeRemoveFilesModal}
-        title={`Delete ${selectedIds.length} items`}
+        title={`Remove items`}
       >
         <Text mb="md">
-          Are you sure you want to delete "{selectedIds.length}" items?
-          {selectedIds.length > 0 &&
-            ' All contents will be deleted permanently.'}
+          Are you sure you want to remove items? All contents will be deleted
+          permanently.
         </Text>
         <Group>
           <Button

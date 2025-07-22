@@ -102,6 +102,7 @@ const useDropbox = () => {
     currentPath,
     uploadLoading,
     searchTerm,
+    navigateLoading,
   } = useAppSelector(state => state.dropbox);
   const dispatch = useAppDispatch();
 
@@ -260,6 +261,8 @@ const useDropbox = () => {
       } else {
         dispatch(navigateToFolder({ account_id: Number(accountId) }));
       }
+      setSelectedIds([]);
+      setLastSelectedIndex(null);
     },
     [dispatch, currentPath]
   );
@@ -901,6 +904,7 @@ const useDropbox = () => {
     allIds,
     pagination,
     loadMoreFiles,
+    navigateLoading,
   };
 };
 

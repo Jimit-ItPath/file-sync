@@ -85,6 +85,25 @@ const FileGrid: React.FC<FileGridProps> = ({
     return () => window.removeEventListener('resize', updateColumnsCount);
   }, []);
 
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        stackRef.current &&
+        !stackRef.current.contains(target) &&
+        !target.closest('.stickey-box')
+      ) {
+        handleUnselectAll();
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [handleUnselectAll]);
+
   // const handleStackClick = (e: React.MouseEvent<HTMLDivElement>) => {
   //   if (e.target === stackRef.current) {
   //     handleUnselectAll();
@@ -193,7 +212,11 @@ const FileGrid: React.FC<FileGridProps> = ({
               handleRowDoubleClick(folder);
             }}
           >
-            <Group gap={12} style={{ width: '100%', flexWrap: 'nowrap' }}>
+            <Group
+              gap={12}
+              align="center"
+              style={{ width: '100%', flexWrap: 'nowrap' }}
+            >
               {folder?.icon(responsiveIconSize)}
               <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
                 <Text
@@ -260,10 +283,11 @@ const FileGrid: React.FC<FileGridProps> = ({
           >
             <Group
               justify="space-between"
+              align="center"
               mb={8}
               style={{ flexWrap: 'nowrap' }}
             >
-              <Group gap={8} flex={1} miw={0}>
+              <Group gap={8} flex={1} miw={0} align="center">
                 {file.icon(responsiveIconSize)}
                 <Tooltip label={file.name} withArrow={false} fz={'xs'}>
                   <Text

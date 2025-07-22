@@ -299,6 +299,8 @@ const useDashboard = () => {
         dispatch(navigateToFolder(null));
         navigate('/dashboard');
       }
+      setSelectedIds([]);
+      setLastSelectedIndex(null);
     },
     [dispatch, currentPath]
   );

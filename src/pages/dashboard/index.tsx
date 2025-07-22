@@ -135,6 +135,7 @@ const Dashboard = () => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             borderBottom: '1px solid #e5e7eb',
           }}
+          className="stickey-box"
         >
           <DragDropOverlay
             isDragging={isDragging}
@@ -391,12 +392,11 @@ const Dashboard = () => {
       <Modal
         opened={removeFilesModalOpen}
         onClose={closeRemoveFilesModal}
-        title={`Delete ${selectedIds.length} items`}
+        title={`Remove items`}
       >
         <Text mb="md">
-          Are you sure you want to delete "{selectedIds.length}" items?
-          {selectedIds.length > 0 &&
-            ' All contents will be deleted permanently.'}
+          Are you sure you want to remove items? All contents will be deleted
+          permanently.
         </Text>
         <Group>
           <Button

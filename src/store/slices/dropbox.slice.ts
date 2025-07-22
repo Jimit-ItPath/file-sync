@@ -38,6 +38,7 @@ interface DropboxState {
   currentPath: Array<{ id?: string; name: string }>;
   uploadLoading: boolean;
   searchTerm: string;
+  navigateLoading: boolean;
 }
 
 const initialState: DropboxState = {
@@ -51,6 +52,7 @@ const initialState: DropboxState = {
     : [],
   uploadLoading: false,
   searchTerm: '',
+  navigateLoading: false,
 };
 
 export const fetchDropboxFiles = createAsyncThunk(
@@ -292,12 +294,13 @@ export const dropboxSlice = createSlice({
         state.pagination = null;
       })
       .addCase(navigateToFolder.pending, state => {
-        state.isLoading = true;
+        state.navigateLoading = true;
         state.error = null;
       })
       .addCase(navigateToFolder.fulfilled, (state, action) => {
         const { folderId, folderName, isRoot } = action.payload;
         state.currentFolderId = folderId;
+        state.navigateLoading = false;
 
         if (isRoot) {
           state.currentPath = [];
@@ -324,7 +327,7 @@ export const dropboxSlice = createSlice({
         setLocalStorage('dropboxFolderId', state.currentFolderId);
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
-        state.isLoading = false;
+        state.navigateLoading = false;
         state.error = action.payload as string;
         state.currentFolderId = null;
         state.currentPath = [];

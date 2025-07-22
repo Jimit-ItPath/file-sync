@@ -38,6 +38,7 @@ interface OneDriveState {
   currentPath: Array<{ id?: string; name: string }>;
   uploadLoading: boolean;
   searchTerm: string;
+  navigateLoading: boolean;
 }
 
 const initialState: OneDriveState = {
@@ -51,6 +52,7 @@ const initialState: OneDriveState = {
     : [],
   uploadLoading: false,
   searchTerm: '',
+  navigateLoading: false,
 };
 
 export const fetchOneDriveFiles = createAsyncThunk(
@@ -294,7 +296,7 @@ export const onedriveSlice = createSlice({
         state.pagination = null;
       })
       .addCase(navigateToFolder.pending, state => {
-        state.isLoading = true;
+        state.navigateLoading = true;
         state.error = null;
       })
       .addCase(navigateToFolder.fulfilled, (state, action) => {
@@ -322,11 +324,12 @@ export const onedriveSlice = createSlice({
             ];
           }
         }
+        state.navigateLoading = false;
         setLocalStorage('oneDrivePath', state.currentPath);
         setLocalStorage('oneDriveFolderId', state.currentFolderId);
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
-        state.isLoading = false;
+        state.navigateLoading = false;
         state.error = action.payload as string;
         state.currentFolderId = null;
         state.currentPath = [];

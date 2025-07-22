@@ -38,6 +38,7 @@ interface GoogleDriveState {
   currentPath: Array<{ id?: string; name: string }>;
   uploadLoading: boolean;
   searchTerm: string;
+  navigateLoading: boolean;
 }
 
 const initialState: GoogleDriveState = {
@@ -51,6 +52,7 @@ const initialState: GoogleDriveState = {
     : [],
   uploadLoading: false,
   searchTerm: '',
+  navigateLoading: false,
 };
 
 export const fetchGoogleDriveFiles = createAsyncThunk(
@@ -294,12 +296,13 @@ export const googleDriveSlice = createSlice({
         state.pagination = null;
       })
       .addCase(navigateToFolder.pending, state => {
-        state.isLoading = true;
+        state.navigateLoading = true;
         state.error = null;
       })
       .addCase(navigateToFolder.fulfilled, (state, action) => {
         const { folderId, folderName, isRoot } = action.payload;
         state.currentFolderId = folderId;
+        state.navigateLoading = false;
 
         if (isRoot) {
           state.currentPath = [];
@@ -326,7 +329,7 @@ export const googleDriveSlice = createSlice({
         setLocalStorage('gDriveFolderId', state.currentFolderId);
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
-        state.isLoading = false;
+        state.navigateLoading = false;
         state.error = action.payload as string;
         state.currentFolderId = null;
         state.currentPath = [];
