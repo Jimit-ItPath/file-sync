@@ -38,7 +38,6 @@ const Dashboard = () => {
     handleShareSelected,
     handleUnselectAll,
     selectedIds,
-    handleKeyDown,
     setSelectedIds,
     setLastSelectedIndex,
     getIndexById,
@@ -88,6 +87,8 @@ const Dashboard = () => {
     handleAccountTypeChange,
     handleSearchChange,
     searchTerm,
+    allIds,
+    lastSelectedIndex,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -265,7 +266,6 @@ const Dashboard = () => {
             {...{
               files,
               handleSelect,
-              handleKeyDown,
               onSelectAll,
               onSelectRow,
               selectedIds,
@@ -281,13 +281,14 @@ const Dashboard = () => {
               handleSelect,
               selectedIds,
               folders,
-              handleKeyDown,
               handleUnselectAll,
               getIndexById,
               setLastSelectedIndex,
               setSelectedIds,
               handleMenuItemClick,
               handleRowDoubleClick,
+              allIds,
+              lastSelectedIndex,
             }}
           />
         )}

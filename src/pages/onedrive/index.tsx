@@ -36,7 +36,6 @@ const OneDrive = () => {
     handleShareSelected,
     handleUnselectAll,
     selectedIds,
-    handleKeyDown,
     setSelectedIds,
     setLastSelectedIndex,
     getIndexById,
@@ -84,6 +83,8 @@ const OneDrive = () => {
     scrollBoxRef,
     handleSearchChange,
     searchTerm,
+    allIds,
+    lastSelectedIndex,
   } = useOneDrive();
   const { connectedAccounts } = useSidebar();
 
@@ -184,7 +185,7 @@ const OneDrive = () => {
             {...{
               files,
               handleSelect,
-              handleKeyDown,
+              // handleKeyDown,
               onSelectAll,
               onSelectRow,
               selectedIds,
@@ -200,13 +201,14 @@ const OneDrive = () => {
               handleSelect,
               selectedIds,
               folders,
-              handleKeyDown,
               handleUnselectAll,
               getIndexById,
               setLastSelectedIndex,
               setSelectedIds,
               handleMenuItemClick,
               handleRowDoubleClick,
+              allIds,
+              lastSelectedIndex,
             }}
           />
         )}

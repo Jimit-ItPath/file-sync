@@ -12,7 +12,6 @@ import {
   removeLocalStorage,
   setLocalStorage,
 } from '../../utils/helper';
-import { useMediaQuery } from '@mantine/hooks';
 import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 import { useAppDispatch, useAppSelector } from '../../store';
@@ -108,12 +107,6 @@ const useDashboard = () => {
     searchTerm,
   } = useAppSelector(state => state.cloudStorage);
   const dispatch = useAppDispatch();
-
-  const isXs = useMediaQuery('(max-width: 575px)');
-  const isSm = useMediaQuery('(min-width: 576px) and (max-width: 767px)');
-  const isMd = useMediaQuery('(min-width: 768px) and (max-width: 991px)');
-
-  const gridColumns = isXs ? 1 : isSm ? 2 : isMd ? 3 : 4;
 
   const folderMethods = useForm<FolderFormData>({
     resolver: zodResolver(folderSchema),
@@ -738,41 +731,6 @@ const useDashboard = () => {
     [allIds, lastSelectedIndex, getIndexById]
   );
 
-  // Shift+arrow key selection
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (!selectedIds.length) return;
-
-      const currentIdx =
-        lastSelectedIndex ?? getIndexById(selectedIds[selectedIds.length - 1]);
-      let nextIdx = currentIdx;
-
-      if (event.shiftKey) {
-        if (event.key === 'ArrowDown') {
-          nextIdx = Math.min(currentIdx + gridColumns, allIds.length - 1);
-        } else if (event.key === 'ArrowUp') {
-          nextIdx = Math.max(currentIdx - gridColumns, 0);
-        } else if (event.key === 'ArrowRight') {
-          nextIdx = Math.min(currentIdx + 1, allIds.length - 1);
-        } else if (event.key === 'ArrowLeft') {
-          nextIdx = Math.max(currentIdx - 1, 0);
-        }
-        if (nextIdx !== currentIdx) {
-          const rangeStart =
-            selectedIds.length === 1
-              ? currentIdx
-              : getIndexById(selectedIds[0]);
-          const start = Math.min(rangeStart, nextIdx);
-          const end = Math.max(rangeStart, nextIdx);
-          const rangeIds = allIds.slice(start, end + 1);
-          setSelectedIds(rangeIds);
-          setLastSelectedIndex(nextIdx);
-        }
-      }
-    },
-    [selectedIds, lastSelectedIndex, allIds, getIndexById, gridColumns]
-  );
-
   const handleSelectAll = useCallback(() => {
     setSelectedIds(files.map(f => f.id));
   }, [files]);
@@ -913,8 +871,6 @@ const useDashboard = () => {
     setSelectedIds,
     setLastSelectedIndex,
     handleSelect,
-    handleKeyDown,
-    handleSelectAll,
     handleUnselectAll,
     handleDeleteSelected,
     handleDownloadSelected,
@@ -966,8 +922,6 @@ const useDashboard = () => {
     handleMenuItemClick,
     handleRowDoubleClick,
 
-    loadMoreFiles,
-    pagination,
     handleScroll,
     scrollBoxRef,
     navigate,
@@ -975,6 +929,9 @@ const useDashboard = () => {
     searchTerm: localSearchTerm,
     handleAccountTypeChange,
     handleSearchChange,
+
+    allIds,
+    lastSelectedIndex,
   };
 };
 

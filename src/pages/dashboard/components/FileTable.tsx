@@ -15,7 +15,7 @@ type FileTableProps = {
   files: FileType[];
   iconSize?: number;
   handleSelect: (id: string, event: React.MouseEvent) => void;
-  handleKeyDown: (event: React.KeyboardEvent) => void;
+  // handleKeyDown: (event: React.KeyboardEvent) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectRow: (id: string, checked: boolean) => void;
   selectedIds: string[];
@@ -33,7 +33,7 @@ type FileTableProps = {
 const FileTable: React.FC<FileTableProps> = ({
   files,
   iconSize = 24,
-  handleKeyDown = () => {},
+  // handleKeyDown = () => {},
   onSelectAll = () => {},
   onSelectRow = () => {},
   selectedIds = [],
@@ -118,7 +118,7 @@ const FileTable: React.FC<FileTableProps> = ({
   return (
     <div
       tabIndex={0}
-      onKeyDown={handleKeyDown}
+      // onKeyDown={handleKeyDown}
       style={{ outline: 'none', marginTop: '10px' }}
     >
       <Table

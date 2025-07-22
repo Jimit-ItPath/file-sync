@@ -36,7 +36,6 @@ const Dropbox = () => {
     handleShareSelected,
     handleUnselectAll,
     selectedIds,
-    handleKeyDown,
     setSelectedIds,
     setLastSelectedIndex,
     getIndexById,
@@ -84,6 +83,8 @@ const Dropbox = () => {
     scrollBoxRef,
     handleSearchChange,
     searchTerm,
+    allIds,
+    lastSelectedIndex,
   } = useDropbox();
   const { connectedAccounts } = useSidebar();
 
@@ -187,7 +188,6 @@ const Dropbox = () => {
             {...{
               files,
               handleSelect,
-              handleKeyDown,
               onSelectAll,
               onSelectRow,
               selectedIds,
@@ -203,13 +203,14 @@ const Dropbox = () => {
               handleSelect,
               selectedIds,
               folders,
-              handleKeyDown,
               handleUnselectAll,
               getIndexById,
               setLastSelectedIndex,
               setSelectedIds,
               handleMenuItemClick,
               handleRowDoubleClick,
+              allIds,
+              lastSelectedIndex,
             }}
           />
         )}

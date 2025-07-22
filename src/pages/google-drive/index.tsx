@@ -36,7 +36,6 @@ const GoogleDrive = () => {
     handleShareSelected,
     handleUnselectAll,
     selectedIds,
-    handleKeyDown,
     setSelectedIds,
     setLastSelectedIndex,
     getIndexById,
@@ -84,6 +83,8 @@ const GoogleDrive = () => {
     scrollBoxRef,
     handleSearchChange,
     searchTerm,
+    allIds,
+    lastSelectedIndex,
   } = useGoogleDrive();
   const { connectedAccounts } = useSidebar();
 
@@ -187,7 +188,6 @@ const GoogleDrive = () => {
             {...{
               files,
               handleSelect,
-              handleKeyDown,
               onSelectAll,
               onSelectRow,
               selectedIds,
@@ -203,13 +203,14 @@ const GoogleDrive = () => {
               handleSelect,
               selectedIds,
               folders,
-              handleKeyDown,
               handleUnselectAll,
               getIndexById,
               setLastSelectedIndex,
               setSelectedIds,
               handleMenuItemClick,
               handleRowDoubleClick,
+              allIds,
+              lastSelectedIndex,
             }}
           />
         )}
