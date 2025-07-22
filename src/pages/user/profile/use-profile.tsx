@@ -11,6 +11,7 @@ import {
   removeProfileImage,
 } from '../../../store/slices/user.slice';
 import {
+  fetchStorageDetails,
   getConnectedAccount,
   removeAccountAccess,
 } from '../../../store/slices/auth.slice';
@@ -66,6 +67,12 @@ const UseProfile = () => {
   }, [dispatch]);
 
   const [onInitialize] = useAsyncOperation(getAccounts);
+
+  const getStorageDetails = useCallback(async () => {
+    await dispatch(fetchStorageDetails());
+  }, [dispatch]);
+
+  const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   useEffect(() => {
     getProfile({});
@@ -166,7 +173,7 @@ const UseProfile = () => {
   const getCloudStorageFiles = useCallback(async () => {
     await dispatch(
       initializeCloudStorageFromStorage({
-        limit: 10,
+        limit: 20,
         page: 1,
       })
     );
@@ -188,6 +195,7 @@ const UseProfile = () => {
         await onInitialize({});
         await getFiles({});
         closeRemoveAccessModal();
+        await fetchStorageData({});
       }
     } catch (error: any) {
       notifications.show({

@@ -162,7 +162,7 @@ const useSidebar = () => {
   const getCloudStorageFiles = useCallback(async () => {
     await dispatch(
       initializeCloudStorageFromStorage({
-        limit: 10,
+        limit: 20,
         page: 1,
       })
     );
@@ -183,6 +183,7 @@ const useSidebar = () => {
         });
         await onInitialize({});
         await getFiles({});
+        await fetchStorageData({});
         navigate(PRIVATE_ROUTES.DASHBOARD.path);
         closeRemoveAccessModal();
       }

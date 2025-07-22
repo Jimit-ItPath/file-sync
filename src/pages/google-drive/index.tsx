@@ -85,6 +85,8 @@ const GoogleDrive = () => {
     searchTerm,
     allIds,
     lastSelectedIndex,
+    loadMoreFiles,
+    pagination,
   } = useGoogleDrive();
   const { connectedAccounts } = useSidebar();
 
@@ -197,22 +199,29 @@ const GoogleDrive = () => {
             }}
           />
         ) : (
-          <FileGrid
-            {...{
-              files: regularFiles,
-              handleSelect,
-              selectedIds,
-              folders,
-              handleUnselectAll,
-              getIndexById,
-              setLastSelectedIndex,
-              setSelectedIds,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-              allIds,
-              lastSelectedIndex,
-            }}
-          />
+          <>
+            <FileGrid
+              {...{
+                files: regularFiles,
+                handleSelect,
+                selectedIds,
+                folders,
+                handleUnselectAll,
+                getIndexById,
+                setLastSelectedIndex,
+                setSelectedIds,
+                handleMenuItemClick,
+                handleRowDoubleClick,
+                allIds,
+                lastSelectedIndex,
+              }}
+            />
+            {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button mt={20} onClick={loadMoreFiles}>
+                Load More
+              </Button>
+            ) : null}
+          </>
         )}
       </Box>
       {/* </ScrollArea> */}

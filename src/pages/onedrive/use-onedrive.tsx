@@ -46,7 +46,7 @@ export type FileType = {
   preview?: string;
   mimeType?: string;
   fileExtension?: string | null;
-  download_url: string | null;
+  download_url?: string | null;
 };
 
 const folderSchema = z.object({
@@ -139,7 +139,7 @@ const useOneDrive = () => {
     await dispatch(
       initializeOneDriveFromStorage({
         ...(folderId && { id: folderId }),
-        limit: pagination?.page_limit || 10,
+        limit: pagination?.page_limit || 20,
         page: pagination?.page_no || 1,
         account_id: Number(accountId),
         searchTerm: debouncedSearchTerm || '',
@@ -324,7 +324,7 @@ const useOneDrive = () => {
           await dispatch(
             initializeOneDriveFromStorage({
               ...(folderId && { id: folderId }),
-              limit: pagination?.page_limit || 10,
+              limit: pagination?.page_limit || 20,
               page: pagination?.page_no || 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
@@ -439,7 +439,7 @@ const useOneDrive = () => {
         await dispatch(
           initializeOneDriveFromStorage({
             ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
+            limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
             account_id: Number(accountId),
             searchTerm: debouncedSearchTerm || '',
@@ -469,7 +469,7 @@ const useOneDrive = () => {
         await dispatch(
           initializeOneDriveFromStorage({
             ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
+            limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
             account_id: Number(accountId),
             searchTerm: debouncedSearchTerm || '',
@@ -508,7 +508,7 @@ const useOneDrive = () => {
           await dispatch(
             initializeOneDriveFromStorage({
               ...(folderId && { id: folderId }),
-              limit: pagination?.page_limit || 10,
+              limit: pagination?.page_limit || 20,
               page: pagination?.page_no || 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
@@ -735,7 +735,7 @@ const useOneDrive = () => {
           await dispatch(
             initializeOneDriveFromStorage({
               ...(folderId && { id: folderId }),
-              limit: pagination?.page_limit || 10,
+              limit: pagination?.page_limit || 20,
               page: pagination?.page_no || 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
@@ -896,6 +896,8 @@ const useOneDrive = () => {
 
     lastSelectedIndex,
     allIds,
+    loadMoreFiles,
+    pagination,
   };
 };
 

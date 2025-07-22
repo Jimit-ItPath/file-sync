@@ -92,7 +92,7 @@ export const navigateToFolder = createAsyncThunk(
     { dispatch }
   ) => {
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (data === null) {
       dispatch(resetCloudStorageFolder());
       await dispatch(

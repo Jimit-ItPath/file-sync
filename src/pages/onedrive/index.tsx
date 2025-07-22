@@ -85,6 +85,8 @@ const OneDrive = () => {
     searchTerm,
     allIds,
     lastSelectedIndex,
+    loadMoreFiles,
+    pagination,
   } = useOneDrive();
   const { connectedAccounts } = useSidebar();
 
@@ -195,22 +197,29 @@ const OneDrive = () => {
             }}
           />
         ) : (
-          <FileGrid
-            {...{
-              files: regularFiles,
-              handleSelect,
-              selectedIds,
-              folders,
-              handleUnselectAll,
-              getIndexById,
-              setLastSelectedIndex,
-              setSelectedIds,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-              allIds,
-              lastSelectedIndex,
-            }}
-          />
+          <>
+            <FileGrid
+              {...{
+                files: regularFiles,
+                handleSelect,
+                selectedIds,
+                folders,
+                handleUnselectAll,
+                getIndexById,
+                setLastSelectedIndex,
+                setSelectedIds,
+                handleMenuItemClick,
+                handleRowDoubleClick,
+                allIds,
+                lastSelectedIndex,
+              }}
+            />
+            {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button mt={20} onClick={loadMoreFiles}>
+                Load More
+              </Button>
+            ) : null}
+          </>
         )}
       </Box>
       {showUploadProgress ? (

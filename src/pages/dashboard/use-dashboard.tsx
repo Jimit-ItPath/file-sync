@@ -48,7 +48,7 @@ export type FileType = {
   preview?: string;
   mimeType?: string;
   fileExtension?: string | null;
-  download_url: string | null;
+  download_url?: string | null;
 };
 
 const folderSchema = z.object({
@@ -137,33 +137,37 @@ const useDashboard = () => {
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
 
   const handleAccountTypeChange = (value: AccountType | 'all') => {
-    dispatch(setAccountType(value));
+    dispatch(setAccountType(value as AccountType | 'all'));
+    getCloudStorageFiles(1);
   };
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
   };
 
-  const getCloudStorageFiles = useCallback(async () => {
-    await dispatch(
-      initializeCloudStorageFromStorage({
-        ...(folderId && { id: folderId }),
-        limit: pagination?.page_limit || 10,
-        page: pagination?.page_no || 1,
-        ...(accountType !== 'all' && {
-          account_type: accountType,
-        }),
-        searchTerm: debouncedSearchTerm || '',
-      })
-    );
-  }, [
-    dispatch,
-    folderId,
-    pagination?.page_limit,
-    pagination?.page_no,
-    accountType,
-    debouncedSearchTerm,
-  ]);
+  const getCloudStorageFiles = useCallback(
+    async (page?: number) => {
+      await dispatch(
+        initializeCloudStorageFromStorage({
+          ...(folderId && { id: folderId }),
+          limit: pagination?.page_limit || 20,
+          page: typeof page === 'number' ? page : pagination?.page_no || 1,
+          ...(accountType !== 'all' && {
+            account_type: accountType,
+          }),
+          searchTerm: debouncedSearchTerm || '',
+        })
+      );
+    },
+    [
+      dispatch,
+      folderId,
+      pagination?.page_limit,
+      pagination?.page_no,
+      accountType,
+      debouncedSearchTerm,
+    ]
+  );
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
@@ -188,7 +192,7 @@ const useDashboard = () => {
 
     dispatch(setSearchTerm(debouncedSearchTerm));
     getCloudStorageFiles();
-  }, [debouncedSearchTerm, accountType]);
+  }, [debouncedSearchTerm]);
 
   const scrollBoxRef = useRef<HTMLDivElement>(null);
 
@@ -221,7 +225,7 @@ const useDashboard = () => {
       await dispatch(
         initializeCloudStorageFromStorage({
           page: pagination.page_no + 1,
-          limit: pagination.page_limit,
+          limit: pagination.page_limit || 20,
           ...(currentFolderId && { id: currentFolderId }),
           ...(accountType !== 'all' && {
             account_type: accountType,
@@ -339,7 +343,7 @@ const useDashboard = () => {
           await dispatch(
             initializeCloudStorageFromStorage({
               ...(folderId && { id: folderId }),
-              limit: pagination?.page_limit || 10,
+              limit: pagination?.page_limit || 20,
               page: pagination?.page_no || 1,
               ...(accountType !== 'all' && {
                 account_type: accountType,
@@ -484,7 +488,7 @@ const useDashboard = () => {
         await dispatch(
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
+            limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
             ...(accountType !== 'all' && {
               account_type: accountType,
@@ -513,7 +517,7 @@ const useDashboard = () => {
         await dispatch(
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
+            limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
             ...(accountType !== 'all' && {
               account_type: accountType,
@@ -549,7 +553,7 @@ const useDashboard = () => {
         await dispatch(
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
+            limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
             ...(accountType !== 'all' && {
               account_type: accountType,
@@ -778,7 +782,7 @@ const useDashboard = () => {
         await dispatch(
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
+            limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
             ...(accountType !== 'all' && {
               account_type: accountType,
@@ -932,6 +936,8 @@ const useDashboard = () => {
 
     allIds,
     lastSelectedIndex,
+    loadMoreFiles,
+    pagination
   };
 };
 

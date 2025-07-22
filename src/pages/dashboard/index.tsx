@@ -89,6 +89,8 @@ const Dashboard = () => {
     searchTerm,
     allIds,
     lastSelectedIndex,
+    loadMoreFiles,
+    pagination,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -242,9 +244,7 @@ const Dashboard = () => {
             </Box>
             <Select
               value={accountType}
-              onChange={(value: AccountType | 'all') =>
-                handleAccountTypeChange(value)
-              }
+              onChange={handleAccountTypeChange}
               data={[
                 { value: 'all', label: 'All Accounts' },
                 { value: 'google_drive', label: 'Google Drive' },
@@ -275,22 +275,29 @@ const Dashboard = () => {
             }}
           />
         ) : (
-          <FileGrid
-            {...{
-              files: regularFiles,
-              handleSelect,
-              selectedIds,
-              folders,
-              handleUnselectAll,
-              getIndexById,
-              setLastSelectedIndex,
-              setSelectedIds,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-              allIds,
-              lastSelectedIndex,
-            }}
-          />
+          <>
+            <FileGrid
+              {...{
+                files: regularFiles,
+                handleSelect,
+                selectedIds,
+                folders,
+                handleUnselectAll,
+                getIndexById,
+                setLastSelectedIndex,
+                setSelectedIds,
+                handleMenuItemClick,
+                handleRowDoubleClick,
+                allIds,
+                lastSelectedIndex,
+              }}
+            />
+            {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button mt={20} onClick={loadMoreFiles}>
+                Load More
+              </Button>
+            ) : null}
+          </>
         )}
       </Box>
       {/* </ScrollArea> */}
