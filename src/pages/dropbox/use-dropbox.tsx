@@ -132,8 +132,6 @@ const useDropbox = () => {
   const folderIdPath = params['*']
     ? params['*'].split('/').filter(Boolean)
     : [];
-  // const folderId = getLocalStorage('folderId');
-  // console.log("folder id path-", folderIdPath)
   const folderId = folderIdPath?.length
     ? folderIdPath[folderIdPath.length - 1]
     : '';
