@@ -37,8 +37,9 @@ type CloudStorageState = {
   currentFolderId: string | null;
   currentPath: Array<{ id?: string; name: string }>;
   uploadLoading: boolean;
-  accountType: AccountType | 'all';
+  accountId: string;
   searchTerm: string;
+  navigateLoading: boolean;
 };
 
 const initialState: CloudStorageState = {
@@ -51,8 +52,9 @@ const initialState: CloudStorageState = {
     ? JSON.parse(localStorage.getItem('cloudStoragePath') || '')
     : [],
   uploadLoading: false,
-  accountType: 'all',
+  accountId: 'all',
   searchTerm: '',
+  navigateLoading: false,
 };
 
 export const fetchCloudStorageFiles = createAsyncThunk(
@@ -131,7 +133,7 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
       limit?: number;
       id?: string;
       searchTerm?: string;
-      account_type?: string;
+      account_id?: string;
     },
     { dispatch }
   ) => {
@@ -149,7 +151,6 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
             name: lastFolder.name,
             page: data.page ?? defaultPage,
             limit: data.limit ?? defaultLimit,
-            account_type: lastFolder.account_type,
             searchTerm: data.searchTerm,
           })
         );
@@ -161,7 +162,7 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
           id: data.id,
           page: data.page ?? defaultPage,
           limit: data.limit ?? defaultLimit,
-          account_type: data.account_type as AccountType,
+          account_id: data.account_id,
           searchTerm: data.searchTerm,
         })
       );
@@ -246,8 +247,8 @@ export const cloudStorageSlice = createSlice({
   name: 'cloudStorage',
   initialState,
   reducers: {
-    setAccountType: (state, action) => {
-      state.accountType = action.payload;
+    setAccountId: (state, action) => {
+      state.accountId = action.payload;
     },
     setSearchTerm: (state, action) => {
       state.searchTerm = action.payload;
@@ -288,7 +289,7 @@ export const cloudStorageSlice = createSlice({
         state.pagination = null;
       })
       .addCase(navigateToFolder.pending, state => {
-        state.loading = true;
+        state.navigateLoading = true;
         state.error = null;
       })
       .addCase(navigateToFolder.fulfilled, (state, action) => {
@@ -313,11 +314,12 @@ export const cloudStorageSlice = createSlice({
             ];
           }
         }
+        state.navigateLoading = false;
         setLocalStorage('cloudStoragePath', state.currentPath);
         setLocalStorage('folderId', state.currentFolderId);
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
-        state.loading = false;
+        state.navigateLoading = false;
         state.error = action.payload as string;
         state.currentFolderId = null;
         state.currentPath = [];
@@ -353,7 +355,7 @@ export const cloudStorageSlice = createSlice({
   },
 });
 
-export const { resetCloudStorageFolder, setAccountType, setSearchTerm } =
+export const { resetCloudStorageFolder, setAccountId, setSearchTerm } =
   cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

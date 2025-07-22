@@ -23,10 +23,9 @@ import {
   removeCloudStorageFiles,
   renameCloudStorageFile,
   resetCloudStorageFolder,
-  setAccountType,
+  setAccountId,
   setSearchTerm,
   uploadCloudStorageFiles,
-  type AccountType,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -103,9 +102,11 @@ const useDashboard = () => {
     currentFolderId,
     currentPath,
     uploadLoading,
-    accountType,
+    accountId,
     searchTerm,
+    navigateLoading,
   } = useAppSelector(state => state.cloudStorage);
+  const { checkStorageDetails } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
 
   const folderMethods = useForm<FolderFormData>({
@@ -136,10 +137,25 @@ const useDashboard = () => {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
 
-  const handleAccountTypeChange = (value: AccountType | 'all') => {
-    dispatch(setAccountType(value as AccountType | 'all'));
-    getCloudStorageFiles(1);
-  };
+  const accountOptions = useMemo(() => {
+    if (checkStorageDetails && checkStorageDetails.result?.length) {
+      const options = checkStorageDetails?.result?.map(account => ({
+        value: account.id,
+        label: account.account_name,
+      }));
+      return [{ value: 'all', label: 'All Accounts' }, ...options];
+    }
+    return [{ value: 'all', label: 'All Accounts' }];
+  }, [checkStorageDetails]);
+
+  const handleAccountTypeChange = useCallback(
+    (value: string | null) => {
+      if (value) {
+        dispatch(setAccountId(value));
+      }
+    },
+    [dispatch]
+  );
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
@@ -152,8 +168,8 @@ const useDashboard = () => {
           ...(folderId && { id: folderId }),
           limit: pagination?.page_limit || 20,
           page: typeof page === 'number' ? page : pagination?.page_no || 1,
-          ...(accountType !== 'all' && {
-            account_type: accountType,
+          ...(accountId !== 'all' && {
+            account_id: accountId,
           }),
           searchTerm: debouncedSearchTerm || '',
         })
@@ -164,7 +180,7 @@ const useDashboard = () => {
       folderId,
       pagination?.page_limit,
       pagination?.page_no,
-      accountType,
+      accountId,
       debouncedSearchTerm,
     ]
   );
@@ -191,8 +207,12 @@ const useDashboard = () => {
     }
 
     dispatch(setSearchTerm(debouncedSearchTerm));
-    getCloudStorageFiles();
-  }, [debouncedSearchTerm]);
+    if (accountId !== 'all') {
+      getCloudStorageFiles(1);
+    } else {
+      getCloudStorageFiles();
+    }
+  }, [debouncedSearchTerm, accountId]);
 
   const scrollBoxRef = useRef<HTMLDivElement>(null);
 
@@ -227,8 +247,8 @@ const useDashboard = () => {
           page: pagination.page_no + 1,
           limit: pagination.page_limit || 20,
           ...(currentFolderId && { id: currentFolderId }),
-          ...(accountType !== 'all' && {
-            account_type: accountType,
+          ...(accountId !== 'all' && {
+            account_id: accountId,
           }),
           searchTerm: debouncedSearchTerm || '',
         })
@@ -346,8 +366,8 @@ const useDashboard = () => {
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
               page: pagination?.page_no || 1,
-              ...(accountType !== 'all' && {
-                account_type: accountType,
+              ...(accountId !== 'all' && {
+                account_id: accountId,
               }),
               searchTerm: debouncedSearchTerm || '',
             })
@@ -491,8 +511,8 @@ const useDashboard = () => {
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
+            ...(accountId !== 'all' && {
+              account_id: accountId,
             }),
             searchTerm: debouncedSearchTerm || '',
           })
@@ -520,8 +540,8 @@ const useDashboard = () => {
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
+            ...(accountId !== 'all' && {
+              account_id: accountId,
             }),
             searchTerm: debouncedSearchTerm || '',
           })
@@ -556,8 +576,8 @@ const useDashboard = () => {
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
+            ...(accountId !== 'all' && {
+              account_id: accountId,
             }),
             searchTerm: debouncedSearchTerm || '',
           })
@@ -785,8 +805,8 @@ const useDashboard = () => {
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
             page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
+            ...(accountId !== 'all' && {
+              account_id: accountId,
             }),
             searchTerm: debouncedSearchTerm || '',
           })
@@ -930,7 +950,7 @@ const useDashboard = () => {
     handleScroll,
     scrollBoxRef,
     navigate,
-    accountType,
+    accountId,
     searchTerm: localSearchTerm,
     handleAccountTypeChange,
     handleSearchChange,
@@ -939,6 +959,8 @@ const useDashboard = () => {
     lastSelectedIndex,
     loadMoreFiles,
     pagination,
+    accountOptions,
+    navigateLoading,
   };
 };
 

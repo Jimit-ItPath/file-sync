@@ -16,6 +16,7 @@ import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
 import UploadProgress from './components/UploadProgress';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
+import { LoaderOverlay } from '../../components/loader';
 
 const controlBoxStyles = {
   height: 40,
@@ -82,7 +83,7 @@ const Dashboard = () => {
     removeFilesLoading,
     handleScroll,
     scrollBoxRef,
-    accountType,
+    accountId,
     handleAccountTypeChange,
     handleSearchChange,
     searchTerm,
@@ -90,6 +91,8 @@ const Dashboard = () => {
     lastSelectedIndex,
     loadMoreFiles,
     pagination,
+    accountOptions,
+    navigateLoading,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -97,7 +100,7 @@ const Dashboard = () => {
 
   return (
     <Box>
-      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
+      <LoaderOverlay visible={navigateLoading} opacity={1} />
       {/* <ScrollArea> */}
       <Box
         px={32}
@@ -242,14 +245,10 @@ const Dashboard = () => {
               />
             </Box>
             <Select
-              value={accountType}
+              data={accountOptions}
+              value={accountId}
               onChange={handleAccountTypeChange}
-              data={[
-                { value: 'all', label: 'All Accounts' },
-                { value: 'google_drive', label: 'Google Drive' },
-                { value: 'dropbox', label: 'Dropbox' },
-                { value: 'onedrive', label: 'OneDrive' },
-              ]}
+              placeholder="Select account type"
               style={{ width: '150px' }}
             />
             <TextInput
