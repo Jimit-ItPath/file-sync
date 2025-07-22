@@ -1,15 +1,23 @@
-import { Stack, Group } from '@mantine/core';
+import { Stack, Group, Text, ActionIcon } from '@mantine/core';
 import { Button, Form, Input } from '../../../components';
 import useLogin from './use-login';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
+import { ICONS } from '../../../assets/icons';
 
-export const LoginForm = () => {
+interface LoginFormProps {
+  onBack: () => void;
+}
+
+export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
   const { loginFormData, isLoading, handleLoginSubmit, methods } = useLogin();
 
   return (
     <Form methods={methods} onSubmit={handleLoginSubmit}>
       <Stack gap={16}>
+        <ActionIcon radius={'50%'} onClick={onBack}>
+          <ICONS.IconArrowLeft size={18} />
+        </ActionIcon>
         {loginFormData.map(
           ({ id, label, placeholder, type, error, name, isRequired }) => (
             <Input
@@ -51,6 +59,15 @@ export const LoginForm = () => {
         >
           Log in
         </Button>
+        <Text ta="center" fz="sm" c="dimmed">
+          Don't have an account?{' '}
+          <Link
+            to={AUTH_ROUTES.REGISTER.url}
+            style={{ textDecoration: 'none', color: '#0284c7' }}
+          >
+            Sign up
+          </Link>
+        </Text>
       </Stack>
     </Form>
   );

@@ -3,7 +3,13 @@ import { ICONS } from '../../../assets/icons';
 import { Button } from '../../../components';
 import useSocialLogin from '../useSocialLogin';
 
-export const SocialLoginButtons: React.FC = () => {
+interface SocialLoginButtonsProps {
+  onEmailClick: () => void;
+}
+
+export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
+  onEmailClick,
+}) => {
   const { handleFacebookLogin, handleGoogleLogin } = useSocialLogin();
 
   return (
@@ -31,6 +37,18 @@ export const SocialLoginButtons: React.FC = () => {
         type="button"
       >
         Continue with Facebook
+      </Button>
+      <Button
+        onClick={onEmailClick}
+        variant="default"
+        leftSection={<ICONS.IconMail size={18} color="#0284c7" />}
+        fullWidth
+        size="md"
+        radius="md"
+        style={{ fontWeight: 500 }}
+        type="button"
+      >
+        Continue with Email
       </Button>
     </Stack>
   );

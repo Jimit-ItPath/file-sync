@@ -107,7 +107,12 @@ const Profile = () => {
                     <ICONS.IconUser size={60} />
                   </Avatar>
                   {preview && isHovering && (
-                    <Tooltip label="Remove avatar" position="bottom" withArrow>
+                    <Tooltip
+                      label="Remove avatar"
+                      position="bottom"
+                      withArrow
+                      fz={'xs'}
+                    >
                       <ActionIcon
                         variant="filled"
                         color="red"
@@ -293,7 +298,7 @@ const Profile = () => {
                         withBorder
                         radius="md"
                         p="lg"
-                        bg={accountConfig.bg}
+                        // bg={accountConfig.bg}
                         style={{
                           height: '100%',
                           display: 'flex',
@@ -325,6 +330,7 @@ const Profile = () => {
                             </Group>
                             <Tooltip
                               label={`Disconnect ${accountConfig.label}`}
+                              fz={'xs'}
                             >
                               <ActionIcon
                                 variant="subtle"

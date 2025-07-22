@@ -84,6 +84,7 @@ import {
   IconCloudOff,
   IconList,
   IconGridDots,
+  IconArrowLeft
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -172,4 +173,5 @@ export const ICONS = {
   IconCloudOff,
   IconList,
   IconGridDots,
+  IconArrowLeft
 };

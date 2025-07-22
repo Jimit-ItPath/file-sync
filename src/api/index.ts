@@ -217,19 +217,16 @@ export const api = {
       }),
   },
   dropbox: {
-    hasAccess: () =>
+    getFiles: (params: {
+      account_id: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    }) =>
       client({
-        url: `/dropbox/has-access`,
-        method: METHODS.GET,
-      }),
-    auth: () =>
-      client({
-        url: '/dropbox/auth',
-        method: METHODS.GET,
-      }),
-    getFiles: (params: { cursor?: string }) =>
-      client({
-        url: '/dropbox/list',
+        url: '/cloud-storage',
         method: METHODS.GET,
         params,
       }),
@@ -237,11 +234,11 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { folder_name: string };
+      data: { name: string; id?: string | null; account_id: number | string };
       [key: string]: any;
     }) =>
       client({
-        url: '/dropbox/create-folder',
+        url: '/cloud-storage/create-folder',
         method: METHODS.POST,
         data,
         ...configs,
@@ -254,7 +251,7 @@ export const api = {
       [key: string]: any;
     }) =>
       client({
-        url: '/dropbox/rename-item',
+        url: '/cloud-storage/rename',
         method: METHODS.POST,
         data,
         ...configs,
@@ -267,7 +264,7 @@ export const api = {
       [key: string]: any;
     }) =>
       client({
-        url: '/dropbox/upload-file',
+        url: '/cloud-storage/upload-file',
         method: METHODS.POST,
         data,
         ...configs,
@@ -276,12 +273,27 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { id: string };
+      data: { ids: string[] };
       [key: string]: any;
     }) =>
       client({
-        url: `/dropbox/delete-item/${data.id}`,
+        url: `/cloud-storage/delete`,
         method: METHODS.DELETE,
+        data,
+        ...configs,
+      }),
+    downloadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/download`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
         ...configs,
       }),
   },

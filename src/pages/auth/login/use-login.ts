@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const useLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [showLoginForm, setShowLoginForm] = useState(false);
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -37,6 +38,10 @@ const useLogin = () => {
     reset,
     formState: { errors },
   } = methods;
+
+  const toggleLoginForm = useCallback(() => {
+    setShowLoginForm(prev => !prev);
+  }, []);
 
   const [onSubmit, loading] = useAsyncOperation(async (data: LoginFormData) => {
     const response = await api.auth.login({
@@ -95,6 +100,8 @@ const useLogin = () => {
     handleLoginSubmit: handleSubmit(onSubmit),
     isLoading: loading,
     methods,
+    showLoginForm,
+    toggleLoginForm,
   };
 };
 

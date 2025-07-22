@@ -245,7 +245,6 @@ const useDashboard = () => {
       id: item.id,
       name: item.name,
       type: item.entry_type === 'folder' ? 'folder' : 'file',
-      // icon: getFileIcon(item.name, item.mime_type),
       icon: getFileIcon({
         entry_type: item.entry_type,
         mime_type: item.mime_type,
@@ -253,7 +252,9 @@ const useDashboard = () => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: formatDate(item.modified_at),
+      lastModified: item.modified_at
+        ? formatDate(item.modified_at)
+        : formatDate(item.updatedAt),
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
@@ -332,27 +333,33 @@ const useDashboard = () => {
   const [createFolder, createFolderLoading] = useAsyncOperation(
     async (folderName: string) => {
       try {
-        await dispatch(
+        const res = await dispatch(
           createCloudStorageFolder({
             name: folderName,
             ...(currentFolderId && {
               id: currentFolderId,
             }),
           })
-        ).unwrap();
-        resetFolderForm();
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
-            page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
         );
-        setModalOpen(false);
+        if (res?.payload?.success) {
+          resetFolderForm();
+          await dispatch(
+            initializeCloudStorageFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 10,
+              page: pagination?.page_no || 1,
+              ...(accountType !== 'all' && {
+                account_type: accountType,
+              }),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+          notifications.show({
+            message: res?.payload?.message || 'Folder created successfully',
+            color: 'green',
+          });
+          setModalOpen(false);
+        }
       } catch (error: any) {
         notifications.show({
           message: error || 'Failed to create folder',

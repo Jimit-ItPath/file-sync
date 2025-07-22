@@ -156,68 +156,6 @@ const GoogleDrive = () => {
               value={layout}
               onChange={(value: 'list' | 'grid') => switchLayout(value)}
             />
-            {/* <SegmentedControl
-              value={layout}
-              onChange={(value: string) =>
-                switchLayout(value as 'list' | 'grid')
-              }
-              p={4}
-              color="#1c7ed6"
-              data={[
-                {
-                  value: 'list',
-                  label: (
-                    <Tooltip label="List View" withArrow fz="xs">
-                      <ICONS.IconList
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'list' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-                {
-                  value: 'grid',
-                  label: (
-                    <Tooltip label="Grid View" withArrow fz="xs">
-                      <ICONS.IconGridDots
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'grid' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-              ]}
-              styles={() => ({
-                root: {
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: 8,
-                  padding: '4px',
-                  height: '40px', // Match the height of the SelectionBar
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering
-                },
-                control: {
-                  height: '32px', // Adjusted for compactness
-                  width: '40px', // Make controls square for better alignment
-                  display: 'flex',
-                  alignItems: 'center', // Center icon vertically
-                  justifyContent: 'center', // Center icon horizontally
-                  borderRadius: 6,
-                  transition: 'background-color 0.2s ease',
-                },
-                active: {
-                  backgroundColor: '#1c7ed6', // Active background color
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering in active state
-                  justifyContent: 'center', // Ensure horizontal centering in active state
-                },
-                label: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-              })}
-            /> */}
           </Group>
           <Group align="center" w={'100%'} mt={16}>
             <Box style={{ flexGrow: 1 }}>
@@ -318,8 +256,8 @@ const GoogleDrive = () => {
           <>
             <Dropzone
               onFilesSelected={setUploadedFiles}
-              maxSize={5 * 1024 ** 2}
-              // multiple={false}
+              // maxSize={5 * 1024 ** 2}
+              multiple={true}
               mb="md"
               getFileIcon={getFileIcon}
               files={uploadedFiles}

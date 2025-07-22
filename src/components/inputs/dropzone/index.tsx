@@ -9,7 +9,12 @@ import { Image } from '../../image';
 
 interface CustomDropzoneProps extends Partial<DropzoneProps> {
   onFilesSelected: (files: File[]) => void;
-  getFileIcon: (mimeType: string) => React.ReactNode;
+  getFileIcon: (item: {
+    entry_type: string;
+    mime_type?: string;
+    file_extension?: string | null;
+    name?: string;
+  }) => (size: number) => React.ReactNode;
   files: File[];
 }
 
@@ -58,7 +63,12 @@ export function Dropzone({
               alt={file.name}
             />
           ) : (
-            getFileIcon(file.type)
+            getFileIcon({
+              entry_type: file.type,
+              mime_type: file.type,
+              file_extension: file.type,
+              name: file.name,
+            })(40)
           )}
         </Box>
         <Text
@@ -75,8 +85,7 @@ export function Dropzone({
   return (
     <MantineDropzone
       onDrop={files => onFilesSelected(files)}
-      maxSize={5 * 1024 ** 2}
-      accept={['image/*', 'application/pdf']}
+      multiple={props.multiple}
       {...props}
     >
       <Group

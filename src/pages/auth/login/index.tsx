@@ -1,20 +1,13 @@
-import {
-  Grid,
-  Paper,
-  Stack,
-  Title,
-  Text,
-  Divider,
-  Box,
-  Group,
-} from '@mantine/core';
+import { Grid, Paper, Stack, Title, Text, Box } from '@mantine/core';
 import { FeatureList } from './FeatureList';
 import { LoginForm } from './LoginForm';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
 import { SocialLoginButtons } from '../register/SocialLoginButtons';
+import useLogin from './use-login';
 
 export default function Login() {
+  const { showLoginForm, toggleLoginForm } = useLogin();
   return (
     <Grid gutter={0} style={{ minHeight: '100vh' }}>
       <Grid.Col span={{ base: 12, md: 6 }}>
@@ -45,10 +38,26 @@ export default function Login() {
                   Sign in to your account
                 </Title>
                 <Text ta="center" c="dimmed" fz="md">
-                  Welcome back! Please enter your details.
+                  Welcome back! {showLoginForm && 'Please enter your details.'}
                 </Text>
               </Box>
-              <SocialLoginButtons />
+              {showLoginForm ? (
+                <LoginForm onBack={toggleLoginForm} />
+              ) : (
+                <>
+                  <SocialLoginButtons onEmailClick={toggleLoginForm} />
+                  <Text ta="center" fz="sm" c="dimmed">
+                    Don't have an account?{' '}
+                    <Link
+                      to={AUTH_ROUTES.REGISTER.url}
+                      style={{ textDecoration: 'none', color: '#0284c7' }}
+                    >
+                      Sign up
+                    </Link>
+                  </Text>
+                </>
+              )}
+              {/* <SocialLoginButtons />
               <Group align="center" gap={8} mb={8}>
                 <Divider w="100%" />
                 <Text c="dimmed" fz="sm" px={8}>
@@ -65,7 +74,7 @@ export default function Login() {
                 >
                   Sign up
                 </Link>
-              </Text>
+              </Text> */}
             </Stack>
           </Box>
         </Paper>

@@ -238,7 +238,6 @@ const useGoogleDrive = () => {
       id: item.id,
       name: item.name,
       type: item.entry_type === 'folder' ? 'folder' : 'file',
-      // icon: getFileIcon(item.name, item.mime_type),
       icon: getFileIcon({
         entry_type: item.entry_type,
         mime_type: item.mime_type,
@@ -246,7 +245,9 @@ const useGoogleDrive = () => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: formatDate(item.modified_at),
+      lastModified: item.modified_at
+        ? formatDate(item.modified_at)
+        : formatDate(item.updatedAt),
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
@@ -319,7 +320,7 @@ const useGoogleDrive = () => {
   const [createFolder, createFolderLoading] = useAsyncOperation(
     async (folderName: string) => {
       try {
-        await dispatch(
+        const res = await dispatch(
           createGoogleDriveFolder({
             name: folderName,
             ...(currentFolderId && {
@@ -327,18 +328,24 @@ const useGoogleDrive = () => {
             }),
             account_id: Number(accountId),
           })
-        ).unwrap();
-        resetFolderForm();
-        await dispatch(
-          initializeGoogleDriveFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
-            page: pagination?.page_no || 1,
-            account_id: Number(accountId),
-            searchTerm: debouncedSearchTerm || '',
-          })
         );
-        setModalOpen(false);
+        if (res?.payload?.success) {
+          resetFolderForm();
+          await dispatch(
+            initializeGoogleDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 10,
+              page: pagination?.page_no || 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+          notifications.show({
+            message: res?.payload?.message || 'Folder created successfully',
+            color: 'green',
+          });
+          setModalOpen(false);
+        }
       } catch (error: any) {
         notifications.show({
           message: error || 'Failed to create folder',

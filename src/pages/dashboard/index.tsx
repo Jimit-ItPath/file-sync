@@ -334,8 +334,8 @@ const Dashboard = () => {
           <>
             <Dropzone
               onFilesSelected={setUploadedFiles}
-              maxSize={5 * 1024 ** 2}
-              // multiple={false}
+              // maxSize={5 * 1024 ** 2}
+              multiple={true}
               mb="md"
               getFileIcon={getFileIcon}
               files={uploadedFiles}
