@@ -37,7 +37,6 @@ const FileTable: React.FC<FileTableProps> = ({
   onSelectAll = () => {},
   onSelectRow = () => {},
   selectedIds = [],
-  currentPath = [],
   handleMenuItemClick = () => {},
   handleRowDoubleClick = () => {},
 }) => {

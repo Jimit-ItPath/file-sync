@@ -58,7 +58,7 @@ const Register = () => {
 
               <Group align="center" gap={8} mb={8}>
                 <Divider w="100%" />
-                <Text c="dimmed" fz="sm" px={8}>
+                <Text ta={'center'} w={'100%'} c="dimmed" fz="sm" px={8}>
                   or create an account with email
                 </Text>
                 <Divider w="100%" />

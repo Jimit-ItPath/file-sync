@@ -3,8 +3,8 @@ import { FeatureList } from './FeatureList';
 import { LoginForm } from './LoginForm';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
-import { SocialLoginButtons } from '../register/SocialLoginButtons';
 import useLogin from './use-login';
+import { SocialLoginButtons } from './SocialLoginButtons';
 
 export default function Login() {
   const { showLoginForm, toggleLoginForm } = useLogin();
