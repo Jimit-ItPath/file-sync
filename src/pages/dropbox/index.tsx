@@ -86,7 +86,7 @@ const Dropbox = () => {
     allIds,
     lastSelectedIndex,
     loadMoreFiles,
-    pagination
+    pagination,
   } = useDropbox();
   const { connectedAccounts } = useSidebar();
 

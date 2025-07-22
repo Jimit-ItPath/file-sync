@@ -16,7 +16,6 @@ import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
 import UploadProgress from './components/UploadProgress';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
-import type { AccountType } from '../../store/slices/cloudStorage.slice';
 
 const controlBoxStyles = {
   height: 40,

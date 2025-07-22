@@ -43,7 +43,7 @@ export type FileType = {
   owner: { name: string; avatar: string | null; initials: string };
   lastModified: string;
   size: string | null;
-  preview?: string;
+  preview?: string | null;
   mimeType?: string;
   fileExtension?: string | null;
   download_url?: string | null;
@@ -227,7 +227,8 @@ const useOneDrive = () => {
     return oneDriveFiles.map(item => ({
       id: item.id,
       name: item.name,
-      type: item.entry_type === 'folder' ? 'folder' : 'file',
+      type:
+        item.entry_type === 'folder' ? 'folder' : ('file' as 'file' | 'folder'),
       icon: getFileIcon({
         entry_type: item.entry_type,
         mime_type: item.mime_type,

@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { ERROR_MESSAGES } from '../utils/constants';
 import { API } from '../configs/env';
-import { AUTH_ROUTES } from '../routing/routes';
 
 export const METHODS = {
   POST: 'post',

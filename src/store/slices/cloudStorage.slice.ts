@@ -176,9 +176,7 @@ export const createCloudStorageFolder = createAsyncThunk(
       const response = await api.cloudStorage.createFolder({ data });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to create folder'
-      );
+      return rejectWithValue(error?.message || 'Failed to create folder');
     }
   }
 );
@@ -190,9 +188,7 @@ export const renameCloudStorageFile = createAsyncThunk(
       const response = await api.cloudStorage.renameFile({ data });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to rename file'
-      );
+      return rejectWithValue(error?.message || 'Failed to rename file');
     }
   }
 );
@@ -216,9 +212,7 @@ export const uploadCloudStorageFiles = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to upload files'
-      );
+      return rejectWithValue(error?.message || 'Failed to upload files');
     }
   }
 );
@@ -230,9 +224,7 @@ export const removeCloudStorageFiles = createAsyncThunk(
       const response = await api.cloudStorage.deleteFile({ data });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to remove files'
-      );
+      return rejectWithValue(error?.message || 'Failed to remove files');
     }
   }
 );

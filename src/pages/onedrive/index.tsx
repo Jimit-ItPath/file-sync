@@ -187,7 +187,6 @@ const OneDrive = () => {
             {...{
               files,
               handleSelect,
-              // handleKeyDown,
               onSelectAll,
               onSelectRow,
               selectedIds,
