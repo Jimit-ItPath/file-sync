@@ -459,4 +459,42 @@ export const api = {
         ...configs,
       }),
   },
+  adminUsers: {
+    getUsers: (params: {
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      client({
+        url: `/admin/users`,
+        method: METHODS.GET,
+        params,
+      }),
+    blockUser: ({
+      data,
+      ...configs
+    }: {
+      data: { id: number; is_blocked: boolean };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/admin/block-user`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    inviteUser: ({
+      data,
+      ...configs
+    }: {
+      data: { email: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/admin/invite-user`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+  },
 };

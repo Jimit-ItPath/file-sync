@@ -44,6 +44,11 @@ export const AUTH_ROUTES = {
     path: '/oauth-callback',
     url: '/oauth-callback',
   },
+  ADMIN_LOGIN: {
+    title: 'Admin Login',
+    path: '/admin',
+    url: '/admin',
+  },
 };
 
 const DASHBOARD_PATH = '/dashboard';
@@ -81,5 +86,17 @@ export const PRIVATE_ROUTES = {
     roles: Object.values(ROLES),
     title: 'Profile',
     url: '/profile',
+  },
+  ADMIN_DASHBOARD: {
+    path: '/admin/dashboard',
+    roles: Object.values(ROLES),
+    title: 'Admin Dashboard',
+    url: '/admin/dashboard',
+  },
+  USERS: {
+    path: '/users',
+    roles: Object.values(ROLES),
+    title: 'Users',
+    url: '/users',
   },
 };

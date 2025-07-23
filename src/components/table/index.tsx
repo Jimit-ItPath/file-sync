@@ -12,7 +12,6 @@ import {
   TableTd,
 } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
-import { ICONS } from '../../assets/icons';
 import { Card } from '../card';
 
 type Column<T> = {
@@ -101,7 +100,7 @@ export function Table<T extends Record<string, any>>({
                         {typeof label === 'string' ? (
                           <Group gap={4}>
                             {label}
-                            <ICONS.IconChevronDown size={14} color="#9ca3af" />
+                            {/* <ICONS.IconChevronDown size={14} color="#9ca3af" /> */}
                           </Group>
                         ) : (
                           label

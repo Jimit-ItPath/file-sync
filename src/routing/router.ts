@@ -29,6 +29,9 @@ import GoogleDrive from '../pages/google-drive';
 import Dropbox from '../pages/dropbox';
 import OneDrive from '../pages/onedrive';
 import Profile from '../pages/user/profile';
+import AdminLogin from '../pages/auth/admin/AdminLogin';
+import AdminDashboard from '../pages/admin/dashboard';
+import AdminUsers from '../pages/admin/users';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -92,7 +95,7 @@ export const router = createBrowserRouter([
       { ...AUTH_ROUTES.RESET_PASSWORD, Component: ResetPassword },
       { ...AUTH_ROUTES.VERIFY_USER, Component: VerifyUser },
       { ...AUTH_ROUTES.OAUTH_CALLBACK, Component: OAuthCallback },
-      // { ...PRIVATE_ROUTES.DASHBOARD, Component: Dashboard },
+      { ...AUTH_ROUTES.ADMIN_LOGIN, Component: AdminLogin },
     ],
   },
   {
@@ -124,6 +127,16 @@ export const router = createBrowserRouter([
         ...PRIVATE_ROUTES.PROFILE,
         Component: Profile,
         loader: dashboardPageLoader(PRIVATE_ROUTES.PROFILE.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.ADMIN_DASHBOARD,
+        Component: AdminDashboard,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.ADMIN_DASHBOARD.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.USERS,
+        Component: AdminUsers,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.USERS.roles),
       },
     ],
   },
