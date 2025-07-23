@@ -243,7 +243,7 @@ export const downloadFiles = createAsyncThunk(
   }
 );
 
-export const cloudStorageSlice = createSlice({
+const cloudStorageSlice = createSlice({
   name: 'cloudStorage',
   initialState,
   reducers: {

@@ -253,7 +253,7 @@ export const downloadGoogleDriveFiles = createAsyncThunk(
   }
 );
 
-export const googleDriveSlice = createSlice({
+const googleDriveSlice = createSlice({
   name: 'googleDrive',
   initialState,
   reducers: {

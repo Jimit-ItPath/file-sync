@@ -1,5 +1,3 @@
-// FILEPATH: d:/projects/file-sync/src/pages/auth/login/FeatureList.tsx
-
 import {
   Paper,
   Group,

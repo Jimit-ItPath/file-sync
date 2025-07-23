@@ -251,7 +251,7 @@ export const downloadDropboxFiles = createAsyncThunk(
   }
 );
 
-export const dropboxSlice = createSlice({
+const dropboxSlice = createSlice({
   name: 'dropbox',
   initialState,
   reducers: {

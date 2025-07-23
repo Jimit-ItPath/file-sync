@@ -68,9 +68,8 @@ const accountTypeConfig = {
 const useSidebar = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { connectedAccounts, loading, checkStorageDetails } = useAppSelector(
-    state => state.auth
-  );
+  const { connectedAccounts, loading, checkStorageDetails, user } =
+    useAppSelector(state => state.auth);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState(false);
   const [hoveredAccountId, setHoveredAccountId] = useState<number | null>(null);
@@ -244,6 +243,7 @@ const useSidebar = () => {
     hoveredAccountId,
     cloudAccountsWithStorage,
     checkStorageDetails,
+    user,
   };
 };
 

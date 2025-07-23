@@ -253,7 +253,7 @@ export const downloadOneDriveFiles = createAsyncThunk(
   }
 );
 
-export const onedriveSlice = createSlice({
+const onedriveSlice = createSlice({
   name: 'onedrive',
   initialState,
   reducers: {

@@ -12,6 +12,7 @@ import { notifications } from '@mantine/notifications';
 import { useAppDispatch } from '../../../store';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import { ROLES } from '../../../utils/constants';
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
@@ -58,22 +59,30 @@ const useLogin = () => {
       },
     });
     if (response?.data?.success || response?.status === 200) {
-      const decodeData = decodeToken(response?.data?.data?.access_token);
-      localStorage.setItem('token', response?.data?.data?.access_token);
-      dispatch(
-        updateUser({
-          token: response?.data?.data?.access_token,
-          activeUI: '',
-          isTemporary: response?.data?.data?.isTemporary || false,
-          user: { ...decodeData },
-        })
-      );
-      notifications.show({
-        message: response?.data?.message || 'Login Successful',
-        color: 'green',
-      });
-      reset();
-      navigate(PRIVATE_ROUTES.DASHBOARD.url);
+      const decodeData: any = decodeToken(response?.data?.data?.access_token);
+      if (decodeData?.user?.role === ROLES.ADMIN) {
+        notifications.show({
+          message: 'Invalid credentials',
+          color: 'red',
+        });
+        return;
+      } else {
+        localStorage.setItem('token', response?.data?.data?.access_token);
+        dispatch(
+          updateUser({
+            token: response?.data?.data?.access_token,
+            activeUI: '',
+            isTemporary: response?.data?.data?.isTemporary || false,
+            user: { ...decodeData },
+          })
+        );
+        notifications.show({
+          message: response?.data?.message || 'Login Successful',
+          color: 'green',
+        });
+        reset();
+        navigate(PRIVATE_ROUTES.DASHBOARD.url);
+      }
     }
   });
 
@@ -111,7 +120,7 @@ const useLogin = () => {
     toggleLoginForm,
     isXs,
     isSm,
-    isMd
+    isMd,
   };
 };
 

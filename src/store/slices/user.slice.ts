@@ -2,10 +2,16 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api';
 
 type UserProfileType = {
-  email: string;
+  id: string;
   first_name: string;
   last_name: string;
-  profile: string | File;
+  email: string;
+  role: string;
+  profile: null | string;
+  verified: boolean;
+  is_blocked: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 interface UserState {
@@ -71,10 +77,14 @@ export const removeProfileImage = createAsyncThunk(
   }
 );
 
-export const userSlice = createSlice({
+const userSlice = createSlice({
   name: 'user',
   initialState,
-  reducers: {},
+  reducers: {
+    resetUserProfile: state => {
+      state.userProfile = null;
+    },
+  },
   extraReducers: builder => {
     builder
       .addCase(fetchProfile.pending, state => {
@@ -104,5 +114,7 @@ export const userSlice = createSlice({
       });
   },
 });
+
+export const { resetUserProfile } = userSlice.actions;
 
 export default userSlice.reducer;

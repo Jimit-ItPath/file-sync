@@ -15,7 +15,8 @@ declare module 'jwt-decode' {
 }
 
 export const REDIRECTION = {
-  [ROLES.ADMIN]: PRIVATE_ROUTES.DASHBOARD.url,
+  [ROLES.USER]: PRIVATE_ROUTES.DASHBOARD.url,
+  [ROLES.ADMIN]: PRIVATE_ROUTES.ADMIN_DASHBOARD.url,
 };
 
 export interface GetAuthOptions {
@@ -51,15 +52,16 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
   let role = '';
 
   if (isAuthenticated) {
-    const decodedToken = decodeToken(token);
-    role = decodedToken?.role || '';
-    // redirectUrl = role
-    //   ? cachedRedirectUrl || REDIRECTION[role]
-    //   : AUTH_ROUTES.LOGIN.url;
-    redirectUrl =
-      cachedRedirectUrl ||
-      PRIVATE_ROUTES.DASHBOARD.url ||
-      AUTH_ROUTES.LOGIN.url;
+    const decodedToken: any = decodeToken(token);
+    // role = decodedToken?.role || '';
+    role = decodedToken?.user?.role || '';
+    redirectUrl = role
+      ? cachedRedirectUrl || REDIRECTION[role]
+      : AUTH_ROUTES.LOGIN.url;
+    // redirectUrl =
+    //   cachedRedirectUrl ||
+    //   PRIVATE_ROUTES.DASHBOARD.url ||
+    //   AUTH_ROUTES.LOGIN.url;
   }
 
   if (isCacheRedirection && !isAuthenticated) {

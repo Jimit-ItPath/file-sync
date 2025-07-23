@@ -33,9 +33,21 @@ type CheckStorageDetailsType = {
   };
 };
 
+type UserType = {
+  user: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    role: string;
+  };
+  iat: number;
+  exp: number;
+};
+
 type AuthState = {
   isLoggedIn: boolean;
-  user: {};
+  user: UserType | null;
   isTemporary: boolean;
   activeUI: string;
   connectedAccounts: ConnectedAccountType[];
@@ -49,7 +61,7 @@ type AuthState = {
 
 const initialState: AuthState = {
   isLoggedIn: false,
-  user: {},
+  user: null,
   isTemporary: false,
   activeUI: '',
   connectedAccounts: [],
@@ -122,7 +134,7 @@ export const removeAccountAccess = createAsyncThunk(
   }
 );
 
-export const authSlice = createSlice({
+const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
@@ -135,6 +147,9 @@ export const authSlice = createSlice({
     },
     logout: () => {
       return { ...initialState };
+    },
+    resetUser: state => {
+      state.user = null;
     },
   },
   extraReducers: builder => {
@@ -168,5 +183,5 @@ export const authSlice = createSlice({
   },
 });
 
-export const { logout, updateUser } = authSlice.actions;
+export const { logout, updateUser, resetUser } = authSlice.actions;
 export default authSlice.reducer;

@@ -20,8 +20,9 @@ import { ConfirmModal } from '../../components/confirm-modal';
 import Icon from '../../assets/icons/icon';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { fetchProfile } from '../../store/slices/user.slice';
+import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
+import { resetUser } from '../../store/slices/auth.slice';
 
 const DashboardLayout = () => {
   usePageData();
@@ -31,12 +32,32 @@ const DashboardLayout = () => {
   const { logout } = useAuth() as any;
   const dispatch = useAppDispatch();
   const { userProfile } = useAppSelector(state => state.user);
+  // const { user } = useAppSelector(state => state.auth);
+  const navigate = useNavigate();
+  // const location = useLocation();
+  // const hasRedirectedRef = useRef(false);
 
   const getUserProfile = useCallback(async () => {
     await dispatch(fetchProfile());
   }, [dispatch]);
 
   const [getProfile] = useAsyncOperation(getUserProfile);
+
+  // useEffect(() => {
+  //   if (!hasRedirectedRef.current) {
+  //     hasRedirectedRef.current = true;
+
+  //     const role = user?.user?.role; // or get from auth state
+  //     const currentPath = location.pathname;
+
+  //     if (role === ROLES.ADMIN && !currentPath.startsWith('/admin')) {
+  //       navigate('/admin/dashboard', { replace: true });
+  //     }
+  //     // else if (role === ROLES.USER && currentPath === '/dashboard') {
+  //     //   navigate('/dashboard', { replace: true });
+  //     // }
+  //   }
+  // }, [user, navigate, location]);
 
   useEffect(() => {
     getProfile({});
@@ -58,8 +79,6 @@ const DashboardLayout = () => {
     [userProfile?.first_name, userProfile?.last_name]
   );
 
-  const navigate = useNavigate();
-
   const PROFILE_MENU_ITEMS = [
     { id: 'profile', label: 'Profile', icon: ICONS.IconUser },
     { id: 'logout', label: 'Logout', icon: ICONS.IconLogout },
@@ -76,6 +95,8 @@ const DashboardLayout = () => {
 
   const onLogoutConfirm = () => {
     logout();
+    dispatch(resetUser());
+    dispatch(resetUserProfile());
     navigate(AUTH_ROUTES.LOGIN.url);
     logoutConfirmHandler.close();
   };
