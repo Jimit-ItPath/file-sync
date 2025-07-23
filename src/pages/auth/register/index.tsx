@@ -17,8 +17,14 @@ import { Button, Form } from '../../../components';
 import useRegister from './use-register';
 
 const Register = () => {
-  const { methods, handleRegisterSubmit, isLoading, registerFormData } =
-    useRegister();
+  const {
+    methods,
+    handleRegisterSubmit,
+    isLoading,
+    registerFormData,
+    onCaptchaChange,
+    recaptchaRef,
+  } = useRegister();
 
   return (
     <Grid gutter={0} style={{ minHeight: '100vh' }}>
@@ -69,6 +75,8 @@ const Register = () => {
                   <FormFields
                     methods={methods}
                     registerFormData={registerFormData}
+                    onCaptchaChange={onCaptchaChange}
+                    recaptchaRef={recaptchaRef}
                   />
 
                   <Button

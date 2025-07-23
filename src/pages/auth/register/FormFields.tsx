@@ -1,15 +1,20 @@
 import { Group, Stack } from '@mantine/core';
 import { Input } from '../../../components';
 import { useMemo } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 type FormFieldsProps = {
   methods: any;
   registerFormData: any[];
+  recaptchaRef: React.RefObject<ReCAPTCHA | null>;
+  onCaptchaChange: (token: string | null) => void;
 };
 
 export const FormFields: React.FC<FormFieldsProps> = ({
   methods,
   registerFormData,
+  recaptchaRef,
+  onCaptchaChange = () => {},
 }) => {
   const {
     formState: { errors },
@@ -74,6 +79,11 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           />
         )
       )}
+      <ReCAPTCHA
+        ref={recaptchaRef}
+        sitekey={import.meta.env.VITE_REACT_APP_CAPTCHA_SITE_KEY || ''}
+        onChange={onCaptchaChange}
+      />
     </Stack>
   );
 };

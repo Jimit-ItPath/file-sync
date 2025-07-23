@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,6 +6,7 @@ import { api } from '../../../api';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import { notifications } from '@mantine/notifications';
 import { passwordRequirements } from '../../../utils/constants';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 // Define Zod schema for form validation
 const registerSchema = z.object({
@@ -25,9 +26,6 @@ const registerSchema = z.object({
       message:
         'Password must include uppercase, lowercase, number, and special symbol',
     }),
-  captchaVerified: z.literal(true, {
-    errorMap: () => ({ message: 'Please verify the captcha' }),
-  }),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: 'You must accept the terms and conditions' }),
   }),
@@ -37,6 +35,9 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 const useRegister = () => {
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+
   const methods = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     mode: 'onChange',
@@ -45,7 +46,6 @@ const useRegister = () => {
       lastName: '',
       email: '',
       password: '',
-      captchaVerified: false as any,
       termsAccepted: false as any,
       newsletterSubscribed: false,
     },
@@ -57,14 +57,30 @@ const useRegister = () => {
     formState: { errors },
   } = methods;
 
+  const onCaptchaChange = useCallback((token: string | null) => {
+    if (token) {
+      setCaptchaToken(token);
+    } else {
+      setCaptchaToken('');
+    }
+  }, []);
+
   const [onSubmit, loading] = useAsyncOperation(
     async (data: RegisterFormData) => {
+      if (!captchaToken) {
+        notifications.show({
+          message: 'Please verify that you are not a robot',
+          color: 'red',
+        });
+        return;
+      }
       const response = await api.auth.register({
         data: {
           first_name: data.firstName,
           last_name: data.lastName,
           email: data.email,
           password: data.password,
+          captcha_token: captchaToken,
         },
       });
 
@@ -74,6 +90,8 @@ const useRegister = () => {
           color: 'green',
         });
         reset();
+        setCaptchaToken('');
+        recaptchaRef.current?.reset();
       }
     }
   );
@@ -118,14 +136,14 @@ const useRegister = () => {
         error: errors.password?.message,
         strengthMeter: true,
       },
-      {
-        id: 'captchaVerified',
-        name: 'captchaVerified',
-        type: 'checkbox',
-        label: 'I am not a robot',
-        isRequired: true,
-        error: errors.captchaVerified?.message,
-      },
+      // {
+      //   id: 'captchaVerified',
+      //   name: 'captchaVerified',
+      //   type: 'checkbox',
+      //   label: 'Verify you are human',
+      //   isRequired: true,
+      //   error: errors.captchaVerified?.message,
+      // },
       {
         id: 'termsAccepted',
         name: 'termsAccepted',
@@ -150,6 +168,8 @@ const useRegister = () => {
     handleRegisterSubmit: handleSubmit(onSubmit),
     isLoading: loading,
     methods,
+    recaptchaRef,
+    onCaptchaChange,
   };
 };
 
