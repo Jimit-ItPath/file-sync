@@ -5,15 +5,17 @@ import useSocialLogin from '../useSocialLogin';
 
 interface SocialLoginButtonsProps {
   onEmailClick: () => void;
+  isXs: boolean;
 }
 
 export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
   onEmailClick,
+  isXs,
 }) => {
   const { handleFacebookLogin, handleGoogleLogin } = useSocialLogin();
 
   return (
-    <Stack gap={12} mb={6}>
+    <Stack gap={isXs ? 'xs' : 'sm'} mb={isXs ? 'xs' : 'sm'}>
       <Button
         onClick={handleGoogleLogin}
         variant="default"
@@ -21,7 +23,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         fullWidth
         size="md"
         radius="md"
-        style={{ fontWeight: 500 }}
+        fw={500}
         type="button"
       >
         Continue with Google
@@ -33,7 +35,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         fullWidth
         size="md"
         radius="md"
-        style={{ fontWeight: 500 }}
+        fw={500}
         type="button"
       >
         Continue with Facebook
@@ -45,7 +47,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         fullWidth
         size="md"
         radius="md"
-        style={{ fontWeight: 500 }}
+        fw={500}
         type="button"
       >
         Continue with Email

@@ -12,7 +12,6 @@ import type { FileType } from '../use-dashboard';
 import { Card, Menu, Tooltip } from '../../../components';
 import { useMediaQuery } from '@mantine/hooks';
 
-const FOLDER_CARD_HEIGHT = 70;
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
 
@@ -192,7 +191,6 @@ const FileGrid: React.FC<FileGridProps> = ({
             radius="md"
             shadow="sm"
             p="md"
-            h={FOLDER_CARD_HEIGHT}
             style={{
               display: 'flex',
               alignItems: 'center',

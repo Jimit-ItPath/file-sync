@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { persistor, store } from './store';
 import { PersistGate } from 'redux-persist/integration/react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import TawkToWidget from './widget/TawkToWidget';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Notifications position="top-right" />
             <AuthProvider>
               <Routing />
+              <TawkToWidget />
             </AuthProvider>
           </MantineProvider>
         </PersistGate>

@@ -10,6 +10,8 @@ import useAsyncOperation from '../../../hooks/use-async-operation';
 import { updateUser } from '../../../store/slices/auth.slice';
 import { notifications } from '@mantine/notifications';
 import { useAppDispatch } from '../../../store';
+import { useMantineTheme } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
@@ -23,6 +25,11 @@ const useLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [showLoginForm, setShowLoginForm] = useState(false);
+
+  const theme = useMantineTheme();
+  const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
+  const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+  const isMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -102,6 +109,9 @@ const useLogin = () => {
     methods,
     showLoginForm,
     toggleLoginForm,
+    isXs,
+    isSm,
+    isMd
   };
 };
 
