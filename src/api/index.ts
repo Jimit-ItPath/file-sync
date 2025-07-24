@@ -90,6 +90,18 @@ export const api = {
         method: METHODS.DELETE,
         ...configs,
       }),
+    completeProfile: (data: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      password: string;
+      validation_code: string;
+    }) =>
+      client({
+        url: `/auth/complete-profile`,
+        method: METHODS.POST,
+        data,
+      }),
   },
   user: {
     get: ({ id, ...configs }: { id: string; [key: string]: any }) =>

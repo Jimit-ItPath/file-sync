@@ -5,6 +5,7 @@ import {
   Group,
   PasswordInput as MantinePasswordInput,
   Progress,
+  rem,
   Text,
   type PasswordInputProps as MantinePasswordInputProps,
 } from '@mantine/core';
@@ -70,6 +71,9 @@ const getStrength = (password: string) => {
 const InputComponent = ({
   field,
   generateOption,
+  isXs,
+  isSm,
+  isMd,
   ...props
 }: PasswordInputProps) => {
   const { value, onChange, onBlur, ref } = field;
@@ -94,6 +98,7 @@ const InputComponent = ({
           inputRef.current = element;
         }
       }}
+      styles={{ label: { width: '100%', fontSize: isMd ? rem(14) : rem(16) } }}
       onChange={e => {
         onChange(e.target.value);
       }}
@@ -146,6 +151,9 @@ const PasswordInput = ({
   generateOption = false,
   strengthMeter = false,
   error,
+  isXs,
+  isSm,
+  isMd,
   ...props
 }: PasswordInputProps) => {
   const isError = Boolean(error);
@@ -184,12 +192,21 @@ const PasswordInput = ({
         <InputComponent
           {...{ field, generateOption }}
           error={popoverOpened ? isError : error}
+          isXs={isXs}
+          isSm={isSm}
+          isMd={isMd}
           {...props}
         />
       </Flex>
     </Popover>
   ) : (
-    <InputComponent {...{ field, error, generateOption }} {...props} />
+    <InputComponent
+      {...{ field, error, generateOption }}
+      isXs={isXs}
+      isSm={isSm}
+      isMd={isMd}
+      {...props}
+    />
   );
 };
 

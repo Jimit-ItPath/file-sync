@@ -22,6 +22,9 @@ const TextInput = ({
   label,
   withAsterisk,
   maxCharCount,
+  isXs,
+  isSm,
+  isMd,
   ...props
 }: TextInputProps) => {
   const { value, onChange, onBlur, ref } = field;
@@ -58,8 +61,9 @@ const TextInput = ({
           </Group>
         ),
       })}
+      fz={isMd ? rem(14) : rem(16)}
       {...(isMaxCharCount && { maxLength: maxCharCount })}
-      styles={{ label: { width: '100%' } }}
+      styles={{ label: { width: '100%', fontSize: isMd ? rem(14) : rem(16) } }}
       {...props}
     />
   );

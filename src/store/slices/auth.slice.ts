@@ -134,6 +134,27 @@ export const removeAccountAccess = createAsyncThunk(
   }
 );
 
+export const completeProfile = createAsyncThunk(
+  'auth/completeProfile',
+  async (
+    data: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      password: string;
+      validation_code: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.auth.completeProfile(data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to complete profile');
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,

@@ -94,7 +94,7 @@ export default function Login() {
           </Paper>
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 2, md: 1 }}>
-          <FeatureList {...{ isXs }} />
+          <FeatureList {...{ isXs, isMd }} />
         </Grid.Col>
       </Grid>
     </Box>

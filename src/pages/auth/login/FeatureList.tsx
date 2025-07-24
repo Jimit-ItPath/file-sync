@@ -11,9 +11,10 @@ import { ICONS } from '../../../assets/icons';
 
 interface FeatureListProps {
   isXs: boolean;
+  isMd: boolean;
 }
 
-export const FeatureList: React.FC<FeatureListProps> = ({ isXs }) => (
+export const FeatureList: React.FC<FeatureListProps> = ({ isXs, isMd }) => (
   <Paper
     p={0}
     style={{
@@ -23,7 +24,7 @@ export const FeatureList: React.FC<FeatureListProps> = ({ isXs }) => (
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'stretch',
-      minHeight: '100vh',
+      minHeight: isMd ? '50vh' : '100vh',
       position: 'relative',
       overflow: 'hidden',
     }}

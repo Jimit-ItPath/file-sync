@@ -49,6 +49,11 @@ export const AUTH_ROUTES = {
     path: '/admin',
     url: '/admin',
   },
+  COMPLETE_PROFILE: {
+    title: 'Complete Profile',
+    path: '/complete-profile',
+    url: '/complete-profile',
+  },
 };
 
 const DASHBOARD_PATH = '/dashboard';

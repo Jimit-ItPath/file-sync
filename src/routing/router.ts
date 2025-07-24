@@ -32,6 +32,7 @@ import Profile from '../pages/user/profile';
 import AdminLogin from '../pages/auth/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/dashboard';
 import AdminUsers from '../pages/admin/users';
+import CompleteProfile from '../pages/auth/admin/complete-profile';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -96,6 +97,7 @@ export const router = createBrowserRouter([
       { ...AUTH_ROUTES.VERIFY_USER, Component: VerifyUser },
       { ...AUTH_ROUTES.OAUTH_CALLBACK, Component: OAuthCallback },
       { ...AUTH_ROUTES.ADMIN_LOGIN, Component: AdminLogin },
+      { ...AUTH_ROUTES.COMPLETE_PROFILE, Component: CompleteProfile },
     ],
   },
   {

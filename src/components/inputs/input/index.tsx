@@ -7,6 +7,8 @@ import Checkbox from '../checkbox';
 import Switch from '../switch';
 import CheckboxGroup from '../checkbox-group';
 import { Dropzone } from '../dropzone';
+import { useMantineTheme } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 
 type InputProps = {
   name: string;
@@ -55,6 +57,11 @@ export const Input = ({
 
   const errorMessage = error?.message || '';
 
+  const theme = useMantineTheme();
+  const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
+  const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+  const isMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
+
   const renderInput = (type: string) => {
     switch (type) {
       case 'password-input':
@@ -70,6 +77,9 @@ export const Input = ({
               withErrorStyles,
               size,
               field,
+              isXs,
+              isSm,
+              isMd,
               ...props,
             }}
           />
@@ -88,6 +98,9 @@ export const Input = ({
               size,
               field,
               data,
+              isXs,
+              isSm,
+              isMd,
               ...props,
             }}
           />
@@ -104,6 +117,9 @@ export const Input = ({
               withErrorStyles,
               size,
               field,
+              isXs,
+              isSm,
+              isMd,
               ...props,
             }}
           />
@@ -118,6 +134,9 @@ export const Input = ({
               disabled,
               size,
               field,
+              isXs,
+              isSm,
+              isMd,
               ...props,
             }}
           />
@@ -163,6 +182,9 @@ export const Input = ({
               size,
               field,
               type,
+              isXs,
+              isSm,
+              isMd,
               ...props,
             }}
           />
