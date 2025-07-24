@@ -227,6 +227,19 @@ export const api = {
         responseType: 'blob',
         ...configs,
       }),
+    moveFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[]; destination_id: string | null };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/move`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
   },
   dropbox: {
     getFiles: (params: {

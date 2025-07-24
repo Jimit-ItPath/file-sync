@@ -253,6 +253,18 @@ export const downloadGoogleDriveFiles = createAsyncThunk(
   }
 );
 
+export const moveGoogleDriveFiles = createAsyncThunk(
+  'googleDrive/moveGoogleDriveFiles',
+  async (data: { ids: string[]; destination_id: string | null }) => {
+    try {
+      const response = await api.googleDrive.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const googleDriveSlice = createSlice({
   name: 'googleDrive',
   initialState,
