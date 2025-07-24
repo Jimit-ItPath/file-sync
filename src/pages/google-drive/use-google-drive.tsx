@@ -25,6 +25,7 @@ import {
   resetGoogleDriveFolder,
   setSearchTerm,
   uploadGoogleDriveFiles,
+  moveGoogleDriveFiles,
 } from '../../store/slices/google-drive.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -34,6 +35,7 @@ import { notifications } from '@mantine/notifications';
 import { useNavigate, useParams } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
+import { type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
 
 export type FileType = {
   id: string;
@@ -93,6 +95,8 @@ const useGoogleDrive = () => {
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [itemToRename, setItemToRename] = useState<FileType | null>(null);
   const [removeFilesModalOpen, setRemoveFilesModalOpen] = useState(false);
+  const [draggedItems, setDraggedItems] = useState<FileType[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const {
     gDriveFiles,
@@ -834,6 +838,152 @@ const useGoogleDrive = () => {
     downloadItems({});
   }, [selectedIds]);
 
+  // Move files functionality
+  const [moveFiles, moveFilesLoading] = useAsyncOperation(
+    async ({
+      fileIds,
+      destinationFolderId,
+    }: {
+      fileIds: string[];
+      destinationFolderId: string | null;
+    }) => {
+      console.log("file-", fileIds)
+      console.log("desti-", destinationFolderId)
+      return
+      try {
+        const res = await dispatch(
+          moveGoogleDriveFiles({
+            ids: fileIds,
+            destination_id: destinationFolderId,
+          })
+        );
+        console.log("res-", res)
+
+        if (res?.payload?.success) {
+          await dispatch(
+            initializeGoogleDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              page: pagination?.page_no || 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+
+          notifications.show({
+            message: `${fileIds.length} item${fileIds.length > 1 ? 's' : ''} moved successfully`,
+            color: 'green',
+          });
+
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to move items',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  // Drag and drop handlers
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      const draggedId = active.id as string;
+
+      // If dragged item is not in selection, select only that item
+      if (!selectedIds.includes(draggedId)) {
+        setSelectedIds([draggedId]);
+      }
+
+      // Get all items being dragged (selected items)
+      const itemsToDrag = selectedIds.includes(draggedId)
+        ? files.filter(file => selectedIds.includes(file.id))
+        : files.filter(file => file.id === draggedId);
+
+      setDraggedItems(itemsToDrag);
+      setIsDragActive(true);
+    },
+    [selectedIds, files]
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setIsDragActive(false);
+      setDraggedItems([]);
+
+      if (!over) return;
+
+      const draggedIds =
+        selectedIds.length > 0 && selectedIds.includes(active.id as string)
+          ? selectedIds
+          : [active.id as string];
+
+      const overId = over.id as string;
+
+      // Check if dropping on a folder
+      if (overId.startsWith('folder-')) {
+        const folderId = overId.replace('folder-', '');
+        const targetFolder = files.find(
+          f => f.id === folderId && f.type === 'folder'
+        );
+        console.log("fid--", folderId)
+
+        if (targetFolder && !draggedIds.includes(folderId)) {
+          moveFiles({
+            fileIds: draggedIds,
+            destinationFolderId: folderId,
+          });
+        }
+      }
+      // Check if dropping on breadcrumb
+      else if (overId.startsWith('breadcrumb-')) {
+        const breadcrumbFolderId =
+          overId === 'breadcrumb-root'
+            ? null
+            : overId.replace('breadcrumb-', '');
+            console.log("bread-", breadcrumbFolderId)
+
+        // Only allow drop if it's not the current folder
+        if (breadcrumbFolderId !== currentFolderId) {
+          moveFiles({
+            fileIds: draggedIds,
+            destinationFolderId: breadcrumbFolderId,
+          });
+        }
+      }
+    },
+    [selectedIds, files, currentFolderId, moveFiles]
+  );
+
+  const canDropOnFolder = useCallback(
+    (folderId: string) => {
+      const draggedIds = selectedIds.length > 0 ? selectedIds : [];
+
+      // Can't drop on itself or if no items are being dragged
+      if (draggedIds.includes(folderId) || draggedIds.length === 0) {
+        return false;
+      }
+
+      // Can't drop folders into their own subfolders (prevent circular references)
+      // This would require additional logic to check folder hierarchy
+
+      return true;
+    },
+    [selectedIds]
+  );
+
+  const canDropOnBreadcrumb = useCallback(
+    (breadcrumbFolderId: string | null | undefined) => {
+      // Can't drop on current folder
+      return breadcrumbFolderId !== currentFolderId;
+    },
+    [currentFolderId]
+  );
+
   return {
     layout,
     switchLayout,
@@ -907,6 +1057,14 @@ const useGoogleDrive = () => {
     pagination,
     loadMoreFiles,
     navigateLoading,
+
+    handleDragStart,
+    handleDragEnd,
+    draggedItems,
+    isDragActive,
+    canDropOnFolder,
+    canDropOnBreadcrumb,
+    moveFilesLoading,
   };
 };
 

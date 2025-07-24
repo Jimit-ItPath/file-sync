@@ -11,6 +11,8 @@ import { ICONS } from '../../../assets/icons';
 import type { FileType } from '../use-dashboard';
 import { Card, Menu, Tooltip } from '../../../components';
 import { useMediaQuery } from '@mantine/hooks';
+import { DroppableFolder } from './DroppableFolder';
+import { DraggableItem } from './DraggableItem';
 
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
@@ -37,6 +39,8 @@ type FileGridProps = {
   getIndexById: (id: string) => number;
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
   setLastSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  canDropOnFolder: (folderId: string) => boolean;
+  isDragActive: boolean;
 };
 
 const MENU_ITEMS = [
@@ -58,8 +62,11 @@ const FileGrid: React.FC<FileGridProps> = ({
   getIndexById = () => {},
   setSelectedIds = () => {},
   setLastSelectedIndex = () => {},
+  canDropOnFolder = () => true,
+  isDragActive = false,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
+  const [cardWidth, setCardWidth] = useState(MIN_CARD_WIDTH);
 
   const [columnsCount, setColumnsCount] = useState(2);
 
@@ -70,12 +77,23 @@ const FileGrid: React.FC<FileGridProps> = ({
   useEffect(() => {
     const updateColumnsCount = () => {
       if (stackRef.current) {
+        // const containerWidth = stackRef.current.offsetWidth;
+        // const newColumnsCount = Math.max(
+        //   2,
+        //   Math.floor(containerWidth / MIN_CARD_WIDTH)
+        // );
+        // setColumnsCount(newColumnsCount);
+        // const newCardWidth = `${(containerWidth - (newColumnsCount - 1) * 20) / newColumnsCount}px`;
+        // setCardWidth(newCardWidth);
         const containerWidth = stackRef.current.offsetWidth;
-        const newColumnsCount = Math.max(
-          2,
-          Math.floor(containerWidth / MIN_CARD_WIDTH)
+        const gap = 20; // Gap between cards
+        const newColumnsCount = Math.floor(
+          (containerWidth + gap) / (MIN_CARD_WIDTH + gap)
         );
         setColumnsCount(newColumnsCount);
+        const newCardWidth =
+          (containerWidth - (newColumnsCount - 1) * gap) / newColumnsCount;
+        setCardWidth(newCardWidth);
       }
     };
 
@@ -159,171 +177,115 @@ const FileGrid: React.FC<FileGridProps> = ({
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : iconSize;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
 
-  return (
-    <Stack
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      style={{ outline: 'none' }}
-      onClick={handleStackClick}
-      ref={stackRef}
-      mt={10}
+  const renderFolderCard = (folder: FileType) => (
+    <Card
+      radius="md"
+      shadow="sm"
+      p="md"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: '#f6faff',
+        border: '1px solid #e5e7eb',
+        ...(selectedIds.includes(folder.id) ? selectedCardStyle : {}),
+        cursor: 'pointer',
+        userSelect: 'none',
+      }}
+      onClick={(e: React.MouseEvent) => {
+        e.stopPropagation();
+        handleSelect(folder.id, e);
+      }}
+      onDoubleClick={(e: React.MouseEvent) => {
+        e.stopPropagation();
+        handleRowDoubleClick(folder);
+      }}
     >
-      {!folders?.length && !files?.length && (
-        <Card>
-          <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
-            <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
-              No files available. Please upload files to see them here.
-            </Text>
-          </Box>
-        </Card>
-      )}
-      {/* Folders */}
-      <Box
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-          gap: '20px',
-        }}
+      <Group
+        gap={12}
+        align="center"
+        style={{ width: '100%', flexWrap: 'nowrap' }}
       >
-        {folders?.map(folder => (
-          <Card
-            key={folder.id}
-            radius="md"
-            shadow="sm"
-            p="md"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#f6faff',
-              border: '1px solid #e5e7eb',
-              ...(selectedIds.includes(folder.id) ? selectedCardStyle : {}),
-              cursor: 'pointer',
-              userSelect: 'none',
-            }}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              handleSelect(folder.id, e);
-            }}
-            onDoubleClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              handleRowDoubleClick(folder);
-            }}
-          >
-            <Group
-              gap={12}
-              align="center"
-              style={{ width: '100%', flexWrap: 'nowrap' }}
-            >
-              {folder?.icon(responsiveIconSize)}
-              <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
-                <Text
-                  fw={600}
-                  fz={responsiveFontSize}
-                  truncate
-                  miw={0}
-                  flex={1}
-                >
-                  {folder.name}
-                </Text>
-              </Tooltip>
-              <Menu
-                items={MENU_ITEMS}
-                onItemClick={actionId => handleMenuItemClick(actionId, folder)}
-              >
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  style={{ flexShrink: 0 }}
-                >
-                  <ICONS.IconDotsVertical size={18} />
-                </ActionIcon>
-              </Menu>
-            </Group>
-          </Card>
-        ))}
-      </Box>
+        {folder?.icon(responsiveIconSize)}
+        <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
+          <Text fw={600} fz={responsiveFontSize} truncate miw={0} flex={1}>
+            {folder.name}
+          </Text>
+        </Tooltip>
+        <Menu
+          items={MENU_ITEMS}
+          onItemClick={actionId => handleMenuItemClick(actionId, folder)}
+        >
+          <ActionIcon variant="subtle" color="gray" style={{ flexShrink: 0 }}>
+            <ICONS.IconDotsVertical size={18} />
+          </ActionIcon>
+        </Menu>
+      </Group>
+    </Card>
+  );
 
+  // Render file card content
+  const renderFileCard = (file: FileType) => (
+    <Card
+      radius="md"
+      shadow="sm"
+      p="md"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        background: '#f6faff',
+        border: '1px solid #e5e7eb',
+        height: FILE_CARD_HEIGHT,
+        ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
+        cursor: 'pointer',
+        transition: 'box-shadow 0.2s ease',
+        userSelect: 'none',
+      }}
+      onClick={(e: React.MouseEvent) => {
+        e.stopPropagation();
+        handleSelect(file.id, e);
+      }}
+      onDoubleClick={(e: any) => {
+        e.stopPropagation();
+        handleRowDoubleClick(file);
+      }}
+    >
+      <Group
+        justify="space-between"
+        align="center"
+        mb={8}
+        style={{ flexWrap: 'nowrap' }}
+      >
+        <Group gap={8} flex={1} miw={0} align="center">
+          {file.icon(responsiveIconSize)}
+          <Tooltip label={file.name} withArrow={false} fz={'xs'}>
+            <Text fw={600} fz={responsiveFontSize} flex={1} truncate miw={0}>
+              {file.name}
+            </Text>
+          </Tooltip>
+        </Group>
+        <Menu
+          items={MENU_ITEMS}
+          onItemClick={actionId => handleMenuItemClick(actionId, file)}
+        >
+          <ActionIcon variant="subtle" color="gray" style={{ flexShrink: 0 }}>
+            <ICONS.IconDotsVertical size={18} />
+          </ActionIcon>
+        </Menu>
+      </Group>
       <Box
         style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-          gap: '20px',
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 8,
+          marginTop: 8,
         }}
       >
-        {files.map(file => (
-          <Card
-            key={file.id}
-            radius="md"
-            shadow="sm"
-            p="md"
-            style={{
-              // flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              background: '#f6faff',
-              border: '1px solid #e5e7eb',
-              height: FILE_CARD_HEIGHT,
-              ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
-              cursor: 'pointer',
-              transition: 'box-shadow 0.2s ease',
-              userSelect: 'none',
-            }}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              handleSelect(file.id, e);
-            }}
-            onDoubleClick={(e: any) => {
-              e.stopPropagation();
-              handleRowDoubleClick(file);
-            }}
-          >
-            <Group
-              justify="space-between"
-              align="center"
-              mb={8}
-              style={{ flexWrap: 'nowrap' }}
-            >
-              <Group gap={8} flex={1} miw={0} align="center">
-                {file.icon(responsiveIconSize)}
-                <Tooltip label={file.name} withArrow={false} fz={'xs'}>
-                  <Text
-                    fw={600}
-                    fz={responsiveFontSize}
-                    flex={1}
-                    truncate
-                    miw={0}
-                  >
-                    {file.name}
-                  </Text>
-                </Tooltip>
-              </Group>
-              <Menu
-                items={MENU_ITEMS}
-                onItemClick={actionId => handleMenuItemClick(actionId, file)}
-              >
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  style={{ flexShrink: 0 }}
-                >
-                  <ICONS.IconDotsVertical size={18} />
-                </ActionIcon>
-              </Menu>
-            </Group>
-            <Box
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 8,
-                marginTop: 8,
-              }}
-            >
-              {file.icon(isXs ? 50 : 60)}
-              {/* {file.preview ? (
+        {file.icon(isXs ? 50 : 60)}
+        {/* {file.preview ? (
                   <Image
                     src={file.preview}
                     alt={file.name}
@@ -343,18 +305,78 @@ const FileGrid: React.FC<FileGridProps> = ({
                     }}
                   />
                 )} */}
-            </Box>
-            <Group justify="space-between" mt={8}>
-              <Text size="xs" c="gray.6">
-                {file.lastModified}
-              </Text>
-              <Text size="xs" c="gray.6">
-                {file.size}
-              </Text>
-            </Group>
-          </Card>
-        ))}
       </Box>
+      <Group justify="space-between" mt={8}>
+        <Text size="xs" c="gray.6">
+          {file.lastModified}
+        </Text>
+        <Text size="xs" c="gray.6">
+          {file.size}
+        </Text>
+      </Group>
+    </Card>
+  );
+
+  return (
+    <Stack
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      style={{ outline: 'none' }}
+      onClick={handleStackClick}
+      ref={stackRef}
+      mt={10}
+    >
+      {!folders?.length && !files?.length && (
+        <Card>
+          <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
+            <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
+              No files available. Please upload files to see them here.
+            </Text>
+          </Box>
+        </Card>
+      )}
+
+      {/* Folders Grid */}
+      {folders?.length > 0 && (
+        <Box
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+            gap: '20px',
+          }}
+        >
+          {folders.map(folder => (
+            <DroppableFolder
+              key={folder.id}
+              folderId={folder.id}
+              canDrop={canDropOnFolder(folder.id)}
+              isDragActive={isDragActive}
+              width={cardWidth}
+            >
+              <DraggableItem file={folder} width={cardWidth}>
+                {renderFolderCard(folder)}
+              </DraggableItem>
+            </DroppableFolder>
+          ))}
+        </Box>
+      )}
+
+      {/* Files Grid */}
+      {files?.length > 0 && (
+        <Box
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+            gap: '20px',
+          }}
+        >
+          {files.map(file => (
+            <DraggableItem key={file.id} file={file} width={cardWidth}>
+              {renderFileCard(file)}
+            </DraggableItem>
+          ))}
+        </Box>
+      )}
     </Stack>
   );
 };

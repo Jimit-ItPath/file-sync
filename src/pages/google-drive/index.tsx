@@ -16,6 +16,7 @@ import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from '../dashboard/components/CustomToggle';
 import useGoogleDrive from './use-google-drive';
 import { LoaderOverlay } from '../../components/loader';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
 
 const controlBoxStyles = {
   height: 40,
@@ -89,83 +90,99 @@ const GoogleDrive = () => {
     loadMoreFiles,
     pagination,
     navigateLoading,
+
+    canDropOnBreadcrumb,
+    canDropOnFolder,
+    draggedItems,
+    handleDragEnd,
+    handleDragStart,
+    isDragActive,
+    moveFilesLoading,
   } = useGoogleDrive();
   const { connectedAccounts } = useSidebar();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
   return (
-    <Box>
-      <LoaderOverlay visible={navigateLoading} opacity={1} />
-      <Box
-        px={32}
-        pb={20}
-        bg="#f8fafc"
-        // ref={dragRef}
-        ref={el => {
-          dragRef.current = el;
-          scrollBoxRef.current = el;
-        }}
-        style={{
-          position: 'relative',
-          height: 'calc(100vh - 120px)',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          // minHeight: 'calc(100vh - 120px)',
-          transition: 'all 0.2s ease-in-out',
-          ...(isDragging && {
-            backgroundColor: 'rgba(37, 99, 235, 0.05)',
-          }),
-        }}
-        onScroll={handleScroll}
-      >
-        {/* Sticky Section */}
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <Box>
+        <LoaderOverlay
+          visible={navigateLoading || moveFilesLoading}
+          opacity={1}
+        />
         <Box
-          style={{
-            position: 'sticky',
-            top: 0,
-            ...(files?.length || folders?.length ? { zIndex: 5 } : {}),
-            backgroundColor: '#ffffff',
-            padding: '16px 24px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            borderBottom: '1px solid #e5e7eb',
+          px={32}
+          pb={20}
+          bg="#f8fafc"
+          // ref={dragRef}
+          ref={el => {
+            dragRef.current = el;
+            scrollBoxRef.current = el;
           }}
-          className="stickey-box"
+          style={{
+            position: 'relative',
+            height: 'calc(100vh - 120px)',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            // minHeight: 'calc(100vh - 120px)',
+            transition: 'all 0.2s ease-in-out',
+            ...(isDragging && {
+              backgroundColor: 'rgba(37, 99, 235, 0.05)',
+            }),
+          }}
+          onScroll={handleScroll}
         >
-          <DragDropOverlay
-            isDragging={isDragging}
-            message="Drop files here to upload"
-            subMessage="Support for PDF, DOC, XLS, PPT, images and more"
-          />
-          {connectedAccounts?.length ? (
-            <ActionButtons
-              {...{ currentPath, navigateToFolderFn, openModal }}
+          {/* Sticky Section */}
+          <Box
+            style={{
+              position: 'sticky',
+              top: 0,
+              ...(files?.length || folders?.length ? { zIndex: 5 } : {}),
+              backgroundColor: '#ffffff',
+              padding: '16px 24px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              borderBottom: '1px solid #e5e7eb',
+            }}
+            className="stickey-box"
+          >
+            <DragDropOverlay
+              isDragging={isDragging}
+              message="Drop files here to upload"
+              subMessage="Support for PDF, DOC, XLS, PPT, images and more"
             />
-          ) : null}
-          {/* <RecentFiles /> */}
-          <Group mb={20} align="center" style={{ width: '100%' }}>
-            {selectedIds.length > 0 ? (
-              <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
-                <SelectionBar
-                  count={selectedIds.length}
-                  onCancel={handleUnselectAll}
-                  onDelete={handleDeleteSelected}
-                  onDownload={handleDownloadSelected}
-                  onShare={handleShareSelected}
-                />
-              </Box>
-            ) : (
-              <Box style={{ flex: 1, marginRight: 12 }} />
-            )}
-            <CustomToggle
-              value={layout}
-              onChange={(value: 'list' | 'grid') => switchLayout(value)}
-            />
-          </Group>
+            {connectedAccounts?.length ? (
+              <ActionButtons
+                {...{ currentPath, navigateToFolderFn, openModal }}
+              />
+            ) : null}
+            {/* <RecentFiles /> */}
+            <Group mb={20} align="center" style={{ width: '100%' }}>
+              {selectedIds.length > 0 ? (
+                <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
+                  <SelectionBar
+                    count={selectedIds.length}
+                    onCancel={handleUnselectAll}
+                    onDelete={handleDeleteSelected}
+                    onDownload={handleDownloadSelected}
+                    onShare={handleShareSelected}
+                  />
+                </Box>
+              ) : (
+                <Box style={{ flex: 1, marginRight: 12 }} />
+              )}
+              <CustomToggle
+                value={layout}
+                onChange={(value: 'list' | 'grid') => switchLayout(value)}
+              />
+            </Group>
+          </Box>
+
           <Group align="center" w={'100%'} mt={16}>
             <Box style={{ flexGrow: 1 }}>
               <Breadcrumbs
                 items={currentPath}
+                canDropOnBreadcrumb={canDropOnBreadcrumb}
+                isDragActive={isDragActive}
                 onNavigate={folderId => {
                   if (!folderId || folderId === null) {
                     navigateToFolderFn(null);
@@ -186,191 +203,220 @@ const GoogleDrive = () => {
               w={'100%'}
             />
           </Group>
-        </Box>
-        {layout === 'list' ? (
-          <FileTable
-            {...{
-              files,
-              handleSelect,
-              onSelectAll,
-              onSelectRow,
-              selectedIds,
-              currentPath,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-              handleUnselectAll,
-            }}
-          />
-        ) : (
-          <>
-            <FileGrid
+
+          {layout === 'list' ? (
+            <FileTable
               {...{
-                files: regularFiles,
+                files,
                 handleSelect,
+                onSelectAll,
+                onSelectRow,
                 selectedIds,
-                folders,
-                handleUnselectAll,
-                getIndexById,
-                setLastSelectedIndex,
-                setSelectedIds,
+                currentPath,
                 handleMenuItemClick,
                 handleRowDoubleClick,
-                allIds,
-                lastSelectedIndex,
+                handleUnselectAll,
+                canDropOnFolder,
+                isDragActive,
               }}
             />
-            {pagination && pagination.page_no < pagination.total_pages ? (
-              <Button mt={20} onClick={loadMoreFiles}>
-                Load More
-              </Button>
-            ) : null}
-          </>
-        )}
-      </Box>
-      {showUploadProgress ? (
-        <UploadProgress
-          uploadProgress={uploadProgress}
-          uploadingFiles={uploadingFiles}
-          onCancelUpload={handleCancelUpload}
-          onClose={handleCloseUploadProgress}
-        />
-      ) : null}
+          ) : (
+            <>
+              <FileGrid
+                {...{
+                  files: regularFiles,
+                  handleSelect,
+                  selectedIds,
+                  folders,
+                  handleUnselectAll,
+                  getIndexById,
+                  setLastSelectedIndex,
+                  setSelectedIds,
+                  handleMenuItemClick,
+                  handleRowDoubleClick,
+                  allIds,
+                  lastSelectedIndex,
+                  canDropOnFolder,
+                  isDragActive,
+                }}
+              />
+              {pagination && pagination.page_no < pagination.total_pages ? (
+                <Button mt={20} onClick={loadMoreFiles}>
+                  Load More
+                </Button>
+              ) : null}
+            </>
+          )}
+        </Box>
+        {showUploadProgress ? (
+          <UploadProgress
+            uploadProgress={uploadProgress}
+            uploadingFiles={uploadingFiles}
+            onCancelUpload={handleCancelUpload}
+            onClose={handleCloseUploadProgress}
+          />
+        ) : null}
 
-      {/* Create folder / upload file modal */}
-      <Modal
-        opened={modalOpen}
-        onClose={closeModal}
-        title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
-      >
-        {modalType === 'folder' ? (
-          <Form methods={folderMethods} onSubmit={handleCreateFolder}>
+        <DragOverlay>
+          {draggedItems.length > 0 && (
+            <Box
+              style={{
+                padding: '8px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {draggedItems[0].icon(20)}
+              <Text size="sm" fw={500}>
+                {draggedItems.length === 1
+                  ? draggedItems[0].name
+                  : `${draggedItems.length} items`}
+              </Text>
+            </Box>
+          )}
+        </DragOverlay>
+
+        {/* Create folder / upload file modal */}
+        <Modal
+          opened={modalOpen}
+          onClose={closeModal}
+          title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
+        >
+          {modalType === 'folder' ? (
+            <Form methods={folderMethods} onSubmit={handleCreateFolder}>
+              <Stack gap="md">
+                <TextInput
+                  placeholder="Folder name"
+                  label="Folder Name"
+                  {...folderMethods.register('folderName')}
+                  error={folderMethods.formState.errors.folderName?.message}
+                  withAsterisk
+                />
+                <Button
+                  type="submit"
+                  loading={createFolderLoading}
+                  disabled={
+                    !folderMethods.formState.isValid || createFolderLoading
+                  }
+                  maw={150}
+                >
+                  Create Folder
+                </Button>
+              </Stack>
+            </Form>
+          ) : (
+            <>
+              <Dropzone
+                onFilesSelected={setUploadedFiles}
+                // maxSize={5 * 1024 ** 2}
+                multiple={true}
+                mb="md"
+                getFileIcon={getFileIcon}
+                files={uploadedFiles}
+              />
+              <Button
+                onClick={handleFileUpload}
+                loading={uploadFilesLoading}
+                disabled={uploadedFiles.length === 0 || uploadFilesLoading}
+              >
+                Upload Files
+              </Button>
+            </>
+          )}
+        </Modal>
+
+        {/* delete file/folder modal */}
+        <Modal
+          opened={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          title={`Delete ${itemToDelete?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+        >
+          <Text mb="md">
+            Are you sure you want to delete "{itemToDelete?.name}"?
+            {itemToDelete?.mimeType === 'application/vnd.google-apps.folder' &&
+              ' All contents will be deleted permanently.'}
+          </Text>
+          <Group>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={removeFileLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={handleDeleteConfirm}
+              loading={removeFileLoading}
+              disabled={removeFileLoading}
+            >
+              Delete
+            </Button>
+          </Group>
+        </Modal>
+
+        {/* Remove multiple files modal*/}
+        <Modal
+          opened={removeFilesModalOpen}
+          onClose={closeRemoveFilesModal}
+          title={`Remove items`}
+        >
+          <Text mb="md">
+            Are you sure you want to remove items? All contents will be deleted
+            permanently.
+          </Text>
+          <Group>
+            <Button
+              variant="outline"
+              onClick={() => closeRemoveFilesModal()}
+              disabled={removeFileLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={handleRemoveFilesConfirm}
+              loading={removeFilesLoading}
+              disabled={removeFilesLoading}
+            >
+              Delete
+            </Button>
+          </Group>
+        </Modal>
+
+        {/* rename file/folder modal */}
+        <Modal
+          opened={renameModalOpen}
+          onClose={() => setRenameModalOpen(false)}
+          title={`Rename ${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+        >
+          <Form methods={renameMethods} onSubmit={handleRenameConfirm}>
             <Stack gap="md">
               <TextInput
-                placeholder="Folder name"
-                label="Folder Name"
-                {...folderMethods.register('folderName')}
-                error={folderMethods.formState.errors.folderName?.message}
+                placeholder={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} name`}
+                label={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} Name`}
+                {...renameMethods.register('newName')}
+                error={renameMethods.formState.errors.newName?.message}
                 withAsterisk
               />
               <Button
                 type="submit"
-                loading={createFolderLoading}
-                disabled={
-                  !folderMethods.formState.isValid || createFolderLoading
-                }
+                loading={renameFileLoading}
                 maw={150}
+                disabled={!renameMethods.formState.isValid || renameFileLoading}
               >
-                Create Folder
+                Rename
               </Button>
             </Stack>
           </Form>
-        ) : (
-          <>
-            <Dropzone
-              onFilesSelected={setUploadedFiles}
-              // maxSize={5 * 1024 ** 2}
-              multiple={true}
-              mb="md"
-              getFileIcon={getFileIcon}
-              files={uploadedFiles}
-            />
-            <Button
-              onClick={handleFileUpload}
-              loading={uploadFilesLoading}
-              disabled={uploadedFiles.length === 0 || uploadFilesLoading}
-            >
-              Upload Files
-            </Button>
-          </>
-        )}
-      </Modal>
-
-      {/* delete file/folder modal */}
-      <Modal
-        opened={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        title={`Delete ${itemToDelete?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
-      >
-        <Text mb="md">
-          Are you sure you want to delete "{itemToDelete?.name}"?
-          {itemToDelete?.mimeType === 'application/vnd.google-apps.folder' &&
-            ' All contents will be deleted permanently.'}
-        </Text>
-        <Group>
-          <Button
-            variant="outline"
-            onClick={() => setDeleteModalOpen(false)}
-            disabled={removeFileLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="red"
-            onClick={handleDeleteConfirm}
-            loading={removeFileLoading}
-            disabled={removeFileLoading}
-          >
-            Delete
-          </Button>
-        </Group>
-      </Modal>
-
-      {/* Remove multiple files modal*/}
-      <Modal
-        opened={removeFilesModalOpen}
-        onClose={closeRemoveFilesModal}
-        title={`Remove items`}
-      >
-        <Text mb="md">
-          Are you sure you want to remove items? All contents will be deleted
-          permanently.
-        </Text>
-        <Group>
-          <Button
-            variant="outline"
-            onClick={() => closeRemoveFilesModal()}
-            disabled={removeFileLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="red"
-            onClick={handleRemoveFilesConfirm}
-            loading={removeFilesLoading}
-            disabled={removeFilesLoading}
-          >
-            Delete
-          </Button>
-        </Group>
-      </Modal>
-
-      {/* rename file/folder modal */}
-      <Modal
-        opened={renameModalOpen}
-        onClose={() => setRenameModalOpen(false)}
-        title={`Rename ${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
-      >
-        <Form methods={renameMethods} onSubmit={handleRenameConfirm}>
-          <Stack gap="md">
-            <TextInput
-              placeholder={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} name`}
-              label={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} Name`}
-              {...renameMethods.register('newName')}
-              error={renameMethods.formState.errors.newName?.message}
-              withAsterisk
-            />
-            <Button
-              type="submit"
-              loading={renameFileLoading}
-              maw={150}
-              disabled={!renameMethods.formState.isValid || renameFileLoading}
-            >
-              Rename
-            </Button>
-          </Stack>
-        </Form>
-      </Modal>
-    </Box>
+        </Modal>
+      </Box>
+    </DndContext>
   );
 };
 

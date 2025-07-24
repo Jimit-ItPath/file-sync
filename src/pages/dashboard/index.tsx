@@ -93,6 +93,8 @@ const Dashboard = () => {
     pagination,
     accountOptions,
     navigateLoading,
+
+    progress,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -309,6 +311,29 @@ const Dashboard = () => {
           onClose={handleCloseUploadProgress}
         />
       ) : null}
+
+      {progress > 0 && progress < 100 && (
+        <div className="progress-bar">
+          <div
+            className="progress-fill"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+      )}
+      <style>{`
+        .progress-bar {
+          width: 200px;
+          height: 20px;
+          background: #e0e0e0;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .progress-fill {
+          height: 100%;
+          background: #4caf50;
+          transition: width 0.2s ease-in-out;
+        }
+      `}</style>
 
       {/* Create folder / upload file modal */}
       <Modal

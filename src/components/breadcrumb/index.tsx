@@ -1,10 +1,6 @@
-import {
-  Breadcrumbs as MantineBreadcrumbs,
-  Anchor,
-  Group,
-  Text,
-} from '@mantine/core';
+import { Breadcrumbs as MantineBreadcrumbs, Group } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
+import { DroppableBreadcrumb } from './DroppableBreadcrumb';
 
 interface BreadcrumbItem {
   id?: string | null;
@@ -14,50 +10,45 @@ interface BreadcrumbItem {
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
   onNavigate: (folderId?: string | null) => void;
+  canDropOnBreadcrumb: (folderId: string | null | undefined) => boolean;
+  isDragActive: boolean;
 }
 
-export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
+export const Breadcrumbs = ({
+  items,
+  onNavigate,
+  canDropOnBreadcrumb = () => true,
+  isDragActive,
+}: BreadcrumbsProps) => {
+  const allItems = [{ id: null, name: 'All Files' }, ...items];
+
   return (
     <Group align="center" style={{ userSelect: 'none' }}>
       <MantineBreadcrumbs
         separator={<ICONS.IconChevronRight size={16} color="#868e96" />}
         styles={{
           root: {
-            padding: '6px 12px',
-            backgroundColor: '#f8f9fa',
+            padding: 0,
+            backgroundColor: 'transparent',
             borderRadius: 8,
           },
           separator: { margin: '0 6px' },
         }}
       >
-        {[{ id: null, name: 'All Files' }, ...items].map((item, index) => {
-          const isLast = index === items.length;
+        {allItems.map((item, index) => {
+          // const isLast = index === items.length;
+          const isLast = index === allItems.length - 1;
+          const canDrop = canDropOnBreadcrumb(item.id);
+
           return (
-            <Anchor
-              onClick={() => {
-                window.getSelection()?.removeAllRanges();
-                onNavigate(item?.id);
-              }}
+            <DroppableBreadcrumb
               key={index}
-              style={{
-                cursor: 'pointer',
-                fontWeight: isLast ? 700 : 500,
-                color: isLast ? '#212529' : '#495057',
-                whiteSpace: 'nowrap',
-                maxWidth: 150,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                transition: 'color 0.2s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#1c7ed6')}
-              onMouseLeave={e =>
-                (e.currentTarget.style.color = isLast ? '#212529' : '#495057')
-              }
-            >
-              <Text size="sm" fw={isLast ? 700 : 500} lineClamp={1}>
-                {item.name}
-              </Text>
-            </Anchor>
+              item={item}
+              isLast={isLast}
+              canDrop={canDrop}
+              isDragActive={isDragActive}
+              onNavigate={onNavigate}
+            />
           );
         })}
       </MantineBreadcrumbs>

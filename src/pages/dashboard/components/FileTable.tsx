@@ -29,6 +29,8 @@ type FileTableProps = {
     e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>
   ) => void;
   handleUnselectAll: () => void;
+  canDropOnFolder: (folderId: string) => boolean;
+  isDragActive: boolean;
 };
 
 const FileTable: React.FC<FileTableProps> = ({
@@ -41,6 +43,8 @@ const FileTable: React.FC<FileTableProps> = ({
   handleMenuItemClick = () => {},
   handleRowDoubleClick = () => {},
   handleUnselectAll = () => {},
+  canDropOnFolder = () => true,
+  isDragActive = false,
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
 

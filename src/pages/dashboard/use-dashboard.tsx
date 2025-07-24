@@ -844,47 +844,103 @@ const useDashboard = () => {
     setModalOpen(false);
   }, []);
 
-  const [downloadItems] = useAsyncOperation(async () => {
+  // const [downloadItems] = useAsyncOperation(async () => {
+  //   try {
+  //     const res = await dispatch(downloadFiles({ ids: selectedIds }));
+  //     if (res?.payload?.status !== 200) {
+  //       notifications.show({
+  //         message:
+  //           res?.payload?.message ||
+  //           `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
+  //         color: 'red',
+  //       });
+  //       return;
+  //     }
+
+  //     const blob = new Blob([res.payload.data]);
+
+  //     // ✅ Extract filename from Content-Disposition header
+  //     const contentDisposition = res.payload.headers?.['content-disposition'];
+  //     const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+  //     const filename = match?.[1] || `download-${Date.now()}.zip`;
+
+  //     // ✅ Trigger download
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement('a');
+  //     link.href = url;
+  //     link.setAttribute('download', filename);
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //   } catch (error: any) {
+  //     notifications.show({
+  //       message:
+  //         error ||
+  //         `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+  //       color: 'red',
+  //     });
+  //   }
+  // });
+
+  const [progress, setProgress] = useState(0);
+  const downloadItems = async () => {
     try {
-      const res = await dispatch(downloadFiles({ ids: selectedIds }));
-      if (res?.payload?.status !== 200) {
-        notifications.show({
-          message:
-            res?.payload?.message ||
-            `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
-          color: 'red',
-        });
-        return;
+      const response = await fetch(
+        'http://192.168.0.26:3051/cloud-storage/download',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ ids: selectedIds }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const totalSize = parseInt(response.headers.get('Content-Length') || '0');
+      const fileName =
+        response.headers
+          .get('Content-Disposition')
+          ?.match(/filename="(.+)"/)?.[1] || 'download';
+
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      let receivedLength = 0;
+      const chunks = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        receivedLength += value.length;
+
+        if (totalSize > 0) {
+          setProgress((receivedLength / totalSize) * 100);
+        }
       }
 
-      const blob = new Blob([res.payload.data]);
-
-      // ✅ Extract filename from Content-Disposition header
-      const contentDisposition = res.payload.headers?.['content-disposition'];
-      const match = contentDisposition?.match(/filename="?([^"]+)"?/);
-      const filename = match?.[1] || `download-${Date.now()}.zip`;
-
-      // ✅ Trigger download
+      const blob = new Blob(chunks);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
       window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      notifications.show({
-        message:
-          error ||
-          `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
-        color: 'red',
-      });
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Download error:', err);
     }
-  });
+  };
 
-  const handleDownloadSelected = useCallback(() => {
-    downloadItems({});
+  const handleDownloadSelected = useCallback(async () => {
+    // downloadItems({});
+    await downloadItems();
   }, [selectedIds]);
 
   return {
@@ -963,6 +1019,8 @@ const useDashboard = () => {
     pagination,
     accountOptions,
     navigateLoading,
+    
+    progress
   };
 };
 
