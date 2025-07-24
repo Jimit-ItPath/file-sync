@@ -17,12 +17,20 @@ export const SelectionBar = ({
   onDelete,
   onDownload,
   onShare,
+  onMove,
+  onPaste,
+  isMoveMode,
+  isPasteEnabled = true,
 }: {
   count: number;
   onCancel: () => void;
   onDelete: () => void;
   onDownload: () => void;
   onShare: () => void;
+  onMove: () => void;
+  onPaste: () => void;
+  isMoveMode: boolean;
+  isPasteEnabled: boolean;
 }) => (
   <Box
     bg="#f3f4f6"
@@ -43,21 +51,40 @@ export const SelectionBar = ({
       <Text fw={500} size="sm">
         {count} selected
       </Text>
-      <Tooltip label="Download" fz="xs">
-        <ActionIcon style={iconStyle} onClick={onDownload}>
-          <ICONS.IconDownload size={18} />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="Share" fz="xs">
-        <ActionIcon style={iconStyle} onClick={onShare}>
-          <ICONS.IconShare size={18} />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="Delete" fz="xs">
-        <ActionIcon style={iconStyle} color="red" onClick={onDelete}>
-          <ICONS.IconTrash size={18} />
-        </ActionIcon>
-      </Tooltip>
+      {!isMoveMode ? (
+        <>
+          <Tooltip label="Download" fz="xs">
+            <ActionIcon style={iconStyle} onClick={onDownload}>
+              <ICONS.IconDownload size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Share" fz="xs">
+            <ActionIcon style={iconStyle} onClick={onShare}>
+              <ICONS.IconShare size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Move" fz="xs">
+            <ActionIcon style={iconStyle} onClick={onMove}>
+              <ICONS.IconFolderShare size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Delete" fz="xs">
+            <ActionIcon style={iconStyle} color="red" onClick={onDelete}>
+              <ICONS.IconTrash size={18} />
+            </ActionIcon>
+          </Tooltip>
+        </>
+      ) : (
+        <Tooltip label="Paste here" fz="xs">
+          <ActionIcon
+            style={iconStyle}
+            disabled={!isPasteEnabled}
+            onClick={onPaste}
+          >
+            <ICONS.IconClipboard size={18} />
+          </ActionIcon>
+        </Tooltip>
+      )}
     </Group>
     <ActionIcon style={iconStyle} onClick={onCancel}>
       <ICONS.IconX size={18} />

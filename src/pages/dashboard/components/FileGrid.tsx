@@ -37,6 +37,8 @@ type FileGridProps = {
   getIndexById: (id: string) => number;
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
   setLastSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  isMoveMode: boolean;
+  filesToMove: string[];
 };
 
 const MENU_ITEMS = [
@@ -58,6 +60,8 @@ const FileGrid: React.FC<FileGridProps> = ({
   getIndexById = () => {},
   setSelectedIds = () => {},
   setLastSelectedIndex = () => {},
+  isMoveMode = false,
+  filesToMove = [],
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
@@ -197,16 +201,27 @@ const FileGrid: React.FC<FileGridProps> = ({
               justifyContent: 'space-between',
               background: '#f6faff',
               border: '1px solid #e5e7eb',
-              ...(selectedIds.includes(folder.id) ? selectedCardStyle : {}),
               cursor: 'pointer',
+              ...(selectedIds.includes(folder.id) ||
+              filesToMove.includes(folder.id)
+                ? selectedCardStyle
+                : {}),
+              ...(isMoveMode && filesToMove.includes(folder.id)
+                ? {
+                    opacity: 0.5,
+                    cursor: 'not-allowed',
+                  }
+                : {}),
               userSelect: 'none',
             }}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
+              if (isMoveMode && filesToMove.includes(folder.id)) return;
               handleSelect(folder.id, e);
             }}
             onDoubleClick={(e: React.MouseEvent) => {
               e.stopPropagation();
+              if (filesToMove.includes(folder.id)) return;
               handleRowDoubleClick(folder);
             }}
           >
@@ -269,14 +284,26 @@ const FileGrid: React.FC<FileGridProps> = ({
               cursor: 'pointer',
               transition: 'box-shadow 0.2s ease',
               userSelect: 'none',
+              ...(isMoveMode
+                ? {
+                    opacity: 0.5,
+                    cursor: 'not-allowed',
+                  }
+                : {}),
             }}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              handleSelect(file.id, e);
+              // handleSelect(file.id, e);
+              if (!isMoveMode) {
+                handleSelect(file.id, e);
+              }
             }}
             onDoubleClick={(e: any) => {
               e.stopPropagation();
-              handleRowDoubleClick(file);
+              if (!isMoveMode) {
+                handleRowDoubleClick(file);
+              }
+              // handleRowDoubleClick(file);
             }}
           >
             <Group

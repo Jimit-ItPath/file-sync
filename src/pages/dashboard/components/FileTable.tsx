@@ -29,6 +29,8 @@ type FileTableProps = {
     e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>
   ) => void;
   handleUnselectAll: () => void;
+  isMoveMode: boolean;
+  filesToMove: string[];
 };
 
 const FileTable: React.FC<FileTableProps> = ({
@@ -41,6 +43,8 @@ const FileTable: React.FC<FileTableProps> = ({
   handleMenuItemClick = () => {},
   handleRowDoubleClick = () => {},
   handleUnselectAll = () => {},
+  isMoveMode = false,
+  filesToMove = [],
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -157,7 +161,13 @@ const FileTable: React.FC<FileTableProps> = ({
         onSelectAll={onSelectAll}
         onRowDoubleClick={(row, e) => {
           e?.stopPropagation();
-          handleRowDoubleClick(row);
+          // handleRowDoubleClick(row);
+          if (
+            !isMoveMode ||
+            (row.type === 'folder' && !filesToMove.includes(row.id))
+          ) {
+            handleRowDoubleClick(row);
+          }
         }}
         idKey="id"
         emptyMessage="No files available. Please upload files to see them here."

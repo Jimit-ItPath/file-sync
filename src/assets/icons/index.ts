@@ -87,6 +87,8 @@ import {
   IconArrowLeft,
   IconForbid2,
   IconLockCheck,
+  IconFolderShare,
+  IconClipboard
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -178,4 +180,6 @@ export const ICONS = {
   IconArrowLeft,
   IconForbid2,
   IconLockCheck,
+  IconFolderShare,
+  IconClipboard
 };
