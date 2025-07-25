@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   fetchProfile,
   removeProfileImage,
+  updateSFDPreference,
 } from '../../../store/slices/user.slice';
 import {
   fetchStorageDetails,
@@ -16,6 +17,8 @@ import {
   removeAccountAccess,
 } from '../../../store/slices/auth.slice';
 import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
+import { useMantineTheme } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 
 const profileSchema = z.object({
   firstName: z
@@ -43,6 +46,11 @@ const UseProfile = () => {
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
     null
   );
+
+  const theme = useMantineTheme();
+  const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
+  const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+  const isMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
 
   const methods = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -93,6 +101,29 @@ const UseProfile = () => {
     }
   }, [userProfile, reset]);
 
+  const [sfdPreference] = useAsyncOperation(async (checked: boolean) => {
+    const res: any = await dispatch(
+      updateSFDPreference({ is_sfd_enabled: checked })
+    );
+    if (res.payload?.status === 200) {
+      await getProfile({});
+      notifications.show({
+        message:
+          res?.payload?.data?.message || 'SFD preference updated successfully!',
+        color: 'green',
+      });
+    } else {
+      notifications.show({
+        message: res?.payload?.message || 'Failed to update SFD preference!',
+        color: 'red',
+      });
+    }
+  });
+
+  const handleSFDToggle = useCallback(async (checked: boolean) => {
+    sfdPreference(checked);
+  }, []);
+
   const [onSubmit, submitLoading] = useAsyncOperation(
     async (data: ProfileFormData) => {
       const formData = new FormData();
@@ -108,7 +139,6 @@ const UseProfile = () => {
 
       if (response?.data?.success || response?.status === 200) {
         notifications.show({
-          title: 'Success',
           message: 'Profile updated successfully!',
           color: 'green',
         });
@@ -188,7 +218,6 @@ const UseProfile = () => {
       ).unwrap();
       if (res?.success) {
         notifications.show({
-          title: 'Success',
           message: res?.message || 'Access removed successfully',
           color: 'green',
         });
@@ -199,7 +228,6 @@ const UseProfile = () => {
       }
     } catch (error: any) {
       notifications.show({
-        title: 'Error',
         message: error || 'Error removing access',
         color: 'red',
       });
@@ -211,7 +239,6 @@ const UseProfile = () => {
       const res = await dispatch(removeProfileImage());
       if (res.payload?.success) {
         notifications.show({
-          title: 'Success',
           message: res.payload?.message || 'Profile image removed successfully',
           color: 'green',
         });
@@ -220,7 +247,6 @@ const UseProfile = () => {
         setPreview(null);
       } else {
         notifications.show({
-          title: 'Error',
           message: res.payload?.message || 'Error removing profile image',
           color: 'red',
         });
@@ -282,6 +308,11 @@ const UseProfile = () => {
     closeRemoveProfilePicModal,
     connectedAccounts,
     loading,
+    handleSFDToggle,
+    userProfile,
+    isXs,
+    isSm,
+    isMd,
   };
 };
 

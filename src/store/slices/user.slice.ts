@@ -12,6 +12,7 @@ type UserProfileType = {
   is_blocked: boolean;
   createdAt: string;
   updatedAt: string;
+  is_sfd_enabled: boolean;
 };
 
 interface UserState {
@@ -73,6 +74,18 @@ export const removeProfileImage = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue('Failed to remove profile image');
+    }
+  }
+);
+
+export const updateSFDPreference = createAsyncThunk(
+  'user/updateSFDPreference',
+  async (data: { is_sfd_enabled: boolean }) => {
+    try {
+      const response = await api.user.updateSFDPreference({ data });
+      return response;
+    } catch (error) {
+      return error;
     }
   }
 );

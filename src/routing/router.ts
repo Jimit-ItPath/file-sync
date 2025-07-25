@@ -33,6 +33,7 @@ import AdminLogin from '../pages/auth/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/dashboard';
 import AdminUsers from '../pages/admin/users';
 import CompleteProfile from '../pages/auth/admin/complete-profile';
+import { ROLES } from '../utils/constants';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -72,9 +73,13 @@ export const router = createBrowserRouter([
   {
     path: '/',
     loader: () => {
-      const { isAuthenticated } = getAuth({});
+      const { isAuthenticated, role } = getAuth({});
       return redirect(
-        isAuthenticated ? PRIVATE_ROUTES.DASHBOARD.url : AUTH_ROUTES.LOGIN.url
+        isAuthenticated
+          ? role === ROLES.ADMIN
+            ? PRIVATE_ROUTES.USERS.url
+            : PRIVATE_ROUTES.DASHBOARD.url
+          : AUTH_ROUTES.LOGIN.url
       );
     },
   },

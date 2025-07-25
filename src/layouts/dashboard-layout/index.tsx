@@ -52,7 +52,8 @@ const DashboardLayout = () => {
   //     const currentPath = location.pathname;
 
   //     if (role === ROLES.ADMIN && !currentPath.startsWith('/admin')) {
-  //       navigate('/admin/dashboard', { replace: true });
+  //       // navigate('/admin/dashboard', { replace: true });
+  //       navigate(PRIVATE_ROUTES.USERS.url);
   //     }
   //     // else if (role === ROLES.USER && currentPath === '/dashboard') {
   //     //   navigate('/dashboard', { replace: true });

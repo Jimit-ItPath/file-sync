@@ -884,6 +884,15 @@ const useOneDrive = () => {
         ).unwrap();
 
         if (res?.status === 200) {
+          await dispatch(
+            initializeOneDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              page: pagination?.page_no || 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
             color: 'green',

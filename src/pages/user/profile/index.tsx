@@ -7,9 +7,10 @@ import {
   Avatar,
   Group,
   FileButton,
-  Container,
   Card,
   ActionIcon,
+  Switch,
+  Input as MantineInput,
 } from '@mantine/core';
 import { Button, Form, Input, Modal, Tooltip } from '../../../components';
 import useProfile from './use-profile';
@@ -40,6 +41,9 @@ const Profile = () => {
     closeRemoveAccessModal,
     openRemoveAccessModal,
     removeAccessModalOpen,
+    handleSFDToggle,
+    userProfile,
+    isXs,
   } = useProfile();
 
   const {
@@ -67,7 +71,7 @@ const Profile = () => {
   }
 
   return (
-    <Container size="xl" py="xl">
+    <Box py="xl" px={'xl'}>
       <Stack gap="xl">
         {/* Profile Card */}
         <Card radius="lg" p="xl" shadow="sm" withBorder>
@@ -206,8 +210,48 @@ const Profile = () => {
           </Form>
         </Card>
 
+        {/* Smart File Distribution Card */}
+        <Card radius="lg" p="xl" shadow="sm" withBorder>
+          <Stack gap="md">
+            <Box>
+              <Title order={4} fw={600}>
+                File Organization Preference
+              </Title>
+              <Text size="sm" c="dimmed">
+                Enable Smart File Distribution to automatically organize your
+                files based on their types and content.
+              </Text>
+            </Box>
+
+            <Group mt={20}>
+              <MantineInput.Label
+                htmlFor="sfd-switch"
+                w="auto"
+                fz={isXs ? 'sm' : 'md'}
+                style={{ cursor: 'pointer' }}
+              >
+                Ask Every Time
+              </MantineInput.Label>
+              <Switch
+                id="sfd-switch"
+                checked={userProfile?.is_sfd_enabled}
+                onChange={event => handleSFDToggle(event.currentTarget.checked)}
+                size="md"
+              />
+              <MantineInput.Label
+                htmlFor="sfd-switch"
+                w="auto"
+                fz={isXs ? 'sm' : 'md'}
+                style={{ cursor: 'pointer' }}
+              >
+                Smart File Distribution
+              </MantineInput.Label>
+            </Group>
+          </Stack>
+        </Card>
+
         {/* Cloud Storage Access Card */}
-        <Card radius="lg" shadow="sm" withBorder>
+        <Card radius="lg" p={'xl'} shadow="sm" withBorder>
           <Stack gap="sm">
             <Box>
               <Title order={4} fw={600}>
@@ -483,7 +527,7 @@ const Profile = () => {
           </Stack>
         </Form>
       </Modal>
-    </Container>
+    </Box>
   );
 };
 

@@ -267,7 +267,10 @@ export const moveGoogleDriveFiles = createAsyncThunk(
 
 export const syncGoogleDrive = createAsyncThunk(
   'googleDrive/syncGoogleDrive',
-  async (data: { account_id?: string | number; directory_id?: string | number }) => {
+  async (data: {
+    account_id?: string | number;
+    directory_id?: string | number;
+  }) => {
     try {
       const response = await api.googleDrive.syncStorage({ data });
       return response;

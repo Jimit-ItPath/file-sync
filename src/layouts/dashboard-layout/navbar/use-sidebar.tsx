@@ -176,7 +176,6 @@ const useSidebar = () => {
       ).unwrap();
       if (res?.success) {
         notifications.show({
-          title: 'Success',
           message: res?.message || 'Access removed successfully',
           color: 'green',
         });
@@ -188,7 +187,6 @@ const useSidebar = () => {
       }
     } catch (error: any) {
       notifications.show({
-        title: 'Error',
         message: error || 'Error removing access',
         color: 'red',
       });

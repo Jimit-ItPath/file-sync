@@ -16,7 +16,8 @@ declare module 'jwt-decode' {
 
 export const REDIRECTION = {
   [ROLES.USER]: PRIVATE_ROUTES.DASHBOARD.url,
-  [ROLES.ADMIN]: PRIVATE_ROUTES.ADMIN_DASHBOARD.url,
+  // [ROLES.ADMIN]: PRIVATE_ROUTES.ADMIN_DASHBOARD.url,
+  [ROLES.ADMIN]: PRIVATE_ROUTES.USERS.url,
 };
 
 export interface GetAuthOptions {

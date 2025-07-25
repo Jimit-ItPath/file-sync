@@ -172,7 +172,10 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
 
 export const createCloudStorageFolder = createAsyncThunk(
   'cloudStorage/createCloudStorageFolder',
-  async (data: { name: string; id?: string | null }, { rejectWithValue }) => {
+  async (
+    data: { name: string; id?: string | null; account_id?: string },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await api.cloudStorage.createFolder({ data });
       return response.data;

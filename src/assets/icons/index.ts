@@ -181,5 +181,5 @@ export const ICONS = {
   IconForbid2,
   IconLockCheck,
   IconFolderShare,
-  IconClipboard
+  IconClipboard,
 };

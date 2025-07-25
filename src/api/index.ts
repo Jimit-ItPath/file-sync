@@ -146,6 +146,21 @@ export const api = {
         data,
         ...configs,
       }),
+    updateSFDPreference: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        is_sfd_enabled: boolean;
+      };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/user/sfd-status`,
+        method: METHODS.PATCH,
+        data,
+        ...configs,
+      }),
   },
   googleDrive: {
     getFiles: (params: {
@@ -483,7 +498,7 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { name: string; id?: string | null };
+      data: { name: string; id?: string | null; account_id?: string };
       [key: string]: any;
     }) =>
       client({

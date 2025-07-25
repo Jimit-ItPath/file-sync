@@ -265,7 +265,10 @@ export const moveDropboxFiles = createAsyncThunk(
 
 export const syncDropbox = createAsyncThunk(
   'dropbox/syncDropbox',
-  async (data: { account_id?: number | string; directory_id?: string | number }) => {
+  async (data: {
+    account_id?: number | string;
+    directory_id?: string | number;
+  }) => {
     try {
       const response = await api.dropbox.syncStorage({ data });
       return response;

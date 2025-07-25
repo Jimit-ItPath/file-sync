@@ -267,7 +267,10 @@ export const moveOneDriveFiles = createAsyncThunk(
 
 export const syncOneDrive = createAsyncThunk(
   'onedrive/syncOneDrive',
-  async (data: { account_id?: string | number; directory_id?: string | number }) => {
+  async (data: {
+    account_id?: string | number;
+    directory_id?: string | number;
+  }) => {
     try {
       const response = await api.oneDrive.syncStorage({ data });
       return response;
