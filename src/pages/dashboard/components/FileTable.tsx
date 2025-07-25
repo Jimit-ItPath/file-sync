@@ -159,6 +159,8 @@ const FileTable: React.FC<FileTableProps> = ({
         selectedRows={selectedIds}
         onSelectRow={onSelectRow}
         onSelectAll={onSelectAll}
+        isMoveMode={isMoveMode}
+        filesToMove={filesToMove}
         onRowDoubleClick={(row, e) => {
           e?.stopPropagation();
           // handleRowDoubleClick(row);

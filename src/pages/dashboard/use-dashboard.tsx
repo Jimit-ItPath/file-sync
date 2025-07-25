@@ -661,6 +661,9 @@ const useDashboard = () => {
           message: 'Item deleted successfully',
           color: 'green',
         });
+        if (selectedIds.includes(fileId)) {
+          cancelMoveMode();
+        }
         setDeleteModalOpen(false);
       } catch (error: any) {
         notifications.show({
@@ -1131,7 +1134,12 @@ const useDashboard = () => {
     let destId: string | null = null;
 
     if (currentFolderId !== null) {
-      destId = selectedIds.length > 0 ? selectedIds[0] : null;
+      if (layout === 'list') {
+        const checkId = files.find(item => selectedIds?.includes(item.id));
+        destId = checkId ? checkId.id : destinationId;
+      } else {
+        destId = selectedIds.length > 0 ? selectedIds[0] : null;
+      }
     } else {
       const checkId = files.find(item => selectedIds?.includes(item.id));
       destId = checkId ? checkId.id : destinationId;

@@ -552,9 +552,12 @@ const useDropbox = () => {
             message: 'File deleted successfully',
             color: 'green',
           });
+          if (selectedIds.includes(fileId)) {
+            cancelMoveMode();
+          }
           setDeleteModalOpen(false);
-          setSelectedIds([]);
-          setLastSelectedIndex(null);
+          // setSelectedIds([]);
+          // setLastSelectedIndex(null);
         } else {
           notifications.show({
             message: res?.payload?.message || `Failed to delete item`,
@@ -1015,7 +1018,12 @@ const useDropbox = () => {
     let destId: string | null = null;
 
     if (currentFolderId !== null) {
-      destId = selectedIds.length > 0 ? selectedIds[0] : null;
+      if (layout === 'list') {
+        const checkId = files.find(item => selectedIds?.includes(item.id));
+        destId = checkId ? checkId.id : destinationId;
+      } else {
+        destId = selectedIds.length > 0 ? selectedIds[0] : null;
+      }
     } else {
       const checkId = files.find(item => selectedIds?.includes(item.id));
       destId = checkId ? checkId.id : destinationId;

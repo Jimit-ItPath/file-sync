@@ -34,6 +34,8 @@ type TableProps<T> = {
   title?: string;
   idKey: keyof T; // key to identify row id
   emptyMessage?: string;
+  isMoveMode?: boolean;
+  filesToMove?: string[];
 };
 
 export function Table<T extends Record<string, any>>({
@@ -46,6 +48,8 @@ export function Table<T extends Record<string, any>>({
   idKey,
   emptyMessage = 'No data available',
   onRowDoubleClick,
+  isMoveMode = false,
+  filesToMove = [],
 }: TableProps<T>) {
   const [allChecked, setAllChecked] = useState(false);
 
@@ -116,6 +120,12 @@ export function Table<T extends Record<string, any>>({
                       onDoubleClick={e => onRowDoubleClick?.(row, e)}
                       style={{
                         cursor: onRowDoubleClick ? 'pointer' : 'default',
+                        ...(isMoveMode &&
+                        (filesToMove.includes(row.id) || row.type === 'file')
+                          ? {
+                              cursor: 'not-allowed',
+                            }
+                          : {}),
                       }}
                     >
                       {onSelectRow && (
@@ -130,6 +140,11 @@ export function Table<T extends Record<string, any>>({
                                 e.currentTarget.checked,
                                 e
                               )
+                            }
+                            disabled={
+                              isMoveMode &&
+                              (filesToMove.includes(row.id) ||
+                                row.type === 'file')
                             }
                             aria-label="Select row"
                           />
