@@ -93,6 +93,8 @@ const Dashboard = () => {
     pagination,
     accountOptions,
     navigateLoading,
+    handleSyncStorage,
+    syncCloudStorageLoading,
 
     isMoveMode,
     handleMoveSelected,
@@ -109,7 +111,7 @@ const Dashboard = () => {
   return (
     <Box>
       <LoaderOverlay
-        visible={navigateLoading || moveFilesLoading}
+        visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
         opacity={1}
       />
       {/* <ScrollArea> */}
@@ -155,7 +157,12 @@ const Dashboard = () => {
           />
           {connectedAccounts?.length ? (
             <ActionButtons
-              {...{ currentPath, navigateToFolderFn, openModal }}
+              {...{
+                currentPath,
+                navigateToFolderFn,
+                openModal,
+                handleSyncStorage,
+              }}
             />
           ) : null}
           {/* <RecentFiles /> */}

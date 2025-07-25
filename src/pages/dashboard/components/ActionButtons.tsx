@@ -5,7 +5,8 @@ import type React from 'react';
 
 const ActionButtons: React.FC<{
   openModal: (type: 'folder' | 'files') => void;
-}> = ({ openModal }) => {
+  handleSyncStorage: () => void;
+}> = ({ openModal = () => {}, handleSyncStorage = () => {} }) => {
   return (
     <Group gap={8} mb={16} wrap="wrap">
       <Button
@@ -41,6 +42,23 @@ const ActionButtons: React.FC<{
         }}
       >
         New Folder
+      </Button>
+      <Button
+        leftSection={<ICONS.IconRefresh size={16} color="#2563eb" />}
+        onClick={handleSyncStorage}
+        radius="md"
+        size="sm"
+        px={16}
+        style={{
+          height: 40,
+          fontWeight: 500,
+          fontSize: 13,
+          backgroundColor: '#fff',
+          color: '#1e293b',
+          border: '1px solid #e5e7eb',
+        }}
+      >
+        Sync
       </Button>
     </Group>
   );

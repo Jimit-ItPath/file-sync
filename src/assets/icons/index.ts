@@ -88,7 +88,7 @@ import {
   IconForbid2,
   IconLockCheck,
   IconFolderShare,
-  IconClipboard
+  IconClipboard,
 } from '@tabler/icons-react';
 
 export const ICONS = {

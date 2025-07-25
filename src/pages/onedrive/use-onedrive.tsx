@@ -26,6 +26,7 @@ import {
   setSearchTerm,
   uploadOneDriveFiles,
   moveOneDriveFiles,
+  syncOneDrive,
 } from '../../store/slices/onedrive.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -172,6 +173,7 @@ const useOneDrive = () => {
       dispatch(resetOneDriveFolder());
       removeLocalStorage('oneDrivePath');
       removeLocalStorage('oneDriveFolderId');
+      removeLocalStorage('oneDriveLayout');
     };
   }, []);
 
@@ -868,6 +870,45 @@ const useOneDrive = () => {
     downloadItems({});
   }, [selectedIds]);
 
+  // Sync storage
+  const [syncStorage, syncOneDriveLoading] = useAsyncOperation(
+    async (folderId: string | null) => {
+      try {
+        const res = await dispatch(
+          syncOneDrive({
+            account_id: accountId,
+            ...(folderId && {
+              directory_id: folderId,
+            }),
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: res?.data?.message || 'Items synced successfully',
+            color: 'green',
+          });
+        } else {
+          notifications.show({
+            message:
+              res?.message || res?.data?.message || 'Failed to sync items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to sync items',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleSyncStorage = useCallback(() => {
+    const folderId = getLocalStorage('oneDriveFolderId');
+    syncStorage(folderId);
+  }, []);
+
   // Moving files
   const [moveFiles, moveFilesLoading] = useAsyncOperation(
     async (destId: string | null) => {
@@ -1070,6 +1111,8 @@ const useOneDrive = () => {
     loadMoreFiles,
     pagination,
     navigateLoading,
+    handleSyncStorage,
+    syncOneDriveLoading,
 
     isMoveMode,
     filesToMove,

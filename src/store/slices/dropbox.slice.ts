@@ -92,7 +92,7 @@ export const navigateToFolder = createAsyncThunk(
     { dispatch }
   ) => {
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (!data?.id) {
       dispatch(resetDropboxFolder());
       await dispatch(
@@ -138,7 +138,7 @@ export const initializeDropboxFromStorage = createAsyncThunk(
   ) => {
     const savedPath = getLocalStorage('dropboxPath');
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (savedPath && savedPath.length > 0) {
       // Navigate to the last folder in the path
       const lastFolder = savedPath[savedPath.length - 1];
@@ -256,6 +256,18 @@ export const moveDropboxFiles = createAsyncThunk(
   async (data: { ids: string[]; destination_id: string | null }) => {
     try {
       const response = await api.dropbox.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const syncDropbox = createAsyncThunk(
+  'dropbox/syncDropbox',
+  async (data: { account_id?: number | string; directory_id?: string | number }) => {
+    try {
+      const response = await api.dropbox.syncStorage({ data });
       return response;
     } catch (error: any) {
       return error;

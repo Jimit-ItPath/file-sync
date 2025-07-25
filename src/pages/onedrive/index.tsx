@@ -89,6 +89,8 @@ const OneDrive = () => {
     loadMoreFiles,
     pagination,
     navigateLoading,
+    handleSyncStorage,
+    syncOneDriveLoading,
 
     isMoveMode,
     handleMoveSelected,
@@ -105,7 +107,7 @@ const OneDrive = () => {
   return (
     <Box>
       <LoaderOverlay
-        visible={navigateLoading || moveFilesLoading}
+        visible={navigateLoading || moveFilesLoading || syncOneDriveLoading}
         opacity={1}
       />
       <Box
@@ -149,7 +151,12 @@ const OneDrive = () => {
           />
           {connectedAccounts?.length ? (
             <ActionButtons
-              {...{ currentPath, navigateToFolderFn, openModal }}
+              {...{
+                currentPath,
+                navigateToFolderFn,
+                openModal,
+                handleSyncStorage,
+              }}
             />
           ) : null}
           {/* <RecentFiles /> */}

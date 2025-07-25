@@ -139,7 +139,7 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
   ) => {
     const savedPath = getLocalStorage('cloudStoragePath');
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (savedPath && savedPath.length > 0) {
       // Navigate to the last folder in the path
       const lastFolder = savedPath[savedPath.length - 1];
@@ -248,6 +248,21 @@ export const moveCloudStorageFiles = createAsyncThunk(
   async (data: { ids: string[]; destination_id: string | null }) => {
     try {
       const response = await api.cloudStorage.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const syncCloudStorage = createAsyncThunk(
+  'cloudStorage/syncCloudStorage',
+  async (data: {
+    account_id?: string | number;
+    directory_id?: string | number;
+  }) => {
+    try {
+      const response = await api.cloudStorage.syncStorage({ data });
       return response;
     } catch (error: any) {
       return error;

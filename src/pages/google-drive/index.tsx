@@ -89,6 +89,8 @@ const GoogleDrive = () => {
     loadMoreFiles,
     pagination,
     navigateLoading,
+    handleSyncStorage,
+    syncGDriveLoading,
 
     isMoveMode,
     handleMoveSelected,
@@ -105,7 +107,7 @@ const GoogleDrive = () => {
   return (
     <Box>
       <LoaderOverlay
-        visible={navigateLoading || moveFilesLoading}
+        visible={navigateLoading || moveFilesLoading || syncGDriveLoading}
         opacity={1}
       />
       <Box
@@ -150,7 +152,12 @@ const GoogleDrive = () => {
           />
           {connectedAccounts?.length ? (
             <ActionButtons
-              {...{ currentPath, navigateToFolderFn, openModal }}
+              {...{
+                currentPath,
+                navigateToFolderFn,
+                openModal,
+                handleSyncStorage,
+              }}
             />
           ) : null}
           {/* <RecentFiles /> */}

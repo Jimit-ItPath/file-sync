@@ -97,6 +97,8 @@ const Dropbox = () => {
     moveFilesLoading,
     isPasteEnabled,
     cancelMoveMode,
+    handleSyncStorage,
+    syncDropboxLoading,
   } = useDropbox();
   const { connectedAccounts } = useSidebar();
 
@@ -105,7 +107,7 @@ const Dropbox = () => {
   return (
     <Box>
       <LoaderOverlay
-        visible={navigateLoading || moveFilesLoading}
+        visible={navigateLoading || moveFilesLoading || syncDropboxLoading}
         opacity={1}
       />
       <Box
@@ -150,7 +152,12 @@ const Dropbox = () => {
           />
           {connectedAccounts?.length ? (
             <ActionButtons
-              {...{ currentPath, navigateToFolderFn, openModal }}
+              {...{
+                currentPath,
+                navigateToFolderFn,
+                openModal,
+                handleSyncStorage,
+              }}
             />
           ) : null}
           {/* <RecentFiles /> */}

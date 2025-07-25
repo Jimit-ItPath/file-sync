@@ -240,6 +240,18 @@ export const api = {
         data,
         ...configs,
       }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
   },
   dropbox: {
     getFiles: (params: {
@@ -330,6 +342,18 @@ export const api = {
     }) =>
       client({
         url: `/cloud-storage/move`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
         method: METHODS.POST,
         data,
         ...configs,
@@ -428,6 +452,18 @@ export const api = {
         data,
         ...configs,
       }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
   },
   cloudStorage: {
     getFiles: (params: {
@@ -518,6 +554,18 @@ export const api = {
     }) =>
       client({
         url: `/cloud-storage/move`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
         method: METHODS.POST,
         data,
         ...configs,

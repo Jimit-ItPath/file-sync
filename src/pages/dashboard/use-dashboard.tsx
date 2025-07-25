@@ -27,13 +27,14 @@ import {
   setSearchTerm,
   uploadCloudStorageFiles,
   moveCloudStorageFiles,
+  syncCloudStorage,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { notifications } from '@mantine/notifications';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
 
@@ -65,7 +66,7 @@ type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = () => {
   const navigate = useNavigate();
-  const params = useParams();
+  // const params = useParams();
   const [layout, setLayout] = useState<'list' | 'grid'>(() => {
     const savedLayout = getLocalStorage('dashboardLayout');
     return savedLayout ? savedLayout : 'list';
@@ -131,14 +132,14 @@ const useDashboard = () => {
   const { reset: resetFolderForm } = folderMethods;
   const { reset: resetRenameForm } = renameMethods;
 
-  const folderIdPath = params['*']
-    ? params['*'].split('/').filter(Boolean)
-    : [];
-  // const folderId = getLocalStorage('folderId');
+  // const folderIdPath = params['*']
+  //   ? params['*'].split('/').filter(Boolean)
+  //   : [];
+  const folderId = getLocalStorage('folderId');
   // console.log("folder id path-", folderIdPath)
-  const folderId = folderIdPath?.length
-    ? folderIdPath[folderIdPath.length - 1]
-    : '';
+  // const folderId = folderIdPath?.length
+  //   ? folderIdPath[folderIdPath.length - 1]
+  //   : '';
 
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
@@ -203,6 +204,7 @@ const useDashboard = () => {
       dispatch(resetCloudStorageFolder());
       removeLocalStorage('cloudStoragePath');
       removeLocalStorage('folderId');
+      removeLocalStorage('dashboardLayout');
     };
   }, []);
 
@@ -924,6 +926,47 @@ const useDashboard = () => {
     downloadItems({});
   }, [selectedIds]);
 
+  // Sync storage
+  const [syncStorage, syncCloudStorageLoading] = useAsyncOperation(
+    async (folderId: string | null) => {
+      try {
+        const res = await dispatch(
+          syncCloudStorage({
+            ...(accountId !== 'all' && {
+              account_id: accountId,
+            }),
+            ...(folderId && {
+              directory_id: folderId,
+            }),
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: res?.data?.message || 'Items synced successfully',
+            color: 'green',
+          });
+        } else {
+          notifications.show({
+            message:
+              res?.message || res?.data?.message || 'Failed to sync items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to sync items',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleSyncStorage = useCallback(() => {
+    const folderId = getLocalStorage('folderId');
+    syncStorage(folderId);
+  }, []);
+
   // Moving files
   const [moveFiles, moveFilesLoading] = useAsyncOperation(
     async (destId: string | null) => {
@@ -1140,6 +1183,8 @@ const useDashboard = () => {
     moveFilesLoading,
     isPasteEnabled,
     cancelMoveMode,
+    handleSyncStorage,
+    syncCloudStorageLoading,
   };
 };
 

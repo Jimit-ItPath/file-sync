@@ -26,6 +26,7 @@ import {
   setSearchTerm,
   uploadDropboxFiles,
   moveDropboxFiles,
+  syncDropbox,
 } from '../../store/slices/dropbox.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -129,12 +130,13 @@ const useDropbox = () => {
   const { reset: resetRenameForm } = renameMethods;
 
   const accountId = params.id;
-  const folderIdPath = params['*']
-    ? params['*'].split('/').filter(Boolean)
-    : [];
-  const folderId = folderIdPath?.length
-    ? folderIdPath[folderIdPath.length - 1]
-    : '';
+  // const folderIdPath = params['*']
+  //   ? params['*'].split('/').filter(Boolean)
+  //   : [];
+  // const folderId = folderIdPath?.length
+  //   ? folderIdPath[folderIdPath.length - 1]
+  //   : '';
+  const folderId = getLocalStorage('dropboxFolderId');
 
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
@@ -173,6 +175,7 @@ const useDropbox = () => {
       dispatch(resetDropboxFolder());
       removeLocalStorage('dropboxPath');
       removeLocalStorage('dropboxFolderId');
+      removeLocalStorage('dropboxLayout');
     };
   }, []);
 
@@ -869,6 +872,45 @@ const useDropbox = () => {
     downloadItems({});
   }, [selectedIds]);
 
+  // Sync storage
+  const [syncStorage, syncDropboxLoading] = useAsyncOperation(
+    async (folderId: string | null) => {
+      try {
+        const res = await dispatch(
+          syncDropbox({
+            account_id: accountId,
+            ...(folderId && {
+              directory_id: folderId,
+            }),
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: res?.data?.message || 'Items synced successfully',
+            color: 'green',
+          });
+        } else {
+          notifications.show({
+            message:
+              res?.message || res?.data?.message || 'Failed to sync items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to sync items',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleSyncStorage = useCallback(() => {
+    const folderId = getLocalStorage('dropboxFolderId');
+    syncStorage(folderId);
+  }, []);
+
   // Moving files
   const [moveFiles, moveFilesLoading] = useAsyncOperation(
     async (destId: string | null) => {
@@ -1072,6 +1114,8 @@ const useDropbox = () => {
     pagination,
     loadMoreFiles,
     navigateLoading,
+    handleSyncStorage,
+    syncDropboxLoading,
 
     isMoveMode,
     filesToMove,

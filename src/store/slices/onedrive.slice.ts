@@ -92,7 +92,7 @@ export const navigateToFolder = createAsyncThunk(
     { dispatch }
   ) => {
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (!data?.id) {
       dispatch(resetOneDriveFolder());
       await dispatch(
@@ -138,7 +138,7 @@ export const initializeOneDriveFromStorage = createAsyncThunk(
   ) => {
     const savedPath = getLocalStorage('oneDrivePath');
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (savedPath && savedPath.length > 0) {
       // Navigate to the last folder in the path
       const lastFolder = savedPath[savedPath.length - 1];
@@ -258,6 +258,18 @@ export const moveOneDriveFiles = createAsyncThunk(
   async (data: { ids: string[]; destination_id: string | null }) => {
     try {
       const response = await api.oneDrive.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const syncOneDrive = createAsyncThunk(
+  'onedrive/syncOneDrive',
+  async (data: { account_id?: string | number; directory_id?: string | number }) => {
+    try {
+      const response = await api.oneDrive.syncStorage({ data });
       return response;
     } catch (error: any) {
       return error;
