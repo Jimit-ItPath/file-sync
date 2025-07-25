@@ -26,6 +26,7 @@ import {
   setAccountId,
   setSearchTerm,
   uploadCloudStorageFiles,
+  moveCloudStorageFiles,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -94,6 +95,11 @@ const useDashboard = () => {
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [itemToRename, setItemToRename] = useState<FileType | null>(null);
   const [removeFilesModalOpen, setRemoveFilesModalOpen] = useState(false);
+
+  const [isMoveMode, setIsMoveMode] = useState(false);
+  const [filesToMove, setFilesToMove] = useState<string[]>([]);
+  const [sourceFolderId, setSourceFolderId] = useState<string | null>(null);
+  const [destinationId, setDestinationId] = useState<string | null>(null);
 
   const {
     cloudStorage,
@@ -240,6 +246,18 @@ const useDashboard = () => {
     }
   }, [cloudStorage.length]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMoveMode) {
+        setIsMoveMode(false);
+        setFilesToMove([]);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMoveMode]);
+
   const loadMoreFiles = useCallback(async () => {
     if (pagination && pagination.page_no < pagination.total_pages && !loading) {
       await dispatch(
@@ -283,12 +301,13 @@ const useDashboard = () => {
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
       if (folder?.id) {
-        const idx = currentPath.findIndex(f => f.id === folder.id);
-        const path = currentPath
-          .slice(0, idx + 1)
-          .map(f => f.id)
-          .join('/');
-        navigate(`/dashboard/${path}`);
+        setDestinationId(folder?.id);
+        // const idx = currentPath.findIndex(f => f.id === folder.id);
+        // const path = currentPath
+        //   .slice(0, idx + 1)
+        //   .map(f => f.id)
+        //   .join('/');
+        // navigate(`/dashboard/${path}`);
         dispatch(
           navigateToFolder({
             id: String(folder?.id),
@@ -297,12 +316,13 @@ const useDashboard = () => {
         );
       } else {
         dispatch(navigateToFolder(null));
-        navigate('/dashboard');
+        setDestinationId(null);
+        // navigate('/dashboard');
       }
-      setSelectedIds([]);
-      setLastSelectedIndex(null);
+      // setSelectedIds([]);
+      // setLastSelectedIndex(null);
     },
-    [dispatch, currentPath]
+    [dispatch, currentPath, isMoveMode]
   );
 
   const handleRowDoubleClick = useCallback(
@@ -311,8 +331,10 @@ const useDashboard = () => {
         row.mimeType === 'application/vnd.google-apps.folder' ||
         row.type === 'folder'
       ) {
-        setSelectedIds([]);
-        setLastSelectedIndex(null);
+        if (!isMoveMode) {
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+        }
         navigateToFolderFn({ id: row.id, name: row.name });
       }
     },
@@ -731,7 +753,12 @@ const useDashboard = () => {
         '[type="checkbox"]'
       );
 
-      if (isCheckboxClick) {
+      if (isMoveMode) {
+        // In move mode, allow selecting only one folder different from filesToMove
+        if (filesToMove.includes(id)) return;
+        setSelectedIds([id]);
+        setLastSelectedIndex(idx);
+      } else if (isCheckboxClick) {
         // For checkbox clicks, simply toggle the selection
         setSelectedIds(prev =>
           prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -763,30 +790,40 @@ const useDashboard = () => {
   }, [files]);
 
   const handleUnselectAll = useCallback(() => {
-    setSelectedIds([]);
-    setLastSelectedIndex(null);
-  }, []);
+    if (!isMoveMode) {
+      setSelectedIds([]);
+      setLastSelectedIndex(null);
+    }
+  }, [isMoveMode]);
 
   // Handle row selection
   const onSelectRow = useCallback(
     (id: string, checked: boolean) => {
-      setSelectedIds(prev =>
-        checked ? [...prev, id] : prev.filter(i => i !== id)
-      );
-      setLastSelectedIndex(getIndexById(id));
+      if (isMoveMode) {
+        // In move mode, allow selecting only one folder, but not one of the files being moved
+        if (filesToMove.includes(id)) return;
+        setSelectedIds([id]);
+        setLastSelectedIndex(getIndexById(id));
+      } else {
+        setSelectedIds(prev =>
+          checked ? [...prev, id] : prev.filter(i => i !== id)
+        );
+        setLastSelectedIndex(getIndexById(id));
+      }
     },
-    [getIndexById]
+    [getIndexById, isMoveMode, filesToMove]
   );
 
   const onSelectAll = useCallback(
     (checked: boolean) => {
+      if (isMoveMode) return;
       if (checked) {
         handleSelectAll();
       } else {
         handleUnselectAll();
       }
     },
-    [handleSelectAll, handleUnselectAll]
+    [handleSelectAll, handleUnselectAll, isMoveMode]
   );
 
   // Actions for selected items
@@ -887,6 +924,138 @@ const useDashboard = () => {
     downloadItems({});
   }, [selectedIds]);
 
+  // Moving files
+  const [moveFiles, moveFilesLoading] = useAsyncOperation(
+    async (destId: string | null) => {
+      try {
+        const res = await dispatch(
+          moveCloudStorageFiles({
+            ids: filesToMove,
+            destination_id: destId,
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: 'Items moved successfully',
+            color: 'green',
+          });
+          await dispatch(
+            initializeCloudStorageFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              page: pagination?.page_no || 1,
+              ...(accountId !== 'all' && {
+                account_id: accountId,
+              }),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+        } else {
+          notifications.show({
+            message: res?.message || 'Failed to move items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to move items',
+          color: 'red',
+        });
+      } finally {
+        setIsMoveMode(false);
+        setFilesToMove([]);
+        handleUnselectAll();
+        setSelectedIds([]);
+        setSourceFolderId(null);
+      }
+    }
+  );
+
+  const cancelMoveMode = useCallback(() => {
+    setIsMoveMode(false);
+    setFilesToMove([]);
+    setSelectedIds([]);
+    setLastSelectedIndex(null);
+    setSourceFolderId(null);
+  }, []);
+
+  const handleMoveSelected = useCallback(() => {
+    setIsMoveMode(true);
+    setFilesToMove([...selectedIds]);
+    setSourceFolderId(currentFolderId ?? null);
+  }, [selectedIds]);
+
+  const isPasteEnabled = useCallback(() => {
+    if (!isMoveMode || filesToMove.length === 0) return false;
+
+    // Disable paste if currentFolderId is same as sourceFolderId and selected folder is among filesToMove
+    if (
+      currentFolderId === sourceFolderId &&
+      selectedIds.length === 1 &&
+      filesToMove.includes(selectedIds[0])
+    ) {
+      return false;
+    }
+
+    // Also disable paste if currentFolderId is null (root) and no folder selected different from filesToMove
+    // if (currentFolderId === null) {
+    //   // Paste disabled on root until user selects a different folder
+    //   return false;
+    // }
+
+    return true;
+  }, [isMoveMode, filesToMove, currentFolderId, sourceFolderId, selectedIds]);
+
+  const handlePasteFiles = useCallback(() => {
+    if (filesToMove.length === 0) return;
+
+    // Get the destination folder ID (currentFolderId could be null for root)
+    let destId: string | null = null;
+
+    if (currentFolderId !== null) {
+      destId = selectedIds.length > 0 ? selectedIds[0] : null;
+    } else {
+      const checkId = files.find(item => selectedIds?.includes(item.id));
+      destId = checkId ? checkId.id : destinationId;
+    }
+
+    // Check if any of the files being moved is the destination folder itself
+    const isMovingFolderIntoItself = cloudStorage.some(
+      file =>
+        filesToMove.includes(file.id) &&
+        file.entry_type === 'folder' &&
+        file.id === destId
+    );
+
+    if (isMovingFolderIntoItself) {
+      notifications.show({
+        message: 'Cannot move a folder into itself',
+        color: 'red',
+      });
+      return;
+    }
+
+    // Check if trying to move items into one of the selected folders
+    const selectedFolders = cloudStorage.filter(
+      file => filesToMove.includes(file.id) && file.entry_type === 'folder'
+    );
+
+    const isMovingIntoSelectedFolder = selectedFolders.some(
+      folder => folder.id === destId
+    );
+
+    if (isMovingIntoSelectedFolder) {
+      notifications.show({
+        message: 'Cannot move items into one of the selected folders',
+        color: 'red',
+      });
+      return;
+    }
+
+    moveFiles(destId);
+  }, [filesToMove, currentFolderId, moveFiles, cloudStorage]);
+
   return {
     layout,
     switchLayout,
@@ -963,6 +1132,14 @@ const useDashboard = () => {
     pagination,
     accountOptions,
     navigateLoading,
+
+    isMoveMode,
+    filesToMove,
+    handleMoveSelected,
+    handlePasteFiles,
+    moveFilesLoading,
+    isPasteEnabled,
+    cancelMoveMode,
   };
 };
 

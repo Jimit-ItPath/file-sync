@@ -243,6 +243,18 @@ export const downloadFiles = createAsyncThunk(
   }
 );
 
+export const moveCloudStorageFiles = createAsyncThunk(
+  'cloudStorage/moveCloudStorageFiles',
+  async (data: { ids: string[]; destination_id: string | null }) => {
+    try {
+      const response = await api.cloudStorage.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const cloudStorageSlice = createSlice({
   name: 'cloudStorage',
   initialState,

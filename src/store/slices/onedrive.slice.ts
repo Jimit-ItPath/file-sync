@@ -253,6 +253,18 @@ export const downloadOneDriveFiles = createAsyncThunk(
   }
 );
 
+export const moveOneDriveFiles = createAsyncThunk(
+  'onedrive/moveOneDriveFiles',
+  async (data: { ids: string[]; destination_id: string | null }) => {
+    try {
+      const response = await api.oneDrive.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const onedriveSlice = createSlice({
   name: 'onedrive',
   initialState,

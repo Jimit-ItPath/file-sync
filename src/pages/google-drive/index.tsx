@@ -89,6 +89,14 @@ const GoogleDrive = () => {
     loadMoreFiles,
     pagination,
     navigateLoading,
+
+    isMoveMode,
+    handleMoveSelected,
+    handlePasteFiles,
+    filesToMove,
+    moveFilesLoading,
+    isPasteEnabled,
+    cancelMoveMode,
   } = useGoogleDrive();
   const { connectedAccounts } = useSidebar();
 
@@ -96,7 +104,10 @@ const GoogleDrive = () => {
 
   return (
     <Box>
-      <LoaderOverlay visible={navigateLoading} opacity={1} />
+      <LoaderOverlay
+        visible={navigateLoading || moveFilesLoading}
+        opacity={1}
+      />
       <Box
         px={32}
         pb={20}
@@ -148,10 +159,17 @@ const GoogleDrive = () => {
               <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
                 <SelectionBar
                   count={selectedIds.length}
-                  onCancel={handleUnselectAll}
+                  onCancel={() => {
+                    handleUnselectAll();
+                    cancelMoveMode();
+                  }}
                   onDelete={handleDeleteSelected}
                   onDownload={handleDownloadSelected}
                   onShare={handleShareSelected}
+                  onMove={handleMoveSelected}
+                  onPaste={handlePasteFiles}
+                  isMoveMode={isMoveMode}
+                  isPasteEnabled={isPasteEnabled()}
                 />
               </Box>
             ) : (
@@ -199,6 +217,8 @@ const GoogleDrive = () => {
               handleMenuItemClick,
               handleRowDoubleClick,
               handleUnselectAll,
+              filesToMove,
+              isMoveMode,
             }}
           />
         ) : (
@@ -217,6 +237,8 @@ const GoogleDrive = () => {
                 handleRowDoubleClick,
                 allIds,
                 lastSelectedIndex,
+                filesToMove,
+                isMoveMode,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (

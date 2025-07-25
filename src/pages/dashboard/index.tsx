@@ -93,6 +93,14 @@ const Dashboard = () => {
     pagination,
     accountOptions,
     navigateLoading,
+
+    isMoveMode,
+    handleMoveSelected,
+    handlePasteFiles,
+    filesToMove,
+    moveFilesLoading,
+    isPasteEnabled,
+    cancelMoveMode,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -100,7 +108,10 @@ const Dashboard = () => {
 
   return (
     <Box>
-      <LoaderOverlay visible={navigateLoading} opacity={1} />
+      <LoaderOverlay
+        visible={navigateLoading || moveFilesLoading}
+        opacity={1}
+      />
       {/* <ScrollArea> */}
       <Box
         px={32}
@@ -153,10 +164,17 @@ const Dashboard = () => {
               <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
                 <SelectionBar
                   count={selectedIds.length}
-                  onCancel={handleUnselectAll}
+                  onCancel={() => {
+                    handleUnselectAll();
+                    cancelMoveMode();
+                  }}
                   onDelete={handleDeleteSelected}
                   onDownload={handleDownloadSelected}
                   onShare={handleShareSelected}
+                  onMove={handleMoveSelected}
+                  onPaste={handlePasteFiles}
+                  isMoveMode={isMoveMode}
+                  isPasteEnabled={isPasteEnabled()}
                 />
               </Box>
             ) : (
@@ -272,6 +290,8 @@ const Dashboard = () => {
               handleMenuItemClick,
               handleRowDoubleClick,
               handleUnselectAll,
+              filesToMove,
+              isMoveMode,
             }}
           />
         ) : (
@@ -290,6 +310,8 @@ const Dashboard = () => {
                 handleRowDoubleClick,
                 allIds,
                 lastSelectedIndex,
+                filesToMove,
+                isMoveMode,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (

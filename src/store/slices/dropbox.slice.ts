@@ -251,6 +251,18 @@ export const downloadDropboxFiles = createAsyncThunk(
   }
 );
 
+export const moveDropboxFiles = createAsyncThunk(
+  'dropbox/moveDropboxFiles',
+  async (data: { ids: string[]; destination_id: string | null }) => {
+    try {
+      const response = await api.dropbox.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const dropboxSlice = createSlice({
   name: 'dropbox',
   initialState,
