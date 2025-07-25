@@ -1,4 +1,12 @@
-import { Box, Group, Select, Stack, Text, TextInput } from '@mantine/core';
+import {
+  Autocomplete,
+  Box,
+  Group,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
 // import RecentFiles from './RecentFiles';
@@ -17,6 +25,7 @@ import UploadProgress from './components/UploadProgress';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
 import { LoaderOverlay } from '../../components/loader';
+import { Controller } from 'react-hook-form';
 
 const controlBoxStyles = {
   height: 40,
@@ -103,6 +112,9 @@ const Dashboard = () => {
     moveFilesLoading,
     isPasteEnabled,
     cancelMoveMode,
+    isSFDEnabled,
+    uploadMethods,
+    accountOptionsForSFD,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -355,6 +367,39 @@ const Dashboard = () => {
                 error={folderMethods.formState.errors.folderName?.message}
                 withAsterisk
               />
+              {!isSFDEnabled && (
+                <Controller
+                  control={folderMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          folderMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
               <Button
                 type="submit"
                 loading={createFolderLoading}
@@ -368,23 +413,67 @@ const Dashboard = () => {
             </Stack>
           </Form>
         ) : (
-          <>
-            <Dropzone
-              onFilesSelected={setUploadedFiles}
-              // maxSize={5 * 1024 ** 2}
-              multiple={true}
-              mb="md"
-              getFileIcon={getFileIcon}
-              files={uploadedFiles}
-            />
-            <Button
-              onClick={handleFileUpload}
-              loading={uploadFilesLoading}
-              disabled={uploadedFiles.length === 0 || uploadFilesLoading}
-            >
-              Upload Files
-            </Button>
-          </>
+          <Form onSubmit={handleFileUpload} methods={uploadMethods}>
+            <Stack gap={'md'}>
+              <Dropzone
+                // onFilesSelected={setUploadedFiles}
+                onFilesSelected={files => {
+                  setUploadedFiles(files);
+                  uploadMethods.setValue('files', files);
+                }}
+                // maxSize={5 * 1024 ** 2}
+                multiple={true}
+                mb="md"
+                getFileIcon={getFileIcon}
+                files={uploadedFiles}
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={uploadMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          uploadMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                // onClick={handleFileUpload}
+                type="submit"
+                loading={uploadFilesLoading}
+                disabled={
+                  uploadedFiles.length === 0 || uploadFilesLoading
+                  // ||
+                  // (!isSFDEnabled && !uploadMethods.formState.isValid)
+                }
+              >
+                Upload Files
+              </Button>
+            </Stack>
+          </Form>
         )}
       </Modal>
 

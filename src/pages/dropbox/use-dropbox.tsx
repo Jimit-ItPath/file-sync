@@ -355,7 +355,8 @@ const useDropbox = () => {
             initializeDropboxFromStorage({
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
-              page: pagination?.page_no || 1,
+              // page: pagination?.page_no || 1,
+              page: 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
             })
@@ -470,7 +471,8 @@ const useDropbox = () => {
           initializeDropboxFromStorage({
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
-            page: pagination?.page_no || 1,
+            // page: pagination?.page_no || 1,
+            page: 1,
             account_id: Number(accountId),
             searchTerm: debouncedSearchTerm || '',
           })
@@ -500,7 +502,8 @@ const useDropbox = () => {
           initializeDropboxFromStorage({
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
-            page: pagination?.page_no || 1,
+            // page: pagination?.page_no || 1,
+            page: 1,
             account_id: Number(accountId),
             searchTerm: debouncedSearchTerm || '',
           })
@@ -539,7 +542,8 @@ const useDropbox = () => {
             initializeDropboxFromStorage({
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
-              page: pagination?.page_no || 1,
+              // page: pagination?.page_no || 1,
+              page: 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
             })
@@ -781,7 +785,8 @@ const useDropbox = () => {
             initializeDropboxFromStorage({
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
-              page: pagination?.page_no || 1,
+              // page: pagination?.page_no || 1,
+              page: 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
             })
@@ -890,7 +895,8 @@ const useDropbox = () => {
             initializeDropboxFromStorage({
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
-              page: pagination?.page_no || 1,
+              // page: pagination?.page_no || 1,
+              page: 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
             })
@@ -940,7 +946,8 @@ const useDropbox = () => {
             initializeDropboxFromStorage({
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
-              page: pagination?.page_no || 1,
+              // page: pagination?.page_no || 1,
+              page: 1,
               account_id: Number(accountId),
               searchTerm: debouncedSearchTerm || '',
             })

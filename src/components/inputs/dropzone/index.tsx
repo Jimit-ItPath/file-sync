@@ -6,6 +6,7 @@ import {
 } from '@mantine/dropzone';
 import { ICONS } from '../../../assets/icons';
 import { Image } from '../../image';
+import { Tooltip } from '../../tooltip';
 
 interface CustomDropzoneProps extends Partial<DropzoneProps> {
   onFilesSelected: (files: File[]) => void;
@@ -37,7 +38,14 @@ export function Dropzone({
           border: `1px solid ${theme.colors.gray[3]}`,
           borderRadius: rem(6),
           backgroundColor: theme.white,
+          cursor: 'default',
+          display: 'flex',
+          width: files?.length > 1 ? rem(250) : '100%',
+          ...(files?.length > 1 && {
+            flex: 1,
+          }),
         }}
+        onClick={e => e.stopPropagation()}
       >
         <Box
           style={{
@@ -50,6 +58,7 @@ export function Dropzone({
             borderRadius: rem(4),
             backgroundColor: theme.colors.gray[0],
             flexShrink: 0,
+            marginRight: rem(12),
           }}
         >
           {isImage ? (
@@ -71,13 +80,21 @@ export function Dropzone({
             })(40)
           )}
         </Box>
-        <Text
-          size="sm"
-          lineClamp={2}
-          style={{ wordBreak: 'break-word', flex: 1 }}
-        >
-          {file.name}
-        </Text>
+        <Tooltip label={file.name} fz={'xs'}>
+          <Text
+            size="sm"
+            lineClamp={1}
+            style={{
+              wordBreak: 'break-word',
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {file.name}
+          </Text>
+        </Tooltip>
       </Group>
     );
   });

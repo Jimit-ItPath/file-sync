@@ -54,6 +54,12 @@ export type FileType = {
 
 const folderSchema = z.object({
   folderName: z.string().min(1, 'Folder name is required'),
+  accountId: z.string().min(1, 'Account selection is required').optional(),
+});
+
+const uploadSchema = z.object({
+  accountId: z.string().min(1, 'Account selection is required').optional(),
+  files: z.any().optional(),
 });
 
 const renameSchema = z.object({
@@ -61,7 +67,7 @@ const renameSchema = z.object({
 });
 
 type FolderFormData = z.infer<typeof folderSchema>;
-
+type UploadFormData = z.infer<typeof uploadSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = () => {
@@ -113,14 +119,35 @@ const useDashboard = () => {
     searchTerm,
     navigateLoading,
   } = useAppSelector(state => state.cloudStorage);
+  const { userProfile } = useAppSelector(state => state.user);
   const { checkStorageDetails } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
 
+  const folderId = getLocalStorage('folderId');
+
+  const isSFDEnabled = useMemo(() => {
+    return !folderId ? (userProfile?.is_sfd_enabled ?? false) : true;
+  }, [userProfile, folderId]);
+
   const folderMethods = useForm<FolderFormData>({
-    resolver: zodResolver(folderSchema),
+    resolver: zodResolver(
+      isSFDEnabled ? folderSchema.omit({ accountId: true }) : folderSchema
+    ),
     mode: 'onChange',
     defaultValues: {
       folderName: '',
+      accountId: '',
+    },
+  });
+
+  const uploadMethods = useForm<UploadFormData>({
+    resolver: zodResolver(
+      isSFDEnabled ? uploadSchema.omit({ accountId: true }) : uploadSchema
+    ),
+    mode: 'onChange',
+    defaultValues: {
+      files: [],
+      accountId: '',
     },
   });
 
@@ -135,7 +162,6 @@ const useDashboard = () => {
   // const folderIdPath = params['*']
   //   ? params['*'].split('/').filter(Boolean)
   //   : [];
-  const folderId = getLocalStorage('folderId');
   // console.log("folder id path-", folderIdPath)
   // const folderId = folderIdPath?.length
   //   ? folderIdPath[folderIdPath.length - 1]
@@ -154,6 +180,11 @@ const useDashboard = () => {
     }
     return [{ value: 'all', label: 'All Accounts' }];
   }, [checkStorageDetails]);
+
+  const accountOptionsForSFD = useMemo(
+    () => accountOptions?.filter(account => account.value !== 'all'),
+    [accountOptions]
+  );
 
   const handleAccountTypeChange = useCallback(
     (value: string | null) => {
@@ -375,23 +406,26 @@ const useDashboard = () => {
 
   // Folder creation functionality
   const [createFolder, createFolderLoading] = useAsyncOperation(
-    async (folderName: string) => {
+    async (data: { folderName: string; accountId?: string | undefined }) => {
       try {
         const res = await dispatch(
           createCloudStorageFolder({
-            name: folderName,
+            name: data.folderName,
             ...(currentFolderId && {
               id: currentFolderId,
             }),
+            ...(!isSFDEnabled && data.accountId
+              ? { account_id: data.accountId }
+              : {}),
           })
         );
         if (res?.payload?.success) {
-          resetFolderForm();
           await dispatch(
             initializeCloudStorageFromStorage({
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
-              page: pagination?.page_no || 1,
+              // page: pagination?.page_no || 1,
+              page: 1,
               ...(accountId !== 'all' && {
                 account_id: accountId,
               }),
@@ -403,6 +437,7 @@ const useDashboard = () => {
             color: 'green',
           });
           setModalOpen(false);
+          resetFolderForm();
         }
       } catch (error: any) {
         notifications.show({
@@ -414,7 +449,7 @@ const useDashboard = () => {
   );
 
   const handleCreateFolder = folderMethods.handleSubmit(data => {
-    createFolder(data.folderName);
+    createFolder(data);
   });
 
   // const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
@@ -447,7 +482,13 @@ const useDashboard = () => {
   // );
 
   const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
-    async (files: File[]) => {
+    async ({
+      files,
+      formData,
+    }: {
+      files: File[];
+      formData: UploadFormData;
+    }) => {
       try {
         setShowUploadProgress(true); // Show the progress UI
         const fileIds = files.map(() => uuidv4()); // Generate unique IDs for each file
@@ -465,37 +506,40 @@ const useDashboard = () => {
           setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
         });
 
-        const formData = new FormData();
-        files.forEach(file => formData.append('file', file));
+        const formDataToUpload = new FormData();
+        files.forEach(file => formDataToUpload.append('file', file));
         if (currentFolderId) {
-          formData.append('id', currentFolderId);
+          formDataToUpload.append('id', currentFolderId);
+        }
+        if (!isSFDEnabled && formData.accountId) {
+          formDataToUpload.append('account_id', formData.accountId);
         }
 
         // Simulate progress manually up to 95%
-        const simulateProgress = (fileId: string) => {
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 5; // Increment progress by 5%
-            setUploadProgress(prev => ({
-              ...prev,
-              [fileId]: Math.min(progress, 95), // Cap progress at 95%
-            }));
-            if (progress >= 95 || !uploadLoading) {
-              clearInterval(interval); // Stop simulation when progress reaches 95% or upload completes
-            }
-          }, 300); // Update progress every 300ms
-        };
+        // const simulateProgress = (fileId: string) => {
+        //   let progress = 0;
+        //   const interval = setInterval(() => {
+        //     progress += 5; // Increment progress by 5%
+        //     setUploadProgress(prev => ({
+        //       ...prev,
+        //       [fileId]: Math.min(progress, 95), // Cap progress at 95%
+        //     }));
+        //     if (progress >= 95 || !uploadLoading) {
+        //       clearInterval(interval); // Stop simulation when progress reaches 95% or upload completes
+        //     }
+        //   }, 300); // Update progress every 300ms
+        // };
 
-        // Start simulating progress for each file
-        files.forEach((_, index) => {
-          const fileId = fileIds[index];
-          simulateProgress(fileId);
-        });
+        // // Start simulating progress for each file
+        // files.forEach((_, index) => {
+        //   const fileId = fileIds[index];
+        //   simulateProgress(fileId);
+        // });
 
         // Call the API and track progress
         await dispatch(
           uploadCloudStorageFiles({
-            data: formData,
+            data: formDataToUpload,
             onUploadProgress: (progressEvent: ProgressEvent) => {
               const percentCompleted = Math.round(
                 (progressEvent.loaded * 100) / progressEvent.total
@@ -504,13 +548,15 @@ const useDashboard = () => {
                 const fileId = fileIds[index];
                 setUploadProgress(prev => ({
                   ...prev,
-                  [fileId]: Math.min(percentCompleted, 95), // Cap progress at 95%
+                  [fileId]: percentCompleted,
+                  // [fileId]: Math.min(percentCompleted, 95), // Cap progress at 95%
                 }));
               });
             },
           })
         ).unwrap();
 
+        uploadMethods.reset();
         closeModal();
 
         // Wait for `uploadLoading` to become false and set progress to 100%
@@ -536,7 +582,8 @@ const useDashboard = () => {
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
-            page: pagination?.page_no || 1,
+            // page: pagination?.page_no || 1,
+            page: 1,
             ...(accountId !== 'all' && {
               account_id: accountId,
             }),
@@ -565,7 +612,8 @@ const useDashboard = () => {
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
-            page: pagination?.page_no || 1,
+            // page: pagination?.page_no || 1,
+            page: 1,
             ...(accountId !== 'all' && {
               account_id: accountId,
             }),
@@ -601,7 +649,8 @@ const useDashboard = () => {
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
-            page: pagination?.page_no || 1,
+            // page: pagination?.page_no || 1,
+            page: 1,
             ...(accountId !== 'all' && {
               account_id: accountId,
             }),
@@ -628,19 +677,17 @@ const useDashboard = () => {
     }
   }, [itemToDelete, removeFile]);
 
-  const handleFileUpload = useCallback(
-    async (files: File[]) => {
-      const filesToUpload = files?.length ? files : uploadedFiles;
-      if (filesToUpload.length === 0) return;
+  const uploadFilesHandler = useCallback(
+    async (files: File[], formData?: UploadFormData) => {
+      if (files.length === 0) return;
 
       uploadsInProgressRef.current = true;
       setShowUploadProgress(true);
 
-      // Reset states for new uploads
       setUploadProgress({});
       setUploadingFiles({});
 
-      filesToUpload.forEach(file => {
+      files.forEach(file => {
         const fileId = uuidv4();
         const controller = new AbortController();
         uploadControllers.current[fileId] = controller;
@@ -653,13 +700,17 @@ const useDashboard = () => {
             fileObject: file,
           },
         }));
-
-        // setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
       });
-      uploadFiles(filesToUpload);
+
+      await uploadFiles({ files, formData: formData || { accountId: '' } });
     },
-    [uploadFiles, uploadedFiles]
+    [uploadFiles]
   );
+
+  const handleFileUpload = uploadMethods.handleSubmit(async data => {
+    const filesToUpload = uploadedFiles.length > 0 ? uploadedFiles : [];
+    await uploadFilesHandler(filesToUpload, data);
+  });
 
   const cleanupUpload = (fileId: string) => {
     setUploadProgress(prev => {
@@ -713,9 +764,16 @@ const useDashboard = () => {
     };
   }, []);
 
+  const handleFileDrop = useCallback(
+    async (files: File[]) => {
+      await uploadFilesHandler(files);
+    },
+    [uploadFilesHandler]
+  );
+
   // Drag and drop functionality
   const { dragRef, isDragging } = useDragDrop({
-    onFileDrop: handleFileUpload,
+    onFileDrop: handleFileDrop,
     acceptedFileTypes: ['*'],
     // maxFileSize: 100 * 1024 * 1024,
   });
@@ -845,7 +903,8 @@ const useDashboard = () => {
           initializeCloudStorageFromStorage({
             ...(folderId && { id: folderId }),
             limit: pagination?.page_limit || 20,
-            page: pagination?.page_no || 1,
+            // page: pagination?.page_no || 1,
+            page: 1,
             ...(accountId !== 'all' && {
               account_id: accountId,
             }),
@@ -876,10 +935,12 @@ const useDashboard = () => {
     setModalType(type);
     setModalOpen(true);
     setUploadedFiles([]);
+    if (type === 'files') uploadMethods.reset({ accountId: '' });
     resetFolderForm();
   }, []);
 
   const closeModal = useCallback(() => {
+    setUploadedFiles([]);
     setModalOpen(false);
   }, []);
 
@@ -942,6 +1003,18 @@ const useDashboard = () => {
         ).unwrap();
 
         if (res?.status === 200) {
+          await dispatch(
+            initializeCloudStorageFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              // page: pagination?.page_no || 1,
+              page: 1,
+              ...(accountId !== 'all' && {
+                account_id: accountId,
+              }),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
             color: 'green',
@@ -987,7 +1060,8 @@ const useDashboard = () => {
             initializeCloudStorageFromStorage({
               ...(folderId && { id: folderId }),
               limit: pagination?.page_limit || 20,
-              page: pagination?.page_no || 1,
+              // page: pagination?.page_no || 1,
+              page: 1,
               ...(accountId !== 'all' && {
                 account_id: accountId,
               }),
@@ -1185,6 +1259,9 @@ const useDashboard = () => {
     cancelMoveMode,
     handleSyncStorage,
     syncCloudStorageLoading,
+    uploadMethods,
+    isSFDEnabled,
+    accountOptionsForSFD,
   };
 };
 
