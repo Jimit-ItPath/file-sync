@@ -115,6 +115,7 @@ const Dashboard = () => {
     isSFDEnabled,
     uploadMethods,
     accountOptionsForSFD,
+    checkLocation,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -282,13 +283,15 @@ const Dashboard = () => {
                 }}
               />
             </Box>
-            <Select
-              data={accountOptions}
-              value={accountId}
-              onChange={handleAccountTypeChange}
-              placeholder="Select account type"
-              style={{ width: '150px' }}
-            />
+            {!checkLocation && (
+              <Select
+                data={accountOptions}
+                value={accountId}
+                onChange={handleAccountTypeChange}
+                placeholder="Select account type"
+                style={{ width: '150px' }}
+              />
+            )}
             <TextInput
               placeholder="Search files..."
               value={searchTerm}

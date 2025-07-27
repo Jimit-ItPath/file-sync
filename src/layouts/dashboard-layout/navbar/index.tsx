@@ -8,7 +8,7 @@ import useSidebar from './use-sidebar';
 import { Button, Form, Input, Modal, Tooltip } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
 import { LoaderOverlay } from '../../../components/loader';
-import { formatBytes } from '../../../utils/helper';
+import { formatBytes, removeLocalStorage } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
 
 const DASHBOARD_NAV_ITEMS = [
@@ -129,6 +129,8 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                       }),
                     }}
                     onClick={() => {
+                      removeLocalStorage('folderId');
+                      removeLocalStorage('cloudStoragePath');
                       mobileDrawerHandler?.close();
                     }}
                     w={{ base: '100%', sm: 'auto' }}
@@ -192,6 +194,8 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                             width: '100%',
                           }}
                           onClick={() => {
+                            removeLocalStorage('folderId');
+                            removeLocalStorage('cloudStoragePath');
                             mobileDrawerHandler?.close();
                           }}
                           onMouseEnter={e => {

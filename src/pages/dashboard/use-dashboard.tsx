@@ -34,7 +34,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { notifications } from '@mantine/notifications';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
 
@@ -72,10 +72,16 @@ type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = () => {
   const navigate = useNavigate();
-  // const params = useParams();
+  const params = useParams();
+  const location = useLocation();
+
+  const layoutKey = 'dashboardLayout';
+  const folderIdKey = 'folderId';
+  const pathKey = 'cloudStoragePath';
+
   const [layout, setLayout] = useState<'list' | 'grid'>(() => {
-    const savedLayout = getLocalStorage('dashboardLayout');
-    return savedLayout ? savedLayout : 'list';
+    const savedLayout = getLocalStorage(layoutKey);
+    return savedLayout ? savedLayout : 'grid';
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
@@ -123,11 +129,24 @@ const useDashboard = () => {
   const { checkStorageDetails } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
 
-  const folderId = getLocalStorage('folderId');
+  const folderId = localStorage.getItem(folderIdKey);
+
+  const checkLocation = useMemo(
+    () =>
+      location.pathname.startsWith('/google-drive') ||
+      location.pathname.startsWith('/dropbox') ||
+      location.pathname.startsWith('/onedrive'),
+    [location.pathname]
+  );
+  const currentAccountId = checkLocation ? params.id : accountId;
 
   const isSFDEnabled = useMemo(() => {
-    return !folderId ? (userProfile?.is_sfd_enabled ?? false) : true;
-  }, [userProfile, folderId]);
+    return checkLocation
+      ? true
+      : !folderId
+        ? (userProfile?.is_sfd_enabled ?? false)
+        : true;
+  }, [userProfile, folderId, checkLocation]);
 
   const folderMethods = useForm<FolderFormData>({
     resolver: zodResolver(
@@ -159,14 +178,6 @@ const useDashboard = () => {
   const { reset: resetFolderForm } = folderMethods;
   const { reset: resetRenameForm } = renameMethods;
 
-  // const folderIdPath = params['*']
-  //   ? params['*'].split('/').filter(Boolean)
-  //   : [];
-  // console.log("folder id path-", folderIdPath)
-  // const folderId = folderIdPath?.length
-  //   ? folderIdPath[folderIdPath.length - 1]
-  //   : '';
-
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
 
@@ -188,11 +199,11 @@ const useDashboard = () => {
 
   const handleAccountTypeChange = useCallback(
     (value: string | null) => {
-      if (value) {
+      if (value && !checkLocation) {
         dispatch(setAccountId(value));
       }
     },
-    [dispatch]
+    [dispatch, checkLocation]
   );
 
   const handleSearchChange = (value: string) => {
@@ -201,17 +212,20 @@ const useDashboard = () => {
 
   const getCloudStorageFiles = useCallback(
     async (page?: number) => {
-      await dispatch(
-        initializeCloudStorageFromStorage({
-          ...(folderId && { id: folderId }),
-          limit: pagination?.page_limit || 20,
-          page: typeof page === 'number' ? page : pagination?.page_no || 1,
-          ...(accountId !== 'all' && {
-            account_id: accountId,
-          }),
-          searchTerm: debouncedSearchTerm || '',
-        })
-      );
+      const requestParams: any = {
+        ...(folderId && { id: folderId }),
+        limit: pagination?.page_limit || 20,
+        page: typeof page === 'number' ? page : pagination?.page_no || 1,
+        searchTerm: debouncedSearchTerm || '',
+      };
+
+      if (checkLocation && currentAccountId) {
+        requestParams.account_id = Number(currentAccountId);
+      } else if (!checkLocation && accountId !== 'all') {
+        requestParams.account_id = accountId;
+      }
+
+      await dispatch(initializeCloudStorageFromStorage(requestParams));
     },
     [
       dispatch,
@@ -233,9 +247,9 @@ const useDashboard = () => {
 
     return () => {
       dispatch(resetCloudStorageFolder());
-      removeLocalStorage('cloudStoragePath');
-      removeLocalStorage('folderId');
-      removeLocalStorage('dashboardLayout');
+      removeLocalStorage(pathKey);
+      removeLocalStorage(folderIdKey);
+      removeLocalStorage(layoutKey);
     };
   }, []);
 
@@ -246,15 +260,14 @@ const useDashboard = () => {
     }
 
     dispatch(setSearchTerm(debouncedSearchTerm));
-    if (accountId !== 'all') {
+    if (checkLocation || accountId !== 'all') {
       getCloudStorageFiles(1);
     } else {
       getCloudStorageFiles();
     }
-  }, [debouncedSearchTerm, accountId]);
+  }, [debouncedSearchTerm, accountId, checkLocation]);
 
   const scrollBoxRef = useRef<HTMLDivElement>(null);
-
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -272,7 +285,6 @@ const useDashboard = () => {
 
   useEffect(() => {
     if (scrollBoxRef.current && lastScrollTop.current > 0) {
-      // Use setTimeout to ensure DOM is updated before restoring scroll
       setTimeout(() => {
         scrollBoxRef.current!.scrollTop = lastScrollTop.current;
       }, 0);
@@ -293,19 +305,31 @@ const useDashboard = () => {
 
   const loadMoreFiles = useCallback(async () => {
     if (pagination && pagination.page_no < pagination.total_pages && !loading) {
-      await dispatch(
-        initializeCloudStorageFromStorage({
-          page: pagination.page_no + 1,
-          limit: pagination.page_limit || 20,
-          ...(currentFolderId && { id: currentFolderId }),
-          ...(accountId !== 'all' && {
-            account_id: accountId,
-          }),
-          searchTerm: debouncedSearchTerm || '',
-        })
-      );
+      const requestParams: any = {
+        page: pagination.page_no + 1,
+        limit: pagination.page_limit || 20,
+        ...(currentFolderId && { id: currentFolderId }),
+        searchTerm: debouncedSearchTerm || '',
+      };
+
+      if (checkLocation && currentAccountId) {
+        requestParams.account_id = Number(currentAccountId);
+      } else if (!checkLocation && accountId !== 'all') {
+        requestParams.account_id = accountId;
+      }
+
+      await dispatch(initializeCloudStorageFromStorage(requestParams));
     }
-  }, [pagination, loading, dispatch, currentFolderId]);
+  }, [
+    pagination,
+    loading,
+    dispatch,
+    currentFolderId,
+    accountId,
+    currentAccountId,
+    debouncedSearchTerm,
+    checkLocation,
+  ]);
 
   // Convert cloud storage data to FileType format
   const files = useMemo(() => {
@@ -333,29 +357,31 @@ const useDashboard = () => {
 
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
+      const requestParams: any = {};
+
       if (folder?.id) {
         setDestinationId(folder?.id);
-        // const idx = currentPath.findIndex(f => f.id === folder.id);
-        // const path = currentPath
-        //   .slice(0, idx + 1)
-        //   .map(f => f.id)
-        //   .join('/');
-        // navigate(`/dashboard/${path}`);
-        dispatch(
-          navigateToFolder({
-            id: String(folder?.id),
-            name: String(folder?.name),
-          })
-        );
+        requestParams.id = String(folder?.id);
+        requestParams.name = String(folder?.name);
       } else {
-        dispatch(navigateToFolder(null));
         setDestinationId(null);
-        // navigate('/dashboard');
       }
-      // setSelectedIds([]);
-      // setLastSelectedIndex(null);
+
+      if (checkLocation && currentAccountId) {
+        requestParams.account_id = Number(currentAccountId);
+      }
+
+      dispatch(
+        navigateToFolder(
+          folder
+            ? requestParams
+            : checkLocation && currentAccountId
+              ? { account_id: Number(currentAccountId) }
+              : null
+        )
+      );
     },
-    [dispatch, currentPath, isMoveMode]
+    [dispatch, currentPath, isMoveMode, checkLocation, currentAccountId]
   );
 
   const handleRowDoubleClick = useCallback(
@@ -371,7 +397,7 @@ const useDashboard = () => {
         navigateToFolderFn({ id: row.id, name: row.name });
       }
     },
-    [navigateToFolderFn]
+    [navigateToFolderFn, isMoveMode]
   );
 
   const handleMenuItemClick = (actionId: string, row: FileType) => {
@@ -394,11 +420,7 @@ const useDashboard = () => {
       setItemToRename(row);
       setRenameModalOpen(true);
       resetRenameForm({ newName: row.name });
-    }
-    // else if (actionId === 'share' && row.webViewLink) {
-    //   window.open(`https://drive.google.com/file/d/${row.id}/share`, '_blank');
-    // }
-    else if (actionId === 'delete') {
+    } else if (actionId === 'delete') {
       setItemToDelete(row);
       setDeleteModalOpen(true);
     }
@@ -408,30 +430,21 @@ const useDashboard = () => {
   const [createFolder, createFolderLoading] = useAsyncOperation(
     async (data: { folderName: string; accountId?: string | undefined }) => {
       try {
-        const res = await dispatch(
-          createCloudStorageFolder({
-            name: data.folderName,
-            ...(currentFolderId && {
-              id: currentFolderId,
-            }),
-            ...(!isSFDEnabled && data.accountId
-              ? { account_id: data.accountId }
-              : {}),
-          })
-        );
+        const requestParams: any = {
+          name: data.folderName,
+          ...(currentFolderId && { id: currentFolderId }),
+        };
+
+        if (checkLocation && currentAccountId) {
+          requestParams.account_id = Number(currentAccountId);
+        } else if (!checkLocation && !isSFDEnabled && data.accountId) {
+          requestParams.account_id = data.accountId;
+        }
+
+        const res = await dispatch(createCloudStorageFolder(requestParams));
+
         if (res?.payload?.success) {
-          await dispatch(
-            initializeCloudStorageFromStorage({
-              ...(folderId && { id: folderId }),
-              limit: pagination?.page_limit || 20,
-              // page: pagination?.page_no || 1,
-              page: 1,
-              ...(accountId !== 'all' && {
-                account_id: accountId,
-              }),
-              searchTerm: debouncedSearchTerm || '',
-            })
-          );
+          await getCloudStorageFiles(1);
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
             color: 'green',
@@ -452,35 +465,6 @@ const useDashboard = () => {
     createFolder(data);
   });
 
-  // const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
-  //   async (files: File[]) => {
-  //     try {
-  //       const formData = new FormData();
-  //       files.forEach(file => formData.append('file', file));
-  //       if (currentFolderId) {
-  //         formData.append('id', currentFolderId);
-  //       }
-  //       await dispatch(uploadCloudStorageFiles(formData)).unwrap();
-  //       await dispatch(
-  //         initializeCloudStorageFromStorage({
-  //           ...(folderId && {
-  //             id: folderId,
-  //           }),
-  //           limit: pagination?.page_limit || 10,
-  //           page: pagination?.page_no || 1,
-  //         })
-  //       );
-  //       setUploadedFiles([]);
-  //       setModalOpen(false);
-  //     } catch (error: any) {
-  //       notifications.show({
-  //         message: error || 'Failed to upload files',
-  //         color: 'red',
-  //       });
-  //     }
-  //   }
-  // );
-
   const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
     async ({
       files,
@@ -490,8 +474,8 @@ const useDashboard = () => {
       formData: UploadFormData;
     }) => {
       try {
-        setShowUploadProgress(true); // Show the progress UI
-        const fileIds = files.map(() => uuidv4()); // Generate unique IDs for each file
+        setShowUploadProgress(true);
+        const fileIds = files.map(() => uuidv4());
 
         // Initialize progress and uploading files state
         files.forEach((file, index) => {
@@ -511,30 +495,12 @@ const useDashboard = () => {
         if (currentFolderId) {
           formDataToUpload.append('id', currentFolderId);
         }
-        if (!isSFDEnabled && formData.accountId) {
+
+        if (checkLocation && currentAccountId) {
+          formDataToUpload.append('account_id', String(currentAccountId));
+        } else if (!checkLocation && !isSFDEnabled && formData.accountId) {
           formDataToUpload.append('account_id', formData.accountId);
         }
-
-        // Simulate progress manually up to 95%
-        // const simulateProgress = (fileId: string) => {
-        //   let progress = 0;
-        //   const interval = setInterval(() => {
-        //     progress += 5; // Increment progress by 5%
-        //     setUploadProgress(prev => ({
-        //       ...prev,
-        //       [fileId]: Math.min(progress, 95), // Cap progress at 95%
-        //     }));
-        //     if (progress >= 95 || !uploadLoading) {
-        //       clearInterval(interval); // Stop simulation when progress reaches 95% or upload completes
-        //     }
-        //   }, 300); // Update progress every 300ms
-        // };
-
-        // // Start simulating progress for each file
-        // files.forEach((_, index) => {
-        //   const fileId = fileIds[index];
-        //   simulateProgress(fileId);
-        // });
 
         // Call the API and track progress
         await dispatch(
@@ -549,7 +515,6 @@ const useDashboard = () => {
                 setUploadProgress(prev => ({
                   ...prev,
                   [fileId]: percentCompleted,
-                  // [fileId]: Math.min(percentCompleted, 95), // Cap progress at 95%
                 }));
               });
             },
@@ -567,31 +532,18 @@ const useDashboard = () => {
                 const fileId = fileIds[index];
                 setUploadProgress(prev => ({
                   ...prev,
-                  [fileId]: 100, // Set progress to 100% when upload completes
+                  [fileId]: 100,
                 }));
               });
-              clearInterval(interval); // Clear interval once upload is complete
+              clearInterval(interval);
             }
-          }, 100); // Check every 100ms
+          }, 100);
         };
 
         waitForUploadCompletion();
 
         // Refresh the file list after upload
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 20,
-            // page: pagination?.page_no || 1,
-            page: 1,
-            ...(accountId !== 'all' && {
-              account_id: accountId,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
-        );
-
-        // Do not reset states here to keep the progress bar visible
+        await getCloudStorageFiles(1);
       } catch (error: any) {
         notifications.show({
           message: error?.message || 'Failed to upload files',
@@ -608,18 +560,7 @@ const useDashboard = () => {
         await dispatch(
           renameCloudStorageFile({ id: fileId, name: newName })
         ).unwrap();
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 20,
-            // page: pagination?.page_no || 1,
-            page: 1,
-            ...(accountId !== 'all' && {
-              account_id: accountId,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
-        );
+        await getCloudStorageFiles(1);
         notifications.show({
           message: 'Item renamed successfully',
           color: 'green',
@@ -644,27 +585,24 @@ const useDashboard = () => {
   const [removeFile, removeFileLoading] = useAsyncOperation(
     async (fileId: string) => {
       try {
-        await dispatch(removeCloudStorageFiles({ ids: [fileId] })).unwrap();
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 20,
-            // page: pagination?.page_no || 1,
-            page: 1,
-            ...(accountId !== 'all' && {
-              account_id: accountId,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
-        );
-        notifications.show({
-          message: 'Item deleted successfully',
-          color: 'green',
-        });
-        if (selectedIds.includes(fileId)) {
-          cancelMoveMode();
+        const res = await dispatch(removeCloudStorageFiles({ ids: [fileId] }));
+
+        if (res?.payload?.status === 200 || res?.payload?.success !== false) {
+          await getCloudStorageFiles(1);
+          notifications.show({
+            message: res?.payload?.message || 'Item deleted successfully',
+            color: 'green',
+          });
+          if (selectedIds.includes(fileId)) {
+            cancelMoveMode();
+          }
+          setDeleteModalOpen(false);
+        } else {
+          notifications.show({
+            message: res?.payload?.message || 'Failed to delete item',
+            color: 'red',
+          });
         }
-        setDeleteModalOpen(false);
       } catch (error: any) {
         notifications.show({
           message: error || 'Failed to delete item',
@@ -728,17 +666,7 @@ const useDashboard = () => {
     });
     delete uploadControllers.current[fileId];
     cancelledUploadsRef.current.delete(fileId);
-    // checkUploadsComplete();
   };
-
-  // const checkUploadsComplete = () => {
-  //   if (
-  //     Object.keys(uploadProgress).length === 0 &&
-  //     Object.keys(uploadingFiles).length === 0
-  //   ) {
-  //     uploadsInProgressRef.current = false;
-  //   }
-  // };
 
   const handleCancelUpload = useCallback((fileId: string) => {
     cancelledUploadsRef.current.add(fileId);
@@ -749,7 +677,6 @@ const useDashboard = () => {
   }, []);
 
   const handleCloseUploadProgress = useCallback(() => {
-    // Cancel all ongoing uploads when closing the progress panel
     Object.keys(uploadControllers.current).forEach(fileId => {
       uploadControllers.current[fileId].abort();
     });
@@ -778,12 +705,11 @@ const useDashboard = () => {
   const { dragRef, isDragging } = useDragDrop({
     onFileDrop: handleFileDrop,
     acceptedFileTypes: ['*'],
-    // maxFileSize: 100 * 1024 * 1024,
   });
 
   useEffect(() => {
-    setLocalStorage('dashboardLayout', layout);
-  }, [layout]);
+    setLocalStorage(layoutKey, layout);
+  }, [layout, layoutKey]);
 
   const switchLayout = useCallback((type: 'list' | 'grid') => {
     setLayout(type);
@@ -811,41 +737,35 @@ const useDashboard = () => {
     (id: string, event: React.MouseEvent) => {
       const idx = getIndexById(id);
 
-      // Check if this is a checkbox click (no need for modifier keys)
       const isCheckboxClick = (event.target as HTMLElement).closest(
         '[type="checkbox"]'
       );
 
       if (isMoveMode) {
-        // In move mode, allow selecting only one folder different from filesToMove
         if (filesToMove.includes(id)) return;
         setSelectedIds([id]);
         setLastSelectedIndex(idx);
       } else if (isCheckboxClick) {
-        // For checkbox clicks, simply toggle the selection
         setSelectedIds(prev =>
           prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
         setLastSelectedIndex(idx);
       } else if (event.shiftKey && lastSelectedIndex !== null) {
-        // Range selection for row clicks with shift key
         const start = Math.min(lastSelectedIndex, idx);
         const end = Math.max(lastSelectedIndex, idx);
         const rangeIds = allIds.slice(start, end + 1);
         setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
       } else if (event.ctrlKey || event.metaKey) {
-        // Multi-selection for row clicks with ctrl/cmd key
         setSelectedIds(prev =>
           prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
         setLastSelectedIndex(idx);
       } else {
-        // Single selection for regular row clicks
         setSelectedIds([id]);
         setLastSelectedIndex(idx);
       }
     },
-    [allIds, lastSelectedIndex, getIndexById]
+    [allIds, lastSelectedIndex, getIndexById, isMoveMode, filesToMove]
   );
 
   const handleSelectAll = useCallback(() => {
@@ -863,7 +783,6 @@ const useDashboard = () => {
   const onSelectRow = useCallback(
     (id: string, checked: boolean) => {
       if (isMoveMode) {
-        // In move mode, allow selecting only one folder, but not one of the files being moved
         if (filesToMove.includes(id)) return;
         setSelectedIds([id]);
         setLastSelectedIndex(getIndexById(id));
@@ -892,35 +811,38 @@ const useDashboard = () => {
   // Actions for selected items
   const handleDeleteSelected = useCallback(() => {
     setRemoveFilesModalOpen(true);
-  }, [selectedIds]);
+  }, []);
 
   const closeRemoveFilesModal = useCallback(() => {
     setRemoveFilesModalOpen(false);
-  }, [setRemoveFilesModalOpen]);
+  }, []);
 
   const [handleRemoveFilesConfirm, removeFilesLoading] = useAsyncOperation(
     async () => {
       try {
-        await dispatch(removeCloudStorageFiles({ ids: selectedIds }));
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 20,
-            // page: pagination?.page_no || 1,
-            page: 1,
-            ...(accountId !== 'all' && {
-              account_id: accountId,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
+        const res = await dispatch(
+          removeCloudStorageFiles({ ids: selectedIds })
         );
-        notifications.show({
-          message: `${selectedIds?.length > 1 ? 'Items' : 'Item'} deleted successfully`,
-          color: 'green',
-        });
-        setSelectedIds([]);
-        setLastSelectedIndex(null);
-        closeRemoveFilesModal();
+
+        if (res?.payload?.status === 200 || res?.payload?.success) {
+          await getCloudStorageFiles(1);
+          notifications.show({
+            message:
+              res?.payload?.message ||
+              `${selectedIds?.length > 1 ? 'Items' : 'Item'} deleted successfully`,
+            color: 'green',
+          });
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+          closeRemoveFilesModal();
+        } else {
+          notifications.show({
+            message:
+              res?.payload?.message ||
+              `Failed to delete ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+            color: 'red',
+          });
+        }
       } catch (error: any) {
         notifications.show({
           message:
@@ -932,7 +854,7 @@ const useDashboard = () => {
     }
   );
 
-  const handleShareSelected = useCallback(() => {}, [selectedIds]);
+  const handleShareSelected = useCallback(() => {}, []);
 
   const openModal = useCallback((type: 'folder' | 'files') => {
     setModalType(type);
@@ -961,13 +883,10 @@ const useDashboard = () => {
       }
 
       const blob = new Blob([res.payload.data]);
-
-      // ✅ Extract filename from Content-Disposition header
       const contentDisposition = res.payload.headers?.['content-disposition'];
       const match = contentDisposition?.match(/filename="?([^"]+)"?/);
       const filename = match?.[1] || `download-${Date.now()}.zip`;
 
-      // ✅ Trigger download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -994,30 +913,22 @@ const useDashboard = () => {
   const [syncStorage, syncCloudStorageLoading] = useAsyncOperation(
     async (folderId: string | null) => {
       try {
-        const res = await dispatch(
-          syncCloudStorage({
-            ...(accountId !== 'all' && {
-              account_id: accountId,
-            }),
-            ...(folderId && {
-              directory_id: folderId,
-            }),
-          })
-        ).unwrap();
+        const requestParams: any = {};
+
+        if (checkLocation && currentAccountId) {
+          requestParams.account_id = currentAccountId;
+        } else if (!checkLocation && accountId !== 'all') {
+          requestParams.account_id = accountId;
+        }
+
+        if (folderId) {
+          requestParams.directory_id = folderId;
+        }
+
+        const res = await dispatch(syncCloudStorage(requestParams)).unwrap();
 
         if (res?.status === 200) {
-          await dispatch(
-            initializeCloudStorageFromStorage({
-              ...(folderId && { id: folderId }),
-              limit: pagination?.page_limit || 20,
-              // page: pagination?.page_no || 1,
-              page: 1,
-              ...(accountId !== 'all' && {
-                account_id: accountId,
-              }),
-              searchTerm: debouncedSearchTerm || '',
-            })
-          );
+          await getCloudStorageFiles(1);
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
             color: 'green',
@@ -1039,9 +950,9 @@ const useDashboard = () => {
   );
 
   const handleSyncStorage = useCallback(() => {
-    const folderId = getLocalStorage('folderId');
+    const folderId = localStorage.getItem(folderIdKey);
     syncStorage(folderId);
-  }, []);
+  }, [syncStorage, folderIdKey]);
 
   // Moving files
   const [moveFiles, moveFilesLoading] = useAsyncOperation(
@@ -1059,18 +970,7 @@ const useDashboard = () => {
             message: 'Items moved successfully',
             color: 'green',
           });
-          await dispatch(
-            initializeCloudStorageFromStorage({
-              ...(folderId && { id: folderId }),
-              limit: pagination?.page_limit || 20,
-              // page: pagination?.page_no || 1,
-              page: 1,
-              ...(accountId !== 'all' && {
-                account_id: accountId,
-              }),
-              searchTerm: debouncedSearchTerm || '',
-            })
-          );
+          await getCloudStorageFiles(1);
         } else {
           notifications.show({
             message: res?.message || 'Failed to move items',
@@ -1104,7 +1004,7 @@ const useDashboard = () => {
     setIsMoveMode(true);
     setFilesToMove([...selectedIds]);
     setSourceFolderId(currentFolderId ?? null);
-  }, [selectedIds]);
+  }, [selectedIds, currentFolderId]);
 
   const isPasteEnabled = useCallback(() => {
     if (!isMoveMode || filesToMove.length === 0) return false;
@@ -1117,12 +1017,6 @@ const useDashboard = () => {
     ) {
       return false;
     }
-
-    // Also disable paste if currentFolderId is null (root) and no folder selected different from filesToMove
-    // if (currentFolderId === null) {
-    //   // Paste disabled on root until user selects a different folder
-    //   return false;
-    // }
 
     return true;
   }, [isMoveMode, filesToMove, currentFolderId, sourceFolderId, selectedIds]);
@@ -1179,7 +1073,16 @@ const useDashboard = () => {
     }
 
     moveFiles(destId);
-  }, [filesToMove, currentFolderId, moveFiles, cloudStorage]);
+  }, [
+    filesToMove,
+    currentFolderId,
+    cloudStorage,
+    moveFiles,
+    layout,
+    files,
+    destinationId,
+    selectedIds,
+  ]);
 
   return {
     layout,
@@ -1246,7 +1149,7 @@ const useDashboard = () => {
     handleScroll,
     scrollBoxRef,
     navigate,
-    accountId,
+    accountId: checkLocation ? currentAccountId : accountId,
     searchTerm: localSearchTerm,
     handleAccountTypeChange,
     handleSearchChange,
@@ -1270,6 +1173,8 @@ const useDashboard = () => {
     uploadMethods,
     isSFDEnabled,
     accountOptionsForSFD,
+
+    checkLocation,
   };
 };
 

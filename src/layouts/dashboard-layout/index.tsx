@@ -167,7 +167,7 @@ const DashboardLayout = () => {
 
               <Group gap={16} align="center">
                 <ICONS.IconBell />
-                <ICONS.IconSettings />
+                {/* <ICONS.IconSettings /> */}
                 <Menu
                   width={140}
                   onItemClick={onItemClick}

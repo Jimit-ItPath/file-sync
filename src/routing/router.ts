@@ -34,6 +34,7 @@ import AdminDashboard from '../pages/admin/dashboard';
 import AdminUsers from '../pages/admin/users';
 import CompleteProfile from '../pages/auth/admin/complete-profile';
 import { ROLES } from '../utils/constants';
+import React from 'react';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -117,17 +118,23 @@ export const router = createBrowserRouter([
       },
       {
         ...PRIVATE_ROUTES.GOOGLE_DRIVE,
-        Component: GoogleDrive,
+        // Component: GoogleDrive,
+        // Component: Dashboard,
+        element: React.createElement(Dashboard, { key: 'google-drive' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.GOOGLE_DRIVE.roles),
       },
       {
         ...PRIVATE_ROUTES.DROPBOX,
-        Component: Dropbox,
+        // Component: Dropbox,
+        // Component: Dashboard,
+        element: React.createElement(Dashboard, { key: 'dropbox' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.DROPBOX.roles),
       },
       {
         ...PRIVATE_ROUTES.ONEDRIVE,
-        Component: OneDrive,
+        // Component: OneDrive,
+        // Component: Dashboard,
+        element: React.createElement(Dashboard, { key: 'onedrive' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.ONEDRIVE.roles),
       },
       {

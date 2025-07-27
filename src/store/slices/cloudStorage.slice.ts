@@ -223,12 +223,12 @@ export const uploadCloudStorageFiles = createAsyncThunk(
 
 export const removeCloudStorageFiles = createAsyncThunk(
   'cloudStorage/removeCloudStorageFiles',
-  async (data: { ids: string[] }, { rejectWithValue }) => {
+  async (data: { ids: string[] }) => {
     try {
       const response = await api.cloudStorage.deleteFile({ data });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error?.message || 'Failed to remove files');
+      return error;
     }
   }
 );
