@@ -1,4 +1,4 @@
-import { generatePath, NavLink as Link, useLocation } from 'react-router';
+import { NavLink as Link, useLocation } from 'react-router';
 import { Box, Group, NavLink, Progress, rem, Stack, Text } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
@@ -76,7 +76,6 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     closeAccountModal,
     connectAccountFormData,
     connectAccountLoading,
-    connectedAccounts,
     loading,
     closeRemoveAccessModal,
     openRemoveAccessModal,
@@ -86,6 +85,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     hoveredAccountId,
     setHoveredAccountId,
     cloudAccountsWithStorage,
+    checkStorageDetails,
   } = useSidebar();
 
   const isActiveRoute = useMemo(
@@ -96,49 +96,48 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
   const accessibleNavItems = DASHBOARD_NAV_ITEMS;
 
   return (
-    <>
+    <Box display={'flex'} h={'100%'} style={{ flexDirection: 'column' }}>
       <LoaderOverlay visible={loading} opacity={1} />
-      {accessibleNavItems.map(
-        ({ id, label, icon, url, children }: AccessibleNavItemProps) => {
-          const isNested = Boolean(children?.length);
+      <Box style={{ flexGrow: 1 }}>
+        {accessibleNavItems.map(
+          ({ id, label, icon, url, children }: AccessibleNavItemProps) => {
+            const isNested = Boolean(children?.length);
 
-          const isActive = isNested
-            ? children?.map(({ url }) => url).includes(location?.pathname)
-            : location?.pathname === url;
+            const isActive = isNested
+              ? children?.map(({ url }) => url).includes(location?.pathname)
+              : location?.pathname === url;
 
-          return (
-            <NavLink
-              component={Link}
-              key={id}
-              {...{ label }}
-              leftSection={<Icon component={icon} size={18} stroke={1.25} />}
-              active={isActive}
-              to={url}
-              style={{
-                borderRadius: 'var(--mantine-radius-default)',
-                ...(isActive && {
-                  // border: '1px solid var(--mantine-primary-color-1)',
-                  fontWeight: 400,
-                }),
-              }}
-              onClick={() => {
-                mobileDrawerHandler?.close();
-              }}
-              w={{ base: '100%', sm: 'auto' }}
-              px={{ sm: 8 }}
-              py={{ sm: 6 }}
-              styles={{
-                section: {
-                  marginInlineEnd: 'var(--mantine-spacing-xs)',
-                  marginBottom: rem(-1),
-                },
-              }}
-            />
-          );
-        }
-      )}
-
-      <Box>
+            return (
+              <NavLink
+                component={Link}
+                key={id}
+                {...{ label }}
+                leftSection={<Icon component={icon} size={18} stroke={1.25} />}
+                active={isActive}
+                to={url}
+                style={{
+                  borderRadius: 'var(--mantine-radius-default)',
+                  ...(isActive && {
+                    // border: '1px solid var(--mantine-primary-color-1)',
+                    fontWeight: 400,
+                  }),
+                }}
+                onClick={() => {
+                  mobileDrawerHandler?.close();
+                }}
+                w={{ base: '100%', sm: 'auto' }}
+                px={{ sm: 8 }}
+                py={{ sm: 6 }}
+                styles={{
+                  section: {
+                    marginInlineEnd: 'var(--mantine-spacing-xs)',
+                    marginBottom: rem(-1),
+                  },
+                }}
+              />
+            );
+          }
+        )}
         <Stack
           mt={20}
           style={{ flexDirection: 'row' }}
@@ -154,151 +153,85 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
             style={{ cursor: 'pointer' }}
           />
         </Stack>
-
-        {/* {cloudAccounts.map(({ id, url, icon, title }) => {
-          const isActive = isActiveRoute(url);
-
-          return (
-            <Link
-              key={id}
-              to={url}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px',
-                borderRadius: 'var(--mantine-radius-default)',
-                textDecoration: 'none',
-                color: 'inherit',
-                transition: 'background-color 0.2s',
-                backgroundColor: isActive
-                  ? 'var(--mantine-color-gray-0)'
-                  : undefined,
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-              onClick={() => {
-                mobileDrawerHandler?.close();
-              }}
-              onMouseEnter={e => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    'var(--mantine-color-gray-0)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = '';
-                }
-              }}
-            >
-              {icon}
-              <span style={{ color: '#000', marginLeft: '10px' }}>{title}</span>
-            </Link>
-          );
-        })} */}
         {cloudAccountsWithStorage?.length
-          ? cloudAccountsWithStorage?.map(
-              ({ id, url, icon, title, storageInfo }) => {
-                const isActive = isActiveRoute(url);
+          ? cloudAccountsWithStorage?.map(({ id, url, icon, title }) => {
+              const isActive = isActiveRoute(url);
 
-                return (
-                  <Group
-                    key={id}
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                    }}
-                    onMouseEnter={() => setHoveredAccountId(id)}
-                    onMouseLeave={() => setHoveredAccountId(null)}
-                  >
-                    <Stack style={{ flexDirection: 'row' }}>
-                      <Link
-                        to={url}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          padding: '8px',
-                          borderRadius: 'var(--mantine-radius-default)',
-                          textDecoration: 'none',
-                          color: 'inherit',
-                          transition: 'background-color 0.2s',
-                          backgroundColor: isActive
-                            ? 'var(--mantine-color-gray-0)'
-                            : undefined,
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          width: '100%',
-                        }}
-                        onClick={() => {
-                          mobileDrawerHandler?.close();
-                        }}
-                        onMouseEnter={e => {
-                          if (!isActive) {
-                            (
-                              e.currentTarget as HTMLElement
-                            ).style.backgroundColor =
-                              'var(--mantine-color-gray-0)';
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          if (!isActive) {
-                            (
-                              e.currentTarget as HTMLElement
-                            ).style.backgroundColor = '';
-                          }
-                        }}
-                      >
-                        {icon}
-                        <span style={{ color: '#000', marginLeft: '10px' }}>
-                          {title}
-                        </span>
-                      </Link>
-                      {hoveredAccountId === id && (
-                        <Tooltip
-                          label="Remove Access"
-                          position="right"
-                          withArrow
+              return (
+                <Group
+                  key={id}
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                  }}
+                  onMouseEnter={() => setHoveredAccountId(id)}
+                  onMouseLeave={() => setHoveredAccountId(null)}
+                >
+                  <Stack style={{ flexDirection: 'row' }} w={'100%'}>
+                    <Link
+                      to={url}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '8px',
+                        borderRadius: 'var(--mantine-radius-default)',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        transition: 'background-color 0.2s',
+                        backgroundColor: isActive
+                          ? 'var(--mantine-color-gray-0)'
+                          : undefined,
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        width: '100%',
+                      }}
+                      onClick={() => {
+                        mobileDrawerHandler?.close();
+                      }}
+                      onMouseEnter={e => {
+                        if (!isActive) {
+                          (
+                            e.currentTarget as HTMLElement
+                          ).style.backgroundColor =
+                            'var(--mantine-color-gray-0)';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!isActive) {
+                          (
+                            e.currentTarget as HTMLElement
+                          ).style.backgroundColor = '';
+                        }
+                      }}
+                    >
+                      {icon}
+                      <span style={{ color: '#000', marginLeft: '10px' }}>
+                        {title}
+                      </span>
+                    </Link>
+                    {hoveredAccountId === id && (
+                      <Tooltip label="Remove Access" position="right" withArrow>
+                        <Box
+                          style={{
+                            position: 'absolute',
+                            right: 8,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            cursor: 'pointer',
+                          }}
+                          onClick={e => {
+                            e.stopPropagation();
+                            openRemoveAccessModal(id);
+                          }}
                         >
-                          <Box
-                            style={{
-                              position: 'absolute',
-                              right: 8,
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              cursor: 'pointer',
-                            }}
-                            onClick={e => {
-                              e.stopPropagation();
-                              openRemoveAccessModal(id);
-                            }}
-                          >
-                            <ICONS.IconTrash size={16} color="red" />
-                          </Box>
-                        </Tooltip>
-                      )}
-                    </Stack>
-
-                    {/* {storageInfo && (
-                      <Box style={{ width: '100%', padding: '0 8px 8px' }}>
-                        <Progress
-                          value={
-                            (Number(storageInfo.used) /
-                              Number(storageInfo.total)) *
-                            100
-                          }
-                          size="sm"
-                          radius="xl"
-                        />
-                        <Text size="xs" mt={4}>
-                          {formatBytes(Number(storageInfo.used))} of{' '}
-                          {formatBytes(Number(storageInfo.total))} used
-                        </Text>
-                      </Box>
-                    )} */}
-                  </Group>
-                );
-              }
-            )
+                          <ICONS.IconTrash size={16} color="red" />
+                        </Box>
+                      </Tooltip>
+                    )}
+                  </Stack>
+                </Group>
+              );
+            })
           : null}
 
         <Stack
@@ -313,6 +246,36 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
           </span>
         </Stack>
       </Box>
+
+      {checkStorageDetails?.storage_details && (
+        <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
+          <Text size="sm" fw={500} mb={8}>
+            Storage Usage
+          </Text>
+          <Progress
+            value={
+              (Number(checkStorageDetails?.storage_details?.used) /
+                Number(checkStorageDetails?.storage_details?.total)) *
+              100
+            }
+            size="xl"
+            radius="xl"
+            styles={theme => ({
+              root: {
+                backgroundColor: theme.colors.gray[2],
+              },
+              bar: {
+                backgroundColor: theme.colors.blue[6],
+              },
+            })}
+          />
+          <Text size="xs" mt={8} color="dimmed">
+            {formatBytes(Number(checkStorageDetails?.storage_details?.used))} of{' '}
+            {formatBytes(Number(checkStorageDetails?.storage_details?.total))}{' '}
+            used
+          </Text>
+        </Box>
+      )}
 
       {/* <Box mt={20}>
         <Stack
@@ -438,7 +401,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
           </Button>
         </Group>
       </Modal>
-    </>
+    </Box>
   );
 };
 

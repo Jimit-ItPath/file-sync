@@ -38,6 +38,7 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
                 window.getSelection()?.removeAllRanges();
                 onNavigate(item?.id);
               }}
+              key={index}
               style={{
                 cursor: 'pointer',
                 fontWeight: isLast ? 700 : 500,

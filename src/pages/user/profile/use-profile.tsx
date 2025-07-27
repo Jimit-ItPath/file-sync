@@ -14,6 +14,7 @@ import {
   getConnectedAccount,
   removeAccountAccess,
 } from '../../../store/slices/auth.slice';
+import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
 
 const profileSchema = z.object({
   firstName: z
@@ -162,6 +163,17 @@ const UseProfile = () => {
     setRemoveAccessModalOpen(false);
   }, []);
 
+  const getCloudStorageFiles = useCallback(async () => {
+    await dispatch(
+      initializeCloudStorageFromStorage({
+        limit: 10,
+        page: 1,
+      })
+    );
+  }, [dispatch]);
+
+  const [getFiles] = useAsyncOperation(getCloudStorageFiles);
+
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
       const res = await dispatch(
@@ -174,6 +186,7 @@ const UseProfile = () => {
           color: 'green',
         });
         await onInitialize({});
+        await getFiles({});
         closeRemoveAccessModal();
       }
     } catch (error: any) {

@@ -14,7 +14,8 @@ import {
 import { decodeToken } from '../../../utils/helper';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import { ICONS } from '../../../assets/icons';
-import { generatePath } from 'react-router';
+import { generatePath, useNavigate } from 'react-router';
+import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
 
 const connectAccountSchema = z.object({
   accountName: z.string().min(1, 'Account name is required'),
@@ -66,6 +67,7 @@ const accountTypeConfig = {
 
 const useSidebar = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { connectedAccounts, loading, checkStorageDetails } = useAppSelector(
     state => state.auth
   );
@@ -157,6 +159,17 @@ const useSidebar = () => {
     setHoveredAccountId(null);
   }, []);
 
+  const getCloudStorageFiles = useCallback(async () => {
+    await dispatch(
+      initializeCloudStorageFromStorage({
+        limit: 10,
+        page: 1,
+      })
+    );
+  }, [dispatch]);
+
+  const [getFiles] = useAsyncOperation(getCloudStorageFiles);
+
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
       const res = await dispatch(
@@ -169,6 +182,8 @@ const useSidebar = () => {
           color: 'green',
         });
         await onInitialize({});
+        await getFiles({});
+        navigate(PRIVATE_ROUTES.DASHBOARD.path);
         closeRemoveAccessModal();
       }
     } catch (error: any) {
@@ -196,7 +211,7 @@ const useSidebar = () => {
   );
 
   const cloudAccountsWithStorage = connectedAccounts?.map(account => {
-    const storageInfo = checkStorageDetails.find(
+    const storageInfo = checkStorageDetails?.result?.find(
       detail => detail.id === account.id.toString()
     );
     const config = accountTypeConfig[account.account_type];
@@ -227,6 +242,7 @@ const useSidebar = () => {
     setHoveredAccountId,
     hoveredAccountId,
     cloudAccountsWithStorage,
+    checkStorageDetails,
   };
 };
 

@@ -1,4 +1,4 @@
-import { Box, Group, Stack, Text, TextInput } from '@mantine/core';
+import { Box, Group, Select, Stack, Text, TextInput } from '@mantine/core';
 import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
 // import RecentFiles from './RecentFiles';
@@ -14,9 +14,9 @@ import {
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
 import UploadProgress from './components/UploadProgress';
-import { LoaderOverlay } from '../../components/loader';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
+import type { AccountType } from '../../store/slices/cloudStorage.slice';
 
 const controlBoxStyles = {
   height: 40,
@@ -83,18 +83,30 @@ const Dashboard = () => {
     handleRemoveFilesConfirm,
     removeFilesModalOpen,
     removeFilesLoading,
+    handleScroll,
+    scrollBoxRef,
+    accountType,
+    handleAccountTypeChange,
+    handleSearchChange,
+    searchTerm,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
+  // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
+
   return (
     <Box>
-      <LoaderOverlay visible={loading} opacity={1} />
-      {/* <ScrollArea h="100vh"> */}
+      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
+      {/* <ScrollArea> */}
       <Box
         px={32}
-        py={20}
+        pb={20}
         bg="#f8fafc"
-        ref={dragRef}
+        // ref={dragRef}
+        ref={el => {
+          dragRef.current = el;
+          scrollBoxRef.current = el;
+        }}
         style={{
           position: 'relative',
           height: 'calc(100vh - 120px)',
@@ -106,13 +118,14 @@ const Dashboard = () => {
             backgroundColor: 'rgba(37, 99, 235, 0.05)',
           }),
         }}
+        onScroll={handleScroll}
       >
         {/* Sticky Section */}
         <Box
           style={{
             position: 'sticky',
             top: 0,
-            zIndex: 998,
+            ...(files?.length || folders?.length ? { zIndex: 5 } : {}),
             backgroundColor: '#ffffff',
             padding: '16px 24px',
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -211,19 +224,42 @@ const Dashboard = () => {
               })}
             /> */}
           </Group>
-          <Breadcrumbs
-            items={currentPath}
-            onNavigate={folderId => {
-              if (!folderId || folderId === null) {
-                navigateToFolderFn(null);
-              } else {
-                const folder = currentPath.find(f => f.id === folderId);
-                if (folder) {
-                  navigateToFolderFn(folder);
-                }
+          <Group align="center" w={'100%'} mt={16}>
+            <Box style={{ flexGrow: 1 }}>
+              <Breadcrumbs
+                items={currentPath}
+                onNavigate={folderId => {
+                  if (!folderId || folderId === null) {
+                    navigateToFolderFn(null);
+                  } else {
+                    const folder = currentPath.find(f => f.id === folderId);
+                    if (folder) {
+                      navigateToFolderFn(folder);
+                    }
+                  }
+                }}
+              />
+            </Box>
+            <Select
+              value={accountType}
+              onChange={(value: AccountType | 'all') =>
+                handleAccountTypeChange(value)
               }
-            }}
-          />
+              data={[
+                { value: 'all', label: 'All Accounts' },
+                { value: 'google_drive', label: 'Google Drive' },
+                { value: 'dropbox', label: 'Dropbox' },
+                { value: 'onedrive', label: 'OneDrive' },
+              ]}
+              style={{ width: '150px' }}
+            />
+            <TextInput
+              placeholder="Search files..."
+              value={searchTerm}
+              onChange={event => handleSearchChange(event.currentTarget.value)}
+              style={{ width: '200px' }}
+            />
+          </Group>
         </Box>
         {layout === 'list' ? (
           <FileTable

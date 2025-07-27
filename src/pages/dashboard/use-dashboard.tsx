@@ -19,18 +19,23 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
   createCloudStorageFolder,
-  fetchCloudStorageFiles,
+  downloadFiles,
+  initializeCloudStorageFromStorage,
   navigateToFolder,
   removeCloudStorageFiles,
   renameCloudStorageFile,
   resetCloudStorageFolder,
+  setAccountType,
+  setSearchTerm,
   uploadCloudStorageFiles,
+  type AccountType,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { notifications } from '@mantine/notifications';
+import { useNavigate, useParams } from 'react-router';
 
 export type FileType = {
   id: string;
@@ -45,6 +50,16 @@ export type FileType = {
   fileExtension?: string | null;
   download_url: string | null;
 };
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 const getFileIcon = (item: {
   entry_type: string;
@@ -259,6 +274,8 @@ type FolderFormData = z.infer<typeof folderSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = () => {
+  const navigate = useNavigate();
+  const params = useParams();
   const [layout, setLayout] = useState<'list' | 'grid'>(() => {
     const savedLayout = getLocalStorage('dashboardLayout');
     return savedLayout ? savedLayout : 'list';
@@ -277,6 +294,8 @@ const useDashboard = () => {
   const uploadControllers = useRef<{ [key: string]: AbortController }>({});
   const cancelledUploadsRef = useRef<Set<string>>(new Set());
   const uploadsInProgressRef = useRef(false);
+  const initializedRef = useRef(false);
+  const hasMountedOnce = useRef(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'files'>('folder');
@@ -287,8 +306,16 @@ const useDashboard = () => {
   const [itemToRename, setItemToRename] = useState<FileType | null>(null);
   const [removeFilesModalOpen, setRemoveFilesModalOpen] = useState(false);
 
-  const { cloudStorage, loading, pagination, currentFolderId, currentPath } =
-    useAppSelector(state => state.cloudStorage);
+  const {
+    cloudStorage,
+    loading,
+    pagination,
+    currentFolderId,
+    currentPath,
+    uploadLoading,
+    accountType,
+    searchTerm,
+  } = useAppSelector(state => state.cloudStorage);
   const dispatch = useAppDispatch();
 
   const isXs = useMediaQuery('(max-width: 575px)');
@@ -312,22 +339,55 @@ const useDashboard = () => {
 
   const { reset: resetFolderForm } = folderMethods;
   const { reset: resetRenameForm } = renameMethods;
-  const folderId = getLocalStorage('folderId');
+
+  const folderIdPath = params['*']
+    ? params['*'].split('/').filter(Boolean)
+    : [];
+  // const folderId = getLocalStorage('folderId');
+  // console.log("folder id path-", folderIdPath)
+  const folderId = folderIdPath?.length
+    ? folderIdPath[folderIdPath.length - 1]
+    : '';
+
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
+
+  const handleAccountTypeChange = (value: AccountType | 'all') => {
+    dispatch(setAccountType(value));
+  };
+
+  const handleSearchChange = (value: string) => {
+    setLocalSearchTerm(value);
+  };
 
   const getCloudStorageFiles = useCallback(async () => {
     await dispatch(
-      fetchCloudStorageFiles({
-        ...(folderId && {
-          id: folderId,
+      initializeCloudStorageFromStorage({
+        ...(folderId && { id: folderId }),
+        limit: pagination?.page_limit || 10,
+        page: pagination?.page_no || 1,
+        ...(accountType !== 'all' && {
+          account_type: accountType,
         }),
+        searchTerm: debouncedSearchTerm || '',
       })
     );
-  }, [dispatch]);
+  }, [
+    dispatch,
+    folderId,
+    pagination?.page_limit,
+    pagination?.page_no,
+    accountType,
+    debouncedSearchTerm,
+  ]);
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
   useEffect(() => {
-    onInitialize({});
+    if (!initializedRef.current) {
+      onInitialize({});
+      initializedRef.current = true;
+    }
 
     return () => {
       dispatch(resetCloudStorageFolder());
@@ -336,11 +396,57 @@ const useDashboard = () => {
     };
   }, []);
 
-  // const loadMoreFiles = useCallback(() => {
-  //   if (pagination && pagination.page_no && !loading) {
-  //     dispatch(fetchCloudStorageFiles({ page: pagination.page_no + 1 }));
-  //   }
-  // }, [pagination, loading, dispatch]);
+  useEffect(() => {
+    if (!hasMountedOnce.current) {
+      hasMountedOnce.current = true;
+      return;
+    }
+
+    dispatch(setSearchTerm(debouncedSearchTerm));
+    getCloudStorageFiles();
+  }, [debouncedSearchTerm, accountType]);
+
+  const scrollBoxRef = useRef<HTMLDivElement>(null);
+
+  const lastScrollTop = useRef(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    lastScrollTop.current = e.currentTarget.scrollTop;
+    const target = e.currentTarget;
+    if (
+      target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
+      pagination &&
+      pagination.page_no < pagination.total_pages &&
+      !loading
+    ) {
+      loadMoreFiles();
+    }
+  };
+
+  useEffect(() => {
+    if (scrollBoxRef.current && lastScrollTop.current > 0) {
+      // Use setTimeout to ensure DOM is updated before restoring scroll
+      setTimeout(() => {
+        scrollBoxRef.current!.scrollTop = lastScrollTop.current;
+      }, 0);
+    }
+  }, [cloudStorage.length]);
+
+  const loadMoreFiles = useCallback(async () => {
+    if (pagination && pagination.page_no < pagination.total_pages && !loading) {
+      await dispatch(
+        initializeCloudStorageFromStorage({
+          page: pagination.page_no + 1,
+          limit: pagination.page_limit,
+          ...(currentFolderId && { id: currentFolderId }),
+          ...(accountType !== 'all' && {
+            account_type: accountType,
+          }),
+          searchTerm: debouncedSearchTerm || '',
+        })
+      );
+    }
+  }, [pagination, loading, dispatch, currentFolderId]);
 
   // Convert cloud storage data to FileType format
   const files = useMemo(() => {
@@ -367,6 +473,12 @@ const useDashboard = () => {
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
       if (folder?.id) {
+        const idx = currentPath.findIndex(f => f.id === folder.id);
+        const path = currentPath
+          .slice(0, idx + 1)
+          .map(f => f.id)
+          .join('/');
+        navigate(`/dashboard/${path}`);
         dispatch(
           navigateToFolder({
             id: String(folder?.id),
@@ -375,13 +487,14 @@ const useDashboard = () => {
         );
       } else {
         dispatch(navigateToFolder(null));
+        navigate('/dashboard');
       }
     },
-    [dispatch]
+    [dispatch, currentPath]
   );
 
   const handleRowDoubleClick = useCallback(
-    (row: FileType, e?: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
+    (row: FileType, _?: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
       if (
         row.mimeType === 'application/vnd.google-apps.folder' ||
         row.type === 'folder'
@@ -438,10 +551,14 @@ const useDashboard = () => {
         ).unwrap();
         resetFolderForm();
         await dispatch(
-          fetchCloudStorageFiles({
-            ...(folderId && {
-              id: folderId,
+          initializeCloudStorageFromStorage({
+            ...(folderId && { id: folderId }),
+            limit: pagination?.page_limit || 10,
+            page: pagination?.page_no || 1,
+            ...(accountType !== 'all' && {
+              account_type: accountType,
             }),
+            searchTerm: debouncedSearchTerm || '',
           })
         );
         setModalOpen(false);
@@ -458,92 +575,140 @@ const useDashboard = () => {
     createFolder(data.folderName);
   });
 
-  const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
-    async (files: File[]) => {
-      try {
-        const formData = new FormData();
-        files.forEach(file => formData.append('file', file));
-        if (currentFolderId) {
-          formData.append('id', currentFolderId);
-        }
-        await dispatch(uploadCloudStorageFiles(formData)).unwrap();
-        await dispatch(
-          fetchCloudStorageFiles({
-            ...(folderId && {
-              id: folderId,
-            }),
-          })
-        );
-        setUploadedFiles([]);
-        setModalOpen(false);
-      } catch (error: any) {
-        notifications.show({
-          message: error || 'Failed to upload files',
-          color: 'red',
-        });
-      }
-    }
-  );
-
   // const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
   //   async (files: File[]) => {
   //     try {
-  //       setShowUploadProgress(true);
   //       const formData = new FormData();
-  //       const fileIds = files.map(() => uuidv4());
-
-  //       files.forEach((file, index) => {
-  //         formData.append('file', file);
-  //         setUploadingFiles(prev => ({
-  //           ...prev,
-  //           [fileIds[index]]: {
-  //             name: file.name,
-  //             size: formatFileSize(file.size.toString()),
-  //           },
-  //         }));
-  //         setUploadProgress(prev => ({ ...prev, [fileIds[index]]: 0 }));
-  //       });
-
+  //       files.forEach(file => formData.append('file', file));
   //       if (currentFolderId) {
   //         formData.append('id', currentFolderId);
   //       }
-
+  //       await dispatch(uploadCloudStorageFiles(formData)).unwrap();
   //       await dispatch(
-  //         uploadCloudStorageFiles({
-  //           data: formData,
-  //           onUploadProgress: (progressEvent: ProgressEvent) => {
-  //             const percentCompleted = Math.round(
-  //               (progressEvent.loaded * 100) / progressEvent.total
-  //             );
-  //             files.forEach((_, index) => {
-  //               setUploadProgress(prev => ({
-  //                 ...prev,
-  //                 [fileIds[index]]: percentCompleted,
-  //               }));
-  //             });
-  //           },
-  //         })
-  //       ).unwrap();
-
-  //       await dispatch(
-  //         fetchCloudStorageFiles({
-  //           ...(folderId && { id: folderId }),
+  //         initializeCloudStorageFromStorage({
+  //           ...(folderId && {
+  //             id: folderId,
+  //           }),
+  //           limit: pagination?.page_limit || 10,
+  //           page: pagination?.page_no || 1,
   //         })
   //       );
-
   //       setUploadedFiles([]);
   //       setModalOpen(false);
-  //       setUploadProgress({});
-  //       setUploadingFiles({});
-  //       setShowUploadProgress(false);
   //     } catch (error: any) {
   //       notifications.show({
-  //         message: error?.message || 'Failed to upload files',
+  //         message: error || 'Failed to upload files',
   //         color: 'red',
   //       });
   //     }
   //   }
   // );
+
+  const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
+    async (files: File[]) => {
+      try {
+        setShowUploadProgress(true); // Show the progress UI
+        const fileIds = files.map(() => uuidv4()); // Generate unique IDs for each file
+
+        // Initialize progress and uploading files state
+        files.forEach((file, index) => {
+          const fileId = fileIds[index];
+          setUploadingFiles(prev => ({
+            ...prev,
+            [fileId]: {
+              name: file.name,
+              size: formatFileSize(file.size.toString()),
+            },
+          }));
+          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        });
+
+        const formData = new FormData();
+        files.forEach(file => formData.append('file', file));
+        if (currentFolderId) {
+          formData.append('id', currentFolderId);
+        }
+
+        // Simulate progress manually up to 95%
+        const simulateProgress = (fileId: string) => {
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 5; // Increment progress by 5%
+            setUploadProgress(prev => ({
+              ...prev,
+              [fileId]: Math.min(progress, 95), // Cap progress at 95%
+            }));
+            if (progress >= 95 || !uploadLoading) {
+              clearInterval(interval); // Stop simulation when progress reaches 95% or upload completes
+            }
+          }, 300); // Update progress every 300ms
+        };
+
+        // Start simulating progress for each file
+        files.forEach((_, index) => {
+          const fileId = fileIds[index];
+          simulateProgress(fileId);
+        });
+
+        // Call the API and track progress
+        await dispatch(
+          uploadCloudStorageFiles({
+            data: formData,
+            onUploadProgress: (progressEvent: ProgressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              files.forEach((_, index) => {
+                const fileId = fileIds[index];
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [fileId]: Math.min(percentCompleted, 95), // Cap progress at 95%
+                }));
+              });
+            },
+          })
+        ).unwrap();
+
+        // Wait for `uploadLoading` to become false and set progress to 100%
+        const waitForUploadCompletion = () => {
+          const interval = setInterval(() => {
+            if (!uploadLoading) {
+              files.forEach((_, index) => {
+                const fileId = fileIds[index];
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [fileId]: 100, // Set progress to 100% when upload completes
+                }));
+              });
+              clearInterval(interval); // Clear interval once upload is complete
+            }
+          }, 100); // Check every 100ms
+        };
+
+        waitForUploadCompletion();
+
+        // Refresh the file list after upload
+        await dispatch(
+          initializeCloudStorageFromStorage({
+            ...(folderId && { id: folderId }),
+            limit: pagination?.page_limit || 10,
+            page: pagination?.page_no || 1,
+            ...(accountType !== 'all' && {
+              account_type: accountType,
+            }),
+            searchTerm: debouncedSearchTerm || '',
+          })
+        );
+
+        // Do not reset states here to keep the progress bar visible
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to upload files',
+          color: 'red',
+        });
+      }
+    }
+  );
 
   // File rename functionality
   const [renameFile, renameFileLoading] = useAsyncOperation(
@@ -553,10 +718,14 @@ const useDashboard = () => {
           renameCloudStorageFile({ id: fileId, name: newName })
         ).unwrap();
         await dispatch(
-          fetchCloudStorageFiles({
-            ...(folderId && {
-              id: folderId,
+          initializeCloudStorageFromStorage({
+            ...(folderId && { id: folderId }),
+            limit: pagination?.page_limit || 10,
+            page: pagination?.page_no || 1,
+            ...(accountType !== 'all' && {
+              account_type: accountType,
             }),
+            searchTerm: debouncedSearchTerm || '',
           })
         );
         notifications.show({
@@ -585,10 +754,14 @@ const useDashboard = () => {
       try {
         await dispatch(removeCloudStorageFiles({ ids: [fileId] })).unwrap();
         await dispatch(
-          fetchCloudStorageFiles({
-            ...(folderId && {
-              id: folderId,
+          initializeCloudStorageFromStorage({
+            ...(folderId && { id: folderId }),
+            limit: pagination?.page_limit || 10,
+            page: pagination?.page_no || 1,
+            ...(accountType !== 'all' && {
+              account_type: accountType,
             }),
+            searchTerm: debouncedSearchTerm || '',
           })
         );
         notifications.show({
@@ -619,6 +792,10 @@ const useDashboard = () => {
       uploadsInProgressRef.current = true;
       setShowUploadProgress(true);
 
+      // Reset states for new uploads
+      setUploadProgress({});
+      setUploadingFiles({});
+
       filesToUpload.forEach(file => {
         const fileId = uuidv4();
         const controller = new AbortController();
@@ -637,7 +814,7 @@ const useDashboard = () => {
       });
       uploadFiles(filesToUpload);
     },
-    [uploadFiles]
+    [uploadFiles, uploadedFiles]
   );
 
   const cleanupUpload = (fileId: string) => {
@@ -841,10 +1018,14 @@ const useDashboard = () => {
       try {
         await dispatch(removeCloudStorageFiles({ ids: selectedIds }));
         await dispatch(
-          fetchCloudStorageFiles({
-            ...(folderId && {
-              id: folderId,
+          initializeCloudStorageFromStorage({
+            ...(folderId && { id: folderId }),
+            limit: pagination?.page_limit || 10,
+            page: pagination?.page_no || 1,
+            ...(accountType !== 'all' && {
+              account_type: accountType,
             }),
+            searchTerm: debouncedSearchTerm || '',
           })
         );
         notifications.show({
@@ -865,8 +1046,6 @@ const useDashboard = () => {
     }
   );
 
-  const handleDownloadSelected = useCallback(() => {}, [selectedIds]);
-
   const handleShareSelected = useCallback(() => {}, [selectedIds]);
 
   const openModal = useCallback((type: 'folder' | 'files') => {
@@ -879,6 +1058,49 @@ const useDashboard = () => {
   const closeModal = useCallback(() => {
     setModalOpen(false);
   }, []);
+
+  const [downloadItems] = useAsyncOperation(async () => {
+    try {
+      const res = await dispatch(downloadFiles({ ids: selectedIds }));
+      if (res?.payload?.status !== 200) {
+        notifications.show({
+          message:
+            res?.payload?.message ||
+            `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
+          color: 'red',
+        });
+        return;
+      }
+
+      const blob = new Blob([res.payload.data]);
+
+      // ✅ Extract filename from Content-Disposition header
+      const contentDisposition = res.payload.headers?.['content-disposition'];
+      const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+      const filename = match?.[1] || `download-${Date.now()}.zip`;
+
+      // ✅ Trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      notifications.show({
+        message:
+          error ||
+          `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+        color: 'red',
+      });
+    }
+  });
+
+  const handleDownloadSelected = useCallback(() => {
+    downloadItems({});
+  }, [selectedIds]);
 
   return {
     layout,
@@ -943,6 +1165,16 @@ const useDashboard = () => {
 
     handleMenuItemClick,
     handleRowDoubleClick,
+
+    loadMoreFiles,
+    pagination,
+    handleScroll,
+    scrollBoxRef,
+    navigate,
+    accountType,
+    searchTerm: localSearchTerm,
+    handleAccountTypeChange,
+    handleSearchChange,
   };
 };
 

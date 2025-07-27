@@ -36,6 +36,9 @@ type CloudStorageState = {
   error: string | null;
   currentFolderId: string | null;
   currentPath: Array<{ id?: string; name: string }>;
+  uploadLoading: boolean;
+  accountType: AccountType | 'all';
+  searchTerm: string;
 };
 
 const initialState: CloudStorageState = {
@@ -47,6 +50,9 @@ const initialState: CloudStorageState = {
   currentPath: localStorage.getItem('cloudStoragePath')
     ? JSON.parse(localStorage.getItem('cloudStoragePath') || '')
     : [],
+  uploadLoading: false,
+  accountType: 'all',
+  searchTerm: '',
 };
 
 export const fetchCloudStorageFiles = createAsyncThunk(
@@ -79,12 +85,22 @@ export const navigateToFolder = createAsyncThunk(
       account_type?: AccountType;
       account_id?: number | string;
       name: string;
+      page?: number;
+      limit?: number;
+      searchTerm?: string;
     } | null,
     { dispatch }
   ) => {
+    const defaultPage = 1;
+    const defaultLimit = 10;
     if (data === null) {
       dispatch(resetCloudStorageFolder());
-      await dispatch(fetchCloudStorageFiles({}));
+      await dispatch(
+        fetchCloudStorageFiles({
+          page: defaultPage,
+          limit: defaultLimit,
+        })
+      );
       return { folderId: null, folderName: 'All Files', isRoot: true };
     } else {
       await dispatch(
@@ -92,6 +108,9 @@ export const navigateToFolder = createAsyncThunk(
           id: data.id,
           account_type: data.account_type,
           account_id: data.account_id,
+          page: data.page ?? defaultPage,
+          limit: data.limit ?? defaultLimit,
+          searchTerm: data.searchTerm,
         })
       );
       return {
@@ -106,8 +125,19 @@ export const navigateToFolder = createAsyncThunk(
 
 export const initializeCloudStorageFromStorage = createAsyncThunk(
   'cloudStorage/initializeCloudStorageFromStorage',
-  async (_, { dispatch }) => {
+  async (
+    data: {
+      page?: number;
+      limit?: number;
+      id?: string;
+      searchTerm?: string;
+      account_type?: string;
+    },
+    { dispatch }
+  ) => {
     const savedPath = getLocalStorage('cloudStoragePath');
+    const defaultPage = 1;
+    const defaultLimit = 10;
     if (savedPath && savedPath.length > 0) {
       // Navigate to the last folder in the path
       const lastFolder = savedPath[savedPath.length - 1];
@@ -115,15 +145,26 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
         await dispatch(
           navigateToFolder({
             id: lastFolder.id,
-            account_type: lastFolder.account_type,
             account_id: lastFolder.account_id,
             name: lastFolder.name,
+            page: data.page ?? defaultPage,
+            limit: data.limit ?? defaultLimit,
+            account_type: lastFolder.account_type,
+            searchTerm: data.searchTerm,
           })
         );
       }
     } else {
       // Load root if no saved path
-      await dispatch(fetchCloudStorageFiles({}));
+      await dispatch(
+        fetchCloudStorageFiles({
+          id: data.id,
+          page: data.page ?? defaultPage,
+          limit: data.limit ?? defaultLimit,
+          account_type: data.account_type as AccountType,
+          searchTerm: data.searchTerm,
+        })
+      );
     }
   }
 );
@@ -158,9 +199,21 @@ export const renameCloudStorageFile = createAsyncThunk(
 
 export const uploadCloudStorageFiles = createAsyncThunk(
   'cloudStorage/uploadCloudStorageFiles',
-  async (data: FormData, { rejectWithValue }) => {
+  async (
+    {
+      data,
+      onUploadProgress,
+    }: {
+      data: FormData;
+      onUploadProgress?: (progressEvent: ProgressEvent) => void;
+    },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await api.cloudStorage.uploadFiles({ data });
+      const response = await api.cloudStorage.uploadFiles({
+        data,
+        onUploadProgress,
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -184,10 +237,29 @@ export const removeCloudStorageFiles = createAsyncThunk(
   }
 );
 
+export const downloadFiles = createAsyncThunk(
+  'cloudStorage/downloadFiles',
+  async (data: { ids: string[] }) => {
+    try {
+      const response = await api.cloudStorage.downloadFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+      // return rejectWithValue(error?.message || 'Failed to download files');
+    }
+  }
+);
+
 export const cloudStorageSlice = createSlice({
   name: 'cloudStorage',
   initialState,
   reducers: {
+    setAccountType: (state, action) => {
+      state.accountType = action.payload;
+    },
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+    },
     resetCloudStorageFolder: state => {
       state.currentFolderId = null;
       state.currentPath = [];
@@ -200,16 +272,22 @@ export const cloudStorageSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCloudStorageFiles.fulfilled, (state, action) => {
-        //   state.cloudStorage = action.payload?.data?.data || [];
-        //   state.pagination = action.payload?.data?.paging || null;
-        const { data = [], pagination = null } = action.payload?.data;
+        const { data = [], paging = null } = action.payload?.data;
         state.loading = false;
-        if (action.meta.arg.page) {
+
+        // Get the folder id from the action
+        const newFolderId = action.meta.arg?.id ?? null;
+
+        // If folder id changed, replace data; if same, append for pagination
+        if (state.currentFolderId !== newFolderId) {
+          state.cloudStorage = data;
+          state.currentFolderId = newFolderId;
+        } else if (action.meta.arg.page && action.meta.arg.page > 1) {
           state.cloudStorage = [...state.cloudStorage, ...data];
         } else {
           state.cloudStorage = data;
         }
-        state.pagination = pagination;
+        state.pagination = paging;
       })
       .addCase(fetchCloudStorageFiles.rejected, (state, action) => {
         state.loading = false;
@@ -266,23 +344,24 @@ export const cloudStorageSlice = createSlice({
         // state.isLoading = false;
         state.error = action.payload as string;
       })
-      // .addCase(uploadGoogleDriveFiles.pending, state => {
-      //   state.isLoading = true;
-      // })
+      .addCase(uploadCloudStorageFiles.pending, state => {
+        state.uploadLoading = true;
+      })
       .addCase(uploadCloudStorageFiles.fulfilled, (state, action) => {
-        // state.isLoading = false;
+        state.uploadLoading = false;
         state.cloudStorage = [
           ...state.cloudStorage,
           { ...(action.payload?.data || []) },
         ];
       })
       .addCase(uploadCloudStorageFiles.rejected, (state, action) => {
-        // state.isLoading = false;
+        state.uploadLoading = false;
         state.error = action.payload as string;
       });
   },
 });
 
-export const { resetCloudStorageFolder } = cloudStorageSlice.actions;
+export const { resetCloudStorageFolder, setAccountType, setSearchTerm } =
+  cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;
