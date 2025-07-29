@@ -48,7 +48,7 @@ export default function AdminLogin() {
             letterSpacing: -0.5,
           }}
         >
-          CloudSync
+          AllCloudHub
         </Text>
       </Group>
       <Grid gutter={0} style={{ minHeight: '100vh' }}>

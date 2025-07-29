@@ -13,9 +13,12 @@ import {
 } from '../../../store/slices/auth.slice';
 import { decodeToken } from '../../../utils/helper';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
-import { ICONS } from '../../../assets/icons';
 import { generatePath, useNavigate } from 'react-router';
 import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
+import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
+import { Image } from '@mantine/core';
 
 const connectAccountSchema = z.object({
   accountName: z.string().min(1, 'Account name is required'),
@@ -29,38 +32,41 @@ type ConnectAccountFormData = z.infer<typeof connectAccountSchema>;
 const accountTypeConfig = {
   google_drive: {
     url: PRIVATE_ROUTES.GOOGLE_DRIVE.url,
-    icon: (
-      <ICONS.IconBrandGoogle
-        size={18}
-        color="#ef4444"
-        stroke={1.25}
-        fill="#ef4444"
-      />
-    ),
+    // icon: (
+    //   <ICONS.IconBrandGoogle
+    //     size={18}
+    //     color="#ef4444"
+    //     stroke={1.25}
+    //     fill="#ef4444"
+    //   />
+    // ),
+    icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={16} h={16} />,
     title: 'Google Drive',
   },
   dropbox: {
     url: PRIVATE_ROUTES.DROPBOX.url,
-    icon: (
-      <ICONS.IconDroplets
-        size={18}
-        color="#007ee5"
-        stroke={1.25}
-        fill="#007ee5"
-      />
-    ),
+    // icon: (
+    //   <ICONS.IconDroplets
+    //     size={18}
+    //     color="#007ee5"
+    //     stroke={1.25}
+    //     fill="#007ee5"
+    //   />
+    // ),
+    icon: <Image src={DropboxIcon} alt="Dropbox" w={16} h={16} />,
     title: 'Dropbox',
   },
   onedrive: {
     url: PRIVATE_ROUTES.ONEDRIVE.url,
-    icon: (
-      <ICONS.IconBrandOnedrive
-        size={18}
-        color="#0078d4"
-        stroke={1.25}
-        fill="#0078d4"
-      />
-    ),
+    // icon: (
+    //   <ICONS.IconBrandOnedrive
+    //     size={18}
+    //     color="#0078d4"
+    //     stroke={1.25}
+    //     fill="#0078d4"
+    //   />
+    // ),
+    icon: <Image src={OneDriveIcon} alt="OneDrive" w={16} h={16} />,
     title: 'OneDrive',
   },
 };

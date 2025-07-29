@@ -43,7 +43,7 @@ const CompleteProfile = () => {
             letterSpacing: -0.5,
           }}
         >
-          CloudSync
+          AllCloudHub
         </Text>
       </Group>
       <Grid gutter={0}>

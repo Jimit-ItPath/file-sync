@@ -15,10 +15,7 @@ interface FeatureListProps {
   isMd: boolean;
 }
 
-export const FeatureList: React.FC<FeatureListProps> = ({
-  isXs,
-  isMd,
-}) => {
+export const FeatureList: React.FC<FeatureListProps> = ({ isXs, isMd }) => {
   const features = [
     {
       icon: ICONS.IconShieldCheck,

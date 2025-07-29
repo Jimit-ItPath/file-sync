@@ -142,7 +142,7 @@ const DashboardLayout = () => {
                   c="blue.7"
                   style={{ letterSpacing: -0.5 }}
                 >
-                  CloudSync
+                  AllCloudHub
                 </Box>
                 <Group align="center" gap={0} style={{ position: 'relative' }}>
                   <TextInput
