@@ -116,6 +116,9 @@ const useDashboard = () => {
   const [sourceFolderId, setSourceFolderId] = useState<string | null>(null);
   const [destinationId, setDestinationId] = useState<string | null>(null);
 
+  const [dragDropModalOpen, setDragDropModalOpen] = useState(false);
+  const [dragDropFiles, setDragDropFiles] = useState<File[]>([]);
+
   const {
     cloudStorage,
     loading,
@@ -706,10 +709,28 @@ const useDashboard = () => {
 
   const handleFileDrop = useCallback(
     async (files: File[]) => {
-      await uploadFilesHandler(files);
+      if (!isSFDEnabled) {
+        setDragDropFiles(files);
+        setDragDropModalOpen(true);
+        uploadMethods.reset({ accountId: '', files: files });
+      } else {
+        await uploadFilesHandler(files);
+      }
     },
-    [uploadFilesHandler]
+    [uploadFilesHandler, isSFDEnabled, uploadMethods]
   );
+
+  const handleDragDropUpload = uploadMethods.handleSubmit(async data => {
+    await uploadFilesHandler(dragDropFiles, data);
+    setDragDropModalOpen(false);
+    setDragDropFiles([]);
+  });
+
+  const closeDragDropModal = useCallback(() => {
+    setDragDropFiles([]);
+    setDragDropModalOpen(false);
+    uploadMethods.reset();
+  }, [uploadMethods]);
 
   // Drag and drop functionality
   const { dragRef, isDragging } = useDragDrop({
@@ -1190,6 +1211,10 @@ const useDashboard = () => {
 
     checkLocation,
     parentId,
+    dragDropModalOpen,
+    dragDropFiles,
+    handleDragDropUpload,
+    closeDragDropModal,
   };
 };
 
