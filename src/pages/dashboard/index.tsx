@@ -116,6 +116,7 @@ const Dashboard = () => {
     uploadMethods,
     accountOptionsForSFD,
     checkLocation,
+    parentId,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
 
@@ -314,6 +315,7 @@ const Dashboard = () => {
               handleUnselectAll,
               filesToMove,
               isMoveMode,
+              parentId,
             }}
           />
         ) : (
@@ -334,6 +336,7 @@ const Dashboard = () => {
                 lastSelectedIndex,
                 filesToMove,
                 isMoveMode,
+                parentId,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (

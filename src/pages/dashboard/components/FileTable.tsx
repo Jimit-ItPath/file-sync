@@ -31,6 +31,7 @@ type FileTableProps = {
   handleUnselectAll: () => void;
   isMoveMode: boolean;
   filesToMove: string[];
+  parentId: string | null;
 };
 
 const FileTable: React.FC<FileTableProps> = ({
@@ -45,6 +46,7 @@ const FileTable: React.FC<FileTableProps> = ({
   handleUnselectAll = () => {},
   isMoveMode = false,
   filesToMove = [],
+  parentId = null,
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -161,6 +163,7 @@ const FileTable: React.FC<FileTableProps> = ({
         onSelectAll={onSelectAll}
         isMoveMode={isMoveMode}
         filesToMove={filesToMove}
+        parentId={parentId}
         onRowDoubleClick={(row, e) => {
           e?.stopPropagation();
           // handleRowDoubleClick(row);

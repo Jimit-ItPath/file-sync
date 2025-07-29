@@ -50,6 +50,7 @@ export type FileType = {
   mimeType?: string;
   fileExtension?: string | null;
   download_url?: string | null;
+  parent_id: string | null;
 };
 
 const folderSchema = z.object({
@@ -111,6 +112,7 @@ const useDashboard = () => {
 
   const [isMoveMode, setIsMoveMode] = useState(false);
   const [filesToMove, setFilesToMove] = useState<string[]>([]);
+  const [parentId, selectParentId] = useState<string | null>(null);
   const [sourceFolderId, setSourceFolderId] = useState<string | null>(null);
   const [destinationId, setDestinationId] = useState<string | null>(null);
 
@@ -296,6 +298,7 @@ const useDashboard = () => {
       if (e.key === 'Escape' && isMoveMode) {
         setIsMoveMode(false);
         setFilesToMove([]);
+        selectParentId(null);
       }
     };
 
@@ -352,6 +355,7 @@ const useDashboard = () => {
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
+      parent_id: item.parent_id,
     }));
   }, [cloudStorage]);
 
@@ -991,6 +995,7 @@ const useDashboard = () => {
       } finally {
         setIsMoveMode(false);
         setFilesToMove([]);
+        selectParentId(null);
         handleUnselectAll();
         setSelectedIds([]);
         setSourceFolderId(null);
@@ -1001,6 +1006,7 @@ const useDashboard = () => {
   const cancelMoveMode = useCallback(() => {
     setIsMoveMode(false);
     setFilesToMove([]);
+    selectParentId(null);
     setSelectedIds([]);
     setLastSelectedIndex(null);
     setSourceFolderId(null);
@@ -1008,7 +1014,9 @@ const useDashboard = () => {
 
   const handleMoveSelected = useCallback(() => {
     setIsMoveMode(true);
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
     setFilesToMove([...selectedIds]);
+    selectParentId(checkFiles?.parent_id ?? null);
     setSourceFolderId(currentFolderId ?? null);
   }, [selectedIds, currentFolderId]);
 
@@ -1033,7 +1041,7 @@ const useDashboard = () => {
     // Get the destination folder ID (currentFolderId could be null for root)
     let destId: string | null = null;
 
-    if (currentFolderId !== null) {
+    if (currentFolderId) {
       if (layout === 'list') {
         const checkId = files.find(item => selectedIds?.includes(item.id));
         destId = checkId ? checkId.id : destinationId;
@@ -1181,6 +1189,7 @@ const useDashboard = () => {
     accountOptionsForSFD,
 
     checkLocation,
+    parentId,
   };
 };
 
