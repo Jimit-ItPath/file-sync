@@ -13,7 +13,8 @@ interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
-  onNavigate: (folderId?: string | null) => void;
+  // onNavigate: (folderId?: string | null) => void;
+  onNavigate: (folder: { id?: string | null; name: string } | null) => void;
 }
 
 export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
@@ -36,7 +37,8 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
             <Anchor
               onClick={() => {
                 window.getSelection()?.removeAllRanges();
-                onNavigate(item?.id);
+                // onNavigate(item?.id);
+                onNavigate(item.id === null ? null : item);
               }}
               key={index}
               style={{

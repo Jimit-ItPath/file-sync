@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { api } from '../../api';
-import { getLocalStorage, setLocalStorage } from '../../utils/helper';
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
@@ -36,6 +35,7 @@ type CloudStorageState = {
   error: string | null;
   currentFolderId: string | null;
   currentPath: Array<{ id?: string; name: string }>;
+  currentFolderName: string;
   uploadLoading: boolean;
   accountId: string;
   searchTerm: string;
@@ -48,9 +48,11 @@ const initialState: CloudStorageState = {
   loading: false,
   error: null,
   currentFolderId: null,
-  currentPath: localStorage.getItem('cloudStoragePath')
-    ? JSON.parse(localStorage.getItem('cloudStoragePath') || '')
-    : [],
+  currentFolderName: '',
+  // currentPath: localStorage.getItem('cloudStoragePath')
+  //   ? JSON.parse(localStorage.getItem('cloudStoragePath') || '')
+  //   : [],
+  currentPath: [],
   uploadLoading: false,
   accountId: 'all',
   searchTerm: '',
@@ -90,31 +92,31 @@ export const navigateToFolder = createAsyncThunk(
       page?: number;
       limit?: number;
       searchTerm?: string;
-    } | null,
-    { dispatch }
+    } | null
+    // { dispatch }
   ) => {
-    const defaultPage = 1;
-    const defaultLimit = 20;
+    // const defaultPage = 1;
+    // const defaultLimit = 20;
     if (data === null) {
-      dispatch(resetCloudStorageFolder());
-      await dispatch(
-        fetchCloudStorageFiles({
-          page: defaultPage,
-          limit: defaultLimit,
-        })
-      );
+      // dispatch(resetCloudStorageFolder());
+      // await dispatch(
+      //   fetchCloudStorageFiles({
+      //     page: defaultPage,
+      //     limit: defaultLimit,
+      //   })
+      // );
       return { folderId: null, folderName: 'All Files', isRoot: true };
     } else {
-      await dispatch(
-        fetchCloudStorageFiles({
-          id: data.id,
-          account_type: data.account_type,
-          account_id: data.account_id,
-          page: data.page ?? defaultPage,
-          limit: data.limit ?? defaultLimit,
-          searchTerm: data.searchTerm,
-        })
-      );
+      // await dispatch(
+      //   fetchCloudStorageFiles({
+      //     id: data.id,
+      //     account_type: data.account_type,
+      //     account_id: data.account_id,
+      //     page: data.page ?? defaultPage,
+      //     limit: data.limit ?? defaultLimit,
+      //     searchTerm: data.searchTerm,
+      //   })
+      // );
       return {
         folderId: data.id,
         accountType: data.account_type,
@@ -137,36 +139,45 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
     },
     { dispatch }
   ) => {
-    const savedPath = getLocalStorage('cloudStoragePath');
+    // const savedPath = getLocalStorage('cloudStoragePath');
     const defaultPage = 1;
     const defaultLimit = 20;
-    if (savedPath && savedPath.length > 0) {
-      // Navigate to the last folder in the path
-      const lastFolder = savedPath[savedPath.length - 1];
-      if (lastFolder.id) {
-        await dispatch(
-          navigateToFolder({
-            id: lastFolder.id,
-            account_id: lastFolder.account_id,
-            name: lastFolder.name,
-            page: data.page ?? defaultPage,
-            limit: data.limit ?? defaultLimit,
-            searchTerm: data.searchTerm,
-          })
-        );
-      }
-    } else {
-      // Load root if no saved path
-      await dispatch(
-        fetchCloudStorageFiles({
-          id: data.id,
-          page: data.page ?? defaultPage,
-          limit: data.limit ?? defaultLimit,
-          account_id: data.account_id,
-          searchTerm: data.searchTerm,
-        })
-      );
-    }
+    await dispatch(
+      fetchCloudStorageFiles({
+        id: data.id,
+        account_id: data.account_id,
+        page: data.page ?? defaultPage,
+        limit: data.limit ?? defaultLimit,
+        searchTerm: data.searchTerm,
+      })
+    );
+    // if (savedPath && savedPath.length > 0) {
+    //   // Navigate to the last folder in the path
+    //   const lastFolder = savedPath[savedPath.length - 1];
+    //   if (lastFolder.id) {
+    //     await dispatch(
+    //       navigateToFolder({
+    //         id: lastFolder.id,
+    //         account_id: lastFolder.account_id,
+    //         name: lastFolder.name,
+    //         page: data.page ?? defaultPage,
+    //         limit: data.limit ?? defaultLimit,
+    //         searchTerm: data.searchTerm,
+    //       })
+    //     );
+    //   }
+    // } else {
+    //   // Load root if no saved path
+    //   await dispatch(
+    //     fetchCloudStorageFiles({
+    //       id: data.id,
+    //       page: data.page ?? defaultPage,
+    //       limit: data.limit ?? defaultLimit,
+    //       account_id: data.account_id,
+    //       searchTerm: data.searchTerm,
+    //     })
+    //   );
+    // }
   }
 );
 
@@ -287,6 +298,31 @@ const cloudStorageSlice = createSlice({
       state.currentFolderId = null;
       state.currentPath = [];
     },
+    updateCurrentPath: (state, action) => {
+      const { id: folderId, name: folderName, isRoot } = action.payload;
+      state.currentFolderId = folderId;
+
+      if (isRoot) {
+        state.currentPath = [];
+        state.currentFolderName = '';
+      } else if (folderId) {
+        // Check if we're navigating deeper or to a sibling folder
+        const existingIndex = state.currentPath.findIndex(
+          f => f.id === folderId
+        );
+        if (existingIndex >= 0) {
+          // Navigated back to a previous folder
+          state.currentPath = state.currentPath.slice(0, existingIndex + 1);
+        } else {
+          // Navigated to a new folder
+          state.currentPath = [
+            ...state.currentPath,
+            { id: folderId, name: folderName },
+          ];
+        }
+        state.currentFolderName = folderName;
+      }
+    },
   },
   extraReducers: builder => {
     builder
@@ -324,10 +360,11 @@ const cloudStorageSlice = createSlice({
       })
       .addCase(navigateToFolder.fulfilled, (state, action) => {
         const { folderId, folderName, isRoot } = action.payload;
-        state.currentFolderId = folderId;
+        // state.currentFolderId = folderId;
 
         if (isRoot) {
           state.currentPath = [];
+          state.currentFolderId = null;
         } else {
           // Check if we're navigating deeper or to a sibling folder
           const existingIndex = state.currentPath.findIndex(
@@ -338,21 +375,34 @@ const cloudStorageSlice = createSlice({
             state.currentPath = state.currentPath.slice(0, existingIndex + 1);
           } else {
             // Navigated to a new folder
-            state.currentPath = [
-              ...state.currentPath,
-              { id: folderId ? String(folderId) : undefined, name: folderName },
-            ];
+            // state.currentPath = [
+            //   ...state.currentPath,
+            //   { id: folderId ? String(folderId) : undefined, name: folderName },
+            // ];
+            const isAlreadyInPath = state.currentPath.some(
+              f => f.id === folderId
+            );
+            if (!isAlreadyInPath) {
+              state.currentPath = [
+                ...state.currentPath,
+                {
+                  id: folderId ? String(folderId) : undefined,
+                  name: folderName,
+                },
+              ];
+            }
           }
+          state.currentFolderId = folderId;
         }
         state.navigateLoading = false;
-        setLocalStorage('cloudStoragePath', state.currentPath);
-        setLocalStorage('folderId', state.currentFolderId);
+        // setLocalStorage('cloudStoragePath', state.currentPath);
+        // setLocalStorage('folderId', state.currentFolderId);
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
         state.navigateLoading = false;
         state.error = action.payload as string;
-        state.currentFolderId = null;
-        state.currentPath = [];
+        // state.currentFolderId = null;
+        // state.currentPath = [];
       })
       //   .addCase(createGoogleDriveFolder.pending, state => {
       //     state.isLoading = true;
@@ -385,7 +435,11 @@ const cloudStorageSlice = createSlice({
   },
 });
 
-export const { resetCloudStorageFolder, setAccountId, setSearchTerm } =
-  cloudStorageSlice.actions;
+export const {
+  resetCloudStorageFolder,
+  setAccountId,
+  setSearchTerm,
+  updateCurrentPath,
+} = cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

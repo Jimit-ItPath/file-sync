@@ -28,6 +28,7 @@ import {
   uploadCloudStorageFiles,
   moveCloudStorageFiles,
   syncCloudStorage,
+  updateCurrentPath,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -76,8 +77,6 @@ const useDashboard = () => {
   const location = useLocation();
 
   const layoutKey = 'dashboardLayout';
-  const folderIdKey = 'folderId';
-  const pathKey = 'cloudStoragePath';
 
   const [layout, setLayout] = useState<'list' | 'grid'>(() => {
     const savedLayout = getLocalStorage(layoutKey);
@@ -99,6 +98,7 @@ const useDashboard = () => {
   const uploadsInProgressRef = useRef(false);
   const initializedRef = useRef(false);
   const hasMountedOnce = useRef(false);
+  const prevParamsRef = useRef<{ folderId?: string; id?: string }>({});
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'files'>('folder');
@@ -124,12 +124,13 @@ const useDashboard = () => {
     accountId,
     searchTerm,
     navigateLoading,
+    currentFolderName,
   } = useAppSelector(state => state.cloudStorage);
   const { userProfile } = useAppSelector(state => state.user);
   const { checkStorageDetails } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
 
-  const folderId = localStorage.getItem(folderIdKey);
+  const folderId = params.folderId || null;
 
   const checkLocation = useMemo(
     () =>
@@ -138,6 +139,7 @@ const useDashboard = () => {
       location.pathname.startsWith('/onedrive'),
     [location.pathname]
   );
+  const prevCheckLocation = useRef(checkLocation);
   const currentAccountId = checkLocation ? params.id : accountId;
 
   const isSFDEnabled = useMemo(() => {
@@ -234,24 +236,68 @@ const useDashboard = () => {
       pagination?.page_no,
       accountId,
       debouncedSearchTerm,
+      checkLocation,
+      currentAccountId,
     ]
   );
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
+  // Handle route changes and parameter updates
   useEffect(() => {
-    if (!initializedRef.current) {
+    const currentParams = { folderId: params.folderId, id: params.id };
+    const prevParams = prevParamsRef.current;
+
+    // Check if parameters have changed
+    const hasParamsChanged =
+      currentParams.folderId !== prevParams.folderId ||
+      currentParams.id !== prevParams.id;
+
+    if (!initializedRef.current || hasParamsChanged) {
       onInitialize({});
       initializedRef.current = true;
+      prevParamsRef.current = currentParams;
+
+      if (folderId) {
+        dispatch(
+          navigateToFolder({
+            id: folderId,
+            name: currentFolderName,
+            ...(checkLocation &&
+              currentAccountId && { account_id: Number(currentAccountId) }),
+          })
+        );
+        // navigateToFolderFn({ id: folderId, name: currentFolderName });
+      } else {
+        dispatch(navigateToFolder(null));
+      }
+
+      if (
+        checkLocation !== prevCheckLocation.current ||
+        (!folderId && hasParamsChanged)
+      ) {
+        dispatch(resetCloudStorageFolder());
+      }
     }
 
+    // Update previous route type and checkLocation AFTER all checks
+    prevCheckLocation.current = checkLocation;
+
     return () => {
-      dispatch(resetCloudStorageFolder());
-      removeLocalStorage(pathKey);
-      removeLocalStorage(folderIdKey);
-      removeLocalStorage(layoutKey);
+      console.log('changed-', hasParamsChanged);
+      if (!hasParamsChanged) {
+        console.log('run');
+        dispatch(resetCloudStorageFolder());
+        removeLocalStorage(layoutKey);
+      }
     };
-  }, []);
+  }, [
+    params.folderId,
+    params.id,
+    checkLocation,
+    currentAccountId,
+    location.pathname,
+  ]);
 
   useEffect(() => {
     if (!hasMountedOnce.current) {
@@ -358,30 +404,61 @@ const useDashboard = () => {
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
       const requestParams: any = {};
+      setDestinationId(folder?.id || null);
 
       if (folder?.id) {
-        setDestinationId(folder?.id);
         requestParams.id = String(folder?.id);
         requestParams.name = String(folder?.name);
+        // Navigate to folder route
+        if (checkLocation && currentAccountId) {
+          requestParams.account_id = Number(currentAccountId);
+          const basePath = location.pathname.split('/').slice(0, 3).join('/');
+          navigate(`${basePath}/${folder.id}`);
+        } else {
+          navigate(`/dashboard/${folder.id}`);
+        }
+        dispatch(
+          updateCurrentPath({
+            id: folder?.id,
+            name: folder?.name,
+            isRoot: false,
+            ...(checkLocation &&
+              currentAccountId && { account_id: Number(currentAccountId) }),
+          })
+        );
       } else {
-        setDestinationId(null);
+        // Navigate to root route
+        if (checkLocation && currentAccountId) {
+          requestParams.account_id = Number(currentAccountId);
+          const basePath = location.pathname.split('/').slice(0, 3).join('/');
+          navigate(basePath);
+        } else {
+          navigate('/dashboard');
+        }
+        dispatch(
+          updateCurrentPath({
+            id: null,
+            name: 'All Files',
+            isRoot: true,
+            ...(checkLocation &&
+              currentAccountId && { account_id: Number(currentAccountId) }),
+          })
+        );
       }
 
-      if (checkLocation && currentAccountId) {
-        requestParams.account_id = Number(currentAccountId);
-      }
-
-      dispatch(
-        navigateToFolder(
-          folder
-            ? requestParams
-            : checkLocation && currentAccountId
-              ? { account_id: Number(currentAccountId) }
-              : null
-        )
-      );
+      // Note: We don't dispatch navigateToFolder here anymore as it will be handled
+      // by the useEffect that watches for route parameter changes
+      // dispatch(
+      //   navigateToFolder(
+      //     folder
+      //       ? requestParams
+      //       : checkLocation && currentAccountId
+      //         ? { account_id: Number(currentAccountId) }
+      //         : null
+      //   )
+      // );
     },
-    [dispatch, currentPath, isMoveMode, checkLocation, currentAccountId]
+    [checkLocation, currentAccountId, navigate, location.pathname]
   );
 
   const handleRowDoubleClick = useCallback(
@@ -395,9 +472,17 @@ const useDashboard = () => {
           setLastSelectedIndex(null);
         }
         navigateToFolderFn({ id: row.id, name: row.name });
+        // dispatch(
+        //   updateCurrentPath({
+        //     id: row.id,
+        //     name: row.name,
+        //     ...(checkLocation &&
+        //       currentAccountId && { account_id: Number(currentAccountId) }),
+        //   })
+        // );
       }
     },
-    [navigateToFolderFn, isMoveMode]
+    [navigateToFolderFn, isMoveMode, dispatch, checkLocation, currentAccountId]
   );
 
   const handleMenuItemClick = (actionId: string, row: FileType) => {
@@ -408,15 +493,7 @@ const useDashboard = () => {
       row.download_url
     ) {
       window.open(row.download_url, '_blank');
-    }
-    // else if (actionId === 'view') {
-    //   if (row.mimeType === 'application/vnd.google-apps.folder') {
-    //     navigateToFolderFn({ id: row.id, name: row.name });
-    //   } else if (row.webViewLink) {
-    //     window.open(row.webViewLink, '_blank');
-    //   }
-    // }
-    else if (actionId === 'rename') {
+    } else if (actionId === 'rename') {
       setItemToRename(row);
       setRenameModalOpen(true);
       resetRenameForm({ newName: row.name });
@@ -950,9 +1027,8 @@ const useDashboard = () => {
   );
 
   const handleSyncStorage = useCallback(() => {
-    const folderId = localStorage.getItem(folderIdKey);
     syncStorage(folderId);
-  }, [syncStorage, folderIdKey]);
+  }, [syncStorage, folderId]);
 
   // Moving files
   const [moveFiles, moveFilesLoading] = useAsyncOperation(
@@ -1175,6 +1251,7 @@ const useDashboard = () => {
     accountOptionsForSFD,
 
     checkLocation,
+    folderId,
   };
 };
 

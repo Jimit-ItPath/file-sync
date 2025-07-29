@@ -271,14 +271,21 @@ const Dashboard = () => {
             <Box style={{ flexGrow: 1 }}>
               <Breadcrumbs
                 items={currentPath}
-                onNavigate={folderId => {
-                  if (!folderId || folderId === null) {
+                // onNavigate={folderId => {
+                //   if (!folderId || folderId === null) {
+                //     navigateToFolderFn(null);
+                //   } else {
+                //     const folder = currentPath.find(f => f.id === folderId);
+                //     if (folder) {
+                //       navigateToFolderFn(folder);
+                //     }
+                //   }
+                // }}
+                onNavigate={folder => {
+                  if (!folder || folder.id === null) {
                     navigateToFolderFn(null);
                   } else {
-                    const folder = currentPath.find(f => f.id === folderId);
-                    if (folder) {
-                      navigateToFolderFn(folder);
-                    }
+                    navigateToFolderFn(folder);
                   }
                 }}
               />
