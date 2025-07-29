@@ -130,14 +130,6 @@ const useGoogleDrive = () => {
   const { reset: resetRenameForm } = renameMethods;
 
   const accountId = params.id;
-  // const folderIdPath = params['*']
-  //   ? params['*'].split('/').filter(Boolean)
-  //   : [];
-  // const folderId = getLocalStorage('folderId');
-  // console.log("folder id path-", folderIdPath)
-  // const folderId = folderIdPath?.length
-  //   ? folderIdPath[folderIdPath.length - 1]
-  //   : '';
   const folderId = getLocalStorage('gDriveFolderId');
 
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);

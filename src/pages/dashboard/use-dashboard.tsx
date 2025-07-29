@@ -129,7 +129,7 @@ const useDashboard = () => {
   const { checkStorageDetails } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
 
-  const folderId = localStorage.getItem(folderIdKey);
+  const folderId = getLocalStorage(folderIdKey);
 
   const checkLocation = useMemo(
     () =>
@@ -254,7 +254,7 @@ const useDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!hasMountedOnce.current) {
+    if (!hasMountedOnce.current && !checkLocation) {
       hasMountedOnce.current = true;
       return;
     }
@@ -365,10 +365,16 @@ const useDashboard = () => {
         requestParams.name = String(folder?.name);
       } else {
         setDestinationId(null);
+        dispatch(resetCloudStorageFolder());
       }
 
       if (checkLocation && currentAccountId) {
         requestParams.account_id = Number(currentAccountId);
+      }
+
+      if (!isMoveMode) {
+        setSelectedIds([]);
+        setLastSelectedIndex(null);
       }
 
       dispatch(
@@ -390,14 +396,14 @@ const useDashboard = () => {
         row.mimeType === 'application/vnd.google-apps.folder' ||
         row.type === 'folder'
       ) {
-        if (!isMoveMode) {
-          setSelectedIds([]);
-          setLastSelectedIndex(null);
-        }
+        // if (!isMoveMode) {
+        //   setSelectedIds([]);
+        //   setLastSelectedIndex(null);
+        // }
         navigateToFolderFn({ id: row.id, name: row.name });
       }
     },
-    [navigateToFolderFn, isMoveMode]
+    [navigateToFolderFn]
   );
 
   const handleMenuItemClick = (actionId: string, row: FileType) => {

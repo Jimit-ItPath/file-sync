@@ -1,6 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { api } from '../../api';
-import { getLocalStorage, setLocalStorage } from '../../utils/helper';
+import {
+  getLocalStorage,
+  removeLocalStorage,
+  setLocalStorage,
+} from '../../utils/helper';
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
@@ -326,7 +330,7 @@ const cloudStorageSlice = createSlice({
         const { folderId, folderName, isRoot } = action.payload;
         state.currentFolderId = folderId;
 
-        if (isRoot) {
+        if (isRoot || !folderId) {
           state.currentPath = [];
         } else {
           // Check if we're navigating deeper or to a sibling folder
@@ -340,13 +344,20 @@ const cloudStorageSlice = createSlice({
             // Navigated to a new folder
             state.currentPath = [
               ...state.currentPath,
-              { id: folderId ? String(folderId) : undefined, name: folderName },
+              {
+                id: folderId ? String(folderId) : undefined,
+                name: String(folderName),
+              },
             ];
           }
         }
         state.navigateLoading = false;
         setLocalStorage('cloudStoragePath', state.currentPath);
-        setLocalStorage('folderId', state.currentFolderId);
+        if (state.currentFolderId) {
+          setLocalStorage('folderId', state.currentFolderId);
+        } else {
+          removeLocalStorage('folderId');
+        }
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
         state.navigateLoading = false;

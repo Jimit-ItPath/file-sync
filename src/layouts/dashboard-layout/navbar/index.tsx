@@ -162,90 +162,123 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               />
             </Stack>
             {cloudAccountsWithStorage?.length
-              ? cloudAccountsWithStorage?.map(({ id, url, icon, title }) => {
-                  const isActive = isActiveRoute(url);
+              ? cloudAccountsWithStorage?.map(
+                  ({ id, url, icon, title, storageInfo }) => {
+                    const isActive = isActiveRoute(url);
 
-                  return (
-                    <Group
-                      key={id}
-                      style={{
-                        position: 'relative',
-                        width: '100%',
-                      }}
-                      onMouseEnter={() => setHoveredAccountId(id)}
-                      onMouseLeave={() => setHoveredAccountId(null)}
-                    >
-                      <Stack style={{ flexDirection: 'row' }} w={'100%'}>
-                        <Link
-                          to={url}
+                    return (
+                      <Box key={id} mb={'xs'}>
+                        <Group
+                          // key={id}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '8px',
-                            borderRadius: 'var(--mantine-radius-default)',
-                            textDecoration: 'none',
-                            color: 'inherit',
-                            transition: 'background-color 0.2s',
-                            backgroundColor: isActive
-                              ? 'var(--mantine-color-gray-0)'
-                              : undefined,
-                            cursor: 'pointer',
-                            fontSize: '14px',
+                            position: 'relative',
                             width: '100%',
                           }}
-                          onClick={() => {
-                            removeLocalStorage('folderId');
-                            removeLocalStorage('cloudStoragePath');
-                            mobileDrawerHandler?.close();
-                          }}
-                          onMouseEnter={e => {
-                            if (!isActive) {
-                              (
-                                e.currentTarget as HTMLElement
-                              ).style.backgroundColor =
-                                'var(--mantine-color-gray-0)';
-                            }
-                          }}
-                          onMouseLeave={e => {
-                            if (!isActive) {
-                              (
-                                e.currentTarget as HTMLElement
-                              ).style.backgroundColor = '';
-                            }
-                          }}
+                          onMouseEnter={() => setHoveredAccountId(id)}
+                          onMouseLeave={() => setHoveredAccountId(null)}
                         >
-                          {icon}
-                          <span style={{ color: '#000', marginLeft: '10px' }}>
-                            {title}
-                          </span>
-                        </Link>
-                        {hoveredAccountId === id && (
-                          <Tooltip
-                            label="Remove Access"
-                            position="right"
-                            withArrow
-                          >
-                            <Box
+                          <Stack style={{ flexDirection: 'row' }} w={'100%'}>
+                            <Link
+                              to={url}
                               style={{
-                                position: 'absolute',
-                                right: 8,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '8px',
+                                borderRadius: 'var(--mantine-radius-default)',
+                                textDecoration: 'none',
+                                color: 'inherit',
+                                transition: 'background-color 0.2s',
+                                backgroundColor: isActive
+                                  ? 'var(--mantine-color-gray-0)'
+                                  : undefined,
                                 cursor: 'pointer',
+                                fontSize: '14px',
+                                width: '100%',
                               }}
-                              onClick={e => {
-                                e.stopPropagation();
-                                openRemoveAccessModal(id);
+                              onClick={() => {
+                                removeLocalStorage('folderId');
+                                removeLocalStorage('cloudStoragePath');
+                                mobileDrawerHandler?.close();
+                              }}
+                              onMouseEnter={e => {
+                                if (!isActive) {
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.backgroundColor =
+                                    'var(--mantine-color-gray-0)';
+                                }
+                              }}
+                              onMouseLeave={e => {
+                                if (!isActive) {
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.backgroundColor = '';
+                                }
                               }}
                             >
-                              <ICONS.IconTrash size={16} color="red" />
-                            </Box>
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </Group>
-                  );
-                })
+                              {icon}
+                              <span
+                                style={{ color: '#000', marginLeft: '10px' }}
+                              >
+                                {title}
+                              </span>
+                            </Link>
+                            {hoveredAccountId === id && (
+                              <Tooltip
+                                label="Remove Access"
+                                position="right"
+                                withArrow
+                              >
+                                <Box
+                                  style={{
+                                    position: 'absolute',
+                                    right: 8,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    cursor: 'pointer',
+                                  }}
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    openRemoveAccessModal(id);
+                                  }}
+                                >
+                                  <ICONS.IconTrash size={16} color="red" />
+                                </Box>
+                              </Tooltip>
+                            )}
+                          </Stack>
+                        </Group>
+                        {storageInfo &&
+                        storageInfo.total &&
+                        storageInfo.used ? (
+                          <Box px={8} mt={4}>
+                            <Progress
+                              value={
+                                (Number(storageInfo.used) /
+                                  Number(storageInfo.total)) *
+                                100
+                              }
+                              size="sm"
+                              radius="xl"
+                              styles={theme => ({
+                                root: {
+                                  backgroundColor: theme.colors.gray[2],
+                                },
+                                bar: {
+                                  backgroundColor: theme.colors.blue[6],
+                                },
+                              })}
+                            />
+                            <Text size="xs" mt={4} c="dimmed">
+                              {formatBytes(Number(storageInfo.used))} of{' '}
+                              {formatBytes(Number(storageInfo.total))} used
+                            </Text>
+                          </Box>
+                        ) : null}
+                      </Box>
+                    );
+                  }
+                )
               : null}
 
             <Stack
@@ -254,47 +287,51 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               align="center"
               onClick={openAccountModal}
             >
-              <ICONS.IconPlus size={18} />
-              <span style={{ fontSize: '14px', color: '##0284C7' }}>
+              <ICONS.IconPlus size={18} color="#0284C7" />
+              <span
+                style={{ fontSize: '14px', color: '#0284C7', fontWeight: 400 }}
+              >
                 Connect Account
               </span>
             </Stack>
           </Box>
 
-          {checkStorageDetails?.storage_details && (
-            <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
-              <Text size="sm" fw={500} mb={8}>
-                Storage Usage
-              </Text>
-              <Progress
-                value={
-                  (Number(checkStorageDetails?.storage_details?.used) /
-                    Number(checkStorageDetails?.storage_details?.total)) *
-                  100
-                }
-                size="xl"
-                radius="xl"
-                styles={theme => ({
-                  root: {
-                    backgroundColor: theme.colors.gray[2],
-                  },
-                  bar: {
-                    backgroundColor: theme.colors.blue[6],
-                  },
-                })}
-              />
-              <Text size="xs" mt={8} color="dimmed">
-                {formatBytes(
-                  Number(checkStorageDetails?.storage_details?.used)
-                )}{' '}
-                of{' '}
-                {formatBytes(
-                  Number(checkStorageDetails?.storage_details?.total)
-                )}{' '}
-                used
-              </Text>
-            </Box>
-          )}
+          {checkStorageDetails?.storage_details &&
+            checkStorageDetails?.storage_details?.total &&
+            checkStorageDetails?.storage_details?.used && (
+              <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
+                <Text size="sm" fw={500} mb={8}>
+                  Storage Usage
+                </Text>
+                <Progress
+                  value={
+                    (Number(checkStorageDetails?.storage_details?.used) /
+                      Number(checkStorageDetails?.storage_details?.total)) *
+                    100
+                  }
+                  size="xl"
+                  radius="xl"
+                  styles={theme => ({
+                    root: {
+                      backgroundColor: theme.colors.gray[2],
+                    },
+                    bar: {
+                      backgroundColor: theme.colors.blue[6],
+                    },
+                  })}
+                />
+                <Text size="xs" mt={8} c="dimmed">
+                  {formatBytes(
+                    Number(checkStorageDetails?.storage_details?.used)
+                  )}{' '}
+                  of{' '}
+                  {formatBytes(
+                    Number(checkStorageDetails?.storage_details?.total)
+                  )}{' '}
+                  used
+                </Text>
+              </Box>
+            )}
         </>
       ) : (
         <>

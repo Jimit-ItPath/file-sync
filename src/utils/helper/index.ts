@@ -35,7 +35,9 @@ export const setLocalStorage = (key: string, value: unknown) => {
 
 export const getLocalStorage = (key: string) => {
   const item = localStorage.getItem(key);
-  return item ? JSON.parse(item) : null;
+  return item && item !== 'null' && item !== 'undefined'
+    ? JSON.parse(item)
+    : null;
 };
 
 export const removeLocalStorage = (key: string) => {

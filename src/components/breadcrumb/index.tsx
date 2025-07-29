@@ -36,11 +36,12 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
             <Anchor
               onClick={() => {
                 window.getSelection()?.removeAllRanges();
+                if (isLast) return;
                 onNavigate(item?.id);
               }}
               key={index}
               style={{
-                cursor: 'pointer',
+                cursor: isLast ? 'not-allowed' : 'pointer',
                 fontWeight: isLast ? 700 : 500,
                 color: isLast ? '#212529' : '#495057',
                 whiteSpace: 'nowrap',
