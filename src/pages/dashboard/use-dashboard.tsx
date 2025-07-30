@@ -129,6 +129,7 @@ const useDashboard = () => {
     accountId,
     searchTerm,
     navigateLoading,
+    recentFiles,
   } = useAppSelector(state => state.cloudStorage);
   const { userProfile } = useAppSelector(state => state.user);
   const { checkStorageDetails } = useAppSelector(state => state.auth);
@@ -361,6 +362,30 @@ const useDashboard = () => {
       parent_id: item.parent_id,
     }));
   }, [cloudStorage]);
+
+  const recentFilesData = useMemo(() => {
+    return recentFiles.map(item => ({
+      id: item.id,
+      name: item.name,
+      type:
+        item.entry_type === 'folder' ? 'folder' : ('file' as 'file' | 'folder'),
+      icon: getFileIcon({
+        entry_type: 'file',
+        mime_type: item.mime_type,
+        file_extension: item.file_extension,
+        name: item.name,
+      }),
+      owner: { name: 'You', avatar: null, initials: 'JS' },
+      lastModified: item.modified_at
+        ? formatDate(item.modified_at)
+        : formatDate(item.updatedAt),
+      size: item.size ? formatFileSize(item.size.toString()) : null,
+      mimeType: item.mime_type,
+      fileExtension: item.file_extension,
+      preview: item.download_url,
+      parent_id: item.parent_id,
+    }));
+  }, [recentFiles]);
 
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
@@ -1215,6 +1240,8 @@ const useDashboard = () => {
     dragDropFiles,
     handleDragDropUpload,
     closeDragDropModal,
+    recentFilesData,
+    folderId,
   };
 };
 

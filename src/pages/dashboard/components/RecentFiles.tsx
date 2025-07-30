@@ -1,123 +1,191 @@
-import { Group, Box, Text, Grid } from '@mantine/core';
-import { ICONS } from '../../../assets/icons';
-import { Button, Card } from '../../../components';
+import { Group, Box, Text, Stack } from '@mantine/core';
+import { Card, Tooltip } from '../../../components';
+import type { FileType } from '../use-dashboard';
+import { useEffect, useRef, useState } from 'react';
 
-const recentFiles = [
-  {
-    icon: ICONS.IconFileTypePdf,
-    iconColor: '#ef4444',
-    name: 'Project_Report.pdf',
-    modified: 'Modified 2 hours ago',
-    size: '4.2 MB',
-  },
-  {
-    icon: ICONS.IconFileTypeXls,
-    iconColor: '#22c55e',
-    name: 'Financial_Data.xlsx',
-    modified: 'Modified yesterday',
-    size: '2.8 MB',
-  },
-  {
-    icon: ICONS.IconPhoto,
-    iconColor: '#a78bfa',
-    name: 'Design_Mockup.png',
-    modified: 'Modified 3 days ago',
-    size: '8.5 MB',
-  },
-  {
-    icon: ICONS.IconFileTypeDoc,
-    iconColor: '#3b82f6',
-    name: 'Meeting_Notes.docx',
-    modified: 'Modified 5 days ago',
-    size: '1.2 MB',
-  },
-];
+const FILE_CARD_HEIGHT = 200;
+const MIN_CARD_WIDTH = 200;
 
-const CARD_HEIGHT = 140;
+interface RecentFileProps {
+  recentFiles: FileType[];
+  isXs: boolean;
+  isSm: boolean;
+}
 
-const RecentFiles = () => (
-  <Box mb={32}>
-    <Group justify="space-between" mb={16}>
-      <Text fw={600} fz="lg" c="gray.9">
-        Recent Files
-      </Text>
-      <Button
+const RecentFiles = ({ recentFiles, isXs, isSm }: RecentFileProps) => {
+  const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
+  const responsiveFontSize = isXs ? 'xs' : 'sm';
+
+  const [visibleFiles, setVisibleFiles] = useState<FileType[]>([]);
+  const [columnsCount, setColumnsCount] = useState(2);
+  const stackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateVisibleFiles = () => {
+      if (stackRef.current) {
+        const containerWidth = stackRef.current.offsetWidth;
+        let cardsPerRow = Math.max(
+          2,
+          Math.floor(containerWidth / MIN_CARD_WIDTH)
+        );
+        setColumnsCount(cardsPerRow);
+        setVisibleFiles(recentFiles.slice(0, cardsPerRow));
+      }
+    };
+
+    updateVisibleFiles();
+    window.addEventListener('resize', updateVisibleFiles);
+    return () => window.removeEventListener('resize', updateVisibleFiles);
+  }, [recentFiles]);
+
+  return (
+    <Stack
+      tabIndex={0}
+      // onKeyDown={handleKeyDown}
+      style={{ outline: 'none' }}
+      // onClick={handleStackClick}
+      ref={stackRef}
+      mt={10}
+    >
+      <Box mt={10} mb={32}>
+        <Group justify="space-between" mb={16}>
+          <Text fw={700} fz="md" c="gray.9">
+            Recent Files
+          </Text>
+          {/* <Button
         variant="subtle"
         color="blue"
         size="xs"
         style={{ fontWeight: 500 }}
       >
         View All
-      </Button>
-    </Group>
-    <Grid gutter={16}>
-      {recentFiles.map(file => (
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }} key={file.name}>
-          <Card
-            // shadow={false}
-            radius={16}
-            p={0}
-            style={{
-              height: CARD_HEIGHT,
-              background: '#f6faff',
-              border: '1px solid #e5e7eb',
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              boxShadow: '0 1px 4px 0 rgba(60,72,88,0.04)',
-              transition: 'box-shadow 0.15s',
-              overflow: 'hidden',
-            }}
-          >
-            <Box px={20} pt={20} pb={0} style={{ flex: 1 }}>
-              <Group justify="flex-start" mb={16}>
-                <file.icon size={40} color={file.iconColor} />
-              </Group>
-              <Text fw={500} fz="sm" mb={2} truncate="end">
-                {file.name}
-              </Text>
-            </Box>
-            <Group
-              justify="space-between"
-              align="center"
-              px={20}
-              pb={12}
-              style={{ background: 'transparent' }}
+      </Button> */}
+        </Group>
+        <Box
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+            // gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_CARD_WIDTH}px, 1fr))`,
+            gap: '20px',
+          }}
+          mt={20}
+        >
+          {visibleFiles.map(file => (
+            <Card
+              key={file.id}
+              radius="md"
+              shadow="sm"
+              p="md"
+              style={{
+                // flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                background: '#f6faff',
+                border: '1px solid #e5e7eb',
+                height: FILE_CARD_HEIGHT,
+                // ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
+                transition: 'box-shadow 0.2s ease',
+                userSelect: 'none',
+                // ...(isMoveMode
+                //   ? {
+                //       opacity: 0.5,
+                //       cursor: 'not-allowed',
+                //     }
+                //   : {}),
+              }}
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                // if (!isMoveMode) {
+                //   handleSelect(file.id, e);
+                // }
+              }}
+              onDoubleClick={(e: any) => {
+                e.stopPropagation();
+                // if (!isMoveMode) {
+                //   handleRowDoubleClick(file);
+                // }
+              }}
             >
-              <Text
-                fz="xs"
-                c="gray.6"
-                style={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
+              <Group
+                justify="space-between"
+                align="center"
+                mb={8}
+                style={{ flexWrap: 'nowrap' }}
               >
-                {file.modified} • {file.size}
-              </Text>
-              <Button
+                <Group gap={8} flex={1} miw={0} align="center">
+                  {file.icon(responsiveIconSize)}
+                  <Tooltip label={file.name} withArrow={false} fz={'xs'}>
+                    <Text
+                      fw={600}
+                      fz={responsiveFontSize}
+                      flex={1}
+                      truncate
+                      miw={0}
+                    >
+                      {file.name}
+                    </Text>
+                  </Tooltip>
+                </Group>
+                {/* <Menu
+              items={MENU_ITEMS}
+              onItemClick={actionId => handleMenuItemClick(actionId, file)}
+            >
+              <ActionIcon
                 variant="subtle"
                 color="gray"
-                size="xs"
-                pos="absolute"
-                right={10}
-                style={{
-                  padding: 0,
-                  minWidth: 0,
-                  width: 28,
-                  height: 28,
-                }}
-                aria-label={`More options for ${file.name}`}
+                style={{ flexShrink: 0 }}
               >
-                <ICONS.IconDotsVertical size={18} color="#94a3b8" />
-              </Button>
-            </Group>
-          </Card>
-        </Grid.Col>
-      ))}
-    </Grid>
-  </Box>
-);
+                <ICONS.IconDotsVertical size={18} />
+              </ActionIcon>
+            </Menu> */}
+              </Group>
+              <Box
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                  marginTop: 8,
+                }}
+              >
+                {file.icon(isXs ? 50 : 60)}
+                {/* {file.preview ? (
+                        <Image
+                          src={file.preview}
+                          alt={file.name}
+                          radius="md"
+                          fit="cover"
+                          h={180}
+                          w="100%"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <Box
+                          style={{
+                            width: '100%',
+                            height: 120,
+                            background: '#e5e7eb',
+                            borderRadius: 8,
+                          }}
+                        />
+                      )} */}
+              </Box>
+              <Group justify="space-between" mt={8}>
+                <Text size="xs" c="gray.6">
+                  {file.lastModified}
+                </Text>
+                <Text size="xs" c="gray.6">
+                  {file.size}
+                </Text>
+              </Group>
+            </Card>
+          ))}
+        </Box>
+      </Box>
+    </Stack>
+  );
+};
 
 export default RecentFiles;

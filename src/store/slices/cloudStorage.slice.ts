@@ -8,7 +8,7 @@ import {
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
-type CloudStorageType = {
+export type CloudStorageType = {
   id: string;
   account_id: string;
   account_type: string;
@@ -29,6 +29,7 @@ type CloudStorageType = {
 
 type CloudStorageState = {
   cloudStorage: CloudStorageType[];
+  recentFiles: CloudStorageType[];
   pagination: {
     total: number;
     total_pages: number;
@@ -48,6 +49,7 @@ type CloudStorageState = {
 
 const initialState: CloudStorageState = {
   cloudStorage: [],
+  recentFiles: [],
   pagination: null,
   loading: false,
   error: null,
@@ -301,6 +303,10 @@ const cloudStorageSlice = createSlice({
       .addCase(fetchCloudStorageFiles.fulfilled, (state, action) => {
         const { data = [], paging = null } = action.payload?.data;
         state.loading = false;
+        state.recentFiles =
+          data?.length > 0
+            ? data.filter((f: any) => f.entry_type === 'file')
+            : [];
 
         // Get the folder id from the action
         const newFolderId = action.meta.arg?.id ?? null;
@@ -320,6 +326,7 @@ const cloudStorageSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.cloudStorage = [];
+        state.recentFiles = [];
         state.pagination = null;
       })
       .addCase(navigateToFolder.pending, state => {

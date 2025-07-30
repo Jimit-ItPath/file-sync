@@ -261,3 +261,10 @@ export const formatBytes = (bytes: number) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+export const truncateBreadcrumbName = (name: string, maxLength: number = 20) => {
+  if (name.length <= maxLength) {
+    return name;
+  }
+  return name.slice(0, maxLength - 3) + '...';
+};

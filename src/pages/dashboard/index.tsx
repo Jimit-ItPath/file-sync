@@ -7,11 +7,9 @@ import {
   Stack,
   Text,
   TextInput,
-  useMantineTheme,
 } from '@mantine/core';
 import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
-// import RecentFiles from './RecentFiles';
 import useDashboard from './use-dashboard';
 import {
   Breadcrumbs,
@@ -30,6 +28,8 @@ import CustomToggle from './components/CustomToggle';
 import { LoaderOverlay } from '../../components/loader';
 import { Controller } from 'react-hook-form';
 import { formatFileSize } from '../../utils/helper';
+import RecentFiles from './components/RecentFiles';
+import useResponsive from '../../hooks/use-responsive';
 
 const Dashboard = () => {
   const {
@@ -118,9 +118,11 @@ const Dashboard = () => {
     dragDropFiles,
     handleDragDropUpload,
     closeDragDropModal,
+    recentFilesData,
+    folderId,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
-  const theme = useMantineTheme();
+  const { isSm, isXs, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
@@ -180,6 +182,11 @@ const Dashboard = () => {
             />
           </Group>
         </Box>
+
+        {recentFilesData?.length && !folderId ? (
+          <RecentFiles {...{ recentFiles: recentFilesData, isSm, isXs }} />
+        ) : null}
+
         {/* Sticky Section */}
         <Box
           style={{
@@ -194,7 +201,6 @@ const Dashboard = () => {
           mt={16}
           className="stickey-box"
         >
-          {/* <RecentFiles /> */}
           <Box>
             <Group align="center" w={'100%'}>
               <Box style={{ flexGrow: 1 }}>
@@ -226,6 +232,8 @@ const Dashboard = () => {
                   onPaste={handlePasteFiles}
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
+                  checkLocation={checkLocation}
+                  folderId={folderId}
                 />
               ) : null}
               {!checkLocation && (
