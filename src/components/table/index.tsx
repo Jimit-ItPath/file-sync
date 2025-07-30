@@ -36,7 +36,7 @@ type TableProps<T> = {
   emptyMessage?: string;
   isMoveMode?: boolean;
   filesToMove?: string[];
-  parentId: string | null;
+  parentId?: string | null;
 };
 
 export function Table<T extends Record<string, any>>({

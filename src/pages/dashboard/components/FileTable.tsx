@@ -31,7 +31,7 @@ type FileTableProps = {
   handleUnselectAll: () => void;
   isMoveMode: boolean;
   filesToMove: string[];
-  parentId: string | null;
+  parentId?: string | null;
 };
 
 const FileTable: React.FC<FileTableProps> = ({
