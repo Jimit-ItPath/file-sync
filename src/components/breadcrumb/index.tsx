@@ -23,11 +23,31 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
         separator={<ICONS.IconChevronRight size={16} color="#868e96" />}
         styles={{
           root: {
-            padding: '6px 12px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: 8,
+            // padding: '6px 12px',
+            // backgroundColor: '#f8f9fa',
+            // borderRadius: 8,
+            padding: 0,
           },
-          separator: { margin: '0 6px' },
+          breadcrumb: {
+            color: '#6b7280',
+            fontSize: '14px',
+            fontWeight: 500,
+            textDecoration: 'none',
+            // padding: '6px 12px',
+            borderRadius: '6px',
+            transition: 'all 0.15s ease',
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#374151',
+            },
+            '&[data-active]': {
+              color: '#1e7ae8',
+              backgroundColor: '#eff6ff',
+              fontWeight: 600,
+            },
+          },
+          separator: { color: '#d1d5db', margin: '0 4px', fontSize: '14px' },
         }}
       >
         {[{ id: null, name: 'All Files' }, ...items].map((item, index) => {
@@ -55,7 +75,7 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
                 (e.currentTarget.style.color = isLast ? '#212529' : '#495057')
               }
             >
-              <Text size="sm" fw={isLast ? 700 : 500} lineClamp={1}>
+              <Text size="sm" fw={isLast ? 700 : 500} lineClamp={1} truncate miw={0}>
                 {item.name}
               </Text>
             </Anchor>

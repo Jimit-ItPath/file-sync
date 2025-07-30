@@ -981,7 +981,7 @@ const useDashboard = () => {
   );
 
   const handleSyncStorage = useCallback(() => {
-    const folderId = localStorage.getItem(folderIdKey);
+    const folderId = getLocalStorage(folderIdKey);
     syncStorage(folderId);
   }, [syncStorage, folderIdKey]);
 

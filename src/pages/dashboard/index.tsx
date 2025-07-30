@@ -31,13 +31,6 @@ import { LoaderOverlay } from '../../components/loader';
 import { Controller } from 'react-hook-form';
 import { formatFileSize } from '../../utils/helper';
 
-const controlBoxStyles = {
-  height: 40,
-  display: 'flex',
-  alignItems: 'center',
-  borderRadius: 6,
-};
-
 const Dashboard = () => {
   const {
     layout,
@@ -160,38 +153,66 @@ const Dashboard = () => {
         }}
         onScroll={handleScroll}
       >
+        {/* Top Row - Toggle and Action Buttons */}
+        <Box mt={10}>
+          <Group justify="space-between" align="center" gap={20}>
+            {connectedAccounts?.length ? (
+              <ActionButtons
+                {...{
+                  openModal,
+                  handleSyncStorage,
+                }}
+              />
+            ) : null}
+            {/* <Tooltip label="Sync" fz={'xs'}>
+                <ActionIcon
+                  h={40}
+                  w={40}
+                  variant="outline"
+                  onClick={handleSyncStorage}
+                >
+                  <ICONS.IconRefresh />
+                </ActionIcon>
+              </Tooltip> */}
+            <CustomToggle
+              value={layout}
+              onChange={(value: 'list' | 'grid') => switchLayout(value)}
+            />
+          </Group>
+        </Box>
         {/* Sticky Section */}
         <Box
           style={{
             position: 'sticky',
             top: 0,
-            ...(files?.length || folders?.length ? { zIndex: 5 } : {}),
-            backgroundColor: '#ffffff',
-            padding: '16px 24px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            borderBottom: '1px solid #e5e7eb',
+            ...(files?.length || folders?.length ? { zIndex: 10 } : {}),
+            backgroundColor: '#E5E7EB',
+            padding: '10px 24px',
+            // boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            // borderBottom: '1px solid #e5e7eb',
           }}
+          mt={16}
           className="stickey-box"
         >
-          <DragDropOverlay
-            isDragging={isDragging}
-            message="Drop files here to upload"
-            subMessage="Support for PDF, DOC, XLS, PPT, images and more"
-          />
-          {connectedAccounts?.length ? (
-            <ActionButtons
-              {...{
-                currentPath,
-                navigateToFolderFn,
-                openModal,
-                handleSyncStorage,
-              }}
-            />
-          ) : null}
           {/* <RecentFiles /> */}
-          <Group mb={20} align="center" style={{ width: '100%' }}>
-            {selectedIds.length > 0 ? (
-              <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
+          <Box>
+            <Group align="center" w={'100%'}>
+              <Box style={{ flexGrow: 1 }}>
+                <Breadcrumbs
+                  items={currentPath}
+                  onNavigate={folderId => {
+                    if (!folderId || folderId === null) {
+                      navigateToFolderFn(null);
+                    } else {
+                      const folder = currentPath.find(f => f.id === folderId);
+                      if (folder) {
+                        navigateToFolderFn(folder);
+                      }
+                    }
+                  }}
+                />
+              </Box>
+              {selectedIds.length > 0 ? (
                 <SelectionBar
                   count={selectedIds.length}
                   onCancel={() => {
@@ -206,109 +227,95 @@ const Dashboard = () => {
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
                 />
-              </Box>
-            ) : (
-              <Box style={{ flex: 1, marginRight: 12 }} />
-            )}
-            <CustomToggle
-              value={layout}
-              onChange={(value: 'list' | 'grid') => switchLayout(value)}
-            />
-            {/* <SegmentedControl
-              value={layout}
-              onChange={(value: string) =>
-                switchLayout(value as 'list' | 'grid')
-              }
-              p={4}
-              color="#1c7ed6"
-              data={[
-                {
-                  value: 'list',
-                  label: (
-                    <Tooltip label="List View" withArrow fz="xs">
-                      <ICONS.IconList
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'list' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-                {
-                  value: 'grid',
-                  label: (
-                    <Tooltip label="Grid View" withArrow fz="xs">
-                      <ICONS.IconGridDots
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'grid' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-              ]}
-              styles={() => ({
-                root: {
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: 8,
-                  padding: '4px',
-                  height: '40px', // Match the height of the SelectionBar
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering
-                },
-                control: {
-                  height: '32px', // Adjusted for compactness
-                  width: '40px', // Make controls square for better alignment
-                  display: 'flex',
-                  alignItems: 'center', // Center icon vertically
-                  justifyContent: 'center', // Center icon horizontally
-                  borderRadius: 6,
-                  transition: 'background-color 0.2s ease',
-                },
-                active: {
-                  backgroundColor: '#1c7ed6', // Active background color
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering in active state
-                  justifyContent: 'center', // Ensure horizontal centering in active state
-                },
-                label: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-              })}
-            /> */}
-          </Group>
-          <Group align="center" w={'100%'} mt={16}>
-            <Box style={{ flexGrow: 1 }}>
-              <Breadcrumbs
-                items={currentPath}
-                onNavigate={folderId => {
-                  if (!folderId || folderId === null) {
-                    navigateToFolderFn(null);
-                  } else {
-                    const folder = currentPath.find(f => f.id === folderId);
-                    if (folder) {
-                      navigateToFolderFn(folder);
-                    }
-                  }
+              ) : null}
+              {!checkLocation && (
+                <Select
+                  data={accountOptions}
+                  value={accountId}
+                  onChange={handleAccountTypeChange}
+                  placeholder="Select account type"
+                  style={{ width: '150px' }}
+                  styles={{
+                    input: {
+                      height: '44px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #e5e7eb',
+                      backgroundColor: '#ffffff',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#374151',
+                      transition: 'all 0.2s ease',
+                      '&:focus': {
+                        borderColor: '#1e7ae8',
+                        boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                      },
+                      '&:hover': {
+                        borderColor: '#d1d5db',
+                      },
+                    },
+                    dropdown: {
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                    },
+                    option: {
+                      padding: '6px',
+                      fontSize: '14px',
+                      borderRadius: '4px',
+                      margin: '2px',
+                      '&[data-selected]': {
+                        backgroundColor: '#1e7ae8',
+                        color: '#ffffff',
+                      },
+                      '&:hover': {
+                        backgroundColor: '#f1f5f9',
+                      },
+                    },
+                  }}
+                />
+              )}
+              <TextInput
+                placeholder="Search files..."
+                value={searchTerm}
+                onChange={event =>
+                  handleSearchChange(event.currentTarget.value)
+                }
+                // style={{ width: '200px' }}
+                styles={{
+                  input: {
+                    height: '44px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #e5e7eb',
+                    backgroundColor: '#ffffff',
+                    fontSize: '14px',
+                    // paddingLeft: '44px',
+                    transition: 'all 0.2s ease',
+                    '&:focus': {
+                      borderColor: '#1e7ae8',
+                      boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                      backgroundColor: '#fefefe',
+                    },
+                    '&:hover': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&::placeholder': {
+                      color: '#9ca3af',
+                      fontSize: '14px',
+                    },
+                  },
+                  section: {
+                    paddingLeft: '16px',
+                  },
                 }}
               />
-            </Box>
-            {!checkLocation && (
-              <Select
-                data={accountOptions}
-                value={accountId}
-                onChange={handleAccountTypeChange}
-                placeholder="Select account type"
-                style={{ width: '150px' }}
-              />
-            )}
-            <TextInput
-              placeholder="Search files..."
-              value={searchTerm}
-              onChange={event => handleSearchChange(event.currentTarget.value)}
-              style={{ width: '200px' }}
-            />
-          </Group>
+            </Group>
+          </Box>
+
+          <DragDropOverlay
+            isDragging={isDragging}
+            message="Drop files here to upload"
+            subMessage="Support for PDF, DOC, XLS, PPT, images and more"
+          />
         </Box>
         {layout === 'list' ? (
           <FileTable

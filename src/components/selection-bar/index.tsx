@@ -34,11 +34,13 @@ export const SelectionBar = ({
 }) => (
   <Box
     bg="#f3f4f6"
-    p={8}
-    pl={16}
-    w="100%"
+    py={7}
+    px={16}
+    // flex={1}
+    // w="100%"
     style={{
       borderRadius: 8,
+      flexGrow: 1,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
