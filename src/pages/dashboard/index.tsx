@@ -2,10 +2,12 @@ import {
   Autocomplete,
   Box,
   Group,
+  rem,
   Select,
   Stack,
   Text,
   TextInput,
+  useMantineTheme,
 } from '@mantine/core';
 import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
@@ -16,6 +18,7 @@ import {
   Button,
   Dropzone,
   Form,
+  Image,
   Modal,
   SelectionBar,
 } from '../../components';
@@ -26,6 +29,7 @@ import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
 import { LoaderOverlay } from '../../components/loader';
 import { Controller } from 'react-hook-form';
+import { formatFileSize } from '../../utils/helper';
 
 const controlBoxStyles = {
   height: 40,
@@ -116,8 +120,14 @@ const Dashboard = () => {
     uploadMethods,
     accountOptionsForSFD,
     checkLocation,
+    parentId,
+    dragDropModalOpen,
+    dragDropFiles,
+    handleDragDropUpload,
+    closeDragDropModal,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
+  const theme = useMantineTheme();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
@@ -321,6 +331,7 @@ const Dashboard = () => {
               handleUnselectAll,
               filesToMove,
               isMoveMode,
+              parentId,
             }}
           />
         ) : (
@@ -341,6 +352,7 @@ const Dashboard = () => {
                 lastSelectedIndex,
                 filesToMove,
                 isMoveMode,
+                parentId,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (
@@ -568,6 +580,116 @@ const Dashboard = () => {
               disabled={!renameMethods.formState.isValid || renameFileLoading}
             >
               Rename
+            </Button>
+          </Stack>
+        </Form>
+      </Modal>
+
+      {/* Drag & Drop Upload Modal - shown when files are dragged without SFD enabled */}
+      <Modal
+        opened={dragDropModalOpen}
+        onClose={closeDragDropModal}
+        title="Upload Dragged Files"
+      >
+        <Form onSubmit={handleDragDropUpload} methods={uploadMethods}>
+          <Stack gap={'md'}>
+            <Text size="sm" c="dimmed" mb="xs">
+              {dragDropFiles.length} file{dragDropFiles.length > 1 ? 's' : ''}{' '}
+              selected for upload:
+            </Text>
+            <Box
+              style={{
+                maxHeight: '250px',
+                overflowY: 'auto',
+                padding: '8px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px',
+                border: '1px solid #e9ecef',
+              }}
+            >
+              {dragDropFiles.map((file, index) => {
+                const isImage = file.type.startsWith('image/');
+                return (
+                  <Group key={index} gap={'md'} mt={index > 0 ? 15 : 0}>
+                    <Box
+                      style={{
+                        width: rem(60),
+                        height: rem(60),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        borderRadius: rem(4),
+                        backgroundColor: theme.colors.gray[0],
+                        flexShrink: 0,
+                        marginRight: rem(12),
+                      }}
+                    >
+                      {isImage ? (
+                        <Image
+                          src={URL.createObjectURL(file)}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'cover',
+                          }}
+                          alt={file.name}
+                        />
+                      ) : (
+                        getFileIcon({
+                          entry_type: file.type,
+                          mime_type: file.type,
+                          file_extension: file.type,
+                          name: file.name,
+                        })(40)
+                      )}
+                    </Box>
+                    <Text size="sm" style={{ marginBottom: '4px' }}>
+                      📄 {file.name} ({formatFileSize(file.size.toString())})
+                    </Text>
+                  </Group>
+                );
+              })}
+            </Box>
+
+            <Controller
+              control={uploadMethods.control}
+              name="accountId"
+              render={({ field }) => {
+                const selectedOption = accountOptionsForSFD.find(
+                  option => option.value === field.value
+                );
+
+                return (
+                  <Autocomplete
+                    label="Select Account"
+                    placeholder="Choose an account"
+                    data={accountOptionsForSFD}
+                    value={selectedOption ? selectedOption.label : ''}
+                    onChange={value => {
+                      const matchedOption = accountOptionsForSFD.find(
+                        option =>
+                          option.label === value || option.value === value
+                      );
+                      field.onChange(matchedOption ? matchedOption.value : '');
+                    }}
+                    error={uploadMethods.formState.errors.accountId?.message}
+                    required
+                  />
+                );
+              }}
+            />
+
+            <Button
+              type="submit"
+              loading={uploadFilesLoading}
+              disabled={
+                dragDropFiles.length === 0 ||
+                uploadFilesLoading ||
+                !uploadMethods.formState.isValid
+              }
+            >
+              Upload Files
             </Button>
           </Stack>
         </Form>

@@ -39,6 +39,7 @@ type FileGridProps = {
   setLastSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
   isMoveMode: boolean;
   filesToMove: string[];
+  parentId: string | null;
 };
 
 const MENU_ITEMS = [
@@ -62,6 +63,7 @@ const FileGrid: React.FC<FileGridProps> = ({
   setLastSelectedIndex = () => {},
   isMoveMode = false,
   filesToMove = [],
+  parentId = null,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
@@ -206,7 +208,8 @@ const FileGrid: React.FC<FileGridProps> = ({
               filesToMove.includes(folder.id)
                 ? selectedCardStyle
                 : {}),
-              ...(isMoveMode && filesToMove.includes(folder.id)
+              ...(isMoveMode &&
+              (filesToMove.includes(folder.id) || parentId === folder.id)
                 ? {
                     opacity: 0.5,
                     cursor: 'not-allowed',
@@ -216,7 +219,11 @@ const FileGrid: React.FC<FileGridProps> = ({
             }}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              if (isMoveMode && filesToMove.includes(folder.id)) return;
+              if (
+                isMoveMode &&
+                (filesToMove.includes(folder.id) || parentId === folder.id)
+              )
+                return;
               handleSelect(folder.id, e);
             }}
             onDoubleClick={(e: React.MouseEvent) => {

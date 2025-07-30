@@ -36,6 +36,7 @@ type TableProps<T> = {
   emptyMessage?: string;
   isMoveMode?: boolean;
   filesToMove?: string[];
+  parentId: string | null;
 };
 
 export function Table<T extends Record<string, any>>({
@@ -50,6 +51,7 @@ export function Table<T extends Record<string, any>>({
   onRowDoubleClick,
   isMoveMode = false,
   filesToMove = [],
+  parentId = null,
 }: TableProps<T>) {
   const [allChecked, setAllChecked] = useState(false);
 
@@ -121,7 +123,9 @@ export function Table<T extends Record<string, any>>({
                       style={{
                         cursor: onRowDoubleClick ? 'pointer' : 'default',
                         ...(isMoveMode &&
-                        (filesToMove.includes(row.id) || row.type === 'file')
+                        (filesToMove.includes(row.id) ||
+                          row.type === 'file' ||
+                          parentId === row.id)
                           ? {
                               cursor: 'not-allowed',
                             }
@@ -134,17 +138,25 @@ export function Table<T extends Record<string, any>>({
                             checked={selectedRows.includes(
                               row[idKey] as string
                             )}
-                            onChange={e =>
+                            onChange={e => {
+                              if (
+                                isMoveMode &&
+                                (filesToMove.includes(row.id) ||
+                                  row.type === 'file' ||
+                                  parentId === row.id)
+                              )
+                                return;
                               onSelectRow?.(
                                 row[idKey] as string,
                                 e.currentTarget.checked,
                                 e
-                              )
-                            }
+                              );
+                            }}
                             disabled={
                               isMoveMode &&
                               (filesToMove.includes(row.id) ||
-                                row.type === 'file')
+                                row.type === 'file' ||
+                                parentId === row.id)
                             }
                             aria-label="Select row"
                           />

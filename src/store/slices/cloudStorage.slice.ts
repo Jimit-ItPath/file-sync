@@ -362,7 +362,7 @@ const cloudStorageSlice = createSlice({
         const { folderId, folderName, isRoot } = action.payload;
         // state.currentFolderId = folderId;
 
-        if (isRoot) {
+        if (isRoot || !folderId) {
           state.currentPath = [];
           state.currentFolderId = null;
         } else {

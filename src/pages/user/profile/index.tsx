@@ -61,17 +61,12 @@ const Profile = () => {
   } = methods;
   const [isHovering, setIsHovering] = useState(false);
 
-  if (isLoading || removeAccessLoading || loading) {
-    return (
+  return (
+    <Box py="xl" px={'xl'}>
       <LoaderOverlay
         visible={isLoading || removeAccessLoading || loading}
         opacity={1}
       />
-    );
-  }
-
-  return (
-    <Box py="xl" px={'xl'}>
       <Stack gap="xl">
         {/* Profile Card */}
         <Card radius="lg" p="xl" shadow="sm" withBorder>

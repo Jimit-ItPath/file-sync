@@ -51,6 +51,7 @@ export type FileType = {
   mimeType?: string;
   fileExtension?: string | null;
   download_url?: string | null;
+  parent_id: string | null;
 };
 
 const folderSchema = z.object({
@@ -111,8 +112,12 @@ const useDashboard = () => {
 
   const [isMoveMode, setIsMoveMode] = useState(false);
   const [filesToMove, setFilesToMove] = useState<string[]>([]);
+  const [parentId, selectParentId] = useState<string | null>(null);
   const [sourceFolderId, setSourceFolderId] = useState<string | null>(null);
   const [destinationId, setDestinationId] = useState<string | null>(null);
+
+  const [dragDropModalOpen, setDragDropModalOpen] = useState(false);
+  const [dragDropFiles, setDragDropFiles] = useState<File[]>([]);
 
   const {
     cloudStorage,
@@ -300,7 +305,7 @@ const useDashboard = () => {
   ]);
 
   useEffect(() => {
-    if (!hasMountedOnce.current) {
+    if (!hasMountedOnce.current && !checkLocation) {
       hasMountedOnce.current = true;
       return;
     }
@@ -342,6 +347,7 @@ const useDashboard = () => {
       if (e.key === 'Escape' && isMoveMode) {
         setIsMoveMode(false);
         setFilesToMove([]);
+        selectParentId(null);
       }
     };
 
@@ -398,6 +404,7 @@ const useDashboard = () => {
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
+      parent_id: item.parent_id,
     }));
   }, [cloudStorage]);
 
@@ -428,6 +435,7 @@ const useDashboard = () => {
         );
       } else {
         // Navigate to root route
+        dispatch(resetCloudStorageFolder());
         if (checkLocation && currentAccountId) {
           requestParams.account_id = Number(currentAccountId);
           const basePath = location.pathname.split('/').slice(0, 3).join('/');
@@ -444,6 +452,11 @@ const useDashboard = () => {
               currentAccountId && { account_id: Number(currentAccountId) }),
           })
         );
+      }
+
+      if (!isMoveMode) {
+        setSelectedIds([]);
+        setLastSelectedIndex(null);
       }
 
       // Note: We don't dispatch navigateToFolder here anymore as it will be handled
@@ -467,10 +480,10 @@ const useDashboard = () => {
         row.mimeType === 'application/vnd.google-apps.folder' ||
         row.type === 'folder'
       ) {
-        if (!isMoveMode) {
-          setSelectedIds([]);
-          setLastSelectedIndex(null);
-        }
+        // if (!isMoveMode) {
+        //   setSelectedIds([]);
+        //   setLastSelectedIndex(null);
+        // }
         navigateToFolderFn({ id: row.id, name: row.name });
         // dispatch(
         //   updateCurrentPath({
@@ -482,7 +495,7 @@ const useDashboard = () => {
         // );
       }
     },
-    [navigateToFolderFn, isMoveMode, dispatch, checkLocation, currentAccountId]
+    [navigateToFolderFn]
   );
 
   const handleMenuItemClick = (actionId: string, row: FileType) => {
@@ -773,10 +786,28 @@ const useDashboard = () => {
 
   const handleFileDrop = useCallback(
     async (files: File[]) => {
-      await uploadFilesHandler(files);
+      if (!isSFDEnabled) {
+        setDragDropFiles(files);
+        setDragDropModalOpen(true);
+        uploadMethods.reset({ accountId: '', files: files });
+      } else {
+        await uploadFilesHandler(files);
+      }
     },
-    [uploadFilesHandler]
+    [uploadFilesHandler, isSFDEnabled, uploadMethods]
   );
+
+  const handleDragDropUpload = uploadMethods.handleSubmit(async data => {
+    await uploadFilesHandler(dragDropFiles, data);
+    setDragDropModalOpen(false);
+    setDragDropFiles([]);
+  });
+
+  const closeDragDropModal = useCallback(() => {
+    setDragDropFiles([]);
+    setDragDropModalOpen(false);
+    uploadMethods.reset();
+  }, [uploadMethods]);
 
   // Drag and drop functionality
   const { dragRef, isDragging } = useDragDrop({
@@ -1061,6 +1092,7 @@ const useDashboard = () => {
       } finally {
         setIsMoveMode(false);
         setFilesToMove([]);
+        selectParentId(null);
         handleUnselectAll();
         setSelectedIds([]);
         setSourceFolderId(null);
@@ -1071,6 +1103,7 @@ const useDashboard = () => {
   const cancelMoveMode = useCallback(() => {
     setIsMoveMode(false);
     setFilesToMove([]);
+    selectParentId(null);
     setSelectedIds([]);
     setLastSelectedIndex(null);
     setSourceFolderId(null);
@@ -1078,7 +1111,9 @@ const useDashboard = () => {
 
   const handleMoveSelected = useCallback(() => {
     setIsMoveMode(true);
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
     setFilesToMove([...selectedIds]);
+    selectParentId(checkFiles?.parent_id ?? null);
     setSourceFolderId(currentFolderId ?? null);
   }, [selectedIds, currentFolderId]);
 
@@ -1103,7 +1138,7 @@ const useDashboard = () => {
     // Get the destination folder ID (currentFolderId could be null for root)
     let destId: string | null = null;
 
-    if (currentFolderId !== null) {
+    if (currentFolderId) {
       if (layout === 'list') {
         const checkId = files.find(item => selectedIds?.includes(item.id));
         destId = checkId ? checkId.id : destinationId;
@@ -1251,7 +1286,11 @@ const useDashboard = () => {
     accountOptionsForSFD,
 
     checkLocation,
-    folderId,
+    parentId,
+    dragDropModalOpen,
+    dragDropFiles,
+    handleDragDropUpload,
+    closeDragDropModal,
   };
 };
 

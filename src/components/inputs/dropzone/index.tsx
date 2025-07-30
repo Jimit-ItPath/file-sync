@@ -7,6 +7,7 @@ import {
 import { ICONS } from '../../../assets/icons';
 import { Image } from '../../image';
 import { Tooltip } from '../../tooltip';
+import { formatFileSize } from '../../../utils/helper';
 
 interface CustomDropzoneProps extends Partial<DropzoneProps> {
   onFilesSelected: (files: File[]) => void;
@@ -95,6 +96,7 @@ export function Dropzone({
             {file.name}
           </Text>
         </Tooltip>
+        <Text size="sm">({formatFileSize(file.size.toString())})</Text>
       </Group>
     );
   });
