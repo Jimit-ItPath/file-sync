@@ -120,6 +120,7 @@ const Dashboard = () => {
     closeDragDropModal,
     recentFilesData,
     folderId,
+    displayMoveIcon,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
   const { isSm, isXs, theme } = useResponsive();
@@ -232,8 +233,7 @@ const Dashboard = () => {
                   onPaste={handlePasteFiles}
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
-                  checkLocation={checkLocation}
-                  folderId={folderId}
+                  displayMoveIcon={displayMoveIcon}
                 />
               ) : null}
               {!checkLocation && (

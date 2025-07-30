@@ -262,7 +262,10 @@ export const formatBytes = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-export const truncateBreadcrumbName = (name: string, maxLength: number = 20) => {
+export const truncateBreadcrumbName = (
+  name: string,
+  maxLength: number = 20
+) => {
   if (name.length <= maxLength) {
     return name;
   }

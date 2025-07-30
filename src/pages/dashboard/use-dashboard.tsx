@@ -1058,6 +1058,13 @@ const useDashboard = () => {
     setSourceFolderId(null);
   }, []);
 
+  const displayMoveIcon = useMemo(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    return checkFiles?.type === 'file' || checkLocation || folderId
+      ? true
+      : false;
+  }, [selectedIds, files, checkLocation, folderId]);
+
   const handleMoveSelected = useCallback(() => {
     setIsMoveMode(true);
     const checkFiles = files.find(file => selectedIds.includes(file.id));
@@ -1242,6 +1249,7 @@ const useDashboard = () => {
     closeDragDropModal,
     recentFilesData,
     folderId,
+    displayMoveIcon,
   };
 };
 

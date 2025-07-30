@@ -53,7 +53,6 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
             // padding: '6px 12px',
             borderRadius: '6px',
             transition: 'all 0.15s ease',
-            cursor: 'pointer',
             '&:hover': {
               backgroundColor: '#e2e8f0',
               color: '#374151',
@@ -69,7 +68,8 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
       >
         {displayItems.map((item, index) => {
           const isEllipsis = item.name === '...';
-          const isLast = index === items.length;
+          const isLast =
+            index === displayItems.length - 1 || index === displayItems.length;
 
           if (isEllipsis) {
             return (

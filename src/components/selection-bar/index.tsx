@@ -21,8 +21,7 @@ export const SelectionBar = ({
   onPaste,
   isMoveMode,
   isPasteEnabled = true,
-  folderId = null,
-  checkLocation = false,
+  displayMoveIcon = true,
 }: {
   count: number;
   onCancel: () => void;
@@ -33,8 +32,7 @@ export const SelectionBar = ({
   onPaste: () => void;
   isMoveMode: boolean;
   isPasteEnabled: boolean;
-  folderId: any;
-  checkLocation: boolean;
+  displayMoveIcon: boolean;
 }) => {
   return (
     <Box
@@ -70,7 +68,7 @@ export const SelectionBar = ({
                 <ICONS.IconShare size={18} />
               </ActionIcon>
             </Tooltip>
-            {(checkLocation || folderId) && (
+            {displayMoveIcon && (
               <Tooltip label="Move" fz="xs">
                 <ActionIcon style={iconStyle} onClick={onMove}>
                   <ICONS.IconFolderShare size={18} />
