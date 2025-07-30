@@ -49,6 +49,7 @@ export type FileType = {
   mimeType?: string;
   fileExtension?: string | null;
   download_url?: string | null;
+  parent_id: string | null;
 };
 
 const folderSchema = z.object({
