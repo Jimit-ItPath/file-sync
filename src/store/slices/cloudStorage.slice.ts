@@ -298,6 +298,9 @@ const cloudStorageSlice = createSlice({
       state.currentFolderId = null;
       state.currentPath = [];
     },
+    setNavigateLoading: (state, action) => {
+      state.navigateLoading = action.payload;
+    },
     updateCurrentPath: (state, action) => {
       const { id: folderId, name: folderName, isRoot } = action.payload;
       state.currentFolderId = folderId;
@@ -394,7 +397,7 @@ const cloudStorageSlice = createSlice({
           }
           state.currentFolderId = folderId;
         }
-        state.navigateLoading = false;
+        // state.navigateLoading = false;
         // setLocalStorage('cloudStoragePath', state.currentPath);
         // setLocalStorage('folderId', state.currentFolderId);
       })

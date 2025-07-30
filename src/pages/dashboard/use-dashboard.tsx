@@ -271,10 +271,24 @@ const useDashboard = () => {
             ...(checkLocation &&
               currentAccountId && { account_id: Number(currentAccountId) }),
           })
-        );
+        ).then(() => {
+          setTimeout(() => {
+            dispatch({
+              type: 'cloudStorage/setNavigateLoading',
+              payload: false,
+            });
+          }, 100);
+        });
         // navigateToFolderFn({ id: folderId, name: currentFolderName });
       } else {
-        dispatch(navigateToFolder(null));
+        dispatch(navigateToFolder(null)).then(() => {
+          setTimeout(() => {
+            dispatch({
+              type: 'cloudStorage/setNavigateLoading',
+              payload: false,
+            });
+          }, 100);
+        });
       }
 
       if (
@@ -289,9 +303,7 @@ const useDashboard = () => {
     prevCheckLocation.current = checkLocation;
 
     return () => {
-      console.log('changed-', hasParamsChanged);
       if (!hasParamsChanged) {
-        console.log('run');
         dispatch(resetCloudStorageFolder());
         removeLocalStorage(layoutKey);
       }
