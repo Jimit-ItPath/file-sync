@@ -39,7 +39,7 @@ type FileGridProps = {
   setLastSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
   isMoveMode: boolean;
   filesToMove: string[];
-  parentId: string | null;
+  parentId?: string | null;
 };
 
 const MENU_ITEMS = [

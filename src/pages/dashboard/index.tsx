@@ -295,7 +295,7 @@ const Dashboard = () => {
                   if (!folder || folder.id === null) {
                     navigateToFolderFn(null);
                   } else {
-                    navigateToFolderFn(folder);
+                    navigateToFolderFn({ id: folder.id, name: folder.name });
                   }
                 }}
               />

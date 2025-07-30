@@ -99,6 +99,7 @@ const Dropbox = () => {
     cancelMoveMode,
     handleSyncStorage,
     syncDropboxLoading,
+    parentId,
   } = useDropbox();
   const { connectedAccounts } = useSidebar();
 
@@ -191,14 +192,11 @@ const Dropbox = () => {
             <Box style={{ flexGrow: 1 }}>
               <Breadcrumbs
                 items={currentPath}
-                onNavigate={folderId => {
-                  if (!folderId || folderId === null) {
+                onNavigate={folder => {
+                  if (!folder || folder.id === null) {
                     navigateToFolderFn(null);
                   } else {
-                    const folder = currentPath.find(f => f.id === folderId);
-                    if (folder) {
-                      navigateToFolderFn(folder);
-                    }
+                    navigateToFolderFn({ id: folder.id, name: folder.name });
                   }
                 }}
               />
@@ -226,6 +224,7 @@ const Dropbox = () => {
               handleUnselectAll,
               filesToMove,
               isMoveMode,
+              parentId,
             }}
           />
         ) : (
@@ -246,6 +245,7 @@ const Dropbox = () => {
                 lastSelectedIndex,
                 filesToMove,
                 isMoveMode,
+                parentId,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (

@@ -409,7 +409,7 @@ const useDashboard = () => {
   }, [cloudStorage]);
 
   const navigateToFolderFn = useCallback(
-    (folder: { id?: string; name: string } | null) => {
+    (folder: { id?: string | null; name: string } | null) => {
       const requestParams: any = {};
       setDestinationId(folder?.id || null);
 

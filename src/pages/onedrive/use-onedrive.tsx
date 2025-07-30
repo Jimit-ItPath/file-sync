@@ -264,6 +264,7 @@ const useOneDrive = () => {
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
+      parent_id: item.parent_id,
     }));
   }, [oneDriveFiles]);
 

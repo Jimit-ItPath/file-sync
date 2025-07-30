@@ -49,6 +49,7 @@ export type FileType = {
   mimeType?: string;
   fileExtension?: string | null;
   download_url?: string | null;
+  parent_id: string | null;
 };
 
 const folderSchema = z.object({
@@ -260,6 +261,7 @@ const useGoogleDrive = () => {
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
+      parent_id: item.parent_id,
     }));
   }, [gDriveFiles]);
 

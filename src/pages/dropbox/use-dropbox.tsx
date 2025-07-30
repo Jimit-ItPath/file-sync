@@ -49,6 +49,7 @@ export type FileType = {
   mimeType?: string;
   fileExtension?: string | null;
   download_url?: string | null;
+  parent_id: string | null;
 };
 
 const folderSchema = z.object({
@@ -100,6 +101,7 @@ const useDropbox = () => {
   const [filesToMove, setFilesToMove] = useState<string[]>([]);
   const [sourceFolderId, setSourceFolderId] = useState<string | null>(null);
   const [destinationId, setDestinationId] = useState<string | null>(null);
+  const [parentId, selectParentId] = useState<string | null>(null);
 
   const {
     dropboxFiles,
@@ -220,6 +222,7 @@ const useDropbox = () => {
       if (e.key === 'Escape' && isMoveMode) {
         setIsMoveMode(false);
         setFilesToMove([]);
+        selectParentId(null);
       }
     };
 
@@ -266,6 +269,7 @@ const useDropbox = () => {
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
+      parent_id: item.parent_id,
     }));
   }, [dropboxFiles]);
 
@@ -972,6 +976,7 @@ const useDropbox = () => {
         handleUnselectAll();
         setSelectedIds([]);
         setSourceFolderId(null);
+        selectParentId(null);
       }
     }
   );
@@ -982,11 +987,14 @@ const useDropbox = () => {
     setSelectedIds([]);
     setLastSelectedIndex(null);
     setSourceFolderId(null);
+    selectParentId(null);
   }, []);
 
   const handleMoveSelected = useCallback(() => {
     setIsMoveMode(true);
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
     setFilesToMove([...selectedIds]);
+    selectParentId(checkFiles?.parent_id ?? null);
     setSourceFolderId(currentFolderId ?? null);
   }, [selectedIds]);
 
@@ -1148,6 +1156,7 @@ const useDropbox = () => {
     moveFilesLoading,
     isPasteEnabled,
     cancelMoveMode,
+    parentId
   };
 };
 

@@ -191,14 +191,11 @@ const GoogleDrive = () => {
             <Box style={{ flexGrow: 1 }}>
               <Breadcrumbs
                 items={currentPath}
-                onNavigate={folderId => {
-                  if (!folderId || folderId === null) {
+                onNavigate={folder => {
+                  if (!folder || folder.id === null) {
                     navigateToFolderFn(null);
                   } else {
-                    const folder = currentPath.find(f => f.id === folderId);
-                    if (folder) {
-                      navigateToFolderFn(folder);
-                    }
+                    navigateToFolderFn({ id: folder.id, name: folder.name });
                   }
                 }}
               />
