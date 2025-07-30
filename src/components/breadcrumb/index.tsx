@@ -5,6 +5,7 @@ import {
   Text,
 } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
+import { Tooltip } from '../tooltip';
 
 interface BreadcrumbItem {
   id?: string | null;
@@ -17,6 +18,22 @@ interface BreadcrumbsProps {
 }
 
 export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
+  let displayItems: (BreadcrumbItem | { name: string; id?: string | null })[] =
+    [];
+  if (items?.length + 1 > 3) {
+    // +1 because we prepend {id:null, name:'All Files'}
+    const allFilesItem = { id: null, name: 'All Files' };
+    const allItems = [allFilesItem, ...items];
+    displayItems = [
+      allItems[0], // first
+      { name: '...' }, // ellipsis placeholder
+      allItems[allItems.length - 2], // second last
+      allItems[allItems.length - 1], // last
+    ];
+  } else {
+    displayItems = [{ id: null, name: 'All Files' }, ...items];
+  }
+
   return (
     <Group align="center" style={{ userSelect: 'none' }}>
       <MantineBreadcrumbs
@@ -50,8 +67,27 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
           separator: { color: '#d1d5db', margin: '0 4px', fontSize: '14px' },
         }}
       >
-        {[{ id: null, name: 'All Files' }, ...items].map((item, index) => {
+        {displayItems.map((item, index) => {
+          const isEllipsis = item.name === '...';
           const isLast = index === items.length;
+
+          if (isEllipsis) {
+            return (
+              <Text
+                key="ellipsis"
+                style={{
+                  color: '#6b7280',
+                  fontSize: '14px',
+                  userSelect: 'none',
+                  cursor: 'default',
+                  padding: '0 8px',
+                }}
+              >
+                ...
+              </Text>
+            );
+          }
+
           return (
             <Anchor
               onClick={() => {
@@ -75,9 +111,18 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
                 (e.currentTarget.style.color = isLast ? '#212529' : '#495057')
               }
             >
-              <Text size="sm" fw={isLast ? 700 : 500} lineClamp={1} truncate miw={0}>
-                {item.name}
-              </Text>
+              <Tooltip label={item.name} fz={'xs'}>
+                <Text
+                  size="sm"
+                  fw={isLast ? 700 : 500}
+                  lineClamp={1}
+                  truncate
+                  miw={0}
+                  maw={150}
+                >
+                  {item.name}
+                </Text>
+              </Tooltip>
             </Anchor>
           );
         })}
