@@ -88,7 +88,30 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     cloudAccountsWithStorage,
     checkStorageDetails,
     user,
+    // closeNewModal,
+    // isNewModalOpen,
+    // openNewModal,
+    // connectedAccounts,
   } = useSidebar();
+
+  // const {
+  //   openModal,
+  //   handleSyncStorage,
+  //   modalOpen,
+  //   closeModal,
+  //   modalType,
+  //   folderMethods,
+  //   handleCreateFolder,
+  //   isSFDEnabled,
+  //   accountOptionsForSFD,
+  //   createFolderLoading,
+  //   handleFileUpload,
+  //   uploadMethods,
+  //   setUploadedFiles,
+  //   uploadedFiles,
+  //   uploadFilesLoading,
+  //   getFileIcon,
+  // } = useDashboard();
 
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
@@ -102,6 +125,31 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
       <LoaderOverlay visible={loading} opacity={1} />
       {user?.user?.role !== ROLES.ADMIN ? (
         <>
+          {/* {connectedAccounts?.length ? (
+            <Box
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <Button
+                leftSection={<ICONS.IconPlus size={16} />}
+                onClick={openNewModal}
+                style={{
+                  backgroundColor: '#fff',
+                  color: '#5f6368',
+                  border: '1px solid #dadce0',
+                  boxShadow:
+                    '0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149)',
+                  fontWeight: 500,
+                  marginRight: '1rem',
+                }}
+              >
+                New
+              </Button>
+            </Box>
+          ) : null} */}
           <Box style={{ flexGrow: 1 }}>
             {accessibleNavItems.map(
               ({ id, label, icon, url, children }: AccessibleNavItemProps) => {
@@ -369,6 +417,41 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               />
             );
           })()}
+
+          {(() => {
+            const url = PRIVATE_ROUTES.AUDIT_LOGS.url;
+            const isActive = location?.pathname === url;
+
+            return (
+              <NavLink
+                component={Link}
+                label="Audit Logs"
+                leftSection={
+                  <Icon component={ICONS.IconLogs} size={18} stroke={1.25} />
+                }
+                active={isActive}
+                to={url}
+                style={{
+                  borderRadius: 'var(--mantine-radius-default)',
+                  ...(isActive && {
+                    fontWeight: 400,
+                  }),
+                }}
+                onClick={() => {
+                  mobileDrawerHandler?.close();
+                }}
+                w={{ base: '100%', sm: 'auto' }}
+                px={{ sm: 8 }}
+                py={{ sm: 6 }}
+                styles={{
+                  section: {
+                    marginInlineEnd: 'var(--mantine-spacing-xs)',
+                    marginBottom: rem(-1),
+                  },
+                }}
+              />
+            );
+          })()}
         </>
       )}
 
@@ -496,6 +579,141 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
           </Button>
         </Group>
       </Modal>
+
+      {/* File / Folder Action Modal */}
+      {/* <Modal opened={isNewModalOpen} onClose={closeNewModal} title="Create New">
+        <ActionButtons
+          openModal={openModal}
+          handleSyncStorage={handleSyncStorage}
+          onActionComplete={closeNewModal}
+        />
+      </Modal> */}
+
+      {/* Create folder / upload file modal */}
+      {/* <Modal
+        opened={modalOpen}
+        onClose={closeModal}
+        title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
+      >
+        {modalType === 'folder' ? (
+          <Form methods={folderMethods} onSubmit={handleCreateFolder}>
+            <Stack gap="md">
+              <TextInput
+                placeholder="Folder name"
+                label="Folder Name"
+                {...folderMethods.register('folderName')}
+                error={folderMethods.formState.errors.folderName?.message}
+                withAsterisk
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={folderMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          folderMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                type="submit"
+                loading={createFolderLoading}
+                disabled={
+                  !folderMethods.formState.isValid || createFolderLoading
+                }
+                maw={150}
+              >
+                Create Folder
+              </Button>
+            </Stack>
+          </Form>
+        ) : (
+          <Form onSubmit={handleFileUpload} methods={uploadMethods}>
+            <Stack gap={'md'}>
+              <Dropzone
+                // onFilesSelected={setUploadedFiles}
+                onFilesSelected={files => {
+                  setUploadedFiles(files);
+                  uploadMethods.setValue('files', files);
+                }}
+                // maxSize={5 * 1024 ** 2}
+                multiple={true}
+                mb="md"
+                getFileIcon={getFileIcon}
+                files={uploadedFiles}
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={uploadMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          uploadMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                // onClick={handleFileUpload}
+                type="submit"
+                loading={uploadFilesLoading}
+                disabled={
+                  uploadedFiles.length === 0 || uploadFilesLoading
+                  // ||
+                  // (!isSFDEnabled && !uploadMethods.formState.isValid)
+                }
+              >
+                Upload Files
+              </Button>
+            </Stack>
+          </Form>
+        )}
+      </Modal> */}
     </Box>
   );
 };

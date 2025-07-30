@@ -623,5 +623,16 @@ export const api = {
         data,
         ...configs,
       }),
+    getAuditLogs: (params: {
+      user_id?: number | string;
+      page?: number;
+      limit?: number;
+      searchTerm?: string;
+    }) =>
+      client({
+        url: `/user/audit-logs`,
+        method: METHODS.GET,
+        params,
+      }),
   },
 };

@@ -29,7 +29,7 @@ const inviteUserSchema = z.object({
 
 type InviteUserFormData = z.infer<typeof inviteUserSchema>;
 
-const useDashboard = () => {
+const useUsers = () => {
   const [inviteUserModalOpen, setInviteUserModalOpen] = useState(false);
   const [userBlockModalOpen, setUserBlockModalOpen] = useState(false);
   const [itemToBlock, setItemToBlock] = useState<UserType | null>(null);
@@ -328,4 +328,4 @@ const useDashboard = () => {
   };
 };
 
-export default useDashboard;
+export default useUsers;

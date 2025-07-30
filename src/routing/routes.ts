@@ -104,4 +104,10 @@ export const PRIVATE_ROUTES = {
     title: 'Users',
     url: '/users',
   },
+  AUDIT_LOGS: {
+    path: '/logs',
+    roles: Object.values(ROLES),
+    title: 'Audit Logs',
+    url: '/logs',
+  },
 };

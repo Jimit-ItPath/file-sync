@@ -19,6 +19,7 @@ import {
 import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import { ROLES } from '../../../utils/constants';
 
 const profileSchema = z.object({
   firstName: z
@@ -37,7 +38,9 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 const UseProfile = () => {
   const { isLoading, userProfile } = useAppSelector(state => state.user);
-  const { connectedAccounts, loading } = useAppSelector(state => state.auth);
+  const { connectedAccounts, loading, user } = useAppSelector(
+    state => state.auth
+  );
   const dispatch = useAppDispatch();
   const [preview, setPreview] = useState<string | null>(null);
   const [openRemoveProfileImageModal, setOpenRemoveProfileImageModal] =
@@ -84,7 +87,9 @@ const UseProfile = () => {
 
   useEffect(() => {
     getProfile({});
-    onInitialize({});
+    if (user?.user?.role === ROLES.USER) {
+      onInitialize({});
+    }
   }, []);
 
   useEffect(() => {

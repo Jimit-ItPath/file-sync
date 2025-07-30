@@ -22,20 +22,42 @@ export type UserType = {
   updatedAt: string;
 };
 
-type AuthState = {
+export type AuditLogType = {
+  id: string;
+  user_id: string;
+  action_type: string;
+  object_type: string;
+  object_name: string;
+  success: boolean;
+  error_message: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type AdminUserState = {
   users: UserType[];
   pagination: PaginationType | null;
   loading: boolean;
   error: string | null;
   searchTerm: string;
+  auditLogs: AuditLogType[];
+  auditLogsPagination: PaginationType | null;
+  auditLogLoading: boolean;
+  auditLogError: string | null;
+  auditLogSearchTerm: string;
 };
 
-const initialState: AuthState = {
+const initialState: AdminUserState = {
   users: [],
   pagination: null,
   loading: false,
   error: null,
   searchTerm: '',
+  auditLogs: [],
+  auditLogsPagination: null,
+  auditLogLoading: false,
+  auditLogError: null,
+  auditLogSearchTerm: '',
 };
 
 export const fetchUsers = createAsyncThunk(
@@ -77,12 +99,35 @@ export const inviteUser = createAsyncThunk(
   }
 );
 
+export const fetchAuditLogs = createAsyncThunk(
+  'adminUser/fetchAuditLogs',
+  async (
+    data: {
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+      user_id?: string | number;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.adminUsers.getAuditLogs(data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch audit logs');
+    }
+  }
+);
+
 const adminUserSlice = createSlice({
   name: 'adminUser',
   initialState,
   reducers: {
     setSearchTerm: (state, action) => {
       state.searchTerm = action.payload;
+    },
+    setAuditLogSearchTerm: (state, action) => {
+      state.auditLogSearchTerm = action.payload;
     },
   },
   extraReducers: builder => {
@@ -105,10 +150,32 @@ const adminUserSlice = createSlice({
         state.error = action.payload as string;
         state.users = [];
         state.pagination = null;
+      })
+      .addCase(fetchAuditLogs.pending, state => {
+        state.auditLogLoading = true;
+        state.auditLogError = null;
+      })
+      .addCase(fetchAuditLogs.fulfilled, (state, action) => {
+        state.auditLogLoading = false;
+        state.auditLogsPagination = action.payload?.data?.paging || null;
+        if (action.meta.arg.page && action.meta.arg.page > 1) {
+          state.auditLogs = [
+            ...state.auditLogs,
+            ...(action.payload?.data?.data || []),
+          ];
+        } else {
+          state.auditLogs = action.payload?.data?.data || [];
+        }
+      })
+      .addCase(fetchAuditLogs.rejected, (state, action) => {
+        state.auditLogLoading = false;
+        state.auditLogError = action.payload as string;
+        state.auditLogs = [];
+        state.auditLogsPagination = null;
       });
   },
 });
 
-export const { setSearchTerm } = adminUserSlice.actions;
+export const { setSearchTerm, setAuditLogSearchTerm } = adminUserSlice.actions;
 
 export default adminUserSlice.reducer;

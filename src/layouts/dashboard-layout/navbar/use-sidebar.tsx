@@ -19,6 +19,7 @@ import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 import { Image } from '@mantine/core';
+import { ROLES } from '../../../utils/constants';
 
 const connectAccountSchema = z.object({
   accountName: z.string().min(1, 'Account name is required'),
@@ -82,6 +83,7 @@ const useSidebar = () => {
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
     null
   );
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
 
   const methods = useForm<ConnectAccountFormData>({
     resolver: zodResolver(connectAccountSchema),
@@ -109,9 +111,11 @@ const useSidebar = () => {
   const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   useEffect(() => {
-    onInitialize({});
-    fetchStorageData({});
-  }, []);
+    if (user?.user?.role === ROLES.USER) {
+      onInitialize({});
+      fetchStorageData({});
+    }
+  }, [user]);
 
   const [connectAccount, connectAccountLoading] = useAsyncOperation(
     async (data: ConnectAccountFormData) => {
@@ -228,6 +232,9 @@ const useSidebar = () => {
     };
   });
 
+  const openNewModal = () => setIsNewModalOpen(true);
+  const closeNewModal = () => setIsNewModalOpen(false);
+
   return {
     methods,
     isConnectModalOpen,
@@ -248,6 +255,9 @@ const useSidebar = () => {
     cloudAccountsWithStorage,
     checkStorageDetails,
     user,
+    isNewModalOpen,
+    openNewModal,
+    closeNewModal,
   };
 };
 

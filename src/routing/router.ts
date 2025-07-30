@@ -32,6 +32,7 @@ import AdminUsers from '../pages/admin/users';
 import CompleteProfile from '../pages/auth/admin/complete-profile';
 import { ROLES } from '../utils/constants';
 import React from 'react';
+import AdminAuditLogs from '../pages/admin/audit-logs';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -148,6 +149,11 @@ export const router = createBrowserRouter([
         ...PRIVATE_ROUTES.USERS,
         Component: AdminUsers,
         loader: dashboardPageLoader(PRIVATE_ROUTES.USERS.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.AUDIT_LOGS,
+        Component: AdminAuditLogs,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.AUDIT_LOGS.roles),
       },
     ],
   },
