@@ -640,5 +640,12 @@ export const api = {
         method: METHODS.GET,
         params,
       }),
+    exportLogs: (data: { user_id?: string | null; searchTerm?: string }) =>
+      client({
+        url: `/user/export-logs`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
+      }),
   },
 };

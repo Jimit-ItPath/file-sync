@@ -300,7 +300,7 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
             style={theme => ({
               cursor: option.disabled ? 'not-allowed' : 'pointer',
               backgroundColor:
-                (highlightedIndex === index || selectedLabels.includes(option))
+                highlightedIndex === index || selectedLabels.includes(option)
                   ? theme.colors.blue[1]
                   : 'transparent',
               opacity: option.disabled ? 0.5 : 1,

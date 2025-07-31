@@ -119,6 +119,18 @@ export const fetchAuditLogs = createAsyncThunk(
   }
 );
 
+export const exportLogs = createAsyncThunk(
+  'adminUser/exportLogs',
+  async (data: { user_id?: string | null; searchTerm?: string }) => {
+    try {
+      const response = await api.adminUsers.exportLogs(data);
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const adminUserSlice = createSlice({
   name: 'adminUser',
   initialState,

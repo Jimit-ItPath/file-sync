@@ -237,7 +237,7 @@ const useUsers = () => {
       {
         key: 'name',
         label: 'Name',
-        width: '30%',
+        width: '20%',
         render: (row: UserType) => (
           <Group
             gap={8}
@@ -250,7 +250,7 @@ const useUsers = () => {
                 fw={600}
                 fz={'sm'}
                 truncate
-                style={{ maxWidth: 'calc(100% - 40px)' }}
+                style={{ maxWidth: 'calc(60%)' }}
               >
                 {row.first_name + ' ' + row.last_name}
               </Text>
@@ -261,9 +261,9 @@ const useUsers = () => {
       {
         key: 'email',
         label: 'Email',
-        width: '30%',
+        // width: '30%',
         render: (row: UserType) => (
-          <Group gap={8} wrap="nowrap" style={{ maxWidth: '200px' }}>
+          <Group gap={8} wrap="nowrap">
             <Text size="sm" truncate>
               {row.email}
             </Text>
@@ -273,7 +273,7 @@ const useUsers = () => {
       {
         key: 'lastModified',
         label: 'Last Modified',
-        width: '20%',
+        // width: '20%',
         render: (row: UserType) => (
           <Text size="sm">
             {row.updatedAt ? formatDate(row.updatedAt) : '-'}
@@ -283,7 +283,7 @@ const useUsers = () => {
       {
         key: 'actions',
         label: 'Block / Unblock',
-        width: '10%',
+        // width: '10%',
         render: (row: UserType) => (
           <>
             <Tooltip label={row.is_blocked ? 'Unblock' : 'Block'}>

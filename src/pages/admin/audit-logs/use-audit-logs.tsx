@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
+  exportLogs,
   fetchAuditLogs,
   fetchUsers,
   setAuditLogSearchTerm,
@@ -14,9 +15,10 @@ import {
 } from '../../../store/slices/adminUser.slice';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import useDebounce from '../../../hooks/use-debounce';
-import { formatDate } from '../../../utils/helper';
+import { downloadFiles, formatDate } from '../../../utils/helper';
 import { Group, Text, Tooltip } from '@mantine/core';
 import type { SelectOption } from '../../../components/inputs/autocomplete';
+import { notifications } from '@mantine/notifications';
 
 const useAuditLogs = () => {
   const {
@@ -42,7 +44,7 @@ const useAuditLogs = () => {
     await dispatch(
       fetchAuditLogs({
         limit: auditLogsPagination?.page_limit || 20,
-        page: auditLogsPagination?.page_no || 1,
+        page: selectedUser ? 1 : auditLogsPagination?.page_no || 1,
         searchTerm: debouncedSearchTerm || '',
         ...(selectedUser && {
           user_id: selectedUser,
@@ -272,6 +274,37 @@ const useAuditLogs = () => {
     []
   );
 
+  const [downloadLogs, downloadLogsLoading] = useAsyncOperation(async () => {
+    try {
+      const payload = {
+        ...(selectedUser && {
+          user_id: selectedUser,
+        }),
+        ...(debouncedSearchTerm && {
+          searchTerm: debouncedSearchTerm,
+        }),
+      };
+      const res = await dispatch(exportLogs(payload));
+      if (res?.payload?.status !== 200) {
+        notifications.show({
+          message: res?.payload?.message || `Failed to export logs`,
+          color: 'red',
+        });
+        return;
+      }
+      downloadFiles(res.payload.data, res);
+    } catch (error: any) {
+      notifications.show({
+        message: error || `Failed to export logs`,
+        color: 'red',
+      });
+    }
+  });
+
+  const handleExportLogs = useCallback(() => {
+    downloadLogs({});
+  }, [selectedUser, debouncedSearchTerm]);
+
   return {
     auditLogs,
     handleScroll,
@@ -284,6 +317,8 @@ const useAuditLogs = () => {
     selectedUser,
     handleUserSelect,
     handleClearSelection,
+    handleExportLogs,
+    downloadLogsLoading,
   };
 };
 

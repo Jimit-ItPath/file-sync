@@ -271,3 +271,19 @@ export const truncateBreadcrumbName = (
   }
   return name.slice(0, maxLength - 3) + '...';
 };
+
+export const downloadFiles = (data: any, res: any) => {
+  const blob = new Blob([data]);
+  const contentDisposition = res?.payload?.headers?.['content-disposition'];
+  const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+  const filename = match?.[1] || `download-${Date.now()}.zip`;
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};

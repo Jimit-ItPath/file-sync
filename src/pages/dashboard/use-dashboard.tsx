@@ -38,6 +38,7 @@ import { notifications } from '@mantine/notifications';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
+import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
 
 export type FileType = {
   id: string;
@@ -971,20 +972,7 @@ const useDashboard = () => {
         });
         return;
       }
-
-      const blob = new Blob([res.payload.data]);
-      const contentDisposition = res.payload.headers?.['content-disposition'];
-      const match = contentDisposition?.match(/filename="?([^"]+)"?/);
-      const filename = match?.[1] || `download-${Date.now()}.zip`;
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      downloadFilesHelper(res.payload.data, res);
     } catch (error: any) {
       notifications.show({
         message:

@@ -1,7 +1,9 @@
 import { ActionIcon, Box, Group, TextInput } from '@mantine/core';
-import { CustomAutocomplete, Table } from '../../../components';
+import { Button, CustomAutocomplete, Table } from '../../../components';
 import useAuditLogs from './use-audit-logs';
 import { ICONS } from '../../../assets/icons';
+import useResponsive from '../../../hooks/use-responsive';
+import { LoaderOverlay } from '../../../components/loader';
 
 const AdminAuditLogs = () => {
   const {
@@ -16,11 +18,14 @@ const AdminAuditLogs = () => {
     selectedUser,
     handleUserSelect,
     handleClearSelection,
+    handleExportLogs,
+    downloadLogsLoading,
   } = useAuditLogs();
+  const { isMd } = useResponsive();
 
   return (
     <Box>
-      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
+      <LoaderOverlay visible={downloadLogsLoading} opacity={1} />
       <Box
         px={32}
         pb={20}
@@ -35,7 +40,16 @@ const AdminAuditLogs = () => {
         }}
         onScroll={handleScroll}
       >
-        <Group justify="flex-end" w={'100%'} mt={16} gap="md">
+        <Group justify={isMd ? 'flex-start' : 'flex-end'} mt={16} gap="md">
+          {auditLogs?.length ? (
+            <Button
+              mt={27}
+              onClick={handleExportLogs}
+              disabled={downloadLogsLoading}
+            >
+              Export Logs
+            </Button>
+          ) : null}
           <CustomAutocomplete
             data={userSearchResults}
             placeholder="Search users..."
@@ -45,7 +59,8 @@ const AdminAuditLogs = () => {
             onClear={handleClearSelection}
             searchable
             clearable
-            maw={350}
+            maw={300}
+            w={'100%'}
             label="Filter by User"
             size="sm"
           />
