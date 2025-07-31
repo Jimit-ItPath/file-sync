@@ -310,6 +310,11 @@ const cloudStorageSlice = createSlice({
       state.currentFolderId = null;
       state.currentPath = [];
     },
+    resetPagination: state => {
+      if (state.pagination) {
+        state.pagination.page_no = 1;
+      }
+    },
   },
   extraReducers: builder => {
     builder
@@ -428,7 +433,11 @@ const cloudStorageSlice = createSlice({
   },
 });
 
-export const { resetCloudStorageFolder, setAccountId, setSearchTerm } =
-  cloudStorageSlice.actions;
+export const {
+  resetCloudStorageFolder,
+  setAccountId,
+  setSearchTerm,
+  resetPagination,
+} = cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

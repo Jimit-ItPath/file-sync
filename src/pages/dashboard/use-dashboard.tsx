@@ -29,6 +29,7 @@ import {
   moveCloudStorageFiles,
   syncCloudStorage,
   fetchRecentFiles,
+  resetPagination,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -223,7 +224,8 @@ const useDashboard = () => {
       const requestParams: any = {
         ...(folderId && { id: folderId }),
         limit: pagination?.page_limit || 20,
-        page: typeof page === 'number' ? page : pagination?.page_no || 1,
+        // page: typeof page === 'number' ? page : pagination?.page_no || 1,
+        page: typeof page === 'number' ? page : 1,
         searchTerm: debouncedSearchTerm || '',
       };
 
@@ -272,6 +274,7 @@ const useDashboard = () => {
     }
 
     return () => {
+      dispatch(resetPagination());
       dispatch(resetCloudStorageFolder());
       removeLocalStorage(pathKey);
       removeLocalStorage(folderIdKey);
