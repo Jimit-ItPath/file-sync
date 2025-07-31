@@ -20,3 +20,4 @@ export { Alert } from './alert';
 export { Breadcrumbs } from './breadcrumb';
 export { SelectionBar } from './selection-bar';
 export { Dropzone } from './inputs/dropzone';
+export { CustomAutocomplete } from './inputs/autocomplete';

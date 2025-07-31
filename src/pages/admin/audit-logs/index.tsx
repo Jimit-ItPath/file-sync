@@ -1,5 +1,5 @@
-import { Box, Group, Stack, Text, TextInput } from '@mantine/core';
-import { Button, Form, Modal, Table } from '../../../components';
+import { Box, Group, TextInput } from '@mantine/core';
+import { CustomAutocomplete, Table } from '../../../components';
 import useAuditLogs from './use-audit-logs';
 
 const AdminAuditLogs = () => {
@@ -10,6 +10,11 @@ const AdminAuditLogs = () => {
     handleSearchChange,
     scrollBoxRef,
     searchTerm,
+    handleUserSearch,
+    userSearchResults,
+    selectedUser,
+    handleUserSelect,
+    handleClearSelection,
   } = useAuditLogs();
 
   return (
@@ -29,13 +34,28 @@ const AdminAuditLogs = () => {
         }}
         onScroll={handleScroll}
       >
-        <Group justify="flex-end" w={'100%'} mt={16}>
+        <Group justify="flex-end" w={'100%'} mt={16} gap="md">
+          <CustomAutocomplete
+            data={userSearchResults}
+            placeholder="Search users..."
+            value={selectedUser}
+            onChange={handleUserSelect}
+            onSearchChange={handleUserSearch}
+            onClear={handleClearSelection}
+            searchable
+            clearable
+            maw={350}
+            label="Filter by User"
+            size="sm"
+          />
           <TextInput
             placeholder="Search logs..."
             value={searchTerm}
             onChange={event => handleSearchChange(event.currentTarget.value)}
-            maw={500}
+            maw={300}
             w={'100%'}
+            size="sm"
+            label="Search Logs"
           />
         </Group>
         <Box mt={20}>

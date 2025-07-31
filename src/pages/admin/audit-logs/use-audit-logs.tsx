@@ -8,19 +8,17 @@ import React, {
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   fetchAuditLogs,
+  fetchUsers,
   setAuditLogSearchTerm,
   type AuditLogType,
 } from '../../../store/slices/adminUser.slice';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import useDebounce from '../../../hooks/use-debounce';
 import { formatDate } from '../../../utils/helper';
-import { ActionIcon, Group, Text, Tooltip } from '@mantine/core';
-import { ICONS } from '../../../assets/icons';
+import { Group, Text, Tooltip } from '@mantine/core';
+import type { SelectOption } from '../../../components/inputs/autocomplete';
 
 const useAuditLogs = () => {
-  const initializedRef = useRef(false);
-  const hasMountedOnce = useRef(false);
-
   const {
     auditLogsPagination,
     auditLogs,
@@ -31,6 +29,10 @@ const useAuditLogs = () => {
 
   const [localSearchTerm, setLocalSearchTerm] = useState(auditLogSearchTerm);
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [userSearchResults, setUserSearchResults] = useState<SelectOption[]>(
+    []
+  );
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
@@ -42,6 +44,9 @@ const useAuditLogs = () => {
         limit: auditLogsPagination?.page_limit || 20,
         page: auditLogsPagination?.page_no || 1,
         searchTerm: debouncedSearchTerm || '',
+        ...(selectedUser && {
+          user_id: selectedUser,
+        }),
       })
     );
   }, [
@@ -49,29 +54,18 @@ const useAuditLogs = () => {
     auditLogsPagination?.page_limit,
     auditLogsPagination?.page_no,
     debouncedSearchTerm,
+    selectedUser,
   ]);
 
   const [onInitialize] = useAsyncOperation(getAuditLogs);
 
   useEffect(() => {
-    if (!initializedRef.current) {
-      onInitialize({});
-      initializedRef.current = true;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!hasMountedOnce.current) {
-      hasMountedOnce.current = true;
-      return;
-    }
-
     dispatch(setAuditLogSearchTerm(debouncedSearchTerm));
-    getAuditLogs();
-  }, [debouncedSearchTerm]);
+    onInitialize({});
+    handleUserSearch();
+  }, [debouncedSearchTerm, selectedUser]);
 
   const scrollBoxRef = useRef<HTMLDivElement>(null);
-
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -106,17 +100,62 @@ const useAuditLogs = () => {
           page: auditLogsPagination.page_no + 1,
           limit: auditLogsPagination.page_limit || 20,
           searchTerm: debouncedSearchTerm || '',
+          ...(selectedUser && {
+            user_id: selectedUser,
+          }),
         })
       );
     }
-  }, [auditLogsPagination, auditLogLoading, dispatch]);
+  }, [
+    auditLogsPagination,
+    auditLogLoading,
+    dispatch,
+    debouncedSearchTerm,
+    selectedUser,
+  ]);
+
+  const handleUserSearch = useCallback(
+    async (query?: string): Promise<SelectOption[]> => {
+      try {
+        const result = await dispatch(
+          fetchUsers({
+            limit: 20,
+            page: 1,
+            searchTerm: query || '',
+          })
+        );
+
+        const users: SelectOption[] =
+          result.payload?.data?.data?.map((user: any) => ({
+            value: user.id,
+            label: user?.email,
+          })) || [];
+
+        setUserSearchResults(users);
+        return users;
+      } catch (error) {
+        console.error('User search failed:', error);
+        setUserSearchResults([]);
+        return [];
+      }
+    },
+    [dispatch]
+  );
+
+  const handleUserSelect = (userId: string | string[] | null) => {
+    setSelectedUser(userId as string | null);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedUser(null);
+    handleUserSearch();
+  };
 
   const columns = useMemo(
     () => [
       {
         key: 'action_type',
         label: 'Action Type',
-        // width: '15%',
         render: (row: AuditLogType) => (
           <Group
             gap={8}
@@ -124,11 +163,7 @@ const useAuditLogs = () => {
             maw={'100%'}
             style={{ overflow: 'hidden' }}
           >
-            <Text
-              fz={'sm'}
-              truncate
-              //   style={{ maxWidth: 'calc(100% - 40px)' }}
-            >
+            <Text fz={'sm'} truncate>
               {row.action_type}
             </Text>
           </Group>
@@ -137,7 +172,6 @@ const useAuditLogs = () => {
       {
         key: 'object_type',
         label: 'Object Type',
-        // width: '10%',
         render: (row: AuditLogType) => (
           <Group gap={8} wrap="nowrap">
             <Text size="sm" truncate>
@@ -208,23 +242,23 @@ const useAuditLogs = () => {
           </Group>
         ),
       },
-      {
-        key: 'actions',
-        label: 'Actions',
-        render: (row: AuditLogType) => (
-          <>
-            <Tooltip label={'View Details'} fz={'xs'}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                // onClick={() => openUserBlockModal(row)}
-              >
-                <ICONS.IconEye size={20} color={'gray'} />
-              </ActionIcon>
-            </Tooltip>
-          </>
-        ),
-      },
+      // {
+      //   key: 'actions',
+      //   label: 'Actions',
+      //   render: (row: AuditLogType) => (
+      //     <>
+      //       <Tooltip label={'View Details'} fz={'xs'}>
+      //         <ActionIcon
+      //           variant="subtle"
+      //           color="gray"
+      //           // onClick={() => openUserBlockModal(row)}
+      //         >
+      //           <ICONS.IconEye size={20} color={'gray'} />
+      //         </ActionIcon>
+      //       </Tooltip>
+      //     </>
+      //   ),
+      // },
     ],
     []
   );
@@ -236,6 +270,11 @@ const useAuditLogs = () => {
     searchTerm: localSearchTerm,
     handleSearchChange,
     columns,
+    handleUserSearch,
+    userSearchResults,
+    selectedUser,
+    handleUserSelect,
+    handleClearSelection,
   };
 };
 

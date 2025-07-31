@@ -60,27 +60,23 @@ const useLogin = () => {
     });
     if (response?.data?.success || response?.status === 200) {
       const decodeData: any = decodeToken(response?.data?.data?.access_token);
+      localStorage.setItem('token', response?.data?.data?.access_token);
+      dispatch(
+        updateUser({
+          token: response?.data?.data?.access_token,
+          activeUI: '',
+          isTemporary: response?.data?.data?.isTemporary || false,
+          user: { ...decodeData },
+        })
+      );
+      notifications.show({
+        message: response?.data?.message || 'Login Successful',
+        color: 'green',
+      });
+      reset();
       if (decodeData?.user?.role === ROLES.ADMIN) {
-        notifications.show({
-          message: 'Invalid credentials',
-          color: 'red',
-        });
-        return;
+        navigate(PRIVATE_ROUTES.USERS.url);
       } else {
-        localStorage.setItem('token', response?.data?.data?.access_token);
-        dispatch(
-          updateUser({
-            token: response?.data?.data?.access_token,
-            activeUI: '',
-            isTemporary: response?.data?.data?.isTemporary || false,
-            user: { ...decodeData },
-          })
-        );
-        notifications.show({
-          message: response?.data?.message || 'Login Successful',
-          color: 'green',
-        });
-        reset();
         navigate(PRIVATE_ROUTES.DASHBOARD.url);
       }
     }
