@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Group,
   Text,
@@ -40,11 +46,13 @@ type FileGridProps = {
   isMoveMode: boolean;
   filesToMove: string[];
   parentId?: string | null;
+  displayDownloadIcon?: boolean;
 };
 
 const MENU_ITEMS = [
   { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
+  { id: 'download', label: 'Download', icon: ICONS.IconDownload },
 ];
 
 const FileGrid: React.FC<FileGridProps> = ({
@@ -64,6 +72,7 @@ const FileGrid: React.FC<FileGridProps> = ({
   isMoveMode = false,
   filesToMove = [],
   parentId = null,
+  displayDownloadIcon = true,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +81,13 @@ const FileGrid: React.FC<FileGridProps> = ({
   const theme = useMantineTheme();
   const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
   const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+
+  const filteredMenuItems = useMemo(() => {
+    if (displayDownloadIcon) {
+      return MENU_ITEMS;
+    }
+    return MENU_ITEMS.filter(item => item.id !== 'download');
+  }, [displayDownloadIcon]);
 
   useEffect(() => {
     const updateColumnsCount = () => {
@@ -252,7 +268,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     </Text>
                   </Tooltip>
                   <Menu
-                    items={MENU_ITEMS}
+                    items={filteredMenuItems}
                     onItemClick={actionId =>
                       handleMenuItemClick(actionId, folder)
                     }
@@ -341,7 +357,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     </Tooltip>
                   </Group>
                   <Menu
-                    items={MENU_ITEMS}
+                    items={filteredMenuItems}
                     onItemClick={actionId =>
                       handleMenuItemClick(actionId, file)
                     }

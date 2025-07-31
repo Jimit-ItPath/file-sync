@@ -3,7 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import { api } from '../../../api';
 import { notifications } from '@mantine/notifications';
-import { AUTH_ROUTES } from '../../../routing/routes';
+import { AUTH_ROUTES, PRIVATE_ROUTES } from '../../../routing/routes';
+import { decodeToken } from '../../../utils/helper';
+import { useAppDispatch } from '../../../store';
+import { updateUser } from '../../../store/slices/auth.slice';
+import { ROLES } from '../../../utils/constants';
 
 type Status = 'idle' | 'success' | 'error' | 'loading';
 
@@ -14,6 +18,7 @@ const useVerifyUser = () => {
   const email = searchParams.get('email');
   const validation_code = searchParams.get('validation_code');
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const [verifyUser, loading] = useAsyncOperation(
     async (data: { email: string | null; validation_code: string | null }) => {
@@ -31,7 +36,17 @@ const useVerifyUser = () => {
         return;
       }
       const res = await verifyUser({ email, validation_code });
-      if (res?.data?.success) {
+      if (res?.data?.success || res?.status === 200) {
+        const decodeData: any = decodeToken(res?.data?.data?.access_token);
+        localStorage.setItem('token', res?.data?.data?.access_token);
+        dispatch(
+          updateUser({
+            token: res?.data?.data?.access_token,
+            activeUI: '',
+            isTemporary: res?.data?.data?.isTemporary || false,
+            user: { ...decodeData },
+          })
+        );
         setStatus('success');
         setMessage(
           res?.data?.message || 'Your account has been successfully verified!'
@@ -40,7 +55,11 @@ const useVerifyUser = () => {
           message: res?.data?.message || 'Your account has been verified!',
           color: 'green',
         });
-        navigate(AUTH_ROUTES.LOGIN.url);
+        if (decodeData?.user?.role === ROLES.USER) {
+          navigate(PRIVATE_ROUTES.DASHBOARD.url);
+        } else {
+          navigate(AUTH_ROUTES.LOGIN.url);
+        }
       } else {
         setStatus('error');
         setMessage(res?.data?.message || 'Invalid email or validation code');

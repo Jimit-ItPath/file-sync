@@ -121,6 +121,7 @@ const Dashboard = () => {
     recentFilesData,
     folderId,
     displayMoveIcon,
+    displayDownloadIcon,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
   const { isSm, isXs, theme } = useResponsive();
@@ -237,6 +238,7 @@ const Dashboard = () => {
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
                   displayMoveIcon={displayMoveIcon}
+                  displayDownloadIcon={displayDownloadIcon}
                 />
               ) : null}
               {!checkLocation && (
@@ -364,6 +366,7 @@ const Dashboard = () => {
                 filesToMove,
                 isMoveMode,
                 parentId,
+                displayDownloadIcon,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (

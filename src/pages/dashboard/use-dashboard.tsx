@@ -280,7 +280,7 @@ const useDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!hasMountedOnce.current && !checkLocation) {
+    if (!hasMountedOnce.current || !checkLocation) {
       hasMountedOnce.current = true;
       return;
     }
@@ -462,10 +462,9 @@ const useDashboard = () => {
     if (
       actionId === 'download' &&
       (row.type !== 'folder' ||
-        row.mimeType !== 'application/vnd.google-apps.folder') &&
-      row.download_url
+        row.mimeType !== 'application/vnd.google-apps.folder')
     ) {
-      window.open(row.download_url, '_blank');
+      downloadItems([row.id]);
     }
     // else if (actionId === 'view') {
     //   if (row.mimeType === 'application/vnd.google-apps.folder') {
@@ -960,9 +959,11 @@ const useDashboard = () => {
     setModalOpen(false);
   }, []);
 
-  const [downloadItems] = useAsyncOperation(async () => {
+  const [downloadItems] = useAsyncOperation(async data => {
     try {
-      const res = await dispatch(downloadFiles({ ids: selectedIds }));
+      const res = await dispatch(
+        downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
+      );
       if (res?.payload?.status !== 200) {
         notifications.show({
           message:
@@ -1092,6 +1093,11 @@ const useDashboard = () => {
       ? true
       : false;
   }, [selectedIds, files, checkLocation, folderId]);
+
+  const displayDownloadIcon = useMemo(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    return checkFiles?.type === 'file' ? true : false;
+  }, [selectedIds, files]);
 
   const handleMoveSelected = useCallback(() => {
     setIsMoveMode(true);
@@ -1278,6 +1284,7 @@ const useDashboard = () => {
     recentFilesData,
     folderId,
     displayMoveIcon,
+    displayDownloadIcon,
   };
 };
 
