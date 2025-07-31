@@ -85,6 +85,23 @@ export const fetchCloudStorageFiles = createAsyncThunk(
   }
 );
 
+export const fetchRecentFiles = createAsyncThunk(
+  'cloudStorage/fetchRecentFiles',
+  async (
+    params: {
+      account_id?: number | string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.cloudStorage.getRecentFiles(params);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch recent files');
+    }
+  }
+);
+
 export const navigateToFolder = createAsyncThunk(
   'cloudStorage/navigateToFolder',
   async (
@@ -303,10 +320,6 @@ const cloudStorageSlice = createSlice({
       .addCase(fetchCloudStorageFiles.fulfilled, (state, action) => {
         const { data = [], paging = null } = action.payload?.data;
         state.loading = false;
-        state.recentFiles =
-          data?.length > 0
-            ? data.filter((f: any) => f.entry_type === 'file')
-            : [];
 
         // Get the folder id from the action
         const newFolderId = action.meta.arg?.id ?? null;
@@ -326,8 +339,20 @@ const cloudStorageSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.cloudStorage = [];
-        state.recentFiles = [];
         state.pagination = null;
+      })
+      .addCase(fetchRecentFiles.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchRecentFiles.fulfilled, (state, action) => {
+        state.loading = false;
+        state.recentFiles = action.payload?.data?.rows || [];
+      })
+      .addCase(fetchRecentFiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.recentFiles = [];
       })
       .addCase(navigateToFolder.pending, state => {
         state.navigateLoading = true;

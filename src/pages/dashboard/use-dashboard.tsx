@@ -28,6 +28,7 @@ import {
   uploadCloudStorageFiles,
   moveCloudStorageFiles,
   syncCloudStorage,
+  fetchRecentFiles,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -244,6 +245,24 @@ const useDashboard = () => {
   );
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
+
+  const getRecentFiles = useCallback(async () => {
+    const requestParams = {
+      ...(currentAccountId !== 'all' &&
+        currentAccountId && {
+          account_id: currentAccountId,
+        }),
+    };
+    await dispatch(fetchRecentFiles(requestParams));
+  }, [dispatch, currentAccountId]);
+
+  const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+
+  useEffect(() => {
+    if (!folderId || folderId === null) {
+      onGetRecentFiles({});
+    }
+  }, [folderId]);
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -482,6 +501,9 @@ const useDashboard = () => {
         const res = await dispatch(createCloudStorageFolder(requestParams));
 
         if (res?.payload?.success) {
+          if (!folderId || folderId === null) {
+            onGetRecentFiles({});
+          }
           await getCloudStorageFiles(1);
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
@@ -581,6 +603,9 @@ const useDashboard = () => {
         waitForUploadCompletion();
 
         // Refresh the file list after upload
+        if (!folderId || folderId === null) {
+          onGetRecentFiles({});
+        }
         await getCloudStorageFiles(1);
       } catch (error: any) {
         notifications.show({
@@ -598,6 +623,9 @@ const useDashboard = () => {
         await dispatch(
           renameCloudStorageFile({ id: fileId, name: newName })
         ).unwrap();
+        if (!folderId || folderId === null) {
+          onGetRecentFiles({});
+        }
         await getCloudStorageFiles(1);
         notifications.show({
           message: 'Item renamed successfully',
@@ -626,6 +654,9 @@ const useDashboard = () => {
         const res = await dispatch(removeCloudStorageFiles({ ids: [fileId] }));
 
         if (res?.payload?.status === 200 || res?.payload?.success !== false) {
+          if (!folderId || folderId === null) {
+            onGetRecentFiles({});
+          }
           await getCloudStorageFiles(1);
           notifications.show({
             message: res?.payload?.message || 'Item deleted successfully',
@@ -881,6 +912,9 @@ const useDashboard = () => {
         );
 
         if (res?.payload?.status === 200 || res?.payload?.success) {
+          if (!folderId || folderId === null) {
+            onGetRecentFiles({});
+          }
           await getCloudStorageFiles(1);
           notifications.show({
             message:
@@ -984,6 +1018,9 @@ const useDashboard = () => {
         const res = await dispatch(syncCloudStorage(requestParams)).unwrap();
 
         if (res?.status === 200) {
+          if (!folderId || folderId === null) {
+            onGetRecentFiles({});
+          }
           await getCloudStorageFiles(1);
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
@@ -1026,6 +1063,9 @@ const useDashboard = () => {
             message: 'Items moved successfully',
             color: 'green',
           });
+          if (!folderId || folderId === null) {
+            onGetRecentFiles({});
+          }
           await getCloudStorageFiles(1);
         } else {
           notifications.show({
