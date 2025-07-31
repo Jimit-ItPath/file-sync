@@ -11,7 +11,7 @@ import {
   Flex,
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
-import { IconX, IconChevronDown } from '@tabler/icons-react';
+import { ICONS } from '../../../assets/icons';
 
 export interface SelectOption {
   value: string;
@@ -260,7 +260,7 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
                     onClick={e => handleRemoveValue(option.value, e)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <IconX size={8} />
+                    <ICONS.IconX size={8} />
                   </ActionIcon>
                 ) : null
               }
@@ -300,7 +300,7 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
             style={theme => ({
               cursor: option.disabled ? 'not-allowed' : 'pointer',
               backgroundColor:
-                highlightedIndex === index
+                (highlightedIndex === index || selectedLabels.includes(option))
                   ? theme.colors.blue[1]
                   : 'transparent',
               opacity: option.disabled ? 0.5 : 1,
@@ -370,7 +370,7 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
                 onClick={handleClear}
                 style={{ cursor: 'pointer' }}
               >
-                <IconX size={14} />
+                <ICONS.IconX size={14} />
               </ActionIcon>
             )}
             <ActionIcon
@@ -383,7 +383,7 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
                 transition: 'transform 200ms ease',
               }}
             >
-              <IconChevronDown size={14} />
+              <ICONS.IconChevronDown size={14} />
             </ActionIcon>
           </Flex>
         }

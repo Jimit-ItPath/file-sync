@@ -23,7 +23,6 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { resetUser } from '../../store/slices/auth.slice';
-import { ROLES } from '../../utils/constants';
 
 const DashboardLayout = () => {
   usePageData();
@@ -33,7 +32,6 @@ const DashboardLayout = () => {
   const { logout } = useAuth() as any;
   const dispatch = useAppDispatch();
   const { userProfile } = useAppSelector(state => state.user);
-  const { user } = useAppSelector(state => state.auth);
   const navigate = useNavigate();
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
@@ -96,13 +94,8 @@ const DashboardLayout = () => {
   };
 
   const onLogoutConfirm = () => {
-    const role = user?.user?.role;
     logout();
-    if (role === ROLES.ADMIN) {
-      navigate(AUTH_ROUTES.ADMIN_LOGIN.url);
-    } else {
-      navigate(AUTH_ROUTES.LOGIN.url);
-    }
+    navigate(AUTH_ROUTES.LOGIN.url);
     dispatch(resetUser());
     dispatch(resetUserProfile());
     logoutConfirmHandler.close();

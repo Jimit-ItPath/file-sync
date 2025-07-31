@@ -1,6 +1,7 @@
-import { Box, Group, TextInput } from '@mantine/core';
+import { ActionIcon, Box, Group, TextInput } from '@mantine/core';
 import { CustomAutocomplete, Table } from '../../../components';
 import useAuditLogs from './use-audit-logs';
+import { ICONS } from '../../../assets/icons';
 
 const AdminAuditLogs = () => {
   const {
@@ -52,6 +53,19 @@ const AdminAuditLogs = () => {
             placeholder="Search logs..."
             value={searchTerm}
             onChange={event => handleSearchChange(event.currentTarget.value)}
+            rightSection={
+              searchTerm ? (
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => handleSearchChange('')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <ICONS.IconX size={14} />
+                </ActionIcon>
+              ) : null
+            }
             maw={300}
             w={'100%'}
             size="sm"

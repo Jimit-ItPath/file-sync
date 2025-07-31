@@ -60,9 +60,12 @@ const useAuditLogs = () => {
   const [onInitialize] = useAsyncOperation(getAuditLogs);
 
   useEffect(() => {
+    handleUserSearch();
+  }, [selectedUser]);
+
+  useEffect(() => {
     dispatch(setAuditLogSearchTerm(debouncedSearchTerm));
     onInitialize({});
-    handleUserSearch();
   }, [debouncedSearchTerm, selectedUser]);
 
   const scrollBoxRef = useRef<HTMLDivElement>(null);
@@ -148,8 +151,14 @@ const useAuditLogs = () => {
 
   const handleClearSelection = () => {
     setSelectedUser(null);
-    handleUserSearch();
   };
+
+  const filteredOptions = useMemo(() => {
+    if (selectedUser) {
+      return userSearchResults.filter(option => option.value === selectedUser);
+    }
+    return userSearchResults;
+  }, [selectedUser, userSearchResults]);
 
   const columns = useMemo(
     () => [
@@ -271,7 +280,7 @@ const useAuditLogs = () => {
     handleSearchChange,
     columns,
     handleUserSearch,
-    userSearchResults,
+    userSearchResults: filteredOptions,
     selectedUser,
     handleUserSelect,
     handleClearSelection,
