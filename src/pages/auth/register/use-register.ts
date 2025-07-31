@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { api } from '../../../api';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import { notifications } from '@mantine/notifications';
-import { passwordRequirements } from '../../../utils/constants';
+import { NAME_REGEX, passwordRequirements } from '../../../utils/constants';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 // Define Zod schema for form validation
@@ -13,11 +13,19 @@ const registerSchema = z.object({
   firstName: z
     .string()
     .min(1, 'First name is required')
-    .max(20, 'First name must be less than 20 characters'),
+    .max(20, 'First name must be less than 20 characters')
+    .regex(
+      NAME_REGEX,
+      'First name must contain only letters, spaces, hyphens, and apostrophes'
+    ),
   lastName: z
     .string()
     .min(1, 'Last name is required')
-    .max(20, 'Last name must be less than 20 characters'),
+    .max(20, 'Last name must be less than 20 characters')
+    .regex(
+      NAME_REGEX,
+      'Last name must contain only letters, spaces, hyphens, and apostrophes'
+    ),
   email: z.string().email('Invalid email address').min(1, 'Email is required'),
   password: z
     .string()

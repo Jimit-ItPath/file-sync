@@ -89,3 +89,5 @@ export const passwordRequirements = [
   { re: regex.hasDigit, label: 'Includes number' },
   { re: regex.hasSpecialChar, label: 'Includes special symbol' },
 ];
+
+export const NAME_REGEX = /^[a-zA-Z\s'-]+$/;

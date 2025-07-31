@@ -19,17 +19,25 @@ import {
 import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
-import { ROLES } from '../../../utils/constants';
+import { NAME_REGEX, ROLES } from '../../../utils/constants';
 
 const profileSchema = z.object({
   firstName: z
     .string()
     .min(1, 'First name is required')
-    .max(20, 'First name must be less than 20 characters'),
+    .max(20, 'First name must be less than 20 characters')
+    .regex(
+      NAME_REGEX,
+      'First name must contain only letters, spaces, hyphens, and apostrophes'
+    ),
   lastName: z
     .string()
     .min(1, 'Last name is required')
-    .max(20, 'Last name must be less than 20 characters'),
+    .max(20, 'Last name must be less than 20 characters')
+    .regex(
+      NAME_REGEX,
+      'Last name must contain only letters, spaces, hyphens, and apostrophes'
+    ),
   email: z.string().email('Invalid email address').min(1, 'Email is required'),
   avatar: z.union([z.string(), z.instanceof(File)]).optional(),
 });
