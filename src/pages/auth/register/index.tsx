@@ -52,11 +52,17 @@ const Register = () => {
           AllCloudHub
         </Text>
       </Group>
-      <Grid gutter={0}>
-        <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 2, md: 1 }}>
+      <Grid gutter={0} style={{ minHeight: '100vh' }}>
+        <Grid.Col
+          span={{ base: 12, md: 6 }}
+          order={isXs || isSm || isMd ? 2 : 1}
+        >
           <FeatureList {...{ isMd, isXs }} />
         </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 1, md: 2 }}>
+        <Grid.Col
+          span={{ base: 12, md: 6 }}
+          order={isXs || isSm || isMd ? 1 : 2}
+        >
           <Paper
             radius={0}
             h="100%"
