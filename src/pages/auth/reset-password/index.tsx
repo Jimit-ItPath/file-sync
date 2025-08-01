@@ -21,8 +21,7 @@ const ResetPassword = () => {
   const { isMd, isSm, isXs } = useResponsive();
 
   return (
-    <Box
-    >
+    <Box>
       <Group
         align="center"
         style={{

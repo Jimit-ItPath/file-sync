@@ -10,13 +10,11 @@ import useAsyncOperation from '../../../hooks/use-async-operation';
 import { updateUser } from '../../../store/slices/auth.slice';
 import { notifications } from '@mantine/notifications';
 import { useAppDispatch } from '../../../store';
-import { useMantineTheme } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
 import { ROLES } from '../../../utils/constants';
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -26,11 +24,6 @@ const useLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [showLoginForm, setShowLoginForm] = useState(false);
-
-  const theme = useMantineTheme();
-  const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
-  const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
-  const isMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -60,23 +53,27 @@ const useLogin = () => {
     });
     if (response?.data?.success || response?.status === 200) {
       const decodeData: any = decodeToken(response?.data?.data?.access_token);
-      localStorage.setItem('token', response?.data?.data?.access_token);
-      dispatch(
-        updateUser({
-          token: response?.data?.data?.access_token,
-          activeUI: '',
-          isTemporary: response?.data?.data?.isTemporary || false,
-          user: { ...decodeData },
-        })
-      );
-      notifications.show({
-        message: response?.data?.message || 'Login Successful',
-        color: 'green',
-      });
-      reset();
       if (decodeData?.user?.role === ROLES.ADMIN) {
-        navigate(PRIVATE_ROUTES.USERS.url);
+        notifications.show({
+          message: 'Invalid credentials',
+          color: 'red',
+        });
+        return;
       } else {
+        localStorage.setItem('token', response?.data?.data?.access_token);
+        dispatch(
+          updateUser({
+            token: response?.data?.data?.access_token,
+            activeUI: '',
+            isTemporary: response?.data?.data?.isTemporary || false,
+            user: { ...decodeData },
+          })
+        );
+        notifications.show({
+          message: response?.data?.message || 'Login Successful',
+          color: 'green',
+        });
+        reset();
         navigate(PRIVATE_ROUTES.DASHBOARD.url);
       }
     }
@@ -87,7 +84,7 @@ const useLogin = () => {
       {
         id: 'email',
         name: 'email',
-        placeholder: 'Enter your email',
+        placeholder: 'Enter email',
         type: 'email',
         label: 'Email address',
         isRequired: true,
@@ -96,7 +93,7 @@ const useLogin = () => {
       {
         id: 'password',
         name: 'password',
-        placeholder: 'Enter Password',
+        placeholder: 'Enter password',
         label: 'Password',
         type: 'password-input',
         showIcon: true,
@@ -114,9 +111,6 @@ const useLogin = () => {
     methods,
     showLoginForm,
     toggleLoginForm,
-    isXs,
-    isSm,
-    isMd,
   };
 };
 

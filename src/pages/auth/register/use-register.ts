@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,7 +26,7 @@ const registerSchema = z.object({
       NAME_REGEX,
       'Last name must contain only letters, spaces, hyphens, and apostrophes'
     ),
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -45,6 +45,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 const useRegister = () => {
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [captchaToken, setCaptchaToken] = useState<string>('');
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
 
   const methods = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -63,7 +64,20 @@ const useRegister = () => {
     handleSubmit,
     reset,
     formState: { errors },
+    setValue,
+    watch,
   } = methods;
+
+  const termsAccepted = watch('termsAccepted');
+  useEffect(() => {
+    if (termsAccepted) {
+      setValue('newsletterSubscribed', true);
+    }
+  }, [termsAccepted, setValue]);
+
+  const toggleRegisterForm = useCallback(() => {
+    setShowRegisterForm(prev => !prev);
+  }, []);
 
   const onCaptchaChange = useCallback((token: string | null) => {
     if (token) {
@@ -109,7 +123,7 @@ const useRegister = () => {
       {
         id: 'firstName',
         name: 'firstName',
-        placeholder: 'Enter your first name',
+        placeholder: 'Enter first name',
         type: 'text',
         label: 'First name',
         isRequired: true,
@@ -118,7 +132,7 @@ const useRegister = () => {
       {
         id: 'lastName',
         name: 'lastName',
-        placeholder: 'Enter your last name',
+        placeholder: 'Enter last name',
         type: 'text',
         label: 'Last name',
         isRequired: true,
@@ -127,7 +141,7 @@ const useRegister = () => {
       {
         id: 'email',
         name: 'email',
-        placeholder: 'Enter your email',
+        placeholder: 'Enter email',
         type: 'email',
         label: 'Email address',
         isRequired: true,
@@ -136,7 +150,7 @@ const useRegister = () => {
       {
         id: 'password',
         name: 'password',
-        placeholder: 'Enter Password',
+        placeholder: 'Enter password',
         label: 'Password',
         type: 'password-input',
         showIcon: true,
@@ -178,6 +192,8 @@ const useRegister = () => {
     methods,
     recaptchaRef,
     onCaptchaChange,
+    toggleRegisterForm,
+    showRegisterForm,
   };
 };
 

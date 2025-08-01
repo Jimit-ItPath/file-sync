@@ -6,9 +6,11 @@ import useLogin from './use-login';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { ICONS } from '../../../assets/icons';
 import { FeatureList } from '../register/FeatureList';
+import useResponsive from '../../../hooks/use-responsive';
 
 export default function Login() {
-  const { showLoginForm, toggleLoginForm, isSm, isXs, isMd } = useLogin();
+  const { showLoginForm, toggleLoginForm } = useLogin();
+  const { isMd, isSm, isXs } = useResponsive();
   return (
     <Box>
       <Group
@@ -79,7 +81,7 @@ export default function Login() {
                       Don't have an account?{' '}
                       <Link
                         to={AUTH_ROUTES.REGISTER.url}
-                        style={{ textDecoration: 'none', color: '#0284c7' }}
+                        style={{ textDecoration: 'none', color: '#0284c7', fontWeight: 500 }}
                       >
                         Sign up
                       </Link>

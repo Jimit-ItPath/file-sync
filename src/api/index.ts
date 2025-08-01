@@ -93,7 +93,7 @@ export const api = {
     completeProfile: (data: {
       first_name: string;
       last_name: string;
-      email: string;
+      email?: string;
       password: string;
       validation_code: string;
     }) =>

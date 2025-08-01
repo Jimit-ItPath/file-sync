@@ -11,6 +11,9 @@ import { PRIVATE_ROUTES } from '../../../../routing/routes';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { ICONS } from '../../../../assets/icons';
+import { decodeToken } from '../../../../utils/helper';
+import { useAppDispatch } from '../../../../store';
+import { updateUser } from '../../../../store/slices/auth.slice';
 
 const completeProfileSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -50,6 +53,7 @@ const useCompleteProfile = () => {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email');
   const validation_code = searchParams.get('validation_code');
+  const dispatch = useAppDispatch();
 
   const theme = useMantineTheme();
   const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
@@ -92,13 +96,22 @@ const useCompleteProfile = () => {
       const res = await api.auth.completeProfile({
         first_name: data.first_name,
         last_name: data.last_name,
-        email: data.email,
+        // email: data.email,
         validation_code,
         password: data.password,
       });
 
       if (res?.data?.success || res.status === 200) {
+        const decodeData: any = decodeToken(res?.data?.data?.access_token);
         localStorage.setItem('token', res?.data?.data?.access_token);
+        dispatch(
+          updateUser({
+            token: res?.data?.data?.access_token,
+            activeUI: '',
+            isTemporary: res?.data?.data?.isTemporary || false,
+            user: { ...decodeData },
+          })
+        );
         notifications.show({
           message: res?.data?.message || 'Profile completed successfully',
           color: 'green',

@@ -1,13 +1,4 @@
-import {
-  Grid,
-  Paper,
-  Stack,
-  Title,
-  Text,
-  Divider,
-  Box,
-  Group,
-} from '@mantine/core';
+import { Grid, Paper, Stack, Title, Text, Box, Group } from '@mantine/core';
 import { FeatureList } from './FeatureList';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { FormFields } from './FormFields';
@@ -16,7 +7,7 @@ import { AUTH_ROUTES } from '../../../routing/routes';
 import { Button, Form } from '../../../components';
 import useRegister from './use-register';
 import { ICONS } from '../../../assets/icons';
-import useLogin from '../login/use-login';
+import useResponsive from '../../../hooks/use-responsive';
 
 const Register = () => {
   const {
@@ -26,8 +17,10 @@ const Register = () => {
     registerFormData,
     onCaptchaChange,
     recaptchaRef,
+    showRegisterForm,
+    toggleRegisterForm,
   } = useRegister();
-  const { isXs, isMd, isSm } = useLogin();
+  const { isXs, isMd, isSm } = useResponsive();
 
   return (
     <Box>
@@ -96,53 +89,68 @@ const Register = () => {
                   </Text>
                 </Box>
 
-                <SocialLoginButtons {...{ isXs }} />
+                {showRegisterForm ? (
+                  <>
+                    <Form methods={methods} onSubmit={handleRegisterSubmit}>
+                      <Stack gap={16}>
+                        <Button
+                          onClick={toggleRegisterForm}
+                          w={'fit-content'}
+                          leftSection={<ICONS.IconArrowLeft size={18} />}
+                        >
+                          Back
+                        </Button>
+                        <FormFields
+                          methods={methods}
+                          registerFormData={registerFormData}
+                          onCaptchaChange={onCaptchaChange}
+                          recaptchaRef={recaptchaRef}
+                        />
 
-                <Group align="center" gap={8} mb={8}>
-                  <Divider w="100%" />
-                  <Text ta={'center'} w={'100%'} c="dimmed" fz="sm" px={8}>
-                    or create an account with email
-                  </Text>
-                  <Divider w="100%" />
-                </Group>
-
-                <Form methods={methods} onSubmit={handleRegisterSubmit}>
-                  <Stack gap={16}>
-                    <FormFields
-                      methods={methods}
-                      registerFormData={registerFormData}
-                      onCaptchaChange={onCaptchaChange}
-                      recaptchaRef={recaptchaRef}
-                    />
-
-                    <Button
-                      type="submit"
-                      disabled={Boolean(isLoading)}
-                      loading={Boolean(isLoading)}
-                      size="md"
-                      radius="md"
-                      style={{
-                        fontWeight: 500,
-                        fontSize: 16,
-                        background: '#0284c7',
-                        color: '#fff',
-                        marginTop: 8,
-                      }}
-                    >
-                      Create Account
-                    </Button>
-                  </Stack>
-                </Form>
-
-                <Text ta="center" fz={isXs ? 12 : 14} c="dimmed">
-                  Already have an account?{' '}
-                  <Link
-                    to={AUTH_ROUTES.LOGIN.url}
-                    style={{ textDecoration: 'none', color: '#0284c7' }}
-                  >
-                    Log in
-                  </Link>
-                </Text>
+                        <Button
+                          type="submit"
+                          disabled={
+                            Boolean(isLoading) || !methods.formState.isValid
+                          }
+                          loading={Boolean(isLoading)}
+                          size="md"
+                          radius="md"
+                          style={{
+                            fontWeight: 500,
+                            fontSize: 16,
+                            background: '#0284c7',
+                            color: '#fff',
+                            marginTop: 8,
+                          }}
+                        >
+                          Create Account
+                        </Button>
+                      </Stack>
+                    </Form>
+                    <Text ta="center" fz={isXs ? 12 : 14} c="dimmed" mt={-20}>
+                      Already have an account?{' '}
+                      <Link
+                        to={AUTH_ROUTES.LOGIN.url}
+                        style={{ textDecoration: 'none', color: '#0284c7', fontWeight: 500 }}
+                      >
+                        Log in
+                      </Link>
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <SocialLoginButtons {...{ isXs, toggleRegisterForm }} />
+                    <Text ta="center" fz={isXs ? 12 : 14} c="dimmed">
+                      Already have an account?{' '}
+                      <Link
+                        to={AUTH_ROUTES.LOGIN.url}
+                        style={{ textDecoration: 'none', color: '#0284c7', fontWeight: 500 }}
+                      >
+                        Log in
+                      </Link>
+                    </Text>
+                  </>
+                )}
               </Stack>
             </Box>
           </Paper>
