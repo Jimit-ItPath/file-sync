@@ -48,6 +48,7 @@ type FileGridProps = {
   parentId?: string | null;
   displayDownloadIcon?: boolean;
   displayShareIcon?: boolean;
+  displayMoveIcon?: boolean;
 };
 
 const MENU_ITEMS = [
@@ -74,6 +75,7 @@ const FileGrid: React.FC<FileGridProps> = ({
   parentId = null,
   displayDownloadIcon = true,
   displayShareIcon = true,
+  displayMoveIcon = true,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
@@ -97,6 +99,13 @@ const FileGrid: React.FC<FileGridProps> = ({
         id: 'share',
         label: 'Share',
         icon: ICONS.IconShare,
+      });
+    }
+    if (displayMoveIcon) {
+      menuItems.push({
+        id: 'move',
+        label: 'Move',
+        icon: ICONS.IconFolderShare,
       });
     }
     return menuItems;

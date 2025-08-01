@@ -16,13 +16,14 @@ export const SelectionBar = ({
   onCancel,
   onDelete,
   onDownload,
-  // onShare,
+  onShare,
   onMove,
   onPaste,
   isMoveMode,
   isPasteEnabled = true,
   displayMoveIcon = true,
   displayDownloadIcon = true,
+  displayShareIcon = true,
 }: {
   count: number;
   onCancel: () => void;
@@ -35,6 +36,7 @@ export const SelectionBar = ({
   isPasteEnabled: boolean;
   displayMoveIcon: boolean;
   displayDownloadIcon: boolean;
+  displayShareIcon: boolean;
 }) => {
   return (
     <Box
@@ -67,11 +69,13 @@ export const SelectionBar = ({
                 </ActionIcon>
               </Tooltip>
             )}
-            {/* <Tooltip label="Share" fz="xs">
-              <ActionIcon style={iconStyle} onClick={onShare}>
-                <ICONS.IconShare size={18} />
-              </ActionIcon>
-            </Tooltip> */}
+            {displayShareIcon && (
+              <Tooltip label="Share" fz="xs">
+                <ActionIcon style={iconStyle} onClick={onShare}>
+                  <ICONS.IconShare size={18} />
+                </ActionIcon>
+              </Tooltip>
+            )}
             {displayMoveIcon && (
               <Tooltip label="Move" fz="xs">
                 <ActionIcon style={iconStyle} onClick={onMove}>

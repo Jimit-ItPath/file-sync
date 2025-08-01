@@ -272,6 +272,9 @@ const Dashboard = () => {
                   isPasteEnabled={isPasteEnabled()}
                   displayMoveIcon={displayMoveIcon}
                   displayDownloadIcon={displayDownloadIcon}
+                  displayShareIcon={
+                    selectedIds?.length === 1 && displayShareIcon
+                  }
                 />
               ) : null}
               {!checkLocation && (
@@ -364,22 +367,31 @@ const Dashboard = () => {
           />
         </Box>
         {layout === 'list' ? (
-          <FileTable
-            {...{
-              files,
-              handleSelect,
-              onSelectAll,
-              onSelectRow,
-              selectedIds,
-              currentPath,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-              handleUnselectAll,
-              filesToMove,
-              isMoveMode,
-              parentId,
-            }}
-          />
+          <>
+            <FileTable
+              {...{
+                files,
+                handleSelect,
+                onSelectAll,
+                onSelectRow,
+                selectedIds,
+                currentPath,
+                handleMenuItemClick,
+                handleRowDoubleClick,
+                handleUnselectAll,
+                filesToMove,
+                isMoveMode,
+                parentId,
+                checkLocation,
+                folderId,
+              }}
+            />
+            {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button mt={20} onClick={loadMoreFiles}>
+                Load More
+              </Button>
+            ) : null}
+          </>
         ) : (
           <>
             <FileGrid
@@ -401,6 +413,7 @@ const Dashboard = () => {
                 parentId,
                 displayDownloadIcon,
                 displayShareIcon,
+                displayMoveIcon,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (

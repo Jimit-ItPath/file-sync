@@ -488,6 +488,8 @@ const useDashboard = () => {
       setDeleteModalOpen(true);
     } else if (actionId === 'share' && row.web_view_url) {
       window.open(row.web_view_url, '_blank');
+    } else if (actionId === 'move') {
+      handleMoveSelected([row?.id]);
     }
   };
 
@@ -952,7 +954,12 @@ const useDashboard = () => {
     }
   );
 
-  const handleShareSelected = useCallback(() => {}, []);
+  const handleShareSelected = useCallback(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    if (checkFiles?.web_view_url) {
+      window.open(checkFiles.web_view_url, '_blank');
+    }
+  }, [files, selectedIds]);
 
   const openModal = useCallback((type: 'folder' | 'files') => {
     setModalType(type);
@@ -1108,17 +1115,28 @@ const useDashboard = () => {
   }, [selectedIds, files]);
 
   const displayShareIcon = useMemo(() => {
-    const checkFiles = cloudStorage.find(file => selectedIds.includes(file.id));
-    return checkFiles?.web_view_url ? true : false;
-  }, [selectedIds, cloudStorage]);
-
-  const handleMoveSelected = useCallback(() => {
-    setIsMoveMode(true);
     const checkFiles = files.find(file => selectedIds.includes(file.id));
-    setFilesToMove([...selectedIds]);
-    selectParentId(checkFiles?.parent_id ?? null);
-    setSourceFolderId(currentFolderId ?? null);
-  }, [selectedIds, currentFolderId]);
+    return checkFiles?.web_view_url ? true : false;
+  }, [selectedIds, files]);
+
+  const handleMoveSelected = useCallback(
+    (ids?: string[]) => {
+      setIsMoveMode(true);
+      if (Array.isArray(ids) && ids?.length) {
+        setSelectedIds(ids);
+        const checkFiles = files.find(file => ids?.includes(file.id));
+        setFilesToMove([...ids]);
+        selectParentId(checkFiles?.parent_id ?? null);
+        setSourceFolderId(currentFolderId ?? null);
+      } else {
+        const checkFiles = files.find(file => selectedIds.includes(file.id));
+        setFilesToMove([...selectedIds]);
+        selectParentId(checkFiles?.parent_id ?? null);
+        setSourceFolderId(currentFolderId ?? null);
+      }
+    },
+    [selectedIds, currentFolderId]
+  );
 
   const isPasteEnabled = useCallback(() => {
     if (!isMoveMode || filesToMove.length === 0) return false;

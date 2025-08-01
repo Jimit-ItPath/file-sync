@@ -30,6 +30,8 @@ type FileTableProps = {
   isMoveMode: boolean;
   filesToMove: string[];
   parentId?: string | null;
+  checkLocation: boolean;
+  folderId?: string | null;
 };
 
 const FileTable: React.FC<FileTableProps> = ({
@@ -45,6 +47,8 @@ const FileTable: React.FC<FileTableProps> = ({
   isMoveMode = false,
   filesToMove = [],
   parentId = null,
+  checkLocation = false,
+  folderId = null,
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -72,12 +76,12 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'name',
         label: 'Name',
-        width: '30%',
+        // width: '30%',
         render: (row: FileType) => (
           <Group
             gap={8}
             wrap="nowrap"
-            maw={'100%'}
+            maw={'50%'}
             style={{ overflow: 'hidden' }}
           >
             {row.icon(iconSize)}
@@ -86,7 +90,7 @@ const FileTable: React.FC<FileTableProps> = ({
                 fw={600}
                 fz={'sm'}
                 truncate
-                style={{ maxWidth: 'calc(100% - 40px)' }}
+                // style={{ maxWidth: 'calc(100% - 40px)' }}
               >
                 {row.name}
               </Text>
@@ -97,9 +101,13 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'owner',
         label: 'Owner',
-        width: '15%',
+        // width: '15%',
         render: (row: FileType) => (
-          <Group gap={8} wrap="nowrap" style={{ maxWidth: '200px' }}>
+          <Group
+            gap={8}
+            wrap="nowrap"
+            //  style={{ maxWidth: '200px' }}
+          >
             <Avatar src={row.owner.avatar} radius="xl" size="sm" color="blue">
               {row.owner.initials}
             </Avatar>
@@ -112,19 +120,19 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'lastModified',
         label: 'Last Modified',
-        width: '20%',
+        // width: '20%',
         render: (row: FileType) => <Text size="sm">{row.lastModified}</Text>,
       },
       {
         key: 'size',
         label: 'Size',
-        width: '10%',
+        // width: '10%',
         render: (row: FileType) => <Text size="sm">{row.size || '-'}</Text>,
       },
       {
         key: 'actions',
         label: '',
-        width: '10%',
+        // width: '10%',
         render: (row: FileType) => {
           const menuItems = [...MENU_ITEMS];
           if (row.type === 'file') {
@@ -139,6 +147,13 @@ const FileTable: React.FC<FileTableProps> = ({
               id: 'share',
               label: 'Share',
               icon: ICONS.IconShare,
+            });
+          }
+          if (row.type === 'file' || checkLocation || folderId) {
+            menuItems.push({
+              id: 'move',
+              label: 'Move',
+              icon: ICONS.IconFolderShare,
             });
           }
 
