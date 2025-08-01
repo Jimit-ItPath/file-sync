@@ -89,7 +89,7 @@ const useResetPassword = ({ email, validation_code }: ResetPasswordProps) => {
         name: 'confirmPassword',
         placeholder: 'ReEnter Password',
         type: 'password-input',
-        label: 'Password',
+        label: 'Confirm Password',
         isRequired: true,
         error: errors.confirmPassword?.message,
       },

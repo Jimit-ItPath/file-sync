@@ -277,9 +277,9 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
 
     return (
       <Tooltip label={selectedLabels[0]?.label} fz={'xs'}>
-      <Text size={size} truncate style={{ color: '#000' }}>
-        {selectedLabels[0]?.label}
-      </Text>
+        <Text size={size} truncate style={{ color: '#000' }}>
+          {selectedLabels[0]?.label}
+        </Text>
       </Tooltip>
     );
   };

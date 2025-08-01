@@ -74,6 +74,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             error={errors?.[name]?.message || error}
             radius="md"
             size="md"
+            pl={name === 'newsletterSubscribed' ? 30 : 0}
             withAsterisk={isRequired}
             {...props}
           />

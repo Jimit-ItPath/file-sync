@@ -1,11 +1,11 @@
 import { Grid, Paper, Stack, Title, Text, Box, Group } from '@mantine/core';
-import { FeatureList } from './FeatureList';
 import { LoginForm } from './LoginForm';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
 import useLogin from './use-login';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { ICONS } from '../../../assets/icons';
+import { FeatureList } from '../register/FeatureList';
 
 export default function Login() {
   const { showLoginForm, toggleLoginForm, isSm, isXs, isMd } = useLogin();
@@ -20,15 +20,12 @@ export default function Login() {
           zIndex: 2,
         }}
       >
-        <ICONS.IconCloud
-          size={32}
-          color={isXs || isSm || isMd ? '#0ea5e9' : '#ffffff'}
-        />
+        <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
           fw={700}
           fz={20}
           style={{
-            color: isXs || isSm || isMd ? '#0ea5e9' : '#ffffff',
+            color: isXs || isSm || isMd ? '#0ea5e9' : '#000000',
             letterSpacing: -0.5,
           }}
         >

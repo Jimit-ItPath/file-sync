@@ -197,7 +197,9 @@ const DashboardLayout = () => {
                         style={{ objectFit: 'contain' }}
                       />
                     ) : (
-                      <Box style={{ fontWeight: 600, fontSize: isXs ? 12 : 14 }}>
+                      <Box
+                        style={{ fontWeight: 600, fontSize: isXs ? 12 : 14 }}
+                      >
                         {fullName
                           ? fullName
                               .split(' ')
