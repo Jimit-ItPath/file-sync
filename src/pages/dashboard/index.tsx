@@ -122,6 +122,8 @@ const Dashboard = () => {
     folderId,
     displayMoveIcon,
     displayDownloadIcon,
+    location,
+    displayShareIcon,
   } = useDashboard();
   const { connectedAccounts } = useSidebar();
   const { isSm, isXs, theme } = useResponsive();
@@ -135,6 +137,19 @@ const Dashboard = () => {
         opacity={1}
       />
       {/* <ScrollArea> */}
+      {location.pathname?.startsWith('/dropbox') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in dropbox account
+        </Text>
+      ) : location.pathname?.startsWith('/google-drive') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in google drive account
+        </Text>
+      ) : location.pathname?.startsWith('/onedrive') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in onedrive account
+        </Text>
+      ) : null}
       <Box
         px={32}
         pb={20}
@@ -186,7 +201,25 @@ const Dashboard = () => {
         </Box>
 
         {recentFilesData?.length && !folderId ? (
-          <RecentFiles {...{ recentFiles: recentFilesData, isSm, isXs }} />
+          <RecentFiles
+            {...{
+              recentFiles: recentFilesData,
+              isSm,
+              isXs,
+              allIds,
+              getIndexById,
+              handleSelect,
+              handleUnselectAll,
+              isMoveMode,
+              lastSelectedIndex,
+              selectedIds,
+              setLastSelectedIndex,
+              setSelectedIds,
+              displayDownloadIcon,
+              handleMenuItemClick,
+              displayShareIcon,
+            }}
+          />
         ) : null}
 
         {/* Sticky Section */}
@@ -367,6 +400,7 @@ const Dashboard = () => {
                 isMoveMode,
                 parentId,
                 displayDownloadIcon,
+                displayShareIcon,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (

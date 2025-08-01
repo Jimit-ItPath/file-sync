@@ -107,7 +107,7 @@ const Profile = () => {
                   >
                     <ICONS.IconUser size={60} />
                   </Avatar>
-                  {preview && isHovering && (
+                  {userProfile?.profile && preview && isHovering ? (
                     <Tooltip
                       label="Remove avatar"
                       position="bottom"
@@ -131,7 +131,7 @@ const Profile = () => {
                         <ICONS.IconTrash size={16} />
                       </ActionIcon>
                     </Tooltip>
-                  )}
+                  ) : null}
                 </Box>
 
                 <Stack gap="xs">

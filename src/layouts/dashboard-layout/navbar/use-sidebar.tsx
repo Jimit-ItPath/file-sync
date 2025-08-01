@@ -14,7 +14,10 @@ import {
 import { decodeToken } from '../../../utils/helper';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import { generatePath, useNavigate } from 'react-router';
-import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
+import {
+  fetchRecentFiles,
+  initializeCloudStorageFromStorage,
+} from '../../../store/slices/cloudStorage.slice';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
@@ -179,6 +182,12 @@ const useSidebar = () => {
 
   const [getFiles] = useAsyncOperation(getCloudStorageFiles);
 
+  const getRecentFiles = useCallback(async () => {
+    await dispatch(fetchRecentFiles({}));
+  }, [dispatch]);
+
+  const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
       const res = await dispatch(
@@ -189,9 +198,10 @@ const useSidebar = () => {
           message: res?.message || 'Access removed successfully',
           color: 'green',
         });
-        await onInitialize({});
-        await getFiles({});
-        await fetchStorageData({});
+        onInitialize({});
+        onGetRecentFiles({});
+        getFiles({});
+        fetchStorageData({});
         navigate(PRIVATE_ROUTES.DASHBOARD.path);
         closeRemoveAccessModal();
       }

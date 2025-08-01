@@ -5,7 +5,6 @@ import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
 
 const MENU_ITEMS = [
-  // { id: 'share', label: 'Share', icon: ICONS.IconShare },
   { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
 ];
@@ -127,17 +126,21 @@ const FileTable: React.FC<FileTableProps> = ({
         label: '',
         width: '10%',
         render: (row: FileType) => {
-          const menuItems =
-            row.type === 'file'
-              ? [
-                  {
-                    id: 'download',
-                    label: 'Download',
-                    icon: ICONS.IconDownload,
-                  },
-                  ...MENU_ITEMS,
-                ]
-              : MENU_ITEMS;
+          const menuItems = [...MENU_ITEMS];
+          if (row.type === 'file') {
+            menuItems.push({
+              id: 'download',
+              label: 'Download',
+              icon: ICONS.IconDownload,
+            });
+          }
+          if (row.web_view_url) {
+            menuItems.push({
+              id: 'share',
+              label: 'Share',
+              icon: ICONS.IconShare,
+            });
+          }
 
           return (
             <Menu

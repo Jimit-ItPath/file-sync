@@ -47,12 +47,12 @@ type FileGridProps = {
   filesToMove: string[];
   parentId?: string | null;
   displayDownloadIcon?: boolean;
+  displayShareIcon?: boolean;
 };
 
 const MENU_ITEMS = [
   { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
   { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
-  { id: 'download', label: 'Download', icon: ICONS.IconDownload },
 ];
 
 const FileGrid: React.FC<FileGridProps> = ({
@@ -73,6 +73,7 @@ const FileGrid: React.FC<FileGridProps> = ({
   filesToMove = [],
   parentId = null,
   displayDownloadIcon = true,
+  displayShareIcon = true,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
@@ -83,11 +84,23 @@ const FileGrid: React.FC<FileGridProps> = ({
   const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
 
   const filteredMenuItems = useMemo(() => {
+    const menuItems = [...MENU_ITEMS];
     if (displayDownloadIcon) {
-      return MENU_ITEMS;
+      menuItems.push({
+        id: 'download',
+        label: 'Download',
+        icon: ICONS.IconDownload,
+      });
     }
-    return MENU_ITEMS.filter(item => item.id !== 'download');
-  }, [displayDownloadIcon]);
+    if (displayShareIcon) {
+      menuItems.push({
+        id: 'share',
+        label: 'Share',
+        icon: ICONS.IconShare,
+      });
+    }
+    return menuItems;
+  }, [displayDownloadIcon, displayShareIcon]);
 
   useEffect(() => {
     const updateColumnsCount = () => {

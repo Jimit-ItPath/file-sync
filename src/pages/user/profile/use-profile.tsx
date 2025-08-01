@@ -16,7 +16,10 @@ import {
   getConnectedAccount,
   removeAccountAccess,
 } from '../../../store/slices/auth.slice';
-import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
+import {
+  fetchRecentFiles,
+  initializeCloudStorageFromStorage,
+} from '../../../store/slices/cloudStorage.slice';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { NAME_REGEX, ROLES } from '../../../utils/constants';
@@ -224,6 +227,12 @@ const UseProfile = () => {
 
   const [getFiles] = useAsyncOperation(getCloudStorageFiles);
 
+  const getRecentFiles = useCallback(async () => {
+    await dispatch(fetchRecentFiles({}));
+  }, [dispatch]);
+
+  const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
       const res = await dispatch(
@@ -235,6 +244,7 @@ const UseProfile = () => {
           color: 'green',
         });
         await onInitialize({});
+        await onGetRecentFiles({});
         await getFiles({});
         closeRemoveAccessModal();
         await fetchStorageData({});

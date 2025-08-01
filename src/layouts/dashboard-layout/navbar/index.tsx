@@ -296,9 +296,8 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                             )}
                           </Stack>
                         </Group>
-                        {storageInfo &&
-                        storageInfo.total &&
-                        storageInfo.used ? (
+                        {storageInfo && storageInfo.total ? (
+                          // && storageInfo.used
                           <Box px={8} mt={4}>
                             <Progress
                               value={
@@ -345,41 +344,41 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
           </Box>
 
           {checkStorageDetails?.storage_details &&
-            checkStorageDetails?.storage_details?.total &&
-            checkStorageDetails?.storage_details?.used && (
-              <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
-                <Text size="sm" fw={500} mb={8}>
-                  Storage Usage
-                </Text>
-                <Progress
-                  value={
-                    (Number(checkStorageDetails?.storage_details?.used) /
-                      Number(checkStorageDetails?.storage_details?.total)) *
-                    100
-                  }
-                  size="xl"
-                  radius="xl"
-                  styles={theme => ({
-                    root: {
-                      backgroundColor: theme.colors.gray[2],
-                    },
-                    bar: {
-                      backgroundColor: theme.colors.blue[6],
-                    },
-                  })}
-                />
-                <Text size="xs" mt={8} c="dimmed">
-                  {formatBytes(
-                    Number(checkStorageDetails?.storage_details?.used)
-                  )}{' '}
-                  of{' '}
-                  {formatBytes(
-                    Number(checkStorageDetails?.storage_details?.total)
-                  )}{' '}
-                  used
-                </Text>
-              </Box>
-            )}
+          checkStorageDetails?.storage_details?.total ? (
+            // && checkStorageDetails?.storage_details?.used
+            <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
+              <Text size="sm" fw={500} mb={8}>
+                Storage Usage
+              </Text>
+              <Progress
+                value={
+                  (Number(checkStorageDetails?.storage_details?.used) /
+                    Number(checkStorageDetails?.storage_details?.total)) *
+                  100
+                }
+                size="xl"
+                radius="xl"
+                styles={theme => ({
+                  root: {
+                    backgroundColor: theme.colors.gray[2],
+                  },
+                  bar: {
+                    backgroundColor: theme.colors.blue[6],
+                  },
+                })}
+              />
+              <Text size="xs" mt={8} c="dimmed">
+                {formatBytes(
+                  Number(checkStorageDetails?.storage_details?.used)
+                )}{' '}
+                of{' '}
+                {formatBytes(
+                  Number(checkStorageDetails?.storage_details?.total)
+                )}{' '}
+                used
+              </Text>
+            </Box>
+          ) : null}
         </>
       ) : (
         <>

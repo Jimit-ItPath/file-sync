@@ -54,6 +54,7 @@ export type FileType = {
   fileExtension?: string | null;
   download_url?: string | null;
   parent_id: string | null;
+  web_view_url: string | null;
 };
 
 const folderSchema = z.object({
@@ -383,6 +384,7 @@ const useDashboard = () => {
       fileExtension: item.file_extension,
       preview: item.download_url,
       parent_id: item.parent_id,
+      web_view_url: item.web_view_url,
     }));
   }, [cloudStorage]);
 
@@ -407,6 +409,7 @@ const useDashboard = () => {
       fileExtension: item.file_extension,
       preview: item.download_url,
       parent_id: item.parent_id,
+      web_view_url: item.web_view_url,
     }));
   }, [recentFiles]);
 
@@ -483,6 +486,8 @@ const useDashboard = () => {
     } else if (actionId === 'delete') {
       setItemToDelete(row);
       setDeleteModalOpen(true);
+    } else if (actionId === 'share' && row.web_view_url) {
+      window.open(row.web_view_url, '_blank');
     }
   };
 
@@ -1102,6 +1107,11 @@ const useDashboard = () => {
     return checkFiles?.type === 'file' ? true : false;
   }, [selectedIds, files]);
 
+  const displayShareIcon = useMemo(() => {
+    const checkFiles = cloudStorage.find(file => selectedIds.includes(file.id));
+    return checkFiles?.web_view_url ? true : false;
+  }, [selectedIds, cloudStorage]);
+
   const handleMoveSelected = useCallback(() => {
     setIsMoveMode(true);
     const checkFiles = files.find(file => selectedIds.includes(file.id));
@@ -1288,6 +1298,8 @@ const useDashboard = () => {
     folderId,
     displayMoveIcon,
     displayDownloadIcon,
+    displayShareIcon,
+    location,
   };
 };
 

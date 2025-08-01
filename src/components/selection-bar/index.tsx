@@ -16,7 +16,7 @@ export const SelectionBar = ({
   onCancel,
   onDelete,
   onDownload,
-  onShare,
+  // onShare,
   onMove,
   onPaste,
   isMoveMode,
@@ -67,11 +67,11 @@ export const SelectionBar = ({
                 </ActionIcon>
               </Tooltip>
             )}
-            <Tooltip label="Share" fz="xs">
+            {/* <Tooltip label="Share" fz="xs">
               <ActionIcon style={iconStyle} onClick={onShare}>
                 <ICONS.IconShare size={18} />
               </ActionIcon>
-            </Tooltip>
+            </Tooltip> */}
             {displayMoveIcon && (
               <Tooltip label="Move" fz="xs">
                 <ActionIcon style={iconStyle} onClick={onMove}>

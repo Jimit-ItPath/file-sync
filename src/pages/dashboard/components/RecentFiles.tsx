@@ -1,7 +1,8 @@
-import { Group, Box, Text, Stack } from '@mantine/core';
-import { Card, Tooltip } from '../../../components';
+import { Group, Box, Text, Stack, ActionIcon } from '@mantine/core';
+import { Card, Menu, Tooltip } from '../../../components';
 import type { FileType } from '../use-dashboard';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ICONS } from '../../../assets/icons';
 
 const FILE_CARD_HEIGHT = 200;
 const MIN_CARD_WIDTH = 200;
@@ -10,9 +11,47 @@ interface RecentFileProps {
   recentFiles: FileType[];
   isXs: boolean;
   isSm: boolean;
+  getIndexById: (id: string) => number;
+  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setLastSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  selectedIds: string[];
+  handleSelect: (id: string, event: React.MouseEvent) => void;
+  handleUnselectAll: () => void;
+  isMoveMode: boolean;
+  allIds: string[];
+  lastSelectedIndex: number | null;
+  displayDownloadIcon: boolean;
+  handleMenuItemClick: (actionId: string, row: FileType) => void;
+  displayShareIcon: boolean;
 }
 
-const RecentFiles = ({ recentFiles, isXs, isSm }: RecentFileProps) => {
+const selectedCardStyle = {
+  border: '2px solid #3b82f6',
+  boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.1)',
+};
+
+const MENU_ITEMS = [
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
+  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
+];
+
+const RecentFiles = ({
+  recentFiles = [],
+  isXs,
+  isSm,
+  getIndexById = () => 0,
+  setSelectedIds = () => {},
+  setLastSelectedIndex = () => {},
+  selectedIds = [],
+  handleSelect = () => {},
+  handleUnselectAll = () => {},
+  isMoveMode = false,
+  allIds = [],
+  lastSelectedIndex = null,
+  displayDownloadIcon = true,
+  handleMenuItemClick = () => {},
+  displayShareIcon = true,
+}: RecentFileProps) => {
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
 
@@ -38,12 +77,72 @@ const RecentFiles = ({ recentFiles, isXs, isSm }: RecentFileProps) => {
     return () => window.removeEventListener('resize', updateVisibleFiles);
   }, [recentFiles]);
 
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (!selectedIds.length) return;
+
+      const currentIdx =
+        lastSelectedIndex ?? getIndexById(selectedIds[selectedIds.length - 1]);
+      let nextIdx = currentIdx;
+
+      if (event.shiftKey) {
+        if (event.key === 'ArrowDown') {
+          nextIdx = Math.min(
+            Number(currentIdx) + columnsCount,
+            allIds.length - 1
+          );
+        } else if (event.key === 'ArrowUp') {
+          nextIdx = Math.max(Number(currentIdx) - columnsCount, 0);
+        } else if (event.key === 'ArrowRight') {
+          nextIdx = Math.min(Number(currentIdx) + 1, allIds.length - 1);
+        } else if (event.key === 'ArrowLeft') {
+          nextIdx = Math.max(Number(currentIdx) - 1, 0);
+        }
+        if (nextIdx !== currentIdx) {
+          const rangeStart =
+            selectedIds.length === 1
+              ? currentIdx
+              : getIndexById(selectedIds[0]);
+          const start = Math.min(Number(rangeStart), Number(nextIdx));
+          const end = Math.max(Number(rangeStart), Number(nextIdx));
+          const rangeIds = allIds.slice(start, end + 1);
+          setSelectedIds(rangeIds);
+          setLastSelectedIndex(Number(nextIdx));
+        }
+      }
+    },
+    [selectedIds, lastSelectedIndex, allIds, getIndexById, columnsCount]
+  );
+
+  const handleStackClick = (_: React.MouseEvent<HTMLDivElement>) => {
+    handleUnselectAll();
+  };
+
+  const filteredMenuItems = useMemo(() => {
+    const menuItems = [...MENU_ITEMS];
+    if (displayDownloadIcon) {
+      menuItems.push({
+        id: 'download',
+        label: 'Download',
+        icon: ICONS.IconDownload,
+      });
+    }
+    if (displayShareIcon) {
+      menuItems.push({
+        id: 'share',
+        label: 'Share',
+        icon: ICONS.IconShare,
+      });
+    }
+    return menuItems;
+  }, [displayDownloadIcon, displayShareIcon]);
+
   return (
     <Stack
       tabIndex={0}
-      // onKeyDown={handleKeyDown}
+      onKeyDown={handleKeyDown}
       style={{ outline: 'none' }}
-      // onClick={handleStackClick}
+      onClick={handleStackClick}
       ref={stackRef}
       mt={10}
     >
@@ -65,7 +164,6 @@ const RecentFiles = ({ recentFiles, isXs, isSm }: RecentFileProps) => {
           style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-            // gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_CARD_WIDTH}px, 1fr))`,
             gap: '20px',
           }}
           mt={20}
@@ -84,21 +182,21 @@ const RecentFiles = ({ recentFiles, isXs, isSm }: RecentFileProps) => {
                 background: '#f6faff',
                 border: '1px solid #e5e7eb',
                 height: FILE_CARD_HEIGHT,
-                // ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
+                ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
                 transition: 'box-shadow 0.2s ease',
                 userSelect: 'none',
-                // ...(isMoveMode
-                //   ? {
-                //       opacity: 0.5,
-                //       cursor: 'not-allowed',
-                //     }
-                //   : {}),
+                ...(isMoveMode
+                  ? {
+                      opacity: 0.5,
+                      cursor: 'not-allowed',
+                    }
+                  : {}),
               }}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                // if (!isMoveMode) {
-                //   handleSelect(file.id, e);
-                // }
+                if (!isMoveMode) {
+                  handleSelect(file.id, e);
+                }
               }}
               onDoubleClick={(e: any) => {
                 e.stopPropagation();
@@ -127,18 +225,27 @@ const RecentFiles = ({ recentFiles, isXs, isSm }: RecentFileProps) => {
                     </Text>
                   </Tooltip>
                 </Group>
-                {/* <Menu
-              items={MENU_ITEMS}
-              onItemClick={actionId => handleMenuItemClick(actionId, file)}
-            >
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                style={{ flexShrink: 0 }}
-              >
-                <ICONS.IconDotsVertical size={18} />
-              </ActionIcon>
-            </Menu> */}
+                <Menu
+                  items={filteredMenuItems}
+                  onItemClick={actionId => handleMenuItemClick(actionId, file)}
+                  width={120}
+                  styles={{
+                    dropdown: {
+                      padding: 0,
+                    },
+                    item: {
+                      fontSize: 13,
+                    },
+                  }}
+                >
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    style={{ flexShrink: 0 }}
+                  >
+                    <ICONS.IconDotsVertical size={16} />
+                  </ActionIcon>
+                </Menu>
               </Group>
               <Box
                 style={{

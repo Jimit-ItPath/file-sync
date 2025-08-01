@@ -25,6 +25,7 @@ export type CloudStorageType = {
   download_url: null | string;
   createdAt: string;
   updatedAt: string;
+  web_view_url: null | string;
 };
 
 type CloudStorageState = {
