@@ -12,6 +12,7 @@ import {
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { ICONS } from '../../../assets/icons';
+import { Tooltip } from '../../tooltip';
 
 export interface SelectOption {
   value: string;
@@ -275,9 +276,11 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
     }
 
     return (
+      <Tooltip label={selectedLabels[0]?.label} fz={'xs'}>
       <Text size={size} truncate style={{ color: '#000' }}>
         {selectedLabels[0]?.label}
       </Text>
+      </Tooltip>
     );
   };
 
@@ -338,13 +341,13 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
       style={{ position: 'relative' }}
     >
       {label && (
-        <Input.Label required={required} size={size} mb={4}>
+        <Input.Label required={required} size={size} mb={2}>
           {label}
         </Input.Label>
       )}
 
       {description && (
-        <Input.Description size={size} mb={4}>
+        <Input.Description size={size} mb={2}>
           {description}
         </Input.Description>
       )}
@@ -410,6 +413,8 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
             right: 0,
             pointerEvents: 'auto',
           }}
+          // w={120}
+          w={'80%'}
         >
           {renderSelectedValues()}
         </Box>

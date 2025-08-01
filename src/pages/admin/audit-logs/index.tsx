@@ -43,7 +43,7 @@ const AdminAuditLogs = () => {
         <Group justify={isMd ? 'flex-start' : 'flex-end'} mt={16} gap="md">
           {auditLogs?.length ? (
             <Button
-              mt={27}
+              mt={26}
               onClick={handleExportLogs}
               disabled={downloadLogsLoading}
             >

@@ -11,6 +11,7 @@ import {
   ActionIcon,
   Switch,
   Input as MantineInput,
+  Image,
 } from '@mantine/core';
 import { Button, Form, Input, Modal, Tooltip } from '../../../components';
 import useProfile from './use-profile';
@@ -20,6 +21,9 @@ import { LoaderOverlay } from '../../../components/loader';
 import useSidebar from '../../../layouts/dashboard-layout/navbar/use-sidebar';
 import AccountTypeSelector from '../../../layouts/dashboard-layout/navbar/AccountTypeSelector';
 import { ROLES } from '../../../utils/constants';
+import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 
 const Profile = () => {
   const {
@@ -298,19 +302,43 @@ const Profile = () => {
 
                     const accountConfigs: Record<string, AccountConfig> = {
                       google_drive: {
-                        icon: <ICONS.IconBrandGoogle size={24} />,
+                        // icon: <ICONS.IconBrandGoogle size={24} />,
+                        icon: (
+                          <Image
+                            src={GoogleDriveIcon}
+                            alt="Google Drive"
+                            w={20}
+                            h={20}
+                          />
+                        ),
                         color: 'red',
                         label: 'Google Drive',
                         bg: 'rgba(234, 67, 53, 0.1)',
                       },
                       dropbox: {
-                        icon: <ICONS.IconDroplets size={24} />,
+                        // icon: <ICONS.IconDroplets size={24} />,
+                        icon: (
+                          <Image
+                            src={DropboxIcon}
+                            alt="Dropbox"
+                            w={20}
+                            h={20}
+                          />
+                        ),
                         color: 'blue',
                         label: 'Dropbox',
                         bg: 'rgba(0, 97, 255, 0.1)',
                       },
                       onedrive: {
-                        icon: <ICONS.IconBrandOnedrive size={24} />,
+                        // icon: <ICONS.IconBrandOnedrive size={24} />,
+                        icon: (
+                          <Image
+                            src={OneDriveIcon}
+                            alt="OneDrive"
+                            w={20}
+                            h={20}
+                          />
+                        ),
                         color: 'indigo',
                         label: 'OneDrive',
                         bg: 'rgba(0, 120, 215, 0.1)',
