@@ -24,6 +24,7 @@ import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { resetUser } from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
+import { ROLES } from '../../utils/constants';
 
 const DashboardLayout = () => {
   usePageData();
@@ -97,7 +98,11 @@ const DashboardLayout = () => {
 
   const onLogoutConfirm = () => {
     logout();
-    navigate(AUTH_ROUTES.LOGIN.url);
+    if (userProfile?.role === ROLES.ADMIN) {
+      navigate(AUTH_ROUTES.ADMIN_LOGIN.url);
+    } else {
+      navigate(AUTH_ROUTES.LOGIN.url);
+    }
     dispatch(resetUser());
     dispatch(resetUserProfile());
     logoutConfirmHandler.close();

@@ -81,7 +81,11 @@ export default function Login() {
                       Don't have an account?{' '}
                       <Link
                         to={AUTH_ROUTES.REGISTER.url}
-                        style={{ textDecoration: 'none', color: '#0284c7', fontWeight: 500 }}
+                        style={{
+                          textDecoration: 'none',
+                          color: '#0284c7',
+                          fontWeight: 500,
+                        }}
                       >
                         Sign up
                       </Link>

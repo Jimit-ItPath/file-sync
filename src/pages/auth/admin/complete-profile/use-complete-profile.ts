@@ -18,9 +18,10 @@ import { updateUser } from '../../../../store/slices/auth.slice';
 const completeProfileSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
   password: z
     .string()
+    .min(1, 'Password is required')
     .min(8, 'Password must be at least 8 characters')
     .refine(val => passwordRequirements.every(req => req.re.test(val)), {
       message:
@@ -127,7 +128,7 @@ const useCompleteProfile = () => {
       {
         id: 'first_name',
         name: 'first_name',
-        placeholder: 'Enter First Name',
+        placeholder: 'Enter first name',
         type: 'text-input',
         label: 'First Name',
         isRequired: true,
@@ -136,7 +137,7 @@ const useCompleteProfile = () => {
       {
         id: 'last_name',
         name: 'last_name',
-        placeholder: 'Enter Last Name',
+        placeholder: 'Enter last name',
         type: 'text-input',
         label: 'Last Name',
         isRequired: true,
@@ -145,7 +146,7 @@ const useCompleteProfile = () => {
       {
         id: 'email',
         name: 'email',
-        placeholder: 'Enter Email',
+        placeholder: 'Enter email',
         type: 'email-input',
         label: 'Email',
         isRequired: true,
@@ -155,7 +156,7 @@ const useCompleteProfile = () => {
       {
         id: 'password',
         name: 'password',
-        placeholder: 'Enter Password',
+        placeholder: 'Enter password',
         label: 'Password',
         type: 'password-input',
         showIcon: true,

@@ -131,7 +131,11 @@ const Register = () => {
                       Already have an account?{' '}
                       <Link
                         to={AUTH_ROUTES.LOGIN.url}
-                        style={{ textDecoration: 'none', color: '#0284c7', fontWeight: 500 }}
+                        style={{
+                          textDecoration: 'none',
+                          color: '#0284c7',
+                          fontWeight: 500,
+                        }}
                       >
                         Log in
                       </Link>
@@ -144,7 +148,11 @@ const Register = () => {
                       Already have an account?{' '}
                       <Link
                         to={AUTH_ROUTES.LOGIN.url}
-                        style={{ textDecoration: 'none', color: '#0284c7', fontWeight: 500 }}
+                        style={{
+                          textDecoration: 'none',
+                          color: '#0284c7',
+                          fontWeight: 500,
+                        }}
                       >
                         Log in
                       </Link>

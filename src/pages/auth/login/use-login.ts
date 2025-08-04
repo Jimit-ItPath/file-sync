@@ -49,6 +49,7 @@ const useLogin = () => {
       data: {
         email: data.email,
         password: data.password,
+        role: ROLES.USER,
       },
     });
     if (response?.data?.success || response?.status === 200) {

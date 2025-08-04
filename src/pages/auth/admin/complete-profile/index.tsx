@@ -114,7 +114,9 @@ const CompleteProfile = () => {
                       type="submit"
                       fullWidth
                       loading={Boolean(isLoading)}
-                      disabled={Boolean(isLoading)}
+                      disabled={
+                        Boolean(isLoading) || !methods.formState.isValid
+                      }
                       size="md"
                       radius="md"
                       style={{
