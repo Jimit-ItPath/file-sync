@@ -24,6 +24,7 @@ import { ROLES } from '../../../utils/constants';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
+import ConnectAccountDescription from '../../dashboard/ConnectAccountDescription';
 
 const Profile = () => {
   const {
@@ -214,18 +215,29 @@ const Profile = () => {
         {/* Smart File Distribution Card */}
         {user?.user?.role === ROLES.USER ? (
           <Card radius="lg" p="xl" shadow="sm" withBorder>
-            <Stack gap="md">
+            <Stack gap="lg">
               <Box>
-                <Title order={4} fw={600}>
-                  File Organization Preference
+                <Title order={4} fw={600} fz={isXs ? 18 : 22}>
+                  Smart File Distribution (SFD)
                 </Title>
-                <Text size="sm" c="dimmed">
-                  Enable Smart File Distribution to automatically organize your
-                  files based on their types and content.
+                <Text size="sm" c="dimmed" lh={1.6}>
+                  Smart File Distribution helps you automatically route uploaded
+                  files or folders to your preferred cloud storage platforms
+                  (Google Drive, Dropbox, or OneDrive) based on file types,
+                  content, or your selected preferences.
+                </Text>
+                <Text size="sm" c="dimmed" mt={8}>
+                  For example, PDFs can go to Google Drive, Images to Dropbox,
+                  and Videos to OneDrive — making your file organization
+                  seamless and efficient.
+                </Text>
+                <Text fz={13} c="gray" mt={8}>
+                  You can turn this off or choose to be asked each time during
+                  file upload.
                 </Text>
               </Box>
 
-              <Group mt={20}>
+              <Group mt={12} wrap="wrap" align="center">
                 <MantineInput.Label
                   htmlFor="sfd-switch"
                   w="auto"
@@ -234,6 +246,7 @@ const Profile = () => {
                 >
                   Ask Every Time
                 </MantineInput.Label>
+
                 <Switch
                   id="sfd-switch"
                   checked={userProfile?.is_sfd_enabled}
@@ -241,7 +254,9 @@ const Profile = () => {
                     handleSFDToggle(event.currentTarget.checked)
                   }
                   size="md"
+                  color="cyan"
                 />
+
                 <MantineInput.Label
                   htmlFor="sfd-switch"
                   w="auto"
@@ -511,6 +526,7 @@ const Profile = () => {
       >
         <Form onSubmit={handleConnectAccount} methods={connectAccountMethods}>
           <Stack>
+            <ConnectAccountDescription />
             {connectAccountFormData?.map(
               ({ id, name, placeholder, type, label, error, isRequired }) => (
                 <Input

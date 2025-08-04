@@ -34,6 +34,7 @@ import useResponsive from '../../hooks/use-responsive';
 import NoContentAvailable from '../../assets/images/no-data.jpg';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import AccountTypeSelector from '../../layouts/dashboard-layout/navbar/AccountTypeSelector';
+import ConnectAccountDescription from './ConnectAccountDescription';
 
 const Dashboard = () => {
   const {
@@ -170,6 +171,7 @@ const Dashboard = () => {
         >
           <Form onSubmit={handleConnectAccount} methods={methods}>
             <Stack>
+              <ConnectAccountDescription />
               {connectAccountFormData?.map(
                 ({ id, name, placeholder, type, label, error, isRequired }) => (
                   <Input

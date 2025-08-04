@@ -10,6 +10,7 @@ import AccountTypeSelector from './AccountTypeSelector';
 import { LoaderOverlay } from '../../../components/loader';
 import { formatBytes, removeLocalStorage } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
+import ConnectAccountDescription from '../../../pages/dashboard/ConnectAccountDescription';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -507,6 +508,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
       >
         <Form onSubmit={handleConnectAccount} methods={methods}>
           <Stack>
+            <ConnectAccountDescription />
             {connectAccountFormData?.map(
               ({ id, name, placeholder, type, label, error, isRequired }) => (
                 <Input
