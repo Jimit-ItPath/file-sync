@@ -23,15 +23,15 @@ export type UserType = {
 };
 
 export type AuditLogType = {
-  id: string;
-  user_id: string;
   action_type: string;
-  object_type: string;
-  object_name: string;
-  success: boolean;
-  error_message: string | null;
   createdAt: string;
+  error_message: string | null;
+  id: string;
+  name: string;
+  success: boolean;
+  type: string;
   updatedAt: string;
+  user_id: string;
 };
 
 type AdminUserState = {

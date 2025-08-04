@@ -181,19 +181,19 @@ const useAuditLogs = () => {
         ),
       },
       {
-        key: 'object_type',
-        label: 'Object Type',
+        key: 'type',
+        label: 'Type',
         render: (row: AuditLogType) => (
           <Group gap={8} wrap="nowrap">
             <Text size="sm" truncate>
-              {row.object_type}
+              {row.type}
             </Text>
           </Group>
         ),
       },
       {
-        key: 'object_name',
-        label: 'Object Name',
+        key: 'name',
+        label: 'Name',
         width: '30%',
         render: (row: AuditLogType) => (
           <Group
@@ -202,13 +202,13 @@ const useAuditLogs = () => {
             maw={'100%'}
             style={{ overflow: 'hidden' }}
           >
-            <Tooltip label={row.object_name} fz={'xs'}>
+            <Tooltip label={row.name} fz={'xs'}>
               <Text
                 fz={'sm'}
                 truncate
-                style={{ maxWidth: 'calc(100% - 40px)' }}
+                style={{ maxWidth: 'calc(100% - 100px)' }}
               >
-                {row.object_name}
+                {row.name}
               </Text>
             </Tooltip>
           </Group>
@@ -245,7 +245,8 @@ const useAuditLogs = () => {
             gap={8}
             wrap="nowrap"
             maw={'100%'}
-            style={{ overflow: 'hidden' }}
+            style={{ maxWidth: 'calc(100% - 100px)' }}
+            // style={{ overflow: 'hidden' }}
           >
             <Text fz={'sm'} truncate>
               {row.error_message || '--'}

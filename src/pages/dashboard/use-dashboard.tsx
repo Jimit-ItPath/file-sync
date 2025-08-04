@@ -40,6 +40,8 @@ import { useLocation, useNavigate, useParams } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
 import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
+import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
+import { PRIVATE_ROUTES } from '../../routing/routes';
 
 export type FileType = {
   id: string;
@@ -104,6 +106,10 @@ const useDashboard = () => {
   const uploadsInProgressRef = useRef(false);
   const initializedRef = useRef(false);
   const hasMountedOnce = useRef(false);
+  const hasCalledPostConnectAPIs = useRef(false);
+  const prevConnectedAccountsLength = useRef(0);
+  const hasCalledInitializeAPI = useRef(false);
+  const hasCalledRecentFilesAPI = useRef(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'files'>('folder');
@@ -137,6 +143,7 @@ const useDashboard = () => {
   } = useAppSelector(state => state.cloudStorage);
   const { userProfile } = useAppSelector(state => state.user);
   const { checkStorageDetails } = useAppSelector(state => state.auth);
+  const { connectedAccounts } = useSidebar();
   const dispatch = useAppDispatch();
 
   const folderId = getLocalStorage(folderIdKey);
@@ -263,15 +270,60 @@ const useDashboard = () => {
   const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
 
   useEffect(() => {
-    if (!folderId || folderId === null) {
+    if (checkLocation && !connectedAccounts?.length) {
+      navigate(PRIVATE_ROUTES.DASHBOARD.url);
+    }
+  }, [checkLocation, navigate, connectedAccounts]);
+
+  useEffect(() => {
+    if (
+      (!folderId || folderId === null) &&
+      connectedAccounts?.length &&
+      !hasCalledRecentFilesAPI.current
+    ) {
       onGetRecentFiles({});
+      hasCalledRecentFilesAPI.current = true;
     }
   }, [folderId]);
 
   useEffect(() => {
-    if (!initializedRef.current) {
+    const currentLength = connectedAccounts?.length || 0;
+    if (
+      currentLength > 0 &&
+      currentLength > prevConnectedAccountsLength.current &&
+      !hasCalledPostConnectAPIs.current &&
+      !hasCalledInitializeAPI.current
+    ) {
+      if (
+        !hasCalledRecentFilesAPI.current &&
+        (!folderId || folderId === null)
+      ) {
+        onGetRecentFiles({});
+        hasCalledRecentFilesAPI.current = true;
+      }
+      onInitialize({});
+      hasCalledPostConnectAPIs.current = true;
+      hasCalledInitializeAPI.current = true;
+    }
+
+    prevConnectedAccountsLength.current = currentLength;
+
+    if (currentLength === 0) {
+      hasCalledPostConnectAPIs.current = false;
+      hasCalledInitializeAPI.current = false;
+      hasCalledRecentFilesAPI.current = false;
+    }
+  }, [connectedAccounts?.length, onGetRecentFiles, onInitialize]);
+
+  useEffect(() => {
+    if (
+      !initializedRef.current &&
+      connectedAccounts?.length &&
+      !hasCalledInitializeAPI.current
+    ) {
       onInitialize({});
       initializedRef.current = true;
+      hasCalledInitializeAPI.current = true;
     }
 
     return () => {
@@ -284,7 +336,11 @@ const useDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!hasMountedOnce.current || !checkLocation) {
+    if (
+      !hasMountedOnce.current ||
+      !checkLocation ||
+      !connectedAccounts?.length
+    ) {
       hasMountedOnce.current = true;
       return;
     }
@@ -1318,6 +1374,7 @@ const useDashboard = () => {
     displayDownloadIcon,
     displayShareIcon,
     location,
+    connectedAccounts,
   };
 };
 

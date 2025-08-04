@@ -1,6 +1,7 @@
 import {
   Autocomplete,
   Box,
+  Container,
   Group,
   rem,
   Select,
@@ -17,19 +18,22 @@ import {
   Dropzone,
   Form,
   Image,
+  Input,
   Modal,
   SelectionBar,
 } from '../../components';
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
 import UploadProgress from './components/UploadProgress';
-import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
 import { LoaderOverlay } from '../../components/loader';
 import { Controller } from 'react-hook-form';
 import { formatFileSize } from '../../utils/helper';
 import RecentFiles from './components/RecentFiles';
 import useResponsive from '../../hooks/use-responsive';
+import NoContentAvailable from '../../assets/images/no-data.jpg';
+import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
+import AccountTypeSelector from '../../layouts/dashboard-layout/navbar/AccountTypeSelector';
 
 const Dashboard = () => {
   const {
@@ -124,11 +128,96 @@ const Dashboard = () => {
     displayDownloadIcon,
     location,
     displayShareIcon,
+    connectedAccounts,
   } = useDashboard();
-  const { connectedAccounts } = useSidebar();
+  const {
+    openAccountModal,
+    isConnectModalOpen,
+    closeAccountModal,
+    handleConnectAccount,
+    methods,
+    connectAccountFormData,
+    connectAccountLoading,
+  } = useSidebar();
   const { isSm, isXs, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
+
+  if (!connectedAccounts?.length) {
+    return (
+      <>
+        <Container p={32} ta={'center'}>
+          <Image
+            src={NoContentAvailable}
+            alt="No content available"
+            style={{ margin: '0 auto' }}
+          />
+          <Text size="xl" fw={500} mt="md">
+            You don't have any cloud storage connected
+          </Text>
+          <Text c="dimmed" mt="xs" mb="xl">
+            Please add your first cloud account (e.g. Google Drive, Dropbox or
+            Microsoft OneDrive) to get started!
+          </Text>
+          <Button onClick={openAccountModal} size="md">
+            Connect Account
+          </Button>
+        </Container>
+        <Modal
+          opened={isConnectModalOpen}
+          onClose={closeAccountModal}
+          title="Connect Cloud Account"
+        >
+          <Form onSubmit={handleConnectAccount} methods={methods}>
+            <Stack>
+              {connectAccountFormData?.map(
+                ({ id, name, placeholder, type, label, error, isRequired }) => (
+                  <Input
+                    key={id}
+                    name={name}
+                    label={label}
+                    placeholder={placeholder}
+                    type={type}
+                    error={error}
+                    radius="md"
+                    withAsterisk={isRequired}
+                  />
+                )
+              )}
+
+              <AccountTypeSelector
+                value={methods.watch('accountType')}
+                onChange={val =>
+                  methods.setValue(
+                    'accountType',
+                    val as 'google_drive' | 'dropbox' | 'onedrive'
+                  )
+                }
+                error={methods.formState.errors.accountType?.message}
+              />
+
+              <Button
+                type="submit"
+                maw="fit-content"
+                loading={Boolean(connectAccountLoading)}
+                disabled={Boolean(connectAccountLoading)}
+                radius="md"
+                style={{
+                  fontWeight: 500,
+                  fontSize: 16,
+                  background: '#0284c7',
+                  color: '#fff',
+                  marginTop: 8,
+                }}
+              >
+                Connect Account
+              </Button>
+            </Stack>
+          </Form>
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <Box>
