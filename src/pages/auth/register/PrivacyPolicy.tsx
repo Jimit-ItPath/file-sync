@@ -1,7 +1,7 @@
 import { Box, Grid, Paper, Stack, Title, Text, Group } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import useResponsive from '../../../hooks/use-responsive';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
 
 const PrivacyPolicy = () => {
@@ -99,7 +99,7 @@ const PrivacyPolicy = () => {
                   indicates acceptance of changes.
                 </Text>
 
-                <Group fz="sm" c="dimmed" align="center" lh={1}>
+                {/* <Group fz="sm" c="dimmed" align="center" lh={1}>
                   <Link
                     to={AUTH_ROUTES.REGISTER.url}
                     style={{
@@ -113,7 +113,7 @@ const PrivacyPolicy = () => {
                   >
                     <ICONS.IconArrowLeft size={18} /> Go Back
                   </Link>
-                </Group>
+                </Group> */}
               </Stack>
             </Box>
           </Paper>

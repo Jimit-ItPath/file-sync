@@ -117,7 +117,7 @@ const TermsAndConditions = () => {
                   .
                 </Text>
 
-                <Group fz="sm" c="dimmed" align="center" lh={1}>
+                {/* <Group fz="sm" c="dimmed" align="center" lh={1}>
                   <Link
                     to={AUTH_ROUTES.REGISTER.url}
                     style={{
@@ -131,7 +131,7 @@ const TermsAndConditions = () => {
                   >
                     <ICONS.IconArrowLeft size={18} /> Go Back
                   </Link>
-                </Group>
+                </Group> */}
               </Stack>
             </Box>
           </Paper>

@@ -2,7 +2,6 @@ import { Group, Stack, Checkbox } from '@mantine/core';
 import { Input } from '../../../components';
 import { useMemo } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
 
 type FormFieldsProps = {
@@ -99,16 +98,22 @@ export const FormFields: React.FC<FormFieldsProps> = ({
         <Checkbox
           {...register('termsAccepted')}
           label={
-            <>
+            <Group>
               I agree to the{' '}
-              <Link
-                to={AUTH_ROUTES.TERMS_OF_SERVICE.url}
+              <Stack
+                // <Link
+                // to={AUTH_ROUTES.TERMS_OF_SERVICE.url}
                 style={{ color: '#0284c7', textDecoration: 'none' }}
-                onClick={e => e.stopPropagation()}
+                onClick={e => {
+                  e.stopPropagation();
+                  window.open(AUTH_ROUTES.TERMS_OF_SERVICE.url, '_blank');
+                }}
+                ml={-10}
               >
                 Terms and Conditions
-              </Link>
-            </>
+                {/* </Link> */}
+              </Stack>
+            </Group>
           }
           error={
             errors?.[termsAcceptedField.name]?.message ||

@@ -7,6 +7,8 @@ import useAsyncOperation from '../../../hooks/use-async-operation';
 import { notifications } from '@mantine/notifications';
 import { NAME_REGEX, passwordRequirements } from '../../../utils/constants';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { AUTH_ROUTES } from '../../../routing/routes';
+import { useNavigate } from 'react-router';
 
 // Define Zod schema for form validation
 const registerSchema = z.object({
@@ -47,6 +49,8 @@ const useRegister = () => {
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [captchaToken, setCaptchaToken] = useState<string>('');
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const methods = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -108,6 +112,7 @@ const useRegister = () => {
       });
 
       if (response?.data?.success || response?.status === 201) {
+        setRegistrationSuccess(true);
         notifications.show({
           message: response?.data?.message || 'Your account has been created!',
           color: 'green',
@@ -118,6 +123,11 @@ const useRegister = () => {
       }
     }
   );
+
+  const backToRegistrationForm = useCallback(() => {
+    setRegistrationSuccess(false);
+    navigate(AUTH_ROUTES.LOGIN.url);
+  }, []);
 
   const getRegisterFormData = useCallback(
     () => [
@@ -195,6 +205,8 @@ const useRegister = () => {
     onCaptchaChange,
     toggleRegisterForm,
     showRegisterForm,
+    registrationSuccess,
+    backToRegistrationForm,
   };
 };
 
