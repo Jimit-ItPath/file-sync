@@ -49,6 +49,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     // removeToken();
     localStorage.removeItem('token');
+    localStorage.clear();
     start();
     setToken(null);
     setUser({});

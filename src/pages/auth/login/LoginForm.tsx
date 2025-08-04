@@ -15,13 +15,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
   return (
     <Form methods={methods} onSubmit={handleLoginSubmit}>
       <Stack gap={16}>
-        <Button
-          onClick={onBack}
-          w={'fit-content'}
-          leftSection={<ICONS.IconArrowLeft size={18} />}
-        >
-          Back
-        </Button>
+        <Group fz="sm" c="dimmed" align="center" lh={1}>
+          <Link
+            to={AUTH_ROUTES.LOGIN.url}
+            style={{
+              textDecoration: 'none',
+              color: '#0284c7',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+            onClick={onBack}
+          >
+            <ICONS.IconArrowLeft size={18} /> Back
+          </Link>
+        </Group>
         {loginFormData.map(
           ({ id, label, placeholder, type, error, name, isRequired }) => (
             <Input

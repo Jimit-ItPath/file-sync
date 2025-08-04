@@ -24,7 +24,7 @@ import { ActionIcon, Group, Text, Tooltip } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 
 const inviteUserSchema = z.object({
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
 });
 
 type InviteUserFormData = z.infer<typeof inviteUserSchema>;

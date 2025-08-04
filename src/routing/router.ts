@@ -33,6 +33,8 @@ import CompleteProfile from '../pages/auth/admin/complete-profile';
 import { ROLES } from '../utils/constants';
 import React from 'react';
 import AdminAuditLogs from '../pages/admin/audit-logs';
+import PrivacyPolicy from '../pages/auth/register/PrivacyPolicy';
+import TermsAndConditions from '../pages/auth/register/TermsAndConditions';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -102,6 +104,8 @@ export const router = createBrowserRouter([
       { ...AUTH_ROUTES.OAUTH_CALLBACK, Component: OAuthCallback },
       { ...AUTH_ROUTES.ADMIN_LOGIN, Component: AdminLogin },
       { ...AUTH_ROUTES.COMPLETE_PROFILE, Component: CompleteProfile },
+      { ...AUTH_ROUTES.PRIVACY_POLICY, Component: PrivacyPolicy },
+      { ...AUTH_ROUTES.TERMS_OF_SERVICE, Component: TermsAndConditions },
     ],
   },
   {

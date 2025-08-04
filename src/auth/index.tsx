@@ -46,7 +46,7 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
 
   // const token = getLocalStorage(LOCAL_STORAGE_KEY)
   const token = localStorage.getItem('token');
-  const cachedRedirectUrl = getLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY);
+  // const cachedRedirectUrl = getLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY);
   const isAuthenticated = isTokenActive(token);
 
   let redirectUrl = AUTH_ROUTES.LOGIN.url;
@@ -55,6 +55,8 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
   if (isAuthenticated) {
     const decodedToken: any = decodeToken(token);
     // role = decodedToken?.role || '';
+    const roleKey = `${CACHED_URL_LOCAL_STORAGE_KEY}-${role}`;
+    const cachedRedirectUrl = getLocalStorage(roleKey);
     role = decodedToken?.user?.role || '';
     redirectUrl = role
       ? cachedRedirectUrl || REDIRECTION[role]
@@ -68,7 +70,21 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
   if (isCacheRedirection && !isAuthenticated) {
     const { pathname, search } = window?.location || {};
     const cachedRedirectUrl = pathname + search;
-    setLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY, cachedRedirectUrl);
+    // setLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY, cachedRedirectUrl);
+    // Try to extract role from token (if expired token is still present)
+    const maybeToken = localStorage.getItem('token');
+    let tempRole = '';
+    if (maybeToken) {
+      try {
+        const decoded: any = decodeToken(maybeToken);
+        tempRole = decoded?.user?.role || '';
+      } catch {
+        tempRole = '';
+      }
+    }
+
+    const roleKey = `${CACHED_URL_LOCAL_STORAGE_KEY}-${tempRole || 'unknown'}`;
+    setLocalStorage(roleKey, cachedRedirectUrl);
   }
 
   return {

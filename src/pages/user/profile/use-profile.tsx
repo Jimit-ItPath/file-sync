@@ -41,7 +41,7 @@ const profileSchema = z.object({
       NAME_REGEX,
       'Last name must contain only letters, spaces, hyphens, and apostrophes'
     ),
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
   avatar: z.union([z.string(), z.instanceof(File)]).optional(),
 });
 
@@ -282,7 +282,7 @@ const UseProfile = () => {
       {
         id: 'firstName',
         name: 'firstName',
-        placeholder: 'Enter your first name',
+        placeholder: 'Enter first name',
         type: 'text',
         label: 'First name',
         isRequired: true,
@@ -291,7 +291,7 @@ const UseProfile = () => {
       {
         id: 'lastName',
         name: 'lastName',
-        placeholder: 'Enter your last name',
+        placeholder: 'Enter last name',
         type: 'text',
         label: 'Last name',
         isRequired: true,
@@ -300,7 +300,7 @@ const UseProfile = () => {
       {
         id: 'email',
         name: 'email',
-        placeholder: 'Enter your email',
+        placeholder: 'Enter email',
         type: 'email',
         label: 'Email address',
         isRequired: true,

@@ -54,6 +54,16 @@ export const AUTH_ROUTES = {
     path: '/complete-profile',
     url: '/complete-profile',
   },
+  PRIVACY_POLICY: {
+    title: 'Privacy Policy',
+    path: '/privacy-policy',
+    url: '/privacy-policy',
+  },
+  TERMS_OF_SERVICE: {
+    title: 'Terms of Service',
+    path: '/terms-of-service',
+    url: '/terms-of-service',
+  },
 };
 
 const DASHBOARD_PATH = '/dashboard';

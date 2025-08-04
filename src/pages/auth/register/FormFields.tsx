@@ -1,7 +1,9 @@
-import { Group, Stack } from '@mantine/core';
+import { Group, Stack, Checkbox } from '@mantine/core';
 import { Input } from '../../../components';
 import { useMemo } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { Link } from 'react-router';
+import { AUTH_ROUTES } from '../../../routing/routes';
 
 type FormFieldsProps = {
   methods: any;
@@ -18,6 +20,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
 }) => {
   const {
     formState: { errors },
+    register,
   } = methods;
 
   const firstNameField = useMemo(
@@ -28,10 +31,22 @@ export const FormFields: React.FC<FormFieldsProps> = ({
     () => registerFormData.find(f => f.name === 'lastName'),
     []
   );
+  const termsAcceptedField = useMemo(
+    () => registerFormData.find(f => f.name === 'termsAccepted'),
+    []
+  );
+  const newsletterSubscribedField = useMemo(
+    () => registerFormData.find(f => f.name === 'newsletterSubscribed'),
+    []
+  );
   const otherFields = useMemo(
     () =>
       registerFormData.filter(
-        f => f.name !== 'firstName' && f.name !== 'lastName'
+        f =>
+          f.name !== 'firstName' &&
+          f.name !== 'lastName' &&
+          f.name !== 'termsAccepted' &&
+          f.name !== 'newsletterSubscribed'
       ),
     []
   );
@@ -79,6 +94,42 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             {...props}
           />
         )
+      )}
+      {termsAcceptedField && (
+        <Checkbox
+          {...register('termsAccepted')}
+          label={
+            <>
+              I agree to the{' '}
+              <Link
+                to={AUTH_ROUTES.TERMS_OF_SERVICE.url}
+                style={{ color: '#0284c7', textDecoration: 'none' }}
+                onClick={e => e.stopPropagation()}
+              >
+                Terms and Conditions
+              </Link>
+            </>
+          }
+          error={
+            errors?.[termsAcceptedField.name]?.message ||
+            termsAcceptedField.error
+          }
+          radius="md"
+          size="md"
+        />
+      )}
+      {newsletterSubscribedField && (
+        <Checkbox
+          {...register('newsletterSubscribed')}
+          label={newsletterSubscribedField.label}
+          error={
+            errors?.[newsletterSubscribedField.name]?.message ||
+            newsletterSubscribedField.error
+          }
+          radius="md"
+          size="md"
+          pl={30}
+        />
       )}
       <ReCAPTCHA
         ref={recaptchaRef}
