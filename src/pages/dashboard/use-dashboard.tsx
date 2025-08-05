@@ -628,6 +628,8 @@ const useDashboard = () => {
           formDataToUpload.append('account_id', formData.accountId);
         }
 
+        closeModal();
+
         // Call the API and track progress
         await dispatch(
           uploadCloudStorageFiles({
@@ -648,7 +650,7 @@ const useDashboard = () => {
         ).unwrap();
 
         uploadMethods.reset();
-        closeModal();
+        // closeModal();
 
         // Wait for `uploadLoading` to become false and set progress to 100%
         const waitForUploadCompletion = () => {
