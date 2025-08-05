@@ -55,9 +55,9 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
   if (isAuthenticated) {
     const decodedToken: any = decodeToken(token);
     // role = decodedToken?.role || '';
+    role = decodedToken?.user?.role || '';
     const roleKey = `${CACHED_URL_LOCAL_STORAGE_KEY}-${role}`;
     const cachedRedirectUrl = getLocalStorage(roleKey);
-    role = decodedToken?.user?.role || '';
     redirectUrl = role
       ? cachedRedirectUrl || REDIRECTION[role]
       : AUTH_ROUTES.LOGIN.url;

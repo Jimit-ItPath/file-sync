@@ -30,10 +30,9 @@ const selectedCardStyle = {
   boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.1)',
 };
 
-const MENU_ITEMS = [
-  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
-  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
-];
+const MENU_ITEMS: [
+  { id: string; label: string; icon: React.FC; color?: string },
+] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
 
 const RecentFiles = ({
   recentFiles = [],
@@ -134,6 +133,12 @@ const RecentFiles = ({
         icon: ICONS.IconShare,
       });
     }
+    menuItems.push({
+      id: 'delete',
+      label: 'Delete',
+      icon: ICONS.IconTrash,
+      color: 'red',
+    });
     return menuItems;
   }, [displayDownloadIcon, displayShareIcon]);
 

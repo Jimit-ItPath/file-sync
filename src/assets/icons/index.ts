@@ -90,6 +90,9 @@ import {
   IconFolderShare,
   IconClipboard,
   IconLogs,
+  IconSparkles,
+  IconUserCheck,
+  IconUserCancel,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -184,4 +187,7 @@ export const ICONS = {
   IconFolderShare,
   IconClipboard,
   IconLogs,
+  IconSparkles,
+  IconUserCheck,
+  IconUserCancel,
 };

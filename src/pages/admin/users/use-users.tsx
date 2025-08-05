@@ -245,16 +245,20 @@ const useUsers = () => {
             maw={'100%'}
             style={{ overflow: 'hidden' }}
           >
-            <Tooltip label={row.first_name + ' ' + row.last_name} fz={'xs'}>
-              <Text
-                fw={600}
-                fz={'sm'}
-                truncate
-                style={{ maxWidth: 'calc(60%)' }}
-              >
-                {row.first_name + ' ' + row.last_name}
-              </Text>
-            </Tooltip>
+            {row?.first_name && row?.last_name ? (
+              <Tooltip label={row.first_name + ' ' + row.last_name} fz={'xs'}>
+                <Text
+                  fw={600}
+                  fz={'sm'}
+                  truncate
+                  style={{ maxWidth: 'calc(60%)' }}
+                >
+                  {row.first_name + ' ' + row.last_name}
+                </Text>
+              </Tooltip>
+            ) : (
+              '-'
+            )}
           </Group>
         ),
       },
@@ -277,6 +281,33 @@ const useUsers = () => {
         render: (row: UserType) => (
           <Text size="sm">
             {row.updatedAt ? formatDate(row.updatedAt) : '-'}
+          </Text>
+        ),
+      },
+      {
+        key: 'lastLogin',
+        label: 'Last Login',
+        render: (row: UserType) => (
+          <Text size="sm">
+            {row.last_login ? formatDate(row.last_login) : '-'}
+          </Text>
+        ),
+      },
+      {
+        key: 'verified',
+        label: 'Verified',
+        render: (row: UserType) => (
+          // <Text size="sm">{row.verified ? 'Yes' : 'No'}</Text>
+          <Text size="sm">
+            {row.verified ? (
+              <Tooltip label="Verified" fz={'xs'}>
+                <ICONS.IconUserCheck color="green" />
+              </Tooltip>
+            ) : (
+              <Tooltip label="Not Verified" fz={'xs'}>
+                <ICONS.IconUserCancel color="red" />
+              </Tooltip>
+            )}
           </Text>
         ),
       },

@@ -4,10 +4,9 @@ import { Menu, Table, Tooltip } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
 
-const MENU_ITEMS = [
-  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
-  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
-];
+const MENU_ITEMS: [
+  { id: string; label: string; icon: React.FC; color?: string },
+] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
 
 type FileTableProps = {
   files: FileType[];
@@ -156,6 +155,12 @@ const FileTable: React.FC<FileTableProps> = ({
               icon: ICONS.IconFolderShare,
             });
           }
+          menuItems.push({
+            id: 'delete',
+            label: 'Delete',
+            icon: ICONS.IconTrash,
+            color: 'red',
+          });
 
           return (
             <Menu

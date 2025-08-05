@@ -10,6 +10,16 @@ type PaginationType = {
 };
 
 export type UserType = {
+  UserConnectedAccounts: [
+    {
+      id: string;
+      account_name: string;
+      account_type: string;
+      createdAt: string;
+      updatedAt: string;
+      sequence_number: null | number;
+    },
+  ];
   id: string;
   first_name: string;
   last_name: string;
@@ -20,6 +30,8 @@ export type UserType = {
   is_blocked: boolean;
   createdAt: string;
   updatedAt: string;
+  is_sfd_enabled: boolean;
+  last_login: null | string;
 };
 
 export type AuditLogType = {

@@ -51,10 +51,9 @@ type FileGridProps = {
   displayMoveIcon?: boolean;
 };
 
-const MENU_ITEMS = [
-  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
-  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
-];
+const MENU_ITEMS: [
+  { id: string; label: string; icon: React.FC; color?: string },
+] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
 
 const FileGrid: React.FC<FileGridProps> = ({
   folders,
@@ -108,6 +107,12 @@ const FileGrid: React.FC<FileGridProps> = ({
         icon: ICONS.IconFolderShare,
       });
     }
+    menuItems.push({
+      id: 'delete',
+      label: 'Delete',
+      icon: ICONS.IconTrash,
+      color: 'red',
+    });
     return menuItems;
   }, [displayDownloadIcon, displayShareIcon]);
 

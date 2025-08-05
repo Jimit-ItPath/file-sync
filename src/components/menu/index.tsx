@@ -36,11 +36,11 @@ export const Menu = ({
       </MantineMenu.Target>
 
       <MantineMenu.Dropdown>
-        {items?.map(({ id, label, icon }) => {
+        {items?.map(({ id, label, icon, color }) => {
           return (
             <MantineMenu.Item
               key={id}
-              leftSection={<Icon component={icon} size={14} />}
+              leftSection={<Icon component={icon} size={14} color={color} />}
               onClick={() => {
                 onItemClick(id);
               }}

@@ -11,7 +11,11 @@ import {
   getConnectedAccount,
   removeAccountAccess,
 } from '../../../store/slices/auth.slice';
-import { decodeToken } from '../../../utils/helper';
+import {
+  decodeToken,
+  getLocalStorage,
+  setLocalStorage,
+} from '../../../utils/helper';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import { generatePath, useNavigate } from 'react-router';
 import {
@@ -23,6 +27,7 @@ import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 import { Image } from '@mantine/core';
 import { ROLES } from '../../../utils/constants';
+import { useViewportSize } from '@mantine/hooks';
 
 const connectAccountSchema = z.object({
   accountName: z.string().min(1, 'Account name is required'),
@@ -87,6 +92,8 @@ const useSidebar = () => {
     null
   );
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { width, height } = useViewportSize();
 
   const methods = useForm<ConnectAccountFormData>({
     resolver: zodResolver(connectAccountSchema),
@@ -120,6 +127,18 @@ const useSidebar = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    const isPostConnect = getLocalStorage('post_connect_redirect') === true;
+
+    if (isPostConnect && connectedAccounts?.length === 1) {
+      setShowConfetti(true);
+      localStorage.removeItem('post_connect_redirect');
+      // setTimeout(() => {
+      //   setShowConfetti(false);
+      // }, 5000);
+    }
+  }, [connectedAccounts]);
+
   const [connectAccount, connectAccountLoading] = useAsyncOperation(
     async (data: ConnectAccountFormData) => {
       const token = localStorage.getItem('token') || null;
@@ -133,6 +152,9 @@ const useSidebar = () => {
           })
         ).unwrap();
         if (res?.success || res?.data?.redirect_url) {
+          if (!connectedAccounts?.length) {
+            setLocalStorage('post_connect_redirect', true);
+          }
           reset();
           setIsConnectModalOpen(false);
           window.location.href = res?.data?.redirect_url;
@@ -268,6 +290,10 @@ const useSidebar = () => {
     isNewModalOpen,
     openNewModal,
     closeNewModal,
+    showConfetti,
+    width,
+    height,
+    setShowConfetti,
   };
 };
 

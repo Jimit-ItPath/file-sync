@@ -11,6 +11,7 @@ import { LoaderOverlay } from '../../../components/loader';
 import { formatBytes, removeLocalStorage } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
 import ConnectAccountDescription from '../../../pages/dashboard/ConnectAccountDescription';
+import ShowConfetti from '../../../components/confetti';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -89,6 +90,10 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     cloudAccountsWithStorage,
     checkStorageDetails,
     user,
+    height,
+    width,
+    showConfetti,
+    setShowConfetti,
     // closeNewModal,
     // isNewModalOpen,
     // openNewModal,
@@ -380,6 +385,12 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               </Text>
             </Box>
           ) : null}
+
+          {showConfetti && (
+            <ShowConfetti
+              {...{ height, setShowConfetti, showConfetti, width }}
+            />
+          )}
         </>
       ) : (
         <>
