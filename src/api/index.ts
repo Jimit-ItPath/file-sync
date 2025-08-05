@@ -102,6 +102,22 @@ export const api = {
         method: METHODS.POST,
         data,
       }),
+    updateSequence: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        id: number;
+        sequence_number: number;
+      }[];
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/connected-account/update-sequence`,
+        method: METHODS.PUT,
+        data,
+        ...configs,
+      }),
   },
   user: {
     get: ({ id, ...configs }: { id: string; [key: string]: any }) =>

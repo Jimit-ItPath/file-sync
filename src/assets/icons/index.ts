@@ -93,6 +93,8 @@ import {
   IconSparkles,
   IconUserCheck,
   IconUserCancel,
+  IconLiveView,
+  IconGripVertical,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -190,4 +192,6 @@ export const ICONS = {
   IconSparkles,
   IconUserCheck,
   IconUserCancel,
+  IconLiveView,
+  IconGripVertical,
 };

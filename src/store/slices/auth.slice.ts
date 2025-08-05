@@ -9,11 +9,13 @@ type ConnectedAccountType = {
   account_name: string;
   account_type: AccountType;
   state_token: string;
-  access_token: null;
-  refresh_token: null;
   token_expires: null;
   createdAt: string;
   updatedAt: string;
+  email: string;
+  sequence_number: number | null;
+  external_account_id: string | null;
+  re_authentication_required: boolean;
 };
 
 type StorageDetailsType = {
@@ -151,6 +153,23 @@ export const completeProfile = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error?.message || 'Failed to complete profile');
+    }
+  }
+);
+
+export const updateSequence = createAsyncThunk(
+  'auth/updateSequence',
+  async (
+    data: {
+      id: number;
+      sequence_number: number;
+    }[]
+  ) => {
+    try {
+      const response = await api.auth.updateSequence({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
     }
   }
 );

@@ -9,11 +9,17 @@ import {
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
 export type CloudStorageType = {
+  UserConnectedAccount: {
+    id: string;
+    account_name: string;
+    account_type: string;
+  };
   id: string;
   account_id: string;
   account_type: string;
   external_id: string;
   parent_id: null | string;
+  external_parent_id?: null | string;
   name: string;
   entry_type: 'folder' | 'file';
   mime_type: string;

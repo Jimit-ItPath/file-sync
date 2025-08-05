@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '../../../store';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import useAsyncOperation from '../../../hooks/use-async-operation';
@@ -10,6 +10,7 @@ import {
   fetchStorageDetails,
   getConnectedAccount,
   removeAccountAccess,
+  updateSequence,
 } from '../../../store/slices/auth.slice';
 import {
   decodeToken,
@@ -28,6 +29,8 @@ import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 import { Image } from '@mantine/core';
 import { ROLES } from '../../../utils/constants';
 import { useViewportSize } from '@mantine/hooks';
+import { type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 
 const connectAccountSchema = z.object({
   accountName: z.string().min(1, 'Account name is required'),
@@ -41,40 +44,16 @@ type ConnectAccountFormData = z.infer<typeof connectAccountSchema>;
 const accountTypeConfig = {
   google_drive: {
     url: PRIVATE_ROUTES.GOOGLE_DRIVE.url,
-    // icon: (
-    //   <ICONS.IconBrandGoogle
-    //     size={18}
-    //     color="#ef4444"
-    //     stroke={1.25}
-    //     fill="#ef4444"
-    //   />
-    // ),
     icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={16} h={16} />,
     title: 'Google Drive',
   },
   dropbox: {
     url: PRIVATE_ROUTES.DROPBOX.url,
-    // icon: (
-    //   <ICONS.IconDroplets
-    //     size={18}
-    //     color="#007ee5"
-    //     stroke={1.25}
-    //     fill="#007ee5"
-    //   />
-    // ),
     icon: <Image src={DropboxIcon} alt="Dropbox" w={16} h={16} />,
     title: 'Dropbox',
   },
   onedrive: {
     url: PRIVATE_ROUTES.ONEDRIVE.url,
-    // icon: (
-    //   <ICONS.IconBrandOnedrive
-    //     size={18}
-    //     color="#0078d4"
-    //     stroke={1.25}
-    //     fill="#0078d4"
-    //   />
-    // ),
     icon: <Image src={OneDriveIcon} alt="OneDrive" w={16} h={16} />,
     title: 'OneDrive',
   },
@@ -93,7 +72,12 @@ const useSidebar = () => {
   );
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [sortedCloudAccounts, setSortedCloudAccounts] = useState<any[]>([]);
   const { width, height } = useViewportSize();
+
+  // Add ref to track if drag operation is in progress
+  const isDragInProgress = useRef(false);
+  const pendingSequenceUpdate = useRef<any[]>([]);
 
   const methods = useForm<ConnectAccountFormData>({
     resolver: zodResolver(connectAccountSchema),
@@ -109,6 +93,10 @@ const useSidebar = () => {
   } = methods;
 
   const getAccounts = useCallback(async () => {
+    // Don't fetch accounts if drag is in progress
+    // if (isDragInProgress.current) {
+    //   return;
+    // }
     await dispatch(getConnectedAccount());
   }, [dispatch]);
 
@@ -133,11 +121,130 @@ const useSidebar = () => {
     if (isPostConnect && connectedAccounts?.length === 1) {
       setShowConfetti(true);
       localStorage.removeItem('post_connect_redirect');
-      // setTimeout(() => {
-      //   setShowConfetti(false);
-      // }, 5000);
     }
   }, [connectedAccounts]);
+
+  const cloudAccountsWithStorage = connectedAccounts?.map(account => {
+    const storageInfo = checkStorageDetails?.result?.find(
+      detail => detail.id === account.id.toString()
+    );
+    const config = accountTypeConfig[account.account_type];
+    return {
+      id: account.id,
+      url: generatePath(config.url, { id: account.id }),
+      icon: config.icon,
+      title: account.account_name || config.title,
+      storageInfo: storageInfo?.storage_details,
+      sequence_number: account.sequence_number || 0,
+    };
+  });
+
+  // Update sorted accounts when cloudAccountsWithStorage changes
+  useEffect(() => {
+    if (cloudAccountsWithStorage?.length && !isDragInProgress.current) {
+      // Sort by sequence_number, fallback to id for consistent ordering
+      const sorted = [...cloudAccountsWithStorage].sort((a, b) => {
+        if (a.sequence_number !== b.sequence_number) {
+          return a.sequence_number - b.sequence_number;
+        }
+        return a.id - b.id;
+      });
+
+      // Only update if the order has actually changed
+      const currentIds = sortedCloudAccounts.map(acc => acc.id);
+      const newIds = sorted.map(acc => acc.id);
+
+      if (JSON.stringify(currentIds) !== JSON.stringify(newIds)) {
+        setSortedCloudAccounts(sorted);
+      }
+    }
+  }, [cloudAccountsWithStorage]);
+
+  const [updateAccountSequence, updateSequenceLoading] = useAsyncOperation(
+    async (data: { id: number; sequence_number: number }[]) => {
+      try {
+        const res = await dispatch(updateSequence(data)).unwrap();
+        if (res?.success) {
+          notifications.show({
+            message: res?.message || 'Account order updated successfully',
+            color: 'green',
+          });
+
+          // Set a timeout before allowing account refresh to prevent UI glitch
+          // setTimeout(() => {
+          // isDragInProgress.current = false;
+          onInitialize({});
+          // }, 500);
+        } else {
+          // Revert optimistic update on failure
+          isDragInProgress.current = false;
+          setSortedCloudAccounts(pendingSequenceUpdate.current);
+          notifications.show({
+            message:
+              res?.message ||
+              res?.data?.message ||
+              'Failed to update account order',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        // Revert optimistic update on error
+        isDragInProgress.current = false;
+        setSortedCloudAccounts(pendingSequenceUpdate.current);
+        notifications.show({
+          message: error || 'Failed to update account order',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  // Handle drag end event with improved state management
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (!over || active.id === over.id) {
+        isDragInProgress.current = false;
+        return;
+      }
+
+      const oldIndex = sortedCloudAccounts.findIndex(
+        account => account.id === active.id
+      );
+      const newIndex = sortedCloudAccounts.findIndex(
+        account => account.id === over.id
+      );
+
+      if (oldIndex === -1 || newIndex === -1) {
+        isDragInProgress.current = false;
+        return;
+      }
+
+      // Set drag in progress to prevent account refresh
+      isDragInProgress.current = true;
+
+      // Store original order for potential revert
+      pendingSequenceUpdate.current = [...sortedCloudAccounts];
+
+      // Optimistically update the UI
+      const newOrder = arrayMove(sortedCloudAccounts, oldIndex, newIndex);
+      setSortedCloudAccounts(newOrder);
+
+      // Prepare data for API call with proper sequence numbers
+      const updateData = newOrder.map((account, index) => ({
+        id: account.id,
+        sequence_number: index + 1,
+      }));
+
+      try {
+        await updateAccountSequence(updateData);
+      } catch (error) {
+        // Error handling is done in updateAccountSequence
+      }
+    },
+    [sortedCloudAccounts, updateAccountSequence]
+  );
 
   const [connectAccount, connectAccountLoading] = useAsyncOperation(
     async (data: ConnectAccountFormData) => {
@@ -161,7 +268,7 @@ const useSidebar = () => {
         }
       } catch (error: any) {
         notifications.show({
-          message: error || 'Failed to connect account123',
+          message: error || 'Failed to connect account',
           color: 'red',
         });
       }
@@ -250,20 +357,6 @@ const useSidebar = () => {
     [errors]
   );
 
-  const cloudAccountsWithStorage = connectedAccounts?.map(account => {
-    const storageInfo = checkStorageDetails?.result?.find(
-      detail => detail.id === account.id.toString()
-    );
-    const config = accountTypeConfig[account.account_type];
-    return {
-      id: account.id,
-      url: generatePath(config.url, { id: account.id }),
-      icon: config.icon,
-      title: account.account_name || config.title,
-      storageInfo: storageInfo?.storage_details,
-    };
-  });
-
   const openNewModal = () => setIsNewModalOpen(true);
   const closeNewModal = () => setIsNewModalOpen(false);
 
@@ -285,6 +378,9 @@ const useSidebar = () => {
     setHoveredAccountId,
     hoveredAccountId,
     cloudAccountsWithStorage,
+    sortedCloudAccounts,
+    handleDragEnd,
+    updateSequenceLoading,
     checkStorageDetails,
     user,
     isNewModalOpen,

@@ -1,17 +1,40 @@
 import { NavLink as Link, useLocation } from 'react-router';
-import { Box, Group, NavLink, Progress, rem, Stack, Text } from '@mantine/core';
+import {
+  Box,
+  Group,
+  Loader,
+  NavLink,
+  Progress,
+  rem,
+  Stack,
+  Text,
+} from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import Icon from '../../../assets/icons/icon';
 import { useMemo } from 'react';
 import useSidebar from './use-sidebar';
-import { Button, Form, Input, Modal, Tooltip } from '../../../components';
+import { Button, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
 import { LoaderOverlay } from '../../../components/loader';
 import { formatBytes, removeLocalStorage } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
 import ConnectAccountDescription from '../../../pages/dashboard/ConnectAccountDescription';
 import ShowConfetti from '../../../components/confetti';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import SortableCloudAccountItem from './SortableCloudAccountItem';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -21,41 +44,6 @@ const DASHBOARD_NAV_ITEMS = [
     url: PRIVATE_ROUTES.DASHBOARD.url,
     roles: PRIVATE_ROUTES.DASHBOARD.roles,
   },
-  // {
-  //   id: 'favorites',
-  //   label: 'Favorites',
-  //   icon: ICONS.IconStar,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'recent',
-  //   label: 'Recent',
-  //   icon: ICONS.IconClock,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'shared',
-  //   label: 'Shared',
-  //   icon: ICONS.IconUsersGroup,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'file-requests',
-  //   label: 'File requests',
-  //   icon: ICONS.IconFile,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'trash',
-  //   label: 'Trash',
-  //   icon: ICONS.IconTrash,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
 ] as const;
 
 type NavItem = (typeof DASHBOARD_NAV_ITEMS)[number];
@@ -87,13 +75,15 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     removeAccessModalOpen,
     hoveredAccountId,
     setHoveredAccountId,
-    cloudAccountsWithStorage,
     checkStorageDetails,
     user,
     height,
     width,
     showConfetti,
     setShowConfetti,
+    sortedCloudAccounts,
+    handleDragEnd,
+    updateSequenceLoading,
     // closeNewModal,
     // isNewModalOpen,
     // openNewModal,
@@ -118,13 +108,24 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
   //   uploadFilesLoading,
   //   getFileIcon,
   // } = useDashboard();
-
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
     [location.pathname]
   );
 
   const accessibleNavItems = DASHBOARD_NAV_ITEMS;
+
+  // Configure sensors with more restrictive activation constraints
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px of movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   return (
     <Box display={'flex'} h={'100%'} style={{ flexDirection: 'column' }}>
@@ -215,7 +216,74 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                 style={{ cursor: 'pointer' }}
               />
             </Stack>
-            {cloudAccountsWithStorage?.length
+
+            {/* Drag and Drop Context for Cloud Accounts - Constrained to this container */}
+            {sortedCloudAccounts?.length ? (
+              <Box
+                style={{
+                  position: 'relative',
+                  // Add container styles to limit drag area
+                  // overflow: 'hidden',
+                }}
+              >
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  // Add modifiers to constrain dragging
+                  modifiers={[
+                    // Custom modifier to restrict drag area
+                    ({ transform, containerNodeRect, draggingNodeRect }) => {
+                      if (!containerNodeRect || !draggingNodeRect)
+                        return transform;
+
+                      // Constrain horizontal movement
+                      const constrainedX = Math.max(
+                        containerNodeRect.left - draggingNodeRect.left,
+                        Math.min(
+                          containerNodeRect.right - draggingNodeRect.right,
+                          transform.x
+                        )
+                      );
+
+                      return {
+                        ...transform,
+                        x: constrainedX,
+                      };
+                    },
+                  ]}
+                >
+                  <SortableContext
+                    items={sortedCloudAccounts.map(account => account.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {updateSequenceLoading ? (
+                      <Group align="center" justify="center" mt={10} mr={10}>
+                        <Loader />
+                      </Group>
+                    ) : (
+                      sortedCloudAccounts?.map(account => {
+                        const isActive = isActiveRoute(account.url);
+
+                        return (
+                          <SortableCloudAccountItem
+                            key={account.id}
+                            account={account}
+                            isActive={isActive}
+                            hoveredAccountId={hoveredAccountId}
+                            setHoveredAccountId={setHoveredAccountId}
+                            openRemoveAccessModal={openRemoveAccessModal}
+                            mobileDrawerHandler={mobileDrawerHandler}
+                            sortedCloudAccounts={sortedCloudAccounts}
+                          />
+                        );
+                      })
+                    )}
+                  </SortableContext>
+                </DndContext>
+              </Box>
+            ) : null}
+            {/* {cloudAccountsWithStorage?.length
               ? cloudAccountsWithStorage?.map(
                   ({ id, url, icon, title, storageInfo }) => {
                     const isActive = isActiveRoute(url);
@@ -332,7 +400,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                     );
                   }
                 )
-              : null}
+              : null} */}
 
             <Stack
               mt={20}
