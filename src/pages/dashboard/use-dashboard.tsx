@@ -42,6 +42,11 @@ import getFileIcon from '../../components/file-icon';
 import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import { PRIVATE_ROUTES } from '../../routing/routes';
+import {
+  DOCUMENT_FILE_TYPES,
+  PREVIEW_FILE_TYPES,
+  VIDEO_FILE_TYPES,
+} from '../../utils/constants';
 
 export type FileType = {
   id: string;
@@ -53,10 +58,16 @@ export type FileType = {
   size: string | null;
   preview?: string | null;
   mimeType?: string;
-  fileExtension?: string | null;
+  fileExtension: string | null;
   download_url?: string | null;
   parent_id: string | null;
   web_view_url: string | null;
+  external_parent_id?: null | string;
+  UserConnectedAccount?: {
+    id: string;
+    account_name: string;
+    account_type: string;
+  } | null;
 };
 
 const folderSchema = z.object({
@@ -128,6 +139,15 @@ const useDashboard = () => {
 
   const [dragDropModalOpen, setDragDropModalOpen] = useState(false);
   const [dragDropFiles, setDragDropFiles] = useState<File[]>([]);
+  const [previewFileLoading, setPreviewFileLoading] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    type: string;
+    name: string;
+    isVideo?: boolean;
+    isDocument?: boolean;
+  } | null>(null);
 
   const {
     cloudStorage,
@@ -441,6 +461,8 @@ const useDashboard = () => {
       preview: item.download_url,
       parent_id: item.parent_id,
       web_view_url: item.web_view_url,
+      external_parent_id: item.external_parent_id,
+      UserConnectedAccount: item.UserConnectedAccount,
     }));
   }, [cloudStorage]);
 
@@ -466,6 +488,8 @@ const useDashboard = () => {
       preview: item.download_url,
       parent_id: item.parent_id,
       web_view_url: item.web_view_url,
+      external_parent_id: item.external_parent_id,
+      UserConnectedAccount: item.UserConnectedAccount,
     }));
   }, [recentFiles]);
 
@@ -520,7 +544,7 @@ const useDashboard = () => {
     [navigateToFolderFn]
   );
 
-  const handleMenuItemClick = (actionId: string, row: FileType) => {
+  const handleMenuItemClick = async (actionId: string, row: FileType) => {
     if (
       actionId === 'download' &&
       (row.type !== 'folder' ||
@@ -546,6 +570,41 @@ const useDashboard = () => {
       window.open(row.web_view_url, '_blank');
     } else if (actionId === 'move') {
       handleMoveSelected([row?.id]);
+    } else if (actionId === 'preview') {
+      // preview code
+      try {
+        setPreviewFileLoading(true);
+        setPreviewModalOpen(true);
+        const res = await dispatch(downloadFiles({ ids: [row.id] }));
+        if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
+          const url = URL.createObjectURL(res.payload?.data);
+          const isVideo = row.fileExtension
+            ? VIDEO_FILE_TYPES.includes(row.fileExtension.toLowerCase())
+            : false;
+          const isDocument = row.fileExtension
+            ? DOCUMENT_FILE_TYPES.includes(row.fileExtension.toLowerCase())
+            : false;
+          setPreviewFile({
+            url,
+            type: row.fileExtension || row.mimeType || '',
+            name: row.name,
+            isVideo,
+            isDocument,
+          });
+        } else {
+          notifications.show({
+            message: res?.payload?.message || 'Failed to preview file',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to preview file',
+          color: 'red',
+        });
+      } finally {
+        setPreviewFileLoading(false);
+      }
     }
   };
 
@@ -629,6 +688,7 @@ const useDashboard = () => {
         }
 
         closeModal();
+        closeDragDropModal();
 
         // Call the API and track progress
         await dispatch(
@@ -1177,6 +1237,15 @@ const useDashboard = () => {
     return checkFiles?.web_view_url ? true : false;
   }, [selectedIds, files]);
 
+  const displayPreviewIcon = useMemo(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    return checkFiles?.type === 'file' &&
+      checkFiles.fileExtension &&
+      PREVIEW_FILE_TYPES.includes(checkFiles?.fileExtension)
+      ? true
+      : false;
+  }, [selectedIds, files]);
+
   const handleMoveSelected = useCallback(
     (ids?: string[]) => {
       setIsMoveMode(true);
@@ -1377,6 +1446,14 @@ const useDashboard = () => {
     displayShareIcon,
     location,
     connectedAccounts,
+
+    // preview
+    previewModalOpen,
+    setPreviewModalOpen,
+    previewFile,
+    setPreviewFile,
+    previewFileLoading,
+    displayPreviewIcon,
   };
 };
 

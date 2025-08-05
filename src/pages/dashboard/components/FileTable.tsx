@@ -3,6 +3,7 @@ import { ICONS } from '../../../assets/icons';
 import { Menu, Table, Tooltip } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
+import { PREVIEW_FILE_TYPES } from '../../../utils/constants';
 
 const MENU_ITEMS: [
   { id: string; label: string; icon: React.FC; color?: string },
@@ -75,12 +76,12 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'name',
         label: 'Name',
-        // width: '30%',
+        width: '30%',
         render: (row: FileType) => (
           <Group
             gap={8}
             wrap="nowrap"
-            maw={'50%'}
+            maw={'70%'}
             style={{ overflow: 'hidden' }}
           >
             {row.icon(iconSize)}
@@ -89,7 +90,7 @@ const FileTable: React.FC<FileTableProps> = ({
                 fw={600}
                 fz={'sm'}
                 truncate
-                // style={{ maxWidth: 'calc(100% - 40px)' }}
+                style={{ maxWidth: 'calc(100% - 40px)' }}
               >
                 {row.name}
               </Text>
@@ -140,6 +141,16 @@ const FileTable: React.FC<FileTableProps> = ({
               label: 'Download',
               icon: ICONS.IconDownload,
             });
+            if (
+              row.fileExtension &&
+              PREVIEW_FILE_TYPES.includes(row.fileExtension)
+            ) {
+              menuItems.push({
+                id: 'preview',
+                label: 'Preview',
+                icon: ICONS.IconLiveView,
+              });
+            }
           }
           if (row.web_view_url) {
             menuItems.push({

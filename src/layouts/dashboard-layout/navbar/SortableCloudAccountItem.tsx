@@ -60,7 +60,6 @@ const SortableCloudAccountItem = ({
               {...listeners}
               style={{
                 cursor: isDragging ? 'grabbing' : 'grab',
-                padding: '4px',
                 display: 'flex',
                 alignItems: 'center',
                 opacity: 0.6,
@@ -87,7 +86,7 @@ const SortableCloudAccountItem = ({
               cursor: 'pointer',
               fontSize: '14px',
               width: '100%',
-              //   marginLeft: showDragHandle ? '0px' : '0px', // Consistent spacing
+              marginLeft: showDragHandle ? '-20px' : '0px',
             }}
             onClick={() => {
               removeLocalStorage('folderId');
@@ -108,9 +107,7 @@ const SortableCloudAccountItem = ({
           >
             {account.icon}
             <Tooltip label={account.title} fz={'xs'}>
-              <Text fz={'sm'} ml={10} c={'#000'} 
-              truncate maw={'50%'}
-              >
+              <Text fz={'sm'} ml={10} c={'#000'} truncate maw={'50%'}>
                 {account.title}
               </Text>
             </Tooltip>
@@ -147,7 +144,6 @@ const SortableCloudAccountItem = ({
         <Box
           px={8}
           mt={4}
-          ml={showDragHandle ? '22px' : '0px'} // Adjust for drag handle spacing
           style={{
             transition: 'margin-left 0.2s ease', // Smooth transition for margin changes
           }}

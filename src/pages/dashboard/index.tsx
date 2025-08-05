@@ -31,6 +31,7 @@ import RecentFiles from './components/RecentFiles';
 import useResponsive from '../../hooks/use-responsive';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import NoConnectedAccount from './NoConnectedAccount';
+import FilePreviewModal from './components/FilePreviewModal';
 
 const Dashboard = () => {
   const {
@@ -126,6 +127,12 @@ const Dashboard = () => {
     location,
     displayShareIcon,
     connectedAccounts,
+    previewFile,
+    previewModalOpen,
+    setPreviewFile,
+    setPreviewModalOpen,
+    previewFileLoading,
+    displayPreviewIcon,
   } = useDashboard();
   const {
     openAccountModal,
@@ -245,6 +252,7 @@ const Dashboard = () => {
               displayDownloadIcon,
               handleMenuItemClick,
               displayShareIcon,
+              displayPreviewIcon,
             }}
           />
         ) : null}
@@ -441,6 +449,7 @@ const Dashboard = () => {
                 displayDownloadIcon,
                 displayShareIcon,
                 displayMoveIcon,
+                displayPreviewIcon,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (
@@ -591,11 +600,17 @@ const Dashboard = () => {
       <Modal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title={`Delete ${itemToDelete?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+        title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
       >
         <Text mb="md">
-          Are you sure you want to delete "{itemToDelete?.name}"?
-          {itemToDelete?.mimeType === 'application/vnd.google-apps.folder' &&
+          Are you sure you want to delete this{' '}
+          {itemToDelete?.type === 'folder' ? 'folder' : 'file'} "
+          {itemToDelete?.name}"{' '}
+          {itemToDelete?.UserConnectedAccount?.account_name
+            ? `from "${itemToDelete?.UserConnectedAccount?.account_name}"`
+            : ''}
+          ?
+          {itemToDelete?.type === 'folder' &&
             ' All contents will be deleted permanently.'}
         </Text>
         <Group>
@@ -782,6 +797,17 @@ const Dashboard = () => {
           </Stack>
         </Form>
       </Modal>
+
+      {/* Preview Modal */}
+      <FilePreviewModal
+        {...{
+          previewFile,
+          previewFileLoading,
+          previewModalOpen,
+          setPreviewFile,
+          setPreviewModalOpen,
+        }}
+      />
     </Box>
   );
 };

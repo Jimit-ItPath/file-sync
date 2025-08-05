@@ -49,6 +49,7 @@ type FileGridProps = {
   displayDownloadIcon?: boolean;
   displayShareIcon?: boolean;
   displayMoveIcon?: boolean;
+  displayPreviewIcon?: boolean;
 };
 
 const MENU_ITEMS: [
@@ -75,6 +76,7 @@ const FileGrid: React.FC<FileGridProps> = ({
   displayDownloadIcon = true,
   displayShareIcon = true,
   displayMoveIcon = true,
+  displayPreviewIcon = true,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +93,13 @@ const FileGrid: React.FC<FileGridProps> = ({
         id: 'download',
         label: 'Download',
         icon: ICONS.IconDownload,
+      });
+    }
+    if (displayPreviewIcon) {
+      menuItems.push({
+        id: 'preview',
+        label: 'Preview',
+        icon: ICONS.IconLiveView,
       });
     }
     if (displayShareIcon) {
@@ -114,7 +123,12 @@ const FileGrid: React.FC<FileGridProps> = ({
       color: 'red',
     });
     return menuItems;
-  }, [displayDownloadIcon, displayShareIcon]);
+  }, [
+    displayDownloadIcon,
+    displayShareIcon,
+    displayMoveIcon,
+    displayPreviewIcon,
+  ]);
 
   useEffect(() => {
     const updateColumnsCount = () => {

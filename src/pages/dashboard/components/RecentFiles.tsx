@@ -23,6 +23,7 @@ interface RecentFileProps {
   displayDownloadIcon: boolean;
   handleMenuItemClick: (actionId: string, row: FileType) => void;
   displayShareIcon: boolean;
+  displayPreviewIcon: boolean;
 }
 
 const selectedCardStyle = {
@@ -50,6 +51,7 @@ const RecentFiles = ({
   displayDownloadIcon = true,
   handleMenuItemClick = () => {},
   displayShareIcon = true,
+  displayPreviewIcon = true,
 }: RecentFileProps) => {
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
@@ -126,6 +128,13 @@ const RecentFiles = ({
         icon: ICONS.IconDownload,
       });
     }
+    if (displayPreviewIcon) {
+      menuItems.push({
+        id: 'preview',
+        label: 'Preview',
+        icon: ICONS.IconLiveView,
+      });
+    }
     if (displayShareIcon) {
       menuItems.push({
         id: 'share',
@@ -140,7 +149,7 @@ const RecentFiles = ({
       color: 'red',
     });
     return menuItems;
-  }, [displayDownloadIcon, displayShareIcon]);
+  }, [displayDownloadIcon, displayShareIcon, displayPreviewIcon]);
 
   return (
     <Stack
