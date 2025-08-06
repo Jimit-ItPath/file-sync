@@ -135,6 +135,10 @@ const useAuditLogs = () => {
   useEffect(() => {
     getActionTypes({});
     getTypes({});
+
+    return () => {
+      dispatch(setAuditLogSearchTerm(''));
+    };
   }, []);
 
   const handleActionTypeSelect = (actionType: string | string[] | null) => {

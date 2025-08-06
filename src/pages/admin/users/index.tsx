@@ -1,11 +1,50 @@
-import { Box, Group, SimpleGrid, Stack, Text, TextInput } from '@mantine/core';
+import {
+  Avatar,
+  Box,
+  Group,
+  Image,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import useUsers from './use-users';
-import { Button, Card, Form, Modal } from '../../../components';
+import { Button, Card, Form, Modal, Tooltip } from '../../../components';
 import { LoaderOverlay } from '../../../components/loader';
 import { DataTable } from 'mantine-datatable';
 import EmailMultiInput from './EmailMultiInput';
 import { formatDate } from '../../../utils/helper';
-import { ICONS } from '../../../assets/icons';
+import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
+
+type AccountConfig = {
+  icon: React.ReactNode;
+  color: string;
+  label: string;
+  bg: string;
+};
+
+const accountConfigs: Record<string, AccountConfig> = {
+  google_drive: {
+    icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={30} h={30} />,
+    color: 'red',
+    label: 'Google Drive',
+    bg: 'rgba(234, 67, 53, 0.1)',
+  },
+  dropbox: {
+    icon: <Image src={DropboxIcon} alt="Dropbox" />,
+    color: 'blue',
+    label: 'Dropbox',
+    bg: 'rgba(0, 97, 255, 0.1)',
+  },
+  onedrive: {
+    icon: <Image src={OneDriveIcon} alt="OneDrive" w={30} h={30} />,
+    color: 'indigo',
+    label: 'OneDrive',
+    bg: 'rgba(0, 120, 215, 0.1)',
+  },
+};
 
 const AdminUsers = () => {
   const {
@@ -92,7 +131,7 @@ const AdminUsers = () => {
                 noRecordsText=""
                 className="mantine-user-data-table"
                 rowExpansion={{
-                  allowMultiple: false,
+                  allowMultiple: true,
                   content: ({ record }) => (
                     <Box p="md" bg="gray.0" style={{ borderRadius: 8 }}>
                       <Text size="sm" fw={600} mb="sm" c="gray.8">
@@ -105,21 +144,38 @@ const AdminUsers = () => {
                           spacing="md"
                           verticalSpacing="md"
                         >
-                          {record.UserConnectedAccounts.map(account => (
-                            <Card
-                              key={account.id}
-                              p="md"
-                              style={{ borderRadius: 8 }}
-                            >
-                              <Group justify="space-between" mb="xs">
-                                <Text fw={500}>{account.account_name}</Text>
-                                <ICONS.IconList size={16} color="gray" />
-                              </Group>
-                              <Text size="xs" c="dimmed">
-                                Created on: {formatDate(account.createdAt)}
-                              </Text>
-                            </Card>
-                          ))}
+                          {record.UserConnectedAccounts.map(account => {
+                            const accountConfig =
+                              accountConfigs[account.account_type];
+                            return (
+                              <Card
+                                key={account.id}
+                                p="md"
+                                style={{ borderRadius: 8 }}
+                              >
+                                <Group justify="space-between" mb="xs">
+                                  <Tooltip
+                                    label={account.account_name}
+                                    fz={'xs'}
+                                  >
+                                    <Text fw={500} maw={'70%'} truncate>
+                                      {account.account_name}
+                                    </Text>
+                                  </Tooltip>
+                                  <Avatar
+                                    color={accountConfig.color}
+                                    radius="sm"
+                                    size="md"
+                                  >
+                                    {accountConfig.icon}
+                                  </Avatar>
+                                </Group>
+                                <Text size="xs" c="dimmed">
+                                  Created on: {formatDate(account.createdAt)}
+                                </Text>
+                              </Card>
+                            );
+                          })}
                         </SimpleGrid>
                       ) : (
                         <Text size="sm" c="dimmed">

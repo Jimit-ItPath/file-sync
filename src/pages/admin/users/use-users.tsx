@@ -77,6 +77,9 @@ const useUsers = () => {
       onInitialize({});
       initializedRef.current = true;
     }
+    return () => {
+      dispatch(setSearchTerm(''));
+    };
   }, []);
 
   useEffect(() => {
