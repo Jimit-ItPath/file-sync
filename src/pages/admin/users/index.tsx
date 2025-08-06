@@ -1,16 +1,15 @@
 import { Box, Group, Stack, Text, TextInput } from '@mantine/core';
 import useUsers from './use-users';
-import { Button, Form, Modal, Table } from '../../../components';
+import { Button, Card, Form, Modal } from '../../../components';
 import { LoaderOverlay } from '../../../components/loader';
+import { DataTable } from 'mantine-datatable';
 
 const AdminUsers = () => {
   const {
     closeInviteUserModal,
     inviteUserMethods,
-    handleScroll,
     handleSearchChange,
     loading,
-    scrollBoxRef,
     searchTerm,
     itemToBlock,
     openInviteUserModal,
@@ -23,6 +22,11 @@ const AdminUsers = () => {
     closeUserBlockModal,
     blockUserLoading,
     handleBlockConfirm,
+    currentPage,
+    handlePageChange,
+    handleLimitChange,
+    totalRecords,
+    limit,
   } = useUsers();
 
   return (
@@ -32,7 +36,6 @@ const AdminUsers = () => {
         px={32}
         pb={20}
         bg="#f8fafc"
-        ref={scrollBoxRef}
         style={{
           position: 'relative',
           height: 'calc(100vh - 120px)',
@@ -40,7 +43,6 @@ const AdminUsers = () => {
           overflowX: 'hidden',
           transition: 'all 0.2s ease-in-out',
         }}
-        onScroll={handleScroll}
       >
         <Group justify="flex-end" w={'100%'} mt={16}>
           <TextInput
@@ -63,12 +65,45 @@ const AdminUsers = () => {
           </Button>
         </Group>
         <Box mt={20}>
-          <Table
-            data={users}
-            columns={columns}
-            idKey="id"
-            emptyMessage="No users available."
-          />
+          <Card>
+            {users.length > 0 ? (
+              <DataTable
+                withTableBorder
+                borderRadius="md"
+                records={users}
+                columns={columns}
+                totalRecords={totalRecords}
+                recordsPerPage={limit}
+                page={currentPage}
+                onPageChange={handlePageChange}
+                onRecordsPerPageChange={handleLimitChange}
+                recordsPerPageOptions={[10, 20, 50, 100]}
+                paginationWithEdges
+                textSelectionDisabled
+                striped
+                highlightOnHover
+                verticalSpacing="sm"
+                horizontalSpacing="md"
+                paginationActiveBackgroundColor="blue"
+                paginationActiveTextColor="white"
+                noRecordsText=""
+                className="mantine-user-data-table"
+                styles={{
+                  pagination: {
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginTop: '10px',
+                  },
+                }}
+              />
+            ) : (
+              <Text ta="center" py="xl" c="dimmed">
+                No users available.
+              </Text>
+            )}
+          </Card>
         </Box>
       </Box>
 

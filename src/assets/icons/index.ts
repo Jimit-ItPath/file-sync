@@ -95,6 +95,9 @@ import {
   IconUserCancel,
   IconLiveView,
   IconGripVertical,
+  IconChevronLeft,
+  IconChevronsLeft,
+  IconChevronsRight,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -194,4 +197,7 @@ export const ICONS = {
   IconUserCancel,
   IconLiveView,
   IconGripVertical,
+  IconChevronLeft,
+  IconChevronsLeft,
+  IconChevronsRight,
 };

@@ -163,11 +163,12 @@ const adminUserSlice = createSlice({
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
         state.pagination = action.payload?.data?.paging || null;
-        if (action.meta.arg.page && action.meta.arg.page > 1) {
-          state.users = [...state.users, ...(action.payload?.data?.data || [])];
-        } else {
-          state.users = action.payload?.data?.data || [];
-        }
+        state.users = action.payload?.data?.data || [];
+        // if (action.meta.arg.page && action.meta.arg.page > 1) {
+        //   state.users = [...state.users, ...(action.payload?.data?.data || [])];
+        // } else {
+        //   state.users = action.payload?.data?.data || [];
+        // }
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
@@ -182,14 +183,15 @@ const adminUserSlice = createSlice({
       .addCase(fetchAuditLogs.fulfilled, (state, action) => {
         state.auditLogLoading = false;
         state.auditLogsPagination = action.payload?.data?.paging || null;
-        if (action.meta.arg.page && action.meta.arg.page > 1) {
-          state.auditLogs = [
-            ...state.auditLogs,
-            ...(action.payload?.data?.data || []),
-          ];
-        } else {
-          state.auditLogs = action.payload?.data?.data || [];
-        }
+        state.auditLogs = action.payload?.data?.data || [];
+        // if (action.meta.arg.page && action.meta.arg.page > 1) {
+        //   state.auditLogs = [
+        //     ...state.auditLogs,
+        //     ...(action.payload?.data?.data || []),
+        //   ];
+        // } else {
+        //   state.auditLogs = action.payload?.data?.data || [];
+        // }
       })
       .addCase(fetchAuditLogs.rejected, (state, action) => {
         state.auditLogLoading = false;

@@ -1,17 +1,16 @@
-import { ActionIcon, Box, Group, TextInput } from '@mantine/core';
-import { Button, CustomAutocomplete, Table } from '../../../components';
+import { ActionIcon, Box, Group, Text, TextInput } from '@mantine/core';
+import { Button, Card, CustomAutocomplete } from '../../../components';
 import useAuditLogs from './use-audit-logs';
 import { ICONS } from '../../../assets/icons';
 import useResponsive from '../../../hooks/use-responsive';
 import { LoaderOverlay } from '../../../components/loader';
+import { DataTable } from 'mantine-datatable';
 
 const AdminAuditLogs = () => {
   const {
     auditLogs,
     columns,
-    handleScroll,
     handleSearchChange,
-    scrollBoxRef,
     searchTerm,
     handleUserSearch,
     userSearchResults,
@@ -20,6 +19,11 @@ const AdminAuditLogs = () => {
     handleClearSelection,
     handleExportLogs,
     downloadLogsLoading,
+    handlePageChange,
+    currentPage,
+    totalRecords,
+    limit,
+    handleLimitChange,
   } = useAuditLogs();
   const { isMd } = useResponsive();
 
@@ -30,7 +34,6 @@ const AdminAuditLogs = () => {
         px={32}
         pb={20}
         bg="#f8fafc"
-        ref={scrollBoxRef}
         style={{
           position: 'relative',
           height: 'calc(100vh - 120px)',
@@ -38,7 +41,6 @@ const AdminAuditLogs = () => {
           overflowX: 'hidden',
           transition: 'all 0.2s ease-in-out',
         }}
-        onScroll={handleScroll}
       >
         <Group justify={isMd ? 'flex-start' : 'flex-end'} mt={16} gap="md">
           {auditLogs?.length ? (
@@ -88,12 +90,45 @@ const AdminAuditLogs = () => {
           />
         </Group>
         <Box mt={20}>
-          <Table
-            data={auditLogs}
-            columns={columns}
-            idKey="id"
-            emptyMessage="No logs available."
-          />
+          <Card>
+            {auditLogs.length > 0 ? (
+              <DataTable
+                withTableBorder
+                borderRadius="md"
+                records={auditLogs}
+                columns={columns}
+                totalRecords={totalRecords}
+                recordsPerPage={limit}
+                page={currentPage}
+                onPageChange={handlePageChange}
+                onRecordsPerPageChange={handleLimitChange}
+                recordsPerPageOptions={[10, 20, 50, 100]}
+                paginationWithEdges
+                textSelectionDisabled
+                striped
+                highlightOnHover
+                verticalSpacing="sm"
+                horizontalSpacing="md"
+                paginationActiveBackgroundColor="blue"
+                paginationActiveTextColor="white"
+                noRecordsText=""
+                className="mantine-user-data-table"
+                styles={{
+                  pagination: {
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginTop: '10px',
+                  },
+                }}
+              />
+            ) : (
+              <Text ta="center" py="xl" c="dimmed">
+                No audit logs available.
+              </Text>
+            )}
+          </Card>
         </Box>
       </Box>
     </Box>

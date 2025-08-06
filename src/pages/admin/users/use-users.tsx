@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   blockUser,
@@ -39,6 +33,7 @@ const useUsers = () => {
   const { loading, pagination, users, searchTerm } = useAppSelector(
     state => state.adminUser
   );
+  const [limit, setLimit] = useState(pagination?.page_limit || 10);
   const dispatch = useAppDispatch();
 
   const inviteUserMethods = useForm<InviteUserFormData>({
@@ -61,17 +56,12 @@ const useUsers = () => {
   const getUsers = useCallback(async () => {
     await dispatch(
       fetchUsers({
-        limit: pagination?.page_limit || 20,
+        limit,
         page: pagination?.page_no || 1,
         searchTerm: debouncedSearchTerm || '',
       })
     );
-  }, [
-    dispatch,
-    pagination?.page_limit,
-    pagination?.page_no,
-    debouncedSearchTerm,
-  ]);
+  }, [dispatch, limit, pagination?.page_no, debouncedSearchTerm]);
 
   const [onInitialize] = useAsyncOperation(getUsers);
 
@@ -92,42 +82,32 @@ const useUsers = () => {
     getUsers();
   }, [debouncedSearchTerm]);
 
-  const scrollBoxRef = useRef<HTMLDivElement>(null);
-
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    lastScrollTop.current = e.currentTarget.scrollTop;
-    const target = e.currentTarget;
-    if (
-      target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
-      pagination &&
-      pagination.page_no < pagination.total_pages &&
-      !loading
-    ) {
-      loadMoreFiles();
-    }
-  };
-
-  useEffect(() => {
-    if (scrollBoxRef.current && lastScrollTop.current > 0) {
-      setTimeout(() => {
-        scrollBoxRef.current!.scrollTop = lastScrollTop.current;
-      }, 0);
-    }
-  }, [users.length]);
-
-  const loadMoreFiles = useCallback(async () => {
-    if (pagination && pagination.page_no < pagination.total_pages && !loading) {
-      await dispatch(
+  const handleLimitChange = useCallback(
+    (newLimit: number) => {
+      setLimit(newLimit);
+      dispatch(
         fetchUsers({
-          page: pagination.page_no + 1,
-          limit: pagination.page_limit || 20,
+          limit: newLimit,
+          page: 1,
           searchTerm: debouncedSearchTerm || '',
         })
       );
-    }
-  }, [pagination, loading, dispatch]);
+    },
+    [dispatch, debouncedSearchTerm]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      dispatch(
+        fetchUsers({
+          limit,
+          page,
+          searchTerm: debouncedSearchTerm || '',
+        })
+      );
+    },
+    [dispatch, limit, debouncedSearchTerm]
+  );
 
   // Invite User
   const [inviteUserFn, inviteUserLoading] = useAsyncOperation(
@@ -142,7 +122,7 @@ const useUsers = () => {
           reset();
           await dispatch(
             fetchUsers({
-              limit: pagination?.page_limit || 20,
+              limit,
               page: pagination?.page_no || 1,
               searchTerm: debouncedSearchTerm || '',
             })
@@ -183,7 +163,7 @@ const useUsers = () => {
       if (res.payload?.success) {
         await dispatch(
           fetchUsers({
-            limit: pagination?.page_limit || 20,
+            limit,
             page: pagination?.page_no || 1,
             searchTerm: debouncedSearchTerm || '',
           })
@@ -235,9 +215,9 @@ const useUsers = () => {
   const columns = useMemo(
     () => [
       {
-        key: 'name',
-        label: 'Name',
-        width: '20%',
+        accessor: 'name',
+        title: 'Name',
+        // width: '20%',
         render: (row: UserType) => (
           <Group
             gap={8}
@@ -263,8 +243,8 @@ const useUsers = () => {
         ),
       },
       {
-        key: 'email',
-        label: 'Email',
+        accessor: 'email',
+        title: 'Email',
         // width: '30%',
         render: (row: UserType) => (
           <Group gap={8} wrap="nowrap">
@@ -275,8 +255,8 @@ const useUsers = () => {
         ),
       },
       {
-        key: 'lastModified',
-        label: 'Last Modified',
+        accessor: 'lastModified',
+        title: 'Last Modified',
         // width: '20%',
         render: (row: UserType) => (
           <Text size="sm">
@@ -285,8 +265,8 @@ const useUsers = () => {
         ),
       },
       {
-        key: 'lastLogin',
-        label: 'Last Login',
+        accessor: 'lastLogin',
+        title: 'Last Login',
         render: (row: UserType) => (
           <Text size="sm">
             {row.last_login ? formatDate(row.last_login) : '-'}
@@ -294,8 +274,8 @@ const useUsers = () => {
         ),
       },
       {
-        key: 'verified',
-        label: 'Verified',
+        accessor: 'verified',
+        title: 'Verified',
         render: (row: UserType) => (
           // <Text size="sm">{row.verified ? 'Yes' : 'No'}</Text>
           <Text size="sm">
@@ -312,8 +292,8 @@ const useUsers = () => {
         ),
       },
       {
-        key: 'actions',
-        label: 'Block / Unblock',
+        accessor: 'actions',
+        title: 'Block / Unblock',
         // width: '10%',
         render: (row: UserType) => (
           <>
@@ -346,8 +326,6 @@ const useUsers = () => {
     inviteUserMethods,
     userBlockModalOpen,
     itemToBlock,
-    handleScroll,
-    scrollBoxRef,
     searchTerm: localSearchTerm,
     handleSearchChange,
     columns,
@@ -356,6 +334,11 @@ const useUsers = () => {
     closeUserBlockModal,
     handleBlockConfirm,
     blockUserLoading,
+    handlePageChange,
+    currentPage: pagination?.page_no || 1,
+    totalRecords: pagination?.total || 0,
+    limit,
+    handleLimitChange,
   };
 };
 

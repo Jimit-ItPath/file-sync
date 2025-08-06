@@ -59,7 +59,7 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
         <Image
           src={previewFile.url}
           alt={previewFile.name}
-          fit='contain'
+          fit="contain"
           h={500}
         />
       ) : previewFile?.type &&

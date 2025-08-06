@@ -136,3 +136,21 @@
     transform: translateY(0);
   }
 }
+
+.mantine-user-data-table .mantine-datatable-empty-state,
+.mantine-user-data-table .mantine-datatable-pagination-text,
+.mantine-user-data-table
+  .mantine-datatable-pagination
+  .m_4081bf90.mantine-Group-root
+  .mantine-focus-auto.m_b6d8b162.mantine-Text-root {
+  display: none;
+}
+
+@media screen and (max-width: 870px) {
+  .mantine-user-data-table .mantine-datatable-pagination {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: start !important;
+    width: 100%;
+  }
+}

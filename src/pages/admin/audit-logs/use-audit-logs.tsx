@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   exportLogs,
@@ -21,12 +15,9 @@ import type { SelectOption } from '../../../components/inputs/autocomplete';
 import { notifications } from '@mantine/notifications';
 
 const useAuditLogs = () => {
-  const {
-    auditLogsPagination,
-    auditLogs,
-    auditLogSearchTerm,
-    auditLogLoading,
-  } = useAppSelector(state => state.adminUser);
+  const { auditLogsPagination, auditLogs, auditLogSearchTerm } = useAppSelector(
+    state => state.adminUser
+  );
   const dispatch = useAppDispatch();
 
   const [localSearchTerm, setLocalSearchTerm] = useState(auditLogSearchTerm);
@@ -35,6 +26,7 @@ const useAuditLogs = () => {
   const [userSearchResults, setUserSearchResults] = useState<SelectOption[]>(
     []
   );
+  const [limit, setLimit] = useState(auditLogsPagination?.page_limit || 10);
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
@@ -43,7 +35,7 @@ const useAuditLogs = () => {
   const getAuditLogs = useCallback(async () => {
     await dispatch(
       fetchAuditLogs({
-        limit: auditLogsPagination?.page_limit || 20,
+        limit,
         page: selectedUser ? 1 : auditLogsPagination?.page_no || 1,
         searchTerm: debouncedSearchTerm || '',
         ...(selectedUser && {
@@ -53,7 +45,7 @@ const useAuditLogs = () => {
     );
   }, [
     dispatch,
-    auditLogsPagination?.page_limit,
+    limit,
     auditLogsPagination?.page_no,
     debouncedSearchTerm,
     selectedUser,
@@ -70,61 +62,45 @@ const useAuditLogs = () => {
     onInitialize({});
   }, [debouncedSearchTerm, selectedUser]);
 
-  const scrollBoxRef = useRef<HTMLDivElement>(null);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    lastScrollTop.current = e.currentTarget.scrollTop;
-    const target = e.currentTarget;
-    if (
-      target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
-      auditLogsPagination &&
-      auditLogsPagination.page_no < auditLogsPagination.total_pages &&
-      !auditLogLoading
-    ) {
-      loadMoreAuditLogs();
-    }
-  };
-
-  useEffect(() => {
-    if (scrollBoxRef.current && lastScrollTop.current > 0) {
-      setTimeout(() => {
-        scrollBoxRef.current!.scrollTop = lastScrollTop.current;
-      }, 0);
-    }
-  }, [auditLogs.length]);
-
-  const loadMoreAuditLogs = useCallback(async () => {
-    if (
-      auditLogsPagination &&
-      auditLogsPagination.page_no < auditLogsPagination.total_pages &&
-      !auditLogLoading
-    ) {
-      await dispatch(
+  const handleLimitChange = useCallback(
+    (newLimit: number) => {
+      setLimit(newLimit);
+      dispatch(
         fetchAuditLogs({
-          page: auditLogsPagination.page_no + 1,
-          limit: auditLogsPagination.page_limit || 20,
+          limit: newLimit,
+          page: selectedUser ? 1 : auditLogsPagination?.page_no || 1,
           searchTerm: debouncedSearchTerm || '',
           ...(selectedUser && {
             user_id: selectedUser,
           }),
         })
       );
-    }
-  }, [
-    auditLogsPagination,
-    auditLogLoading,
-    dispatch,
-    debouncedSearchTerm,
-    selectedUser,
-  ]);
+    },
+    [dispatch, debouncedSearchTerm]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      dispatch(
+        fetchAuditLogs({
+          limit,
+          page,
+          searchTerm: debouncedSearchTerm || '',
+          ...(selectedUser && {
+            user_id: selectedUser,
+          }),
+        })
+      );
+    },
+    [dispatch, limit, debouncedSearchTerm]
+  );
 
   const handleUserSearch = useCallback(
     async (query?: string): Promise<SelectOption[]> => {
       try {
         const result = await dispatch(
           fetchUsers({
-            limit: 20,
+            limit,
             page: 1,
             searchTerm: query || '',
           })
@@ -165,8 +141,8 @@ const useAuditLogs = () => {
   const columns = useMemo(
     () => [
       {
-        key: 'action_type',
-        label: 'Action Type',
+        accessor: 'action_type',
+        title: 'Action Type',
         render: (row: AuditLogType) => (
           <Group
             gap={8}
@@ -181,8 +157,8 @@ const useAuditLogs = () => {
         ),
       },
       {
-        key: 'type',
-        label: 'Type',
+        accessor: 'type',
+        title: 'Type',
         render: (row: AuditLogType) => (
           <Group gap={8} wrap="nowrap">
             <Text size="sm" truncate>
@@ -192,9 +168,9 @@ const useAuditLogs = () => {
         ),
       },
       {
-        key: 'name',
-        label: 'Name',
-        width: '30%',
+        accessor: 'name',
+        title: 'Name',
+        // width: '30%',
         render: (row: AuditLogType) => (
           <Group
             gap={8}
@@ -215,9 +191,9 @@ const useAuditLogs = () => {
         ),
       },
       {
-        key: 'status',
-        label: 'Status',
-        width: '15%',
+        accessor: 'status',
+        title: 'Status',
+        // width: '15%',
         render: (row: AuditLogType) => (
           <Group gap={8} wrap="nowrap">
             <Text fz={'sm'} truncate c={row.success ? 'green.8' : 'red'}>
@@ -227,9 +203,9 @@ const useAuditLogs = () => {
         ),
       },
       {
-        key: 'lastModified',
-        label: 'Last Modified',
-        width: '20%',
+        accessor: 'lastModified',
+        title: 'Last Modified',
+        // width: '20%',
         render: (row: AuditLogType) => (
           <Text size="sm">
             {row.updatedAt ? formatDate(row.updatedAt) : '-'}
@@ -237,9 +213,9 @@ const useAuditLogs = () => {
         ),
       },
       {
-        key: 'error_message',
-        label: 'Error Message',
-        width: '30%',
+        accessor: 'error_message',
+        title: 'Error Message',
+        // width: '30%',
         render: (row: AuditLogType) => (
           <Group
             gap={8}
@@ -255,8 +231,8 @@ const useAuditLogs = () => {
         ),
       },
       // {
-      //   key: 'actions',
-      //   label: 'Actions',
+      //   accessor: 'actions',
+      //   title: 'Actions',
       //   render: (row: AuditLogType) => (
       //     <>
       //       <Tooltip label={'View Details'} fz={'xs'}>
@@ -308,8 +284,6 @@ const useAuditLogs = () => {
 
   return {
     auditLogs,
-    handleScroll,
-    scrollBoxRef,
     searchTerm: localSearchTerm,
     handleSearchChange,
     columns,
@@ -320,6 +294,11 @@ const useAuditLogs = () => {
     handleClearSelection,
     handleExportLogs,
     downloadLogsLoading,
+    handlePageChange,
+    currentPage: auditLogsPagination?.page_no || 1,
+    totalRecords: auditLogsPagination?.total || 0,
+    limit,
+    handleLimitChange,
   };
 };
 
