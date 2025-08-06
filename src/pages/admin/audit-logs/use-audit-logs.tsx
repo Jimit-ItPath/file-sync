@@ -406,6 +406,15 @@ const useAuditLogs = () => {
         ...(debouncedSearchTerm && {
           searchTerm: debouncedSearchTerm,
         }),
+        ...(selectedActionType && {
+          action_types: selectedActionType,
+        }),
+        ...(selectedType && {
+          types: selectedType,
+        }),
+        ...(successFilter && {
+          success: successFilter === 'true',
+        }),
       };
       const res = await dispatch(exportLogs(payload));
       if (res?.payload?.status !== 200) {
@@ -426,7 +435,13 @@ const useAuditLogs = () => {
 
   const handleExportLogs = useCallback(() => {
     downloadLogs({});
-  }, [selectedUser, debouncedSearchTerm]);
+  }, [
+    selectedUser,
+    debouncedSearchTerm,
+    selectedActionType,
+    selectedType,
+    successFilter,
+  ]);
 
   return {
     auditLogs,

@@ -659,7 +659,13 @@ export const api = {
         method: METHODS.GET,
         params,
       }),
-    exportLogs: (data: { user_id?: string | null; searchTerm?: string }) =>
+    exportLogs: (data: {
+      user_id?: string | null;
+      searchTerm?: string;
+      action_types?: string;
+      types?: string;
+      success?: boolean;
+    }) =>
       client({
         url: `/user/export-logs`,
         method: METHODS.POST,

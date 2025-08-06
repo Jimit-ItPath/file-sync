@@ -140,7 +140,13 @@ export const fetchAuditLogs = createAsyncThunk(
 
 export const exportLogs = createAsyncThunk(
   'adminUser/exportLogs',
-  async (data: { user_id?: string | null; searchTerm?: string }) => {
+  async (data: {
+    user_id?: string | null;
+    searchTerm?: string;
+    action_types?: string;
+    types?: string;
+    success?: boolean;
+  }) => {
     try {
       const response = await api.adminUsers.exportLogs(data);
       return response;
