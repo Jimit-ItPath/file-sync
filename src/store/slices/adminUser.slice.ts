@@ -125,6 +125,7 @@ export const fetchAuditLogs = createAsyncThunk(
       user_id?: string | number;
       action_types?: string;
       types?: string;
+      success?: boolean;
     },
     { rejectWithValue }
   ) => {

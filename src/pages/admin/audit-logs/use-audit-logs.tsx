@@ -37,6 +37,7 @@ const useAuditLogs = () => {
     null
   );
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [successFilter, setSuccessFilter] = useState<string | null>(null);
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
@@ -58,6 +59,9 @@ const useAuditLogs = () => {
           ...(selectedType && {
             types: selectedType,
           }),
+          ...(successFilter && {
+            success: successFilter === 'true',
+          }),
         })
       );
     },
@@ -69,6 +73,7 @@ const useAuditLogs = () => {
       selectedUser,
       selectedActionType,
       selectedType,
+      successFilter,
     ]
   );
   const actionTypeOptions = useMemo(() => {
@@ -92,6 +97,28 @@ const useAuditLogs = () => {
     }
     return [];
   }, [types]);
+
+  const successFilterOptions = useMemo(
+    () => [
+      {
+        value: 'true',
+        label: 'Success',
+      },
+      {
+        value: 'false',
+        label: 'Failure',
+      },
+    ],
+    []
+  );
+
+  const handleSuccessFilterChange = (value: string | null) => {
+    setSuccessFilter(value);
+  };
+
+  const handleClearSuccessFilter = () => {
+    setSuccessFilter(null);
+  };
 
   const fetchActionTypesData = useCallback(async () => {
     await dispatch(fetchActionTypes());
@@ -133,7 +160,13 @@ const useAuditLogs = () => {
   useEffect(() => {
     dispatch(setAuditLogSearchTerm(debouncedSearchTerm));
     getAuditLogs(1);
-  }, [debouncedSearchTerm, selectedUser, selectedActionType, selectedType]);
+  }, [
+    debouncedSearchTerm,
+    selectedUser,
+    selectedActionType,
+    selectedType,
+    successFilter,
+  ]);
 
   const handleLimitChange = useCallback(
     (newLimit: number) => {
@@ -152,6 +185,9 @@ const useAuditLogs = () => {
           ...(selectedType && {
             types: selectedType,
           }),
+          ...(successFilter && {
+            success: successFilter === 'true',
+          }),
         })
       );
     },
@@ -161,6 +197,7 @@ const useAuditLogs = () => {
       selectedUser,
       selectedActionType,
       selectedType,
+      successFilter,
     ]
   );
 
@@ -180,6 +217,9 @@ const useAuditLogs = () => {
           ...(selectedType && {
             types: selectedType,
           }),
+          ...(successFilter && {
+            success: successFilter === 'true',
+          }),
         })
       );
     },
@@ -190,6 +230,7 @@ const useAuditLogs = () => {
       selectedUser,
       selectedActionType,
       selectedType,
+      successFilter,
     ]
   );
 
@@ -206,6 +247,9 @@ const useAuditLogs = () => {
             }),
             ...(selectedType && {
               types: selectedType,
+            }),
+            ...(successFilter && {
+              success: successFilter === 'true',
             }),
           })
         );
@@ -321,12 +365,14 @@ const useAuditLogs = () => {
             gap={8}
             wrap="nowrap"
             maw={'100%'}
-            style={{ maxWidth: 'calc(100% - 100px)' }}
+            style={{ maxWidth: '70%' }}
             // style={{ overflow: 'hidden' }}
           >
-            <Text fz={'sm'} truncate>
-              {row.error_message || '--'}
-            </Text>
+            <Tooltip label={row.error_message || '--'} fz={'xs'}>
+              <Text fz={'sm'} truncate>
+                {row.error_message || '--'}
+              </Text>
+            </Tooltip>
           </Group>
         ),
       },
@@ -407,6 +453,10 @@ const useAuditLogs = () => {
     selectedType,
     handleClearActionType,
     handleClearType,
+    successFilterOptions,
+    handleSuccessFilterChange,
+    handleClearSuccessFilter,
+    successFilter,
   };
 };
 

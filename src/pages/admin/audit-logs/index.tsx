@@ -1,9 +1,10 @@
-import { ActionIcon, Box, Group, Select, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Box, Group, Text, TextInput } from '@mantine/core';
 import { Button, Card, CustomAutocomplete } from '../../../components';
 import useAuditLogs from './use-audit-logs';
 import { ICONS } from '../../../assets/icons';
 import { LoaderOverlay } from '../../../components/loader';
 import { DataTable } from 'mantine-datatable';
+import SelectFilter from '../../../components/inputs/select/SelectFilter';
 
 const AdminAuditLogs = () => {
   const {
@@ -31,6 +32,10 @@ const AdminAuditLogs = () => {
     selectedType,
     handleClearActionType,
     handleClearType,
+    handleClearSuccessFilter,
+    handleSuccessFilterChange,
+    successFilterOptions,
+    successFilter,
   } = useAuditLogs();
 
   return (
@@ -59,97 +64,38 @@ const AdminAuditLogs = () => {
             </Button>
           ) : null}
           {/* Action Type */}
-          <Select
-            data={actionTypeOptions}
-            value={selectedActionType}
-            label="Action Type"
-            onChange={handleActionTypeSelect}
-            onClear={handleClearActionType}
-            placeholder="Select action type"
-            clearable
-            w={200}
-            styles={{
-              input: {
-                border: '1px solid #ced4da',
-                backgroundColor: '#ffffff',
-                zIndex: 10,
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#374151',
-                transition: 'all 0.2s ease',
-                '&:focus': {
-                  borderColor: '#1e7ae8',
-                  boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
-                },
-                '&:hover': {
-                  borderColor: '#d1d5db',
-                },
-              },
-              dropdown: {
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-              },
-              option: {
-                padding: '6px',
-                fontSize: '14px',
-                borderRadius: '4px',
-                margin: '2px',
-                '&[data-selected]': {
-                  backgroundColor: '#1e7ae8',
-                  color: '#ffffff',
-                },
-                '&:hover': {
-                  backgroundColor: '#f1f5f9',
-                },
-              },
+          <SelectFilter
+            {...{
+              data: actionTypeOptions,
+              label: 'Action Type',
+              value: selectedActionType,
+              onChange: handleActionTypeSelect,
+              onClear: handleClearActionType,
+              placeholder: 'Select action type',
             }}
           />
           {/* Type */}
-          <Select
-            data={typeOptions}
-            value={selectedType}
-            label="Type"
-            onChange={handleTypeSelect}
-            onClear={handleClearType}
-            placeholder="Select type"
-            clearable
-            w={150}
-            styles={{
-              input: {
-                border: '1px solid #ced4da',
-                backgroundColor: '#ffffff',
-                zIndex: 10,
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#374151',
-                transition: 'all 0.2s ease',
-                '&:focus': {
-                  borderColor: '#1e7ae8',
-                  boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
-                },
-                '&:hover': {
-                  borderColor: '#d1d5db',
-                },
-              },
-              dropdown: {
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-              },
-              option: {
-                padding: '6px',
-                fontSize: '14px',
-                borderRadius: '4px',
-                margin: '2px',
-                '&[data-selected]': {
-                  backgroundColor: '#1e7ae8',
-                  color: '#ffffff',
-                },
-                '&:hover': {
-                  backgroundColor: '#f1f5f9',
-                },
-              },
+          <SelectFilter
+            {...{
+              data: typeOptions,
+              label: 'Type',
+              value: selectedType,
+              onChange: handleTypeSelect,
+              onClear: handleClearType,
+              placeholder: 'Select type',
+              width: 150,
+            }}
+          />
+          {/* Success Filter */}
+          <SelectFilter
+            {...{
+              data: successFilterOptions,
+              label: 'Status',
+              value: successFilter,
+              onChange: handleSuccessFilterChange,
+              onClear: handleClearSuccessFilter,
+              placeholder: 'Select status',
+              width: 150,
             }}
           />
           <CustomAutocomplete

@@ -652,6 +652,7 @@ export const api = {
       searchTerm?: string;
       action_types?: string;
       types?: string;
+      success?: boolean;
     }) =>
       client({
         url: `/user/audit-logs`,
