@@ -636,7 +636,7 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { email: string };
+      data: { emails: string[] };
       [key: string]: any;
     }) =>
       client({

@@ -127,3 +127,5 @@ export const PREVIEW_FILE_TYPES = [
   ...VIDEO_FILE_TYPES,
   // ...DOCUMENT_FILE_TYPES,
 ];
+
+export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;

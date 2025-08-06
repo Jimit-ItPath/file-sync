@@ -18,7 +18,11 @@ import { ActionIcon, Group, Text, Tooltip } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 
 const inviteUserSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  emails: z
+    .array(
+      z.string().min(1, 'Email is required').email('Invalid email address')
+    )
+    .min(1, 'At least one email is required'),
 });
 
 type InviteUserFormData = z.infer<typeof inviteUserSchema>;
@@ -40,7 +44,7 @@ const useUsers = () => {
     resolver: zodResolver(inviteUserSchema),
     mode: 'onChange',
     defaultValues: {
-      email: '',
+      emails: [],
     },
   });
 
@@ -111,11 +115,11 @@ const useUsers = () => {
 
   // Invite User
   const [inviteUserFn, inviteUserLoading] = useAsyncOperation(
-    async (email: string) => {
+    async (emails: string[]) => {
       try {
         const res = await dispatch(
           inviteUser({
-            email,
+            emails,
           })
         );
         if (res?.payload?.success) {
@@ -148,7 +152,7 @@ const useUsers = () => {
   );
 
   const handleInviteUser = inviteUserMethods.handleSubmit(data => {
-    inviteUserFn(data.email);
+    inviteUserFn(data.emails);
   });
 
   // User Block / Unblock

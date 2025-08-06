@@ -101,7 +101,7 @@ export const blockUser = createAsyncThunk(
 
 export const inviteUser = createAsyncThunk(
   'adminUser/inviteUser',
-  async (data: { email: string }) => {
+  async (data: { emails: string[] }) => {
     try {
       const response = await api.adminUsers.inviteUser({ data });
       return response.data;

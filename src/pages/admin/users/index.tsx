@@ -3,6 +3,7 @@ import useUsers from './use-users';
 import { Button, Card, Form, Modal } from '../../../components';
 import { LoaderOverlay } from '../../../components/loader';
 import { DataTable } from 'mantine-datatable';
+import EmailMultiInput from './EmailMultiInput';
 
 const AdminUsers = () => {
   const {
@@ -115,12 +116,9 @@ const AdminUsers = () => {
       >
         <Form methods={inviteUserMethods} onSubmit={handleInviteUser}>
           <Stack gap="md">
-            <TextInput
-              placeholder="User email"
-              label="User Email"
-              {...inviteUserMethods.register('email')}
-              error={inviteUserMethods.formState.errors.email?.message}
-              withAsterisk
+            <EmailMultiInput
+              inviteUserMethods={inviteUserMethods}
+              inviteUserLoading={inviteUserLoading}
             />
             <Button
               type="submit"
