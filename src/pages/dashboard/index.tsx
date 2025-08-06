@@ -361,9 +361,7 @@ const Dashboard = () => {
               <TextInput
                 placeholder="Search files..."
                 value={searchTerm}
-                onChange={event =>
-                  handleSearchChange(event.currentTarget.value)
-                }
+                onChange={event => handleSearchChange(event.target.value)}
                 // style={{ width: '200px' }}
                 styles={{
                   input: {

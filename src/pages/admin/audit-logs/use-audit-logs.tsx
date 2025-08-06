@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   exportLogs,
+  fetchActionTypes,
   fetchAuditLogs,
+  fetchTypes,
   fetchUsers,
   setAuditLogSearchTerm,
   type AuditLogType,
@@ -15,9 +17,13 @@ import type { SelectOption } from '../../../components/inputs/autocomplete';
 import { notifications } from '@mantine/notifications';
 
 const useAuditLogs = () => {
-  const { auditLogsPagination, auditLogs, auditLogSearchTerm } = useAppSelector(
-    state => state.adminUser
-  );
+  const {
+    auditLogsPagination,
+    auditLogs,
+    auditLogSearchTerm,
+    actionTypes,
+    types,
+  } = useAppSelector(state => state.adminUser);
   const dispatch = useAppDispatch();
 
   const [localSearchTerm, setLocalSearchTerm] = useState(auditLogSearchTerm);
@@ -27,31 +33,98 @@ const useAuditLogs = () => {
     []
   );
   const [limit, setLimit] = useState(auditLogsPagination?.page_limit || 10);
+  const [selectedActionType, setSelectedActionType] = useState<string | null>(
+    null
+  );
+  const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
   };
 
-  const getAuditLogs = useCallback(async () => {
-    await dispatch(
-      fetchAuditLogs({
-        limit,
-        page: selectedUser ? 1 : auditLogsPagination?.page_no || 1,
-        searchTerm: debouncedSearchTerm || '',
-        ...(selectedUser && {
-          user_id: selectedUser,
-        }),
-      })
-    );
-  }, [
-    dispatch,
-    limit,
-    auditLogsPagination?.page_no,
-    debouncedSearchTerm,
-    selectedUser,
-  ]);
+  const getAuditLogs = useCallback(
+    async (pageNo?: number) => {
+      await dispatch(
+        fetchAuditLogs({
+          limit,
+          page: pageNo || selectedUser ? 1 : auditLogsPagination?.page_no || 1,
+          searchTerm: debouncedSearchTerm || '',
+          ...(selectedUser && {
+            user_id: selectedUser,
+          }),
+          ...(selectedActionType && {
+            action_types: selectedActionType,
+          }),
+          ...(selectedType && {
+            types: selectedType,
+          }),
+        })
+      );
+    },
+    [
+      dispatch,
+      limit,
+      auditLogsPagination?.page_no,
+      debouncedSearchTerm,
+      selectedUser,
+      selectedActionType,
+      selectedType,
+    ]
+  );
+  const actionTypeOptions = useMemo(() => {
+    if (actionTypes) {
+      const options = Object.entries(actionTypes)?.map(([key, value]) => ({
+        value,
+        label: key,
+      }));
+      return options;
+    }
+    return [];
+  }, [actionTypes]);
 
-  const [onInitialize] = useAsyncOperation(getAuditLogs);
+  const typeOptions = useMemo(() => {
+    if (types) {
+      const options = Object.entries(types)?.map(([key, value]) => ({
+        value,
+        label: key,
+      }));
+      return options;
+    }
+    return [];
+  }, [types]);
+
+  const fetchActionTypesData = useCallback(async () => {
+    await dispatch(fetchActionTypes());
+  }, [dispatch]);
+
+  const [getActionTypes] = useAsyncOperation(fetchActionTypesData);
+
+  const fetchTypesData = useCallback(async () => {
+    await dispatch(fetchTypes());
+  }, [dispatch]);
+
+  const [getTypes] = useAsyncOperation(fetchTypesData);
+
+  useEffect(() => {
+    getActionTypes({});
+    getTypes({});
+  }, []);
+
+  const handleActionTypeSelect = (actionType: string | string[] | null) => {
+    setSelectedActionType(actionType as string | null);
+  };
+
+  const handleClearActionType = () => {
+    setSelectedActionType(null);
+  };
+
+  const handleTypeSelect = (type: string | string[] | null) => {
+    setSelectedType(type as string | null);
+  };
+
+  const handleClearType = () => {
+    setSelectedType(null);
+  };
 
   useEffect(() => {
     handleUserSearch();
@@ -59,8 +132,8 @@ const useAuditLogs = () => {
 
   useEffect(() => {
     dispatch(setAuditLogSearchTerm(debouncedSearchTerm));
-    onInitialize({});
-  }, [debouncedSearchTerm, selectedUser]);
+    getAuditLogs(1);
+  }, [debouncedSearchTerm, selectedUser, selectedActionType, selectedType]);
 
   const handleLimitChange = useCallback(
     (newLimit: number) => {
@@ -73,10 +146,22 @@ const useAuditLogs = () => {
           ...(selectedUser && {
             user_id: selectedUser,
           }),
+          ...(selectedActionType && {
+            action_types: selectedActionType,
+          }),
+          ...(selectedType && {
+            types: selectedType,
+          }),
         })
       );
     },
-    [dispatch, debouncedSearchTerm]
+    [
+      dispatch,
+      debouncedSearchTerm,
+      selectedUser,
+      selectedActionType,
+      selectedType,
+    ]
   );
 
   const handlePageChange = useCallback(
@@ -89,10 +174,23 @@ const useAuditLogs = () => {
           ...(selectedUser && {
             user_id: selectedUser,
           }),
+          ...(selectedActionType && {
+            action_types: selectedActionType,
+          }),
+          ...(selectedType && {
+            types: selectedType,
+          }),
         })
       );
     },
-    [dispatch, limit, debouncedSearchTerm]
+    [
+      dispatch,
+      limit,
+      debouncedSearchTerm,
+      selectedUser,
+      selectedActionType,
+      selectedType,
+    ]
   );
 
   const handleUserSearch = useCallback(
@@ -103,6 +201,12 @@ const useAuditLogs = () => {
             limit,
             page: 1,
             searchTerm: query || '',
+            ...(selectedActionType && {
+              action_types: selectedActionType,
+            }),
+            ...(selectedType && {
+              types: selectedType,
+            }),
           })
         );
 
@@ -179,11 +283,7 @@ const useAuditLogs = () => {
             style={{ overflow: 'hidden' }}
           >
             <Tooltip label={row.name} fz={'xs'}>
-              <Text
-                fz={'sm'}
-                truncate
-                style={{ maxWidth: 'calc(100% - 100px)' }}
-              >
+              <Text fz={'sm'} truncate style={{ maxWidth: '80%' }}>
                 {row.name}
               </Text>
             </Tooltip>
@@ -299,6 +399,14 @@ const useAuditLogs = () => {
     totalRecords: auditLogsPagination?.total || 0,
     limit,
     handleLimitChange,
+    actionTypeOptions,
+    typeOptions,
+    handleActionTypeSelect,
+    handleTypeSelect,
+    selectedActionType,
+    selectedType,
+    handleClearActionType,
+    handleClearType,
   };
 };
 

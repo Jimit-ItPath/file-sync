@@ -57,15 +57,18 @@ const useUsers = () => {
     setLocalSearchTerm(value);
   };
 
-  const getUsers = useCallback(async () => {
-    await dispatch(
-      fetchUsers({
-        limit,
-        page: pagination?.page_no || 1,
-        searchTerm: debouncedSearchTerm || '',
-      })
-    );
-  }, [dispatch, limit, pagination?.page_no, debouncedSearchTerm]);
+  const getUsers = useCallback(
+    async (pageNo?: number) => {
+      await dispatch(
+        fetchUsers({
+          limit,
+          page: pageNo ? pageNo : pagination?.page_no || 1,
+          searchTerm: debouncedSearchTerm || '',
+        })
+      );
+    },
+    [dispatch, limit, pagination?.page_no, debouncedSearchTerm]
+  );
 
   const [onInitialize] = useAsyncOperation(getUsers);
 
@@ -83,7 +86,7 @@ const useUsers = () => {
     }
 
     dispatch(setSearchTerm(debouncedSearchTerm));
-    getUsers();
+    getUsers(1);
   }, [debouncedSearchTerm]);
 
   const handleLimitChange = useCallback(
@@ -226,8 +229,8 @@ const useUsers = () => {
           <Group
             gap={8}
             wrap="nowrap"
-            maw={'100%'}
-            style={{ overflow: 'hidden' }}
+            // maw={'100%'}
+            // style={{ overflow: 'hidden' }}
           >
             {row?.first_name && row?.last_name ? (
               <Tooltip label={row.first_name + ' ' + row.last_name} fz={'xs'}>
@@ -235,7 +238,7 @@ const useUsers = () => {
                   fw={600}
                   fz={'sm'}
                   truncate
-                  style={{ maxWidth: 'calc(60%)' }}
+                  // style={{ maxWidth: 'calc(60%)' }}
                 >
                   {row.first_name + ' ' + row.last_name}
                 </Text>
@@ -249,12 +252,19 @@ const useUsers = () => {
       {
         accessor: 'email',
         title: 'Email',
-        // width: '30%',
+        // width: '20%',
         render: (row: UserType) => (
-          <Group gap={8} wrap="nowrap">
-            <Text size="sm" truncate>
-              {row.email}
-            </Text>
+          <Group
+            gap={8}
+            wrap="nowrap"
+            maw={'100%'}
+            style={{ overflow: 'hidden' }}
+          >
+            <Tooltip label={row.email} fz={'xs'}>
+              <Text size="sm" truncate style={{ maxWidth: 'calc(80%)' }}>
+                {row.email}
+              </Text>
+            </Tooltip>
           </Group>
         ),
       },
@@ -305,7 +315,10 @@ const useUsers = () => {
               <ActionIcon
                 variant="subtle"
                 color="gray"
-                onClick={() => openUserBlockModal(row)}
+                onClick={e => {
+                  e.stopPropagation();
+                  openUserBlockModal(row);
+                }}
               >
                 {row.is_blocked ? (
                   <ICONS.IconLockCheck size={20} color={'green'} />

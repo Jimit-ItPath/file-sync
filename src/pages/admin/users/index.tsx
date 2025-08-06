@@ -1,9 +1,11 @@
-import { Box, Group, Stack, Text, TextInput } from '@mantine/core';
+import { Box, Group, SimpleGrid, Stack, Text, TextInput } from '@mantine/core';
 import useUsers from './use-users';
 import { Button, Card, Form, Modal } from '../../../components';
 import { LoaderOverlay } from '../../../components/loader';
 import { DataTable } from 'mantine-datatable';
 import EmailMultiInput from './EmailMultiInput';
+import { formatDate } from '../../../utils/helper';
+import { ICONS } from '../../../assets/icons';
 
 const AdminUsers = () => {
   const {
@@ -89,6 +91,44 @@ const AdminUsers = () => {
                 paginationActiveTextColor="white"
                 noRecordsText=""
                 className="mantine-user-data-table"
+                rowExpansion={{
+                  allowMultiple: false,
+                  content: ({ record }) => (
+                    <Box p="md" bg="gray.0" style={{ borderRadius: 8 }}>
+                      <Text size="sm" fw={600} mb="sm" c="gray.8">
+                        Connected Accounts
+                      </Text>
+
+                      {record.UserConnectedAccounts?.length > 0 ? (
+                        <SimpleGrid
+                          cols={{ base: 1, sm: 2, md: 3 }}
+                          spacing="md"
+                          verticalSpacing="md"
+                        >
+                          {record.UserConnectedAccounts.map(account => (
+                            <Card
+                              key={account.id}
+                              p="md"
+                              style={{ borderRadius: 8 }}
+                            >
+                              <Group justify="space-between" mb="xs">
+                                <Text fw={500}>{account.account_name}</Text>
+                                <ICONS.IconList size={16} color="gray" />
+                              </Group>
+                              <Text size="xs" c="dimmed">
+                                Created on: {formatDate(account.createdAt)}
+                              </Text>
+                            </Card>
+                          ))}
+                        </SimpleGrid>
+                      ) : (
+                        <Text size="sm" c="dimmed">
+                          No connected accounts.
+                        </Text>
+                      )}
+                    </Box>
+                  ),
+                }}
                 styles={{
                   pagination: {
                     display: 'flex',
@@ -96,6 +136,9 @@ const AdminUsers = () => {
                     alignItems: 'center',
                     gap: '10px',
                     marginTop: '10px',
+                  },
+                  table: {
+                    cursor: 'pointer',
                   },
                 }}
               />

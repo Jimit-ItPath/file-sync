@@ -1,8 +1,7 @@
-import { ActionIcon, Box, Group, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Box, Group, Select, Text, TextInput } from '@mantine/core';
 import { Button, Card, CustomAutocomplete } from '../../../components';
 import useAuditLogs from './use-audit-logs';
 import { ICONS } from '../../../assets/icons';
-import useResponsive from '../../../hooks/use-responsive';
 import { LoaderOverlay } from '../../../components/loader';
 import { DataTable } from 'mantine-datatable';
 
@@ -24,8 +23,15 @@ const AdminAuditLogs = () => {
     totalRecords,
     limit,
     handleLimitChange,
+    actionTypeOptions,
+    typeOptions,
+    handleActionTypeSelect,
+    handleTypeSelect,
+    selectedActionType,
+    selectedType,
+    handleClearActionType,
+    handleClearType,
   } = useAuditLogs();
-  const { isMd } = useResponsive();
 
   return (
     <Box>
@@ -42,7 +48,7 @@ const AdminAuditLogs = () => {
           transition: 'all 0.2s ease-in-out',
         }}
       >
-        <Group justify={isMd ? 'flex-start' : 'flex-end'} mt={16} gap="md">
+        <Group justify={'flex-start'} align="center" mt={16} gap="md">
           {auditLogs?.length ? (
             <Button
               mt={26}
@@ -52,6 +58,100 @@ const AdminAuditLogs = () => {
               Export Logs
             </Button>
           ) : null}
+          {/* Action Type */}
+          <Select
+            data={actionTypeOptions}
+            value={selectedActionType}
+            label="Action Type"
+            onChange={handleActionTypeSelect}
+            onClear={handleClearActionType}
+            placeholder="Select action type"
+            clearable
+            w={200}
+            styles={{
+              input: {
+                border: '1px solid #ced4da',
+                backgroundColor: '#ffffff',
+                zIndex: 10,
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#374151',
+                transition: 'all 0.2s ease',
+                '&:focus': {
+                  borderColor: '#1e7ae8',
+                  boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                },
+                '&:hover': {
+                  borderColor: '#d1d5db',
+                },
+              },
+              dropdown: {
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              },
+              option: {
+                padding: '6px',
+                fontSize: '14px',
+                borderRadius: '4px',
+                margin: '2px',
+                '&[data-selected]': {
+                  backgroundColor: '#1e7ae8',
+                  color: '#ffffff',
+                },
+                '&:hover': {
+                  backgroundColor: '#f1f5f9',
+                },
+              },
+            }}
+          />
+          {/* Type */}
+          <Select
+            data={typeOptions}
+            value={selectedType}
+            label="Type"
+            onChange={handleTypeSelect}
+            onClear={handleClearType}
+            placeholder="Select type"
+            clearable
+            w={150}
+            styles={{
+              input: {
+                border: '1px solid #ced4da',
+                backgroundColor: '#ffffff',
+                zIndex: 10,
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#374151',
+                transition: 'all 0.2s ease',
+                '&:focus': {
+                  borderColor: '#1e7ae8',
+                  boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                },
+                '&:hover': {
+                  borderColor: '#d1d5db',
+                },
+              },
+              dropdown: {
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              },
+              option: {
+                padding: '6px',
+                fontSize: '14px',
+                borderRadius: '4px',
+                margin: '2px',
+                '&[data-selected]': {
+                  backgroundColor: '#1e7ae8',
+                  color: '#ffffff',
+                },
+                '&:hover': {
+                  backgroundColor: '#f1f5f9',
+                },
+              },
+            }}
+          />
           <CustomAutocomplete
             data={userSearchResults}
             placeholder="Search users..."
@@ -61,7 +161,7 @@ const AdminAuditLogs = () => {
             onClear={handleClearSelection}
             searchable
             clearable
-            maw={300}
+            maw={250}
             w={'100%'}
             label="Filter by User"
             size="sm"
@@ -83,7 +183,7 @@ const AdminAuditLogs = () => {
                 </ActionIcon>
               ) : null
             }
-            maw={300}
+            maw={250}
             w={'100%'}
             size="sm"
             label="Search Logs"

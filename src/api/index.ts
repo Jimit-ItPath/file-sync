@@ -650,6 +650,8 @@ export const api = {
       page?: number;
       limit?: number;
       searchTerm?: string;
+      action_types?: string;
+      types?: string;
     }) =>
       client({
         url: `/user/audit-logs`,
@@ -662,6 +664,16 @@ export const api = {
         method: METHODS.POST,
         data,
         responseType: 'blob',
+      }),
+    getActionTypes: () =>
+      client({
+        url: `/admin/action-type`,
+        method: METHODS.GET,
+      }),
+    getTypes: () =>
+      client({
+        url: `/admin/types`,
+        method: METHODS.GET,
       }),
   },
 };

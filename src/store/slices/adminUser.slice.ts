@@ -57,6 +57,8 @@ type AdminUserState = {
   auditLogLoading: boolean;
   auditLogError: string | null;
   auditLogSearchTerm: string;
+  types: Record<string, string> | null;
+  actionTypes: Record<string, string> | null;
 };
 
 const initialState: AdminUserState = {
@@ -70,6 +72,8 @@ const initialState: AdminUserState = {
   auditLogLoading: false,
   auditLogError: null,
   auditLogSearchTerm: '',
+  types: null,
+  actionTypes: null,
 };
 
 export const fetchUsers = createAsyncThunk(
@@ -119,6 +123,8 @@ export const fetchAuditLogs = createAsyncThunk(
       page?: number;
       limit?: number;
       user_id?: string | number;
+      action_types?: string;
+      types?: string;
     },
     { rejectWithValue }
   ) => {
@@ -137,6 +143,27 @@ export const exportLogs = createAsyncThunk(
     try {
       const response = await api.adminUsers.exportLogs(data);
       return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const fetchTypes = createAsyncThunk('adminUser/fetchTypes', async () => {
+  try {
+    const response = await api.adminUsers.getTypes();
+    return response.data;
+  } catch (error: any) {
+    return error;
+  }
+});
+
+export const fetchActionTypes = createAsyncThunk(
+  'adminUser/fetchActionTypes',
+  async () => {
+    try {
+      const response = await api.adminUsers.getActionTypes();
+      return response.data;
     } catch (error: any) {
       return error;
     }
@@ -198,6 +225,18 @@ const adminUserSlice = createSlice({
         state.auditLogError = action.payload as string;
         state.auditLogs = [];
         state.auditLogsPagination = null;
+      })
+      .addCase(fetchTypes.fulfilled, (state, action) => {
+        state.types = action.payload?.data;
+      })
+      .addCase(fetchTypes.rejected, state => {
+        state.types = null;
+      })
+      .addCase(fetchActionTypes.fulfilled, (state, action) => {
+        state.actionTypes = action.payload?.data;
+      })
+      .addCase(fetchActionTypes.rejected, state => {
+        state.actionTypes = null;
       });
   },
 });
