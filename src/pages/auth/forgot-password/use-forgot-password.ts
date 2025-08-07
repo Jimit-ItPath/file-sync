@@ -45,6 +45,7 @@ const useForgotPassword = () => {
     methods,
     handleForgotSubmit: methods.handleSubmit(onSubmit),
     isLoading: loading,
+    navigate,
   };
 };
 

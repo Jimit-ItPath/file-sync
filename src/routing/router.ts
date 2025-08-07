@@ -35,6 +35,7 @@ import React from 'react';
 import AdminAuditLogs from '../pages/admin/audit-logs';
 import PrivacyPolicy from '../pages/auth/register/PrivacyPolicy';
 import TermsAndConditions from '../pages/auth/register/TermsAndConditions';
+import UnifidriveLanding from '../pages/landing';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -75,14 +76,24 @@ export const router = createBrowserRouter([
     path: '/',
     loader: () => {
       const { isAuthenticated, role } = getAuth({});
-      return redirect(
-        isAuthenticated
-          ? role === ROLES.ADMIN
+      if (isAuthenticated) {
+        return redirect(
+          role === ROLES.ADMIN
             ? PRIVATE_ROUTES.USERS.url
             : PRIVATE_ROUTES.DASHBOARD.url
-          : AUTH_ROUTES.LOGIN.url
-      );
+        );
+      }
+      return null;
+      // return redirect(
+      //   isAuthenticated
+      //     ? role === ROLES.ADMIN
+      //       ? PRIVATE_ROUTES.USERS.url
+      //       : PRIVATE_ROUTES.DASHBOARD.url
+      //     : // : AUTH_ROUTES.LOGIN.url
+      //       AUTH_ROUTES.LANDING.url
+      // );
     },
+    Component: UnifidriveLanding,
   },
   {
     ...AUTH_ROUTES.layout,
@@ -93,7 +104,8 @@ export const router = createBrowserRouter([
       {
         // ...PLAIN_ROUTES.root,
         loader: () => {
-          return redirect(AUTH_ROUTES.LOGIN.url);
+          // return redirect(AUTH_ROUTES.LOGIN.url);
+          return redirect(AUTH_ROUTES.LANDING.url);
         },
       },
       { ...AUTH_ROUTES.LOGIN, Component: Login },

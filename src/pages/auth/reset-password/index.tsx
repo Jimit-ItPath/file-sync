@@ -17,6 +17,7 @@ const ResetPassword = () => {
     handleResetPasswordSubmit,
     isLoading,
     resetPasswordFormData,
+    navigate,
   } = useResetPassword({ email, validation_code });
   const { isMd, isSm, isXs } = useResponsive();
 
@@ -29,7 +30,9 @@ const ResetPassword = () => {
           top: 24,
           left: 32,
           zIndex: 2,
+          cursor: 'pointer',
         }}
+        onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
         <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text

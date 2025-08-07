@@ -35,7 +35,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       ? // ? PRIVATE_ROUTES.ADMIN_DASHBOARD.url
         PRIVATE_ROUTES.USERS.url
       : PRIVATE_ROUTES.DASHBOARD.url
-    : AUTH_ROUTES.LOGIN.url;
+    : // : AUTH_ROUTES.LOGIN.url;
+      AUTH_ROUTES.LANDING.url;
 
   const login = (newToken: string) => {
     localStorage.setItem('token', newToken);

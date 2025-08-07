@@ -64,6 +64,11 @@ export const AUTH_ROUTES = {
     path: '/terms-of-service',
     url: '/terms-of-service',
   },
+  LANDING: {
+    title: 'Landing',
+    path: '/',
+    url: '/',
+  },
 };
 
 const DASHBOARD_PATH = '/dashboard';

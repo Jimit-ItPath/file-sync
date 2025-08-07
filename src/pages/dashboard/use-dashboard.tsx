@@ -358,7 +358,7 @@ const useDashboard = () => {
   useEffect(() => {
     if (
       !hasMountedOnce.current ||
-      !checkLocation ||
+      // !checkLocation ||
       !connectedAccounts?.length
     ) {
       hasMountedOnce.current = true;

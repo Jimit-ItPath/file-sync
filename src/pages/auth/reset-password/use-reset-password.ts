@@ -104,6 +104,7 @@ const useResetPassword = ({ email, validation_code }: ResetPasswordProps) => {
     handleResetPasswordSubmit: handleSubmit(onSubmit),
     isLoading: loading,
     methods,
+    navigate,
   };
 };
 

@@ -9,7 +9,7 @@ import { FeatureList } from '../register/FeatureList';
 import useResponsive from '../../../hooks/use-responsive';
 
 export default function Login() {
-  const { showLoginForm, toggleLoginForm } = useLogin();
+  const { showLoginForm, toggleLoginForm, navigate } = useLogin();
   const { isMd, isSm, isXs } = useResponsive();
   return (
     <Box>
@@ -20,7 +20,9 @@ export default function Login() {
           top: 24,
           left: 32,
           zIndex: 2,
+          cursor: 'pointer',
         }}
+        onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
         <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text

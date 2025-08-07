@@ -112,6 +112,7 @@ const useLogin = () => {
     methods,
     showLoginForm,
     toggleLoginForm,
+    navigate,
   };
 };
 

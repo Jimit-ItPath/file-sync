@@ -177,6 +177,7 @@ const useCompleteProfile = () => {
     isSm,
     isMd,
     features,
+    navigate,
   };
 };
 

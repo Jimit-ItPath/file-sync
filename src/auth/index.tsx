@@ -49,7 +49,8 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
   // const cachedRedirectUrl = getLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY);
   const isAuthenticated = isTokenActive(token);
 
-  let redirectUrl = AUTH_ROUTES.LOGIN.url;
+  // let redirectUrl = AUTH_ROUTES.LOGIN.url;
+  let redirectUrl = AUTH_ROUTES.LANDING.url;
   let role = '';
 
   if (isAuthenticated) {
@@ -60,7 +61,8 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
     const cachedRedirectUrl = getLocalStorage(roleKey);
     redirectUrl = role
       ? cachedRedirectUrl || REDIRECTION[role]
-      : AUTH_ROUTES.LOGIN.url;
+      : // : AUTH_ROUTES.LOGIN.url;
+        AUTH_ROUTES.LANDING.url;
     // redirectUrl =
     //   cachedRedirectUrl ||
     //   PRIVATE_ROUTES.DASHBOARD.url ||

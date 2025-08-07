@@ -101,7 +101,8 @@ const DashboardLayout = () => {
     if (userProfile?.role === ROLES.ADMIN) {
       navigate(AUTH_ROUTES.ADMIN_LOGIN.url);
     } else {
-      navigate(AUTH_ROUTES.LOGIN.url);
+      // navigate(AUTH_ROUTES.LOGIN.url);
+      navigate(AUTH_ROUTES.LANDING.url);
     }
     dispatch(resetUser());
     dispatch(resetUserProfile());

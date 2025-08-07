@@ -8,7 +8,8 @@ import { ICONS } from '../../../assets/icons';
 import { FeatureList } from '../register/FeatureList';
 
 export default function ForgotPassword() {
-  const { methods, handleForgotSubmit, isLoading } = useForgotPassword();
+  const { methods, handleForgotSubmit, isLoading, navigate } =
+    useForgotPassword();
   const { isXs, isSm, isMd } = useResponsive();
 
   return (
@@ -20,7 +21,9 @@ export default function ForgotPassword() {
           top: 24,
           left: 32,
           zIndex: 2,
+          cursor: 'pointer',
         }}
+        onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
         <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
