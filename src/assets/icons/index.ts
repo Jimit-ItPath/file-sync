@@ -98,6 +98,16 @@ import {
   IconChevronLeft,
   IconChevronsLeft,
   IconChevronsRight,
+  IconDashboard,
+  IconDragDrop2,
+  IconArrowRight,
+  IconDeviceDesktop,
+  IconShield,
+  IconFolders,
+  IconTransfer,
+  IconShieldHalfFilled,
+  IconLayoutDistributeVertical,
+  IconForbid,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -200,4 +210,14 @@ export const ICONS = {
   IconChevronLeft,
   IconChevronsLeft,
   IconChevronsRight,
+  IconDashboard,
+  IconDragDrop2,
+  IconArrowRight,
+  IconDeviceDesktop,
+  IconShield,
+  IconFolders,
+  IconTransfer,
+  IconShieldHalfFilled,
+  IconLayoutDistributeVertical,
+  IconForbid,
 };
