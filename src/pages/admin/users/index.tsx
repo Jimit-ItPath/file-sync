@@ -27,19 +27,19 @@ type AccountConfig = {
 
 const accountConfigs: Record<string, AccountConfig> = {
   google_drive: {
-    icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={30} h={30} />,
+    icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={26} h={26} />,
     color: 'red',
     label: 'Google Drive',
     bg: 'rgba(234, 67, 53, 0.1)',
   },
   dropbox: {
-    icon: <Image src={DropboxIcon} alt="Dropbox" />,
+    icon: <Image src={DropboxIcon} w={28} alt="Dropbox" />,
     color: 'blue',
     label: 'Dropbox',
     bg: 'rgba(0, 97, 255, 0.1)',
   },
   onedrive: {
-    icon: <Image src={OneDriveIcon} alt="OneDrive" w={30} h={30} />,
+    icon: <Image src={OneDriveIcon} alt="OneDrive" w={26} h={26} />,
     color: 'indigo',
     label: 'OneDrive',
     bg: 'rgba(0, 120, 215, 0.1)',

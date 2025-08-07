@@ -48,7 +48,7 @@ const providers = [
   {
     name: 'Dropbox',
     // icon: '📦',
-    icon: <Image src={DropboxIcon} alt="Dropbox" w={24} h={24} />,
+    icon: <Image src={DropboxIcon} alt="Dropbox" w={26} />,
     color: '#0061FF',
     description: 'Connect your Dropbox account',
   },
@@ -109,7 +109,7 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
           position: relative;
           overflow: hidden;
           display: flex;
-          align-items: center;
+          // align-items: center;
           justify-content: center;
           padding: 1rem;
         }
@@ -233,15 +233,16 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
         .connect-button {
           // background: linear-gradient(45deg, #667eea 0%, #764ba2 100%) !important;
           border: none !important;
-          border-radius: 50px !important;
-          padding: 16px 48px !important;
-          font-size: 1.125rem !important;
+          // border-radius: 50px !important;
+          // padding: 16px 48px !important;
+          font-size: 1.125rem !important;s
           font-weight: 600 !important;
           color: white !important;
           text-transform: none !important;
           animation: pulseGlow 3s ease-in-out infinite;
           transition: all 0.3s ease !important;
-          margin-bottom: 3rem;
+          // margin-bottom: 3rem;
+          margin-top: -2rem;
         }
 
         .connect-button:hover {
@@ -329,6 +330,7 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
         @media (min-width: 1900px) {
          .container {
            min-height: 100vh;
+           align-items: center;
          }
         }
 
@@ -412,8 +414,8 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
 
             {/* Connect Button */}
             <Button
-              // className="connect-button"
-              size={isSm ? 'sm' : 'lg'}
+              className="connect-button"
+              size={isSm ? 'md' : 'lg'}
               radius="sm"
               onClick={openAccountModal}
             >

@@ -336,8 +336,7 @@ const Profile = () => {
                           <Image
                             src={DropboxIcon}
                             alt="Dropbox"
-                            w={20}
-                            h={20}
+                            w={24}
                           />
                         ),
                         color: 'blue',
