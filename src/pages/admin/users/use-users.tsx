@@ -21,7 +21,11 @@ import { ICONS } from '../../../assets/icons';
 const inviteUserSchema = z.object({
   emails: z
     .array(
-      z.string().min(1, 'Email is required').email('Invalid email address')
+      z
+        .string()
+        .trim()
+        .min(1, 'Email is required')
+        .email('Invalid email address')
     )
     .min(1, 'At least one email is required'),
 });

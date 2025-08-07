@@ -33,7 +33,7 @@ import { type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
 const connectAccountSchema = z.object({
-  accountName: z.string().min(1, 'Account name is required'),
+  accountName: z.string().trim().min(1, 'Account name is required'),
   accountType: z.enum(['google_drive', 'dropbox', 'onedrive'], {
     errorMap: () => ({ message: 'Please select an account type' }),
   }),

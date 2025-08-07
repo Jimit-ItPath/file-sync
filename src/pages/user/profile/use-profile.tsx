@@ -27,6 +27,7 @@ import { NAME_REGEX, ROLES } from '../../../utils/constants';
 const profileSchema = z.object({
   firstName: z
     .string()
+    .trim()
     .min(1, 'First name is required')
     .max(20, 'First name must be less than 20 characters')
     .regex(
@@ -35,13 +36,18 @@ const profileSchema = z.object({
     ),
   lastName: z
     .string()
+    .trim()
     .min(1, 'Last name is required')
     .max(20, 'Last name must be less than 20 characters')
     .regex(
       NAME_REGEX,
       'Last name must contain only letters, spaces, hyphens, and apostrophes'
     ),
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
   avatar: z.union([z.string(), z.instanceof(File)]).optional(),
 });
 

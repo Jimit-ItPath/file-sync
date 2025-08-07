@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router';
 const registerSchema = z.object({
   firstName: z
     .string()
+    .trim()
     .min(1, 'First name is required')
     .max(20, 'First name must be less than 20 characters')
     .regex(
@@ -22,15 +23,21 @@ const registerSchema = z.object({
     ),
   lastName: z
     .string()
+    .trim()
     .min(1, 'Last name is required')
     .max(20, 'Last name must be less than 20 characters')
     .regex(
       NAME_REGEX,
       'Last name must contain only letters, spaces, hyphens, and apostrophes'
     ),
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
   password: z
     .string()
+    .trim()
     .min(1, 'Password is required')
     .min(8, 'Password must be at least 8 characters')
     .refine(val => passwordRequirements.every(req => req.re.test(val)), {

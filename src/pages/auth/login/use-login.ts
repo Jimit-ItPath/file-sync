@@ -14,8 +14,17 @@ import { ROLES } from '../../../utils/constants';
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address')
+    .refine(value => value.trim() !== '', 'Email cannot be empty spaces'),
+  password: z
+    .string()
+    .trim()
+    .min(1, 'Password is required')
+    .refine(value => value.trim() !== '', 'Password cannot be empty spaces'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;

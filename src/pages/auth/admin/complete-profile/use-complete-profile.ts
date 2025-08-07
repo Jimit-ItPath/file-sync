@@ -16,11 +16,16 @@ import { useAppDispatch } from '../../../../store';
 import { updateUser } from '../../../../store/slices/auth.slice';
 
 const completeProfileSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  first_name: z.string().trim().min(1, 'First name is required'),
+  last_name: z.string().trim().min(1, 'Last name is required'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
   password: z
     .string()
+    .trim()
     .min(1, 'Password is required')
     .min(8, 'Password must be at least 8 characters')
     .refine(val => passwordRequirements.every(req => req.re.test(val)), {
