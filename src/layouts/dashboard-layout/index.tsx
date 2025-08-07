@@ -22,9 +22,10 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
-import { resetUser } from '../../store/slices/auth.slice';
+import { resetUser, updateUser } from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
 import { ROLES } from '../../utils/constants';
+import { decodeToken } from '../../utils/helper';
 
 const DashboardLayout = () => {
   usePageData();
@@ -36,11 +37,22 @@ const DashboardLayout = () => {
   const dispatch = useAppDispatch();
   const { userProfile } = useAppSelector(state => state.user);
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
 
   const getUserProfile = useCallback(async () => {
-    await dispatch(fetchProfile());
+    const res = await dispatch(fetchProfile());
+    if (res?.payload?.data?.role === ROLES.USER && token) {
+      const decodeData: any = decodeToken(token);
+      dispatch(
+        updateUser({
+          token,
+          activeUI: '',
+          user: { ...decodeData },
+        })
+      );
+    }
   }, [dispatch]);
 
   const [getProfile] = useAsyncOperation(getUserProfile);

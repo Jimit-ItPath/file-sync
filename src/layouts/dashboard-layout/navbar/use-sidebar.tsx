@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '../../../store';
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import useAsyncOperation from '../../../hooks/use-async-operation';
@@ -49,7 +49,7 @@ const accountTypeConfig = {
   },
   dropbox: {
     url: PRIVATE_ROUTES.DROPBOX.url,
-    icon: <Image src={DropboxIcon} alt="Dropbox" w={16} h={16} />,
+    icon: <Image src={DropboxIcon} alt="Dropbox" w={18} />,
     title: 'Dropbox',
   },
   onedrive: {
@@ -72,8 +72,11 @@ const useSidebar = () => {
   );
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [sortedCloudAccounts, setSortedCloudAccounts] = useState<any[]>([]);
   const { width, height } = useViewportSize();
+  const [localSortedAccounts, setLocalSortedAccounts] = useState<any[] | null>(
+    null
+  );
+  const hasMountedOnce = useRef(false);
 
   // Add ref to track if drag operation is in progress
   const isDragInProgress = useRef(false);
@@ -109,9 +112,10 @@ const useSidebar = () => {
   const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   useEffect(() => {
-    if (user?.user?.role === ROLES.USER) {
+    if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
       onInitialize({});
       fetchStorageData({});
+      hasMountedOnce.current = true;
     }
   }, [user]);
 
@@ -124,41 +128,36 @@ const useSidebar = () => {
     }
   }, [connectedAccounts]);
 
-  const cloudAccountsWithStorage = connectedAccounts?.map(account => {
-    const storageInfo = checkStorageDetails?.result?.find(
-      detail => detail.id === account.id.toString()
+  const cloudAccountsWithStorage = useMemo(() => {
+    return (
+      connectedAccounts?.map(account => {
+        const storageInfo = checkStorageDetails?.result?.find(
+          detail => detail.id === account.id.toString()
+        );
+
+        const config = accountTypeConfig[account.account_type];
+        return {
+          id: account.id,
+          url: generatePath(config.url, { id: account.id }),
+          icon: config.icon,
+          title: account.account_name || config.title,
+          storageInfo: storageInfo?.storage_details,
+          sequence_number: account.sequence_number || 0,
+        };
+      }) || []
     );
-    const config = accountTypeConfig[account.account_type];
-    return {
-      id: account.id,
-      url: generatePath(config.url, { id: account.id }),
-      icon: config.icon,
-      title: account.account_name || config.title,
-      storageInfo: storageInfo?.storage_details,
-      sequence_number: account.sequence_number || 0,
-    };
-  });
+  }, [connectedAccounts, checkStorageDetails?.result]);
 
-  // Update sorted accounts when cloudAccountsWithStorage changes
-  useEffect(() => {
-    if (cloudAccountsWithStorage?.length && !isDragInProgress.current) {
-      // Sort by sequence_number, fallback to id for consistent ordering
-      const sorted = [...cloudAccountsWithStorage].sort((a, b) => {
-        if (a.sequence_number !== b.sequence_number) {
-          return a.sequence_number - b.sequence_number;
-        }
-        return a.id - b.id;
-      });
-
-      // Only update if the order has actually changed
-      const currentIds = sortedCloudAccounts.map(acc => acc.id);
-      const newIds = sorted.map(acc => acc.id);
-
-      if (JSON.stringify(currentIds) !== JSON.stringify(newIds)) {
-        setSortedCloudAccounts(sorted);
+  const sortedCloudAccounts = useMemo(() => {
+    return [...cloudAccountsWithStorage].sort((a, b) => {
+      if (a.sequence_number !== b.sequence_number) {
+        return a.sequence_number - b.sequence_number;
       }
-    }
+      return a.id - b.id;
+    });
   }, [cloudAccountsWithStorage]);
+
+  const displayedAccounts = localSortedAccounts || sortedCloudAccounts;
 
   const [updateAccountSequence, updateSequenceLoading] = useAsyncOperation(
     async (data: { id: number; sequence_number: number }[]) => {
@@ -178,7 +177,7 @@ const useSidebar = () => {
         } else {
           // Revert optimistic update on failure
           isDragInProgress.current = false;
-          setSortedCloudAccounts(pendingSequenceUpdate.current);
+          setLocalSortedAccounts(pendingSequenceUpdate.current);
           notifications.show({
             message:
               res?.message ||
@@ -190,7 +189,7 @@ const useSidebar = () => {
       } catch (error: any) {
         // Revert optimistic update on error
         isDragInProgress.current = false;
-        setSortedCloudAccounts(pendingSequenceUpdate.current);
+        setLocalSortedAccounts(pendingSequenceUpdate.current);
         notifications.show({
           message: error || 'Failed to update account order',
           color: 'red',
@@ -204,10 +203,7 @@ const useSidebar = () => {
     async (event: DragEndEvent) => {
       const { active, over } = event;
 
-      if (!over || active.id === over.id) {
-        isDragInProgress.current = false;
-        return;
-      }
+      if (!over || active.id === over.id) return;
 
       const oldIndex = sortedCloudAccounts.findIndex(
         account => account.id === active.id
@@ -216,22 +212,11 @@ const useSidebar = () => {
         account => account.id === over.id
       );
 
-      if (oldIndex === -1 || newIndex === -1) {
-        isDragInProgress.current = false;
-        return;
-      }
+      if (oldIndex === -1 || newIndex === -1) return;
 
-      // Set drag in progress to prevent account refresh
-      isDragInProgress.current = true;
-
-      // Store original order for potential revert
-      pendingSequenceUpdate.current = [...sortedCloudAccounts];
-
-      // Optimistically update the UI
       const newOrder = arrayMove(sortedCloudAccounts, oldIndex, newIndex);
-      setSortedCloudAccounts(newOrder);
+      setLocalSortedAccounts(newOrder);
 
-      // Prepare data for API call with proper sequence numbers
       const updateData = newOrder.map((account, index) => ({
         id: account.id,
         sequence_number: index + 1,
@@ -239,8 +224,9 @@ const useSidebar = () => {
 
       try {
         await updateAccountSequence(updateData);
-      } catch (error) {
-        // Error handling is done in updateAccountSequence
+        setLocalSortedAccounts(null);
+      } catch {
+        setLocalSortedAccounts(null);
       }
     },
     [sortedCloudAccounts, updateAccountSequence]
@@ -378,7 +364,7 @@ const useSidebar = () => {
     setHoveredAccountId,
     hoveredAccountId,
     cloudAccountsWithStorage,
-    sortedCloudAccounts,
+    sortedCloudAccounts: displayedAccounts,
     handleDragEnd,
     updateSequenceLoading,
     checkStorageDetails,
