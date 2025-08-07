@@ -6,6 +6,7 @@ import {
   inviteUser,
   type UserType,
   setSearchTerm,
+  resetAdminUserState,
 } from '../../../store/slices/adminUser.slice';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -78,7 +79,7 @@ const useUsers = () => {
       initializedRef.current = true;
     }
     return () => {
-      dispatch(setSearchTerm(''));
+      dispatch(resetAdminUserState());
     };
   }, []);
 

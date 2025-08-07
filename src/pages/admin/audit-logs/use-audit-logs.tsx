@@ -6,6 +6,7 @@ import {
   fetchAuditLogs,
   fetchTypes,
   fetchUsers,
+  resetAdminLogsState,
   setAuditLogSearchTerm,
   type AuditLogType,
 } from '../../../store/slices/adminUser.slice';
@@ -137,7 +138,7 @@ const useAuditLogs = () => {
     getTypes({});
 
     return () => {
-      dispatch(setAuditLogSearchTerm(''));
+      dispatch(resetAdminLogsState());
     };
   }, []);
 

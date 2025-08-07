@@ -59,6 +59,7 @@ type AuthState = {
     result: CheckStorageDetailsType[];
     storage_details: StorageDetailsType;
   } | null;
+  token: string | null;
 };
 
 const initialState: AuthState = {
@@ -70,6 +71,7 @@ const initialState: AuthState = {
   checkStorageDetails: null,
   loading: false,
   error: null,
+  token: null,
 };
 
 export const connectCloudAccount = createAsyncThunk(
@@ -190,6 +192,10 @@ const authSlice = createSlice({
     },
     resetUser: state => {
       state.user = null;
+      state.connectedAccounts = [];
+      state.checkStorageDetails = null;
+      state.isLoggedIn = false;
+      state.token = null;
     },
   },
   extraReducers: builder => {

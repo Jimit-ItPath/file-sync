@@ -187,6 +187,18 @@ const adminUserSlice = createSlice({
     setAuditLogSearchTerm: (state, action) => {
       state.auditLogSearchTerm = action.payload;
     },
+    resetAdminUserState: state => {
+      state.users = [];
+      state.pagination = null;
+      state.searchTerm = '';
+    },
+    resetAdminLogsState: state => {
+      state.auditLogs = [];
+      state.auditLogsPagination = null;
+      state.auditLogSearchTerm = '';
+      state.types = null;
+      state.actionTypes = null;
+    },
   },
   extraReducers: builder => {
     builder
@@ -248,6 +260,11 @@ const adminUserSlice = createSlice({
   },
 });
 
-export const { setSearchTerm, setAuditLogSearchTerm } = adminUserSlice.actions;
+export const {
+  setSearchTerm,
+  setAuditLogSearchTerm,
+  resetAdminLogsState,
+  resetAdminUserState,
+} = adminUserSlice.actions;
 
 export default adminUserSlice.reducer;
