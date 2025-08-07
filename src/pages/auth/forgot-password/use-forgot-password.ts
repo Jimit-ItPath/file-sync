@@ -8,7 +8,11 @@ import { useNavigate } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
 
 const forgotSchema = z.object({
-  email: z.string().trim().min(1, 'Email is required').email('Invalid email address'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
 });
 
 type ForgotFormData = z.infer<typeof forgotSchema>;

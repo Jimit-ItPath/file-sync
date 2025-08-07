@@ -332,13 +332,7 @@ const Profile = () => {
                       },
                       dropbox: {
                         // icon: <ICONS.IconDroplets size={24} />,
-                        icon: (
-                          <Image
-                            src={DropboxIcon}
-                            alt="Dropbox"
-                            w={24}
-                          />
-                        ),
+                        icon: <Image src={DropboxIcon} alt="Dropbox" w={24} />,
                         color: 'blue',
                         label: 'Dropbox',
                         bg: 'rgba(0, 97, 255, 0.1)',

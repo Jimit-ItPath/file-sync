@@ -106,7 +106,7 @@ const Dashboard = () => {
     syncCloudStorageLoading,
 
     isMoveMode,
-    handleMoveSelected,
+    // handleMoveSelected,
     handlePasteFiles,
     filesToMove,
     moveFilesLoading,
@@ -139,6 +139,7 @@ const Dashboard = () => {
     itemsToMove,
     moveModalOpen,
     currentAccountId,
+    handleModalMoveSelected,
   } = useDashboard();
   const {
     openAccountModal,
@@ -307,7 +308,8 @@ const Dashboard = () => {
                   onDelete={handleDeleteSelected}
                   onDownload={handleDownloadSelected}
                   onShare={handleShareSelected}
-                  onMove={handleMoveSelected}
+                  // onMove={handleMoveSelected}
+                  onMove={handleModalMoveSelected}
                   onPaste={handlePasteFiles}
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}

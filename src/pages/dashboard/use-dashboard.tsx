@@ -578,9 +578,11 @@ const useDashboard = () => {
       setDeleteModalOpen(true);
     } else if (actionId === 'share' && row.web_view_url) {
       window.open(row.web_view_url, '_blank');
-    } else if (actionId === 'move') {
-      handleMoveSelected([row?.id]);
-    } else if (actionId === 'moveto') {
+    }
+    // else if (actionId === 'move') {
+    //   handleMoveSelected([row?.id]);
+    // }
+    else if (actionId === 'move') {
       handleModalMoveSelected([row?.id]);
     } else if (actionId === 'preview') {
       // preview code
@@ -1406,6 +1408,7 @@ const useDashboard = () => {
             color: 'red',
           });
         }
+        return res;
       } catch (error: any) {
         notifications.show({
           message: error?.message || 'Failed to move items',
@@ -1554,6 +1557,7 @@ const useDashboard = () => {
     itemsToMove,
     handleMoveModalConfirm,
     currentAccountId,
+    handleModalMoveSelected,
   };
 };
 

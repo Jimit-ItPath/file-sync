@@ -59,6 +59,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
 
   const { moveModal } = useAppSelector(state => state.cloudStorage);
   const { folders, loading, currentPath, pagination } = moveModal;
+  const [moveLoading, setMoveLoading] = useState(false);
 
   const [selectedDestination, setSelectedDestination] = useState<{
     id: string | null;
@@ -194,7 +195,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
       dispatch(setMoveModalPath(newPath));
       setSelectedDestination(
         parentFolder
-          ? { id: parentFolder.id, name: parentFolder.name }
+          ? { id: parentFolder.id ?? null, name: parentFolder.name }
           : { id: null, name: 'All Files' }
       );
       fetchFolders(parentFolder?.id || null);
@@ -231,11 +232,17 @@ const MoveModal: React.FC<MoveModalProps> = ({
   }, []);
 
   // Handle move confirmation
-  const handleMoveConfirm = useCallback(() => {
+  const handleMoveConfirm = useCallback(async () => {
     if (!selectedDestination || !isMoveValid) return;
-
-    onMoveConfirm(selectedDestination.id, selectedDestination.name);
-    handleMoveModalClose();
+    setMoveLoading(true);
+    const res: any = await onMoveConfirm(
+      selectedDestination.id,
+      selectedDestination.name
+    );
+    setMoveLoading(false);
+    if (res?.status === 200 || res?.data?.success) {
+      handleMoveModalClose();
+    }
   }, [selectedDestination, isMoveValid, onMoveConfirm]);
 
   const handleMoveModalClose = useCallback(() => {
@@ -499,7 +506,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
                           left: 0,
                           top: 0,
                           bottom: 0,
-                          width: '4px',
+                          width: '2px',
                           backgroundColor: '#2563eb',
                           borderRadius: '0 4px 4px 0',
                         }}
@@ -534,15 +541,16 @@ const MoveModal: React.FC<MoveModalProps> = ({
                   borderColor: '#d1d5db',
                   color: '#6b7280',
                 }}
+                disabled={moveLoading}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleMoveConfirm}
-                disabled={!isMoveValid || loading}
+                disabled={!isMoveValid || moveLoading}
                 style={{
                   backgroundColor:
-                    !isMoveValid || loading ? '#9ca3af' : '#2563eb',
+                    !isMoveValid || moveLoading ? '#9ca3af' : '#2563eb',
                 }}
               >
                 Move Here

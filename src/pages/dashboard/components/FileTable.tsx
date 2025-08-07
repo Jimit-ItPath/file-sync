@@ -160,6 +160,11 @@ const FileTable: React.FC<FileTableProps> = ({
             });
           }
           if (row.type === 'file' || checkLocation || folderId) {
+            // menuItems.push({
+            //   id: 'move',
+            //   label: 'Move',
+            //   icon: ICONS.IconFolderShare,
+            // });
             menuItems.push({
               id: 'move',
               label: 'Move',
