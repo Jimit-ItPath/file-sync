@@ -27,7 +27,6 @@ import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 import { Image } from '@mantine/core';
-import { ROLES } from '../../../utils/constants';
 import { useViewportSize } from '@mantine/hooks';
 import { type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -76,7 +75,7 @@ const useSidebar = () => {
   const [localSortedAccounts, setLocalSortedAccounts] = useState<any[] | null>(
     null
   );
-  const hasMountedOnce = useRef(false);
+  // const hasMountedOnce = useRef(false);
 
   // Add ref to track if drag operation is in progress
   const isDragInProgress = useRef(false);
@@ -111,13 +110,13 @@ const useSidebar = () => {
 
   const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
-  useEffect(() => {
-    if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
-      onInitialize({});
-      fetchStorageData({});
-      hasMountedOnce.current = true;
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
+  //     onInitialize({});
+  //     fetchStorageData({});
+  //     hasMountedOnce.current = true;
+  //   }
+  // }, [user]);
 
   useEffect(() => {
     const isPostConnect = getLocalStorage('post_connect_redirect') === true;

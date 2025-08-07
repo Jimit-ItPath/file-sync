@@ -22,7 +22,12 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
-import { resetUser, updateUser } from '../../store/slices/auth.slice';
+import {
+  fetchStorageDetails,
+  getConnectedAccount,
+  resetUser,
+  updateUser,
+} from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
 import { ROLES } from '../../utils/constants';
 import { decodeToken } from '../../utils/helper';
@@ -40,6 +45,18 @@ const DashboardLayout = () => {
   const token = localStorage.getItem('token');
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
+
+  const getAccounts = useCallback(async () => {
+    await dispatch(getConnectedAccount());
+  }, [dispatch]);
+
+  const [onInitialize] = useAsyncOperation(getAccounts);
+
+  const getStorageDetails = useCallback(async () => {
+    await dispatch(fetchStorageDetails());
+  }, [dispatch]);
+
+  const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   const getUserProfile = useCallback(async () => {
     const res = await dispatch(fetchProfile());
@@ -76,7 +93,6 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     getProfile({});
-
     // const handleBeforeUnload = () => {
     //   removeLocalStorage('googleDrivePath');
     // };
@@ -86,6 +102,13 @@ const DashboardLayout = () => {
     //   window.removeEventListener('beforeunload', handleBeforeUnload);
     // };
   }, []);
+
+  useEffect(() => {
+    if (userProfile?.role === ROLES.USER) {
+      onInitialize({});
+      fetchStorageData({});
+    }
+  }, [userProfile]);
 
   const fullName = useMemo(
     () =>
