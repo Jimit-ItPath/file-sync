@@ -32,6 +32,7 @@ import useResponsive from '../../hooks/use-responsive';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import NoConnectedAccount from './NoConnectedAccount';
 import FilePreviewModal from './components/FilePreviewModal';
+import MoveModal from './components/MoveModal';
 
 const Dashboard = () => {
   const {
@@ -133,6 +134,11 @@ const Dashboard = () => {
     setPreviewModalOpen,
     previewFileLoading,
     displayPreviewIcon,
+    closeMoveModal,
+    handleMoveModalConfirm,
+    itemsToMove,
+    moveModalOpen,
+    currentAccountId,
   } = useDashboard();
   const {
     openAccountModal,
@@ -805,6 +811,18 @@ const Dashboard = () => {
           setPreviewFile,
           setPreviewModalOpen,
         }}
+      />
+
+      {/* Move Modal */}
+      <MoveModal
+        opened={moveModalOpen}
+        onClose={closeMoveModal}
+        selectedItems={itemsToMove}
+        onMoveConfirm={handleMoveModalConfirm}
+        currentFolderId={folderId}
+        checkLocation={checkLocation}
+        accountId={accountId}
+        currentAccountId={currentAccountId}
       />
     </Box>
   );

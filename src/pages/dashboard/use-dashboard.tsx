@@ -30,6 +30,7 @@ import {
   syncCloudStorage,
   fetchRecentFiles,
   resetPagination,
+  setMoveModalPath,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -148,6 +149,9 @@ const useDashboard = () => {
     isVideo?: boolean;
     isDocument?: boolean;
   } | null>(null);
+
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [itemsToMove, setItemsToMove] = useState<FileType[]>([]);
 
   const {
     cloudStorage,
@@ -288,6 +292,12 @@ const useDashboard = () => {
   }, [dispatch, currentAccountId]);
 
   const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+
+  useEffect(() => {
+    if (moveModalOpen) {
+      dispatch(setMoveModalPath(currentPath));
+    }
+  }, [moveModalOpen, currentPath, dispatch]);
 
   useEffect(() => {
     if (checkLocation && !connectedAccounts?.length) {
@@ -570,6 +580,8 @@ const useDashboard = () => {
       window.open(row.web_view_url, '_blank');
     } else if (actionId === 'move') {
       handleMoveSelected([row?.id]);
+    } else if (actionId === 'moveto') {
+      handleModalMoveSelected([row?.id]);
     } else if (actionId === 'preview') {
       // preview code
       try {
@@ -737,7 +749,10 @@ const useDashboard = () => {
         await getCloudStorageFiles(1);
       } catch (error: any) {
         notifications.show({
-          message: error?.message || 'Failed to upload files',
+          message:
+            typeof error === 'string'
+              ? error
+              : error?.message || 'Failed to upload files',
           color: 'red',
         });
       }
@@ -1343,6 +1358,84 @@ const useDashboard = () => {
     selectedIds,
   ]);
 
+  const openMoveModal = useCallback(
+    (items?: FileType[]) => {
+      const selectedFiles =
+        items || files.filter(file => selectedIds.includes(file.id));
+      setItemsToMove(selectedFiles);
+      setMoveModalOpen(true);
+    },
+    [files, selectedIds]
+  );
+
+  const closeMoveModal = useCallback(() => {
+    setMoveModalOpen(false);
+    setItemsToMove([]);
+  }, []);
+
+  const handleMoveModalConfirm = useCallback(
+    async (destinationId: string | null, destinationName: string) => {
+      try {
+        const itemIds = itemsToMove.map(item => item.id);
+
+        const res = await dispatch(
+          moveCloudStorageFiles({
+            ids: itemIds,
+            destination_id: destinationId,
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: `Items moved to ${destinationName} successfully`,
+            color: 'green',
+          });
+          if (!folderId || folderId === null) {
+            onGetRecentFiles({});
+          }
+          await getCloudStorageFiles(1);
+
+          // Clear selections
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+          cancelMoveMode();
+          closeMoveModal();
+        } else {
+          notifications.show({
+            message: res?.message || 'Failed to move items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to move items',
+          color: 'red',
+        });
+      }
+    },
+    [
+      itemsToMove,
+      dispatch,
+      folderId,
+      onGetRecentFiles,
+      getCloudStorageFiles,
+      cancelMoveMode,
+      closeMoveModal,
+    ]
+  );
+
+  const handleModalMoveSelected = useCallback(
+    (ids?: string[]) => {
+      if (Array.isArray(ids) && ids?.length) {
+        const selectedFiles = files.filter(file => ids.includes(file.id));
+        openMoveModal(selectedFiles);
+      } else {
+        openMoveModal();
+      }
+    },
+    [files, openMoveModal]
+  );
+
   return {
     layout,
     switchLayout,
@@ -1454,6 +1547,13 @@ const useDashboard = () => {
     setPreviewFile,
     previewFileLoading,
     displayPreviewIcon,
+
+    // modal move
+    moveModalOpen,
+    closeMoveModal,
+    itemsToMove,
+    handleMoveModalConfirm,
+    currentAccountId,
   };
 };
 

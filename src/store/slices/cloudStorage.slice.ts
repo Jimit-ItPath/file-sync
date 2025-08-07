@@ -52,6 +52,18 @@ type CloudStorageState = {
   accountId: string;
   searchTerm: string;
   navigateLoading: boolean;
+  moveModal: {
+    folders: CloudStorageType[];
+    loading: boolean;
+    error: string | null;
+    currentPath: Array<{ id?: string; name: string }>;
+    pagination?: {
+      total: number;
+      total_pages: number;
+      page_no: number;
+      page_limit: number;
+    } | null;
+  };
 };
 
 const initialState: CloudStorageState = {
@@ -68,6 +80,13 @@ const initialState: CloudStorageState = {
   accountId: 'all',
   searchTerm: '',
   navigateLoading: false,
+  moveModal: {
+    folders: [],
+    loading: false,
+    error: null,
+    currentPath: [],
+    pagination: null,
+  },
 };
 
 export const fetchCloudStorageFiles = createAsyncThunk(
@@ -303,6 +322,27 @@ export const syncCloudStorage = createAsyncThunk(
   }
 );
 
+export const fetchMoveModalFolders = createAsyncThunk(
+  'cloudStorage/fetchMoveModalFolders',
+  async (
+    params: {
+      account_id?: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      page?: number;
+      limit?: number;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.cloudStorage.getFiles(params);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch folders');
+    }
+  }
+);
+
 const cloudStorageSlice = createSlice({
   name: 'cloudStorage',
   initialState,
@@ -316,11 +356,34 @@ const cloudStorageSlice = createSlice({
     resetCloudStorageFolder: state => {
       state.currentFolderId = null;
       state.currentPath = [];
+      state.cloudStorage = [];
+      state.pagination = null;
+      state.searchTerm = '';
+      state.moveModal = {
+        folders: [],
+        loading: false,
+        error: null,
+        currentPath: [],
+        pagination: null,
+      };
+      state.recentFiles = [];
+      state.accountId = 'all';
     },
     resetPagination: state => {
       if (state.pagination) {
         state.pagination.page_no = 1;
       }
+    },
+    setMoveModalPath: (state, action) => {
+      state.moveModal.currentPath = action.payload;
+    },
+    resetMoveModalState: state => {
+      state.moveModal = {
+        folders: [],
+        loading: false,
+        error: null,
+        currentPath: [],
+      };
     },
   },
   extraReducers: builder => {
@@ -337,7 +400,10 @@ const cloudStorageSlice = createSlice({
         const newFolderId = action.meta.arg?.id ?? null;
 
         // If folder id changed, replace data; if same, append for pagination
-        if (state.currentFolderId !== newFolderId) {
+        if (
+          state.currentFolderId !== newFolderId &&
+          action.meta.arg.page === 1
+        ) {
           state.cloudStorage = data;
           state.currentFolderId = newFolderId;
         } else if (action.meta.arg.page && action.meta.arg.page > 1) {
@@ -436,6 +502,32 @@ const cloudStorageSlice = createSlice({
       .addCase(uploadCloudStorageFiles.rejected, (state, action) => {
         state.uploadLoading = false;
         state.error = action.payload as string;
+      })
+      .addCase(fetchMoveModalFolders.pending, state => {
+        state.moveModal.loading = true;
+        state.moveModal.error = null;
+      })
+      .addCase(fetchMoveModalFolders.fulfilled, (state, action) => {
+        const { data = [], paging = null } = action.payload?.data;
+        state.moveModal.loading = false;
+        if (action.meta.arg.page && action.meta.arg.page > 1) {
+          state.moveModal.folders = [
+            ...state.moveModal.folders,
+            ...data.filter(
+              (item: CloudStorageType) => item.entry_type === 'folder'
+            ),
+          ];
+        } else {
+          state.moveModal.folders = data.filter(
+            (item: CloudStorageType) => item.entry_type === 'folder'
+          );
+        }
+        state.moveModal.pagination = paging;
+      })
+      .addCase(fetchMoveModalFolders.rejected, (state, action) => {
+        state.moveModal.loading = false;
+        state.moveModal.error = action.payload as string;
+        state.moveModal.folders = [];
       });
   },
 });
@@ -445,6 +537,8 @@ export const {
   setAccountId,
   setSearchTerm,
   resetPagination,
+  resetMoveModalState,
+  setMoveModalPath,
 } = cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

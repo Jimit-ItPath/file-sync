@@ -116,8 +116,10 @@ const DashboardLayout = () => {
       // navigate(AUTH_ROUTES.LOGIN.url);
       navigate(AUTH_ROUTES.LANDING.url);
     }
-    dispatch(resetUser());
-    dispatch(resetUserProfile());
+    setTimeout(() => {
+      dispatch(resetUser());
+      dispatch(resetUserProfile());
+    }, 1000);
     logoutConfirmHandler.close();
   };
 

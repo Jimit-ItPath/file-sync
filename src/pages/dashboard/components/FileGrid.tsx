@@ -115,6 +115,11 @@ const FileGrid: React.FC<FileGridProps> = ({
         label: 'Move',
         icon: ICONS.IconFolderShare,
       });
+      menuItems.push({
+        id: 'moveto',
+        label: 'Move to',
+        icon: ICONS.IconFolderShare,
+      });
     }
     menuItems.push({
       id: 'delete',
