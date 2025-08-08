@@ -30,6 +30,7 @@ import { Image } from '@mantine/core';
 import { useViewportSize } from '@mantine/hooks';
 import { type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { ROLES } from '../../../utils/constants';
 
 const connectAccountSchema = z.object({
   accountName: z.string().trim().min(1, 'Account name is required'),
@@ -75,7 +76,8 @@ const useSidebar = () => {
   const [localSortedAccounts, setLocalSortedAccounts] = useState<any[] | null>(
     null
   );
-  // const hasMountedOnce = useRef(false);
+  const hasMountedOnce = useRef(false);
+  const [menuOpened, setMenuOpened] = useState(false);
 
   // Add ref to track if drag operation is in progress
   const isDragInProgress = useRef(false);
@@ -110,13 +112,13 @@ const useSidebar = () => {
 
   const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
-  // useEffect(() => {
-  //   if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
-  //     onInitialize({});
-  //     fetchStorageData({});
-  //     hasMountedOnce.current = true;
-  //   }
-  // }, [user]);
+  useEffect(() => {
+    if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
+      onInitialize({});
+      fetchStorageData({});
+      hasMountedOnce.current = true;
+    }
+  }, [user]);
 
   useEffect(() => {
     const isPostConnect = getLocalStorage('post_connect_redirect') === true;
@@ -375,6 +377,8 @@ const useSidebar = () => {
     width,
     height,
     setShowConfetti,
+    menuOpened,
+    setMenuOpened,
   };
 };
 

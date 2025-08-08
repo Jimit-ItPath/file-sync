@@ -36,6 +36,7 @@ import AdminAuditLogs from '../pages/admin/audit-logs';
 import PrivacyPolicy from '../pages/auth/register/PrivacyPolicy';
 import TermsAndConditions from '../pages/auth/register/TermsAndConditions';
 import UnifidriveLanding from '../pages/landing';
+import RecentFiles from '../pages/dashboard/components/RecentFiles';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -129,6 +130,11 @@ export const router = createBrowserRouter([
         ...PRIVATE_ROUTES.DASHBOARD,
         Component: Dashboard,
         loader: dashboardPageLoader(PRIVATE_ROUTES.DASHBOARD.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.RECENT_FILES,
+        Component: RecentFiles,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.RECENT_FILES.roles),
       },
       {
         ...PRIVATE_ROUTES.GOOGLE_DRIVE,

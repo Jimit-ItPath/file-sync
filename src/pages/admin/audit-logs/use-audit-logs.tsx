@@ -323,7 +323,7 @@ const useAuditLogs = () => {
       {
         accessor: 'name',
         title: 'Name',
-        // width: '30%',
+        width: '400px',
         render: (row: AuditLogType) => (
           <Group
             gap={8}

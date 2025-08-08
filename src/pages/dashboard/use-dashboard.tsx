@@ -28,7 +28,6 @@ import {
   uploadCloudStorageFiles,
   moveCloudStorageFiles,
   syncCloudStorage,
-  fetchRecentFiles,
   resetPagination,
   setMoveModalPath,
 } from '../../store/slices/cloudStorage.slice';
@@ -281,17 +280,17 @@ const useDashboard = () => {
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
-  const getRecentFiles = useCallback(async () => {
-    const requestParams = {
-      ...(currentAccountId !== 'all' &&
-        currentAccountId && {
-          account_id: currentAccountId,
-        }),
-    };
-    await dispatch(fetchRecentFiles(requestParams));
-  }, [dispatch, currentAccountId]);
+  // const getRecentFiles = useCallback(async () => {
+  //   const requestParams = {
+  //     ...(currentAccountId !== 'all' &&
+  //       currentAccountId && {
+  //         account_id: currentAccountId,
+  //       }),
+  //   };
+  //   await dispatch(fetchRecentFiles(requestParams));
+  // }, [dispatch, currentAccountId]);
 
-  const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+  // const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
 
   useEffect(() => {
     if (moveModalOpen) {
@@ -305,16 +304,16 @@ const useDashboard = () => {
     }
   }, [checkLocation, navigate, connectedAccounts]);
 
-  useEffect(() => {
-    if (
-      (!folderId || folderId === null) &&
-      connectedAccounts?.length &&
-      !hasCalledRecentFilesAPI.current
-    ) {
-      onGetRecentFiles({});
-      hasCalledRecentFilesAPI.current = true;
-    }
-  }, [folderId]);
+  // useEffect(() => {
+  //   if (
+  //     (!folderId || folderId === null) &&
+  //     connectedAccounts?.length &&
+  //     !hasCalledRecentFilesAPI.current
+  //   ) {
+  //     onGetRecentFiles({});
+  //     hasCalledRecentFilesAPI.current = true;
+  //   }
+  // }, [folderId]);
 
   useEffect(() => {
     const currentLength = connectedAccounts?.length || 0;
@@ -324,13 +323,13 @@ const useDashboard = () => {
       !hasCalledPostConnectAPIs.current &&
       !hasCalledInitializeAPI.current
     ) {
-      if (
-        !hasCalledRecentFilesAPI.current &&
-        (!folderId || folderId === null)
-      ) {
-        onGetRecentFiles({});
-        hasCalledRecentFilesAPI.current = true;
-      }
+      // if (
+      //   !hasCalledRecentFilesAPI.current &&
+      //   (!folderId || folderId === null)
+      // ) {
+      //   onGetRecentFiles({});
+      //   hasCalledRecentFilesAPI.current = true;
+      // }
       onInitialize({});
       hasCalledPostConnectAPIs.current = true;
       hasCalledInitializeAPI.current = true;
@@ -343,7 +342,11 @@ const useDashboard = () => {
       hasCalledInitializeAPI.current = false;
       hasCalledRecentFilesAPI.current = false;
     }
-  }, [connectedAccounts?.length, onGetRecentFiles, onInitialize]);
+  }, [
+    connectedAccounts?.length,
+    onInitialize,
+    // onGetRecentFiles
+  ]);
 
   useEffect(() => {
     if (
@@ -640,9 +643,9 @@ const useDashboard = () => {
         const res = await dispatch(createCloudStorageFolder(requestParams));
 
         if (res?.payload?.success) {
-          if (!folderId || folderId === null) {
-            onGetRecentFiles({});
-          }
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
           await getCloudStorageFiles(1);
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
@@ -745,9 +748,9 @@ const useDashboard = () => {
         waitForUploadCompletion();
 
         // Refresh the file list after upload
-        if (!folderId || folderId === null) {
-          onGetRecentFiles({});
-        }
+        // if (!folderId || folderId === null) {
+        //   onGetRecentFiles({});
+        // }
         await getCloudStorageFiles(1);
       } catch (error: any) {
         notifications.show({
@@ -768,9 +771,9 @@ const useDashboard = () => {
         await dispatch(
           renameCloudStorageFile({ id: fileId, name: newName })
         ).unwrap();
-        if (!folderId || folderId === null) {
-          onGetRecentFiles({});
-        }
+        // if (!folderId || folderId === null) {
+        //   onGetRecentFiles({});
+        // }
         await getCloudStorageFiles(1);
         notifications.show({
           message: 'Item renamed successfully',
@@ -799,9 +802,9 @@ const useDashboard = () => {
         const res = await dispatch(removeCloudStorageFiles({ ids: [fileId] }));
 
         if (res?.payload?.status === 200 || res?.payload?.success !== false) {
-          if (!folderId || folderId === null) {
-            onGetRecentFiles({});
-          }
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
           await getCloudStorageFiles(1);
           notifications.show({
             message: res?.payload?.message || 'Item deleted successfully',
@@ -1057,9 +1060,9 @@ const useDashboard = () => {
         );
 
         if (res?.payload?.status === 200 || res?.payload?.success) {
-          if (!folderId || folderId === null) {
-            onGetRecentFiles({});
-          }
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
           await getCloudStorageFiles(1);
           notifications.show({
             message:
@@ -1157,9 +1160,9 @@ const useDashboard = () => {
         const res = await dispatch(syncCloudStorage(requestParams)).unwrap();
 
         if (res?.status === 200) {
-          if (!folderId || folderId === null) {
-            onGetRecentFiles({});
-          }
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
           await getCloudStorageFiles(1);
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
@@ -1202,9 +1205,9 @@ const useDashboard = () => {
             message: 'Items moved successfully',
             color: 'green',
           });
-          if (!folderId || folderId === null) {
-            onGetRecentFiles({});
-          }
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
           await getCloudStorageFiles(1);
         } else {
           notifications.show({
@@ -1392,9 +1395,9 @@ const useDashboard = () => {
             message: `Items moved to ${destinationName} successfully`,
             color: 'green',
           });
-          if (!folderId || folderId === null) {
-            onGetRecentFiles({});
-          }
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
           await getCloudStorageFiles(1);
 
           // Clear selections
@@ -1420,7 +1423,7 @@ const useDashboard = () => {
       itemsToMove,
       dispatch,
       folderId,
-      onGetRecentFiles,
+      // onGetRecentFiles,
       getCloudStorageFiles,
       cancelMoveMode,
       closeMoveModal,

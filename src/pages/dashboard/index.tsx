@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Autocomplete,
   Box,
   Group,
@@ -8,7 +9,6 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
 import useDashboard from './use-dashboard';
 import {
@@ -19,6 +19,7 @@ import {
   Image,
   Modal,
   SelectionBar,
+  Tooltip,
 } from '../../components';
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
@@ -27,12 +28,22 @@ import CustomToggle from './components/CustomToggle';
 import { LoaderOverlay } from '../../components/loader';
 import { Controller } from 'react-hook-form';
 import { formatFileSize } from '../../utils/helper';
-import RecentFiles from './components/RecentFiles';
+// import RecentFiles from './components/RecentFilesOld';
 import useResponsive from '../../hooks/use-responsive';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import NoConnectedAccount from './NoConnectedAccount';
 import FilePreviewModal from './components/FilePreviewModal';
 import MoveModal from './components/MoveModal';
+import { ICONS } from '../../assets/icons';
+
+const iconStyle = {
+  borderRadius: 999,
+  transition: 'background 0.2s',
+  padding: 4,
+  '&:hover': {
+    background: '#e0e7ff',
+  },
+};
 
 const Dashboard = () => {
   const {
@@ -63,7 +74,7 @@ const Dashboard = () => {
     createFolderLoading,
     handleCreateFolder,
     handleFileUpload,
-    openModal,
+    // openModal,
     uploadFilesLoading,
     currentPath,
     navigateToFolderFn,
@@ -121,7 +132,7 @@ const Dashboard = () => {
     dragDropFiles,
     handleDragDropUpload,
     closeDragDropModal,
-    recentFilesData,
+    // recentFilesData,
     folderId,
     displayMoveIcon,
     displayDownloadIcon,
@@ -150,7 +161,7 @@ const Dashboard = () => {
     connectAccountFormData,
     connectAccountLoading,
   } = useSidebar();
-  const { isSm, isXs, theme } = useResponsive();
+  const { isSm, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
@@ -214,7 +225,7 @@ const Dashboard = () => {
         onScroll={handleScroll}
       >
         {/* Top Row - Toggle and Action Buttons */}
-        <Box mt={10}>
+        {/* <Box mt={10}>
           <Group justify="space-between" align="center" gap={20}>
             {connectedAccounts?.length ? (
               <ActionButtons
@@ -224,7 +235,7 @@ const Dashboard = () => {
                 }}
               />
             ) : null}
-            {/* <Tooltip label="Sync" fz={'xs'}>
+            <Tooltip label="Sync" fz={'xs'}>
                 <ActionIcon
                   h={40}
                   w={40}
@@ -233,15 +244,11 @@ const Dashboard = () => {
                 >
                   <ICONS.IconRefresh />
                 </ActionIcon>
-              </Tooltip> */}
-            <CustomToggle
-              value={layout}
-              onChange={(value: 'list' | 'grid') => switchLayout(value)}
-            />
+              </Tooltip>
           </Group>
-        </Box>
+        </Box> */}
 
-        {recentFilesData?.length && !folderId ? (
+        {/* {recentFilesData?.length && !folderId ? (
           <RecentFiles
             {...{
               recentFiles: recentFilesData,
@@ -262,7 +269,7 @@ const Dashboard = () => {
               displayPreviewIcon,
             }}
           />
-        ) : null}
+        ) : null} */}
 
         {/* Sticky Section */}
         <Box
@@ -320,6 +327,11 @@ const Dashboard = () => {
                   }
                 />
               ) : null}
+              <Tooltip label="Sync" fz={'xs'}>
+                <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
+                  <ICONS.IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
               {!checkLocation && (
                 <Select
                   data={accountOptions}
@@ -397,6 +409,10 @@ const Dashboard = () => {
                     paddingLeft: '16px',
                   },
                 }}
+              />
+              <CustomToggle
+                value={layout}
+                onChange={(value: 'list' | 'grid') => switchLayout(value)}
               />
             </Group>
           </Box>

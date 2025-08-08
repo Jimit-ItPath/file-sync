@@ -209,6 +209,22 @@ export const formatDate = (
   return date.toLocaleDateString('en-US', options);
 };
 
+export const formatTime = (seconds: number): string => {
+  if (!seconds || !isFinite(seconds)) return '--';
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${secs}s`;
+  } else {
+    return `${secs}s`;
+  }
+};
+
 export const getMimeTypeFromExtension = (extension?: string) => {
   if (!extension) {
     return undefined;
@@ -286,4 +302,16 @@ export const downloadFiles = (data: any, res: any) => {
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
+};
+
+export const downloadFilesEnhanced = async (
+  selectedIds: string[],
+  downloadFile: (ids: string[]) => Promise<void>
+) => {
+  try {
+    await downloadFile(selectedIds);
+  } catch (error: any) {
+    console.error('Download failed:', error);
+    throw error;
+  }
 };

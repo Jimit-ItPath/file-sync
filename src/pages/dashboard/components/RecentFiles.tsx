@@ -1,30 +1,16 @@
-import { Group, Box, Text, Stack, ActionIcon } from '@mantine/core';
-import { Card, Menu, Tooltip } from '../../../components';
-import type { FileType } from '../use-dashboard';
+import { Group, Box, Text, Stack, ActionIcon, TextInput } from '@mantine/core';
+import { Button, Card, Form, Menu, Modal, Tooltip } from '../../../components';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ICONS } from '../../../assets/icons';
+import useResponsive from '../../../hooks/use-responsive';
+import useRecentFiles from './use-recent-files';
+import { LoaderOverlay } from '../../../components/loader';
+import FilePreviewModal from './FilePreviewModal';
+import DownloadProgress from './DownloadProgress';
+import useFileDownloader from './use-file-downloader';
 
-const FILE_CARD_HEIGHT = 200;
-const MIN_CARD_WIDTH = 200;
-
-interface RecentFileProps {
-  recentFiles: FileType[];
-  isXs: boolean;
-  isSm: boolean;
-  getIndexById: (id: string) => number;
-  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
-  setLastSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  selectedIds: string[];
-  handleSelect: (id: string, event: React.MouseEvent) => void;
-  handleUnselectAll: () => void;
-  isMoveMode: boolean;
-  allIds: string[];
-  lastSelectedIndex: number | null;
-  displayDownloadIcon: boolean;
-  handleMenuItemClick: (actionId: string, row: FileType) => void;
-  displayShareIcon: boolean;
-  displayPreviewIcon: boolean;
-}
+const FILE_CARD_HEIGHT = 220;
+const MIN_CARD_WIDTH = 240;
 
 const selectedCardStyle = {
   border: '2px solid #3b82f6',
@@ -35,48 +21,91 @@ const MENU_ITEMS: [
   { id: string; label: string; icon: React.FC; color?: string },
 ] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
 
-const RecentFiles = ({
-  recentFiles = [],
-  isXs,
-  isSm,
-  getIndexById = () => 0,
-  setSelectedIds = () => {},
-  setLastSelectedIndex = () => {},
-  selectedIds = [],
-  handleSelect = () => {},
-  handleUnselectAll = () => {},
-  isMoveMode = false,
-  allIds = [],
-  lastSelectedIndex = null,
-  displayDownloadIcon = true,
-  handleMenuItemClick = () => {},
-  displayShareIcon = true,
-  displayPreviewIcon = true,
-}: RecentFileProps) => {
+const RecentFiles = () => {
+  const { isXs, isSm } = useResponsive();
+  const { downloadProgress, cancelDownload, clearDownload, downloadFile } =
+    useFileDownloader();
+  const {
+    loading,
+    selectedIds,
+    setSelectedIds,
+    setLastSelectedIndex,
+    handleSelect,
+    handleUnselectAll,
+    getIndexById,
+
+    deleteModalOpen,
+    setDeleteModalOpen,
+    itemToDelete,
+    removeFileLoading,
+    handleDeleteConfirm,
+    removeFilesModalOpen,
+    removeFilesLoading,
+
+    renameModalOpen,
+    setRenameModalOpen,
+    itemToRename,
+    renameMethods,
+    handleRenameConfirm,
+    renameFileLoading,
+    handleRemoveFilesConfirm,
+    closeRemoveFilesModal,
+
+    handleMenuItemClick,
+    allIds,
+    lastSelectedIndex,
+    recentFiles,
+    displayDownloadIcon,
+    displayShareIcon,
+
+    // preview
+    previewModalOpen,
+    setPreviewModalOpen,
+    previewFile,
+    setPreviewFile,
+    previewFileLoading,
+    displayPreviewIcon,
+  } = useRecentFiles({ downloadFile });
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
-
-  const [visibleFiles, setVisibleFiles] = useState<FileType[]>([]);
   const [columnsCount, setColumnsCount] = useState(2);
   const stackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const updateVisibleFiles = () => {
+    const updateColumnsCount = () => {
       if (stackRef.current) {
         const containerWidth = stackRef.current.offsetWidth;
-        let cardsPerRow = Math.max(
+        const newColumnsCount = Math.max(
           2,
           Math.floor(containerWidth / MIN_CARD_WIDTH)
         );
-        setColumnsCount(cardsPerRow);
-        setVisibleFiles(recentFiles.slice(0, cardsPerRow));
+        setColumnsCount(newColumnsCount);
       }
     };
 
-    updateVisibleFiles();
-    window.addEventListener('resize', updateVisibleFiles);
-    return () => window.removeEventListener('resize', updateVisibleFiles);
-  }, [recentFiles]);
+    updateColumnsCount();
+    window.addEventListener('resize', updateColumnsCount);
+    return () => window.removeEventListener('resize', updateColumnsCount);
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        stackRef.current &&
+        !stackRef.current.contains(target) &&
+        !target.closest('.stickey-box')
+      ) {
+        handleUnselectAll();
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [handleUnselectAll]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -160,6 +189,7 @@ const RecentFiles = ({
       ref={stackRef}
       mt={10}
     >
+      <LoaderOverlay visible={loading} opacity={1} />
       <Box mt={10} mb={32}>
         <Group justify="space-between" mb={16}>
           <Text fw={700} fz="md" c="gray.9">
@@ -174,137 +204,242 @@ const RecentFiles = ({
         View All
       </Button> */}
         </Group>
-        <Box
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-            gap: '20px',
-          }}
-          mt={20}
-        >
-          {visibleFiles.map(file => (
-            <Card
-              key={file.id}
-              radius="md"
-              shadow="sm"
-              p="md"
+        <Card>
+          {recentFiles.length > 0 ? (
+            <Box
               style={{
-                // flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                background: '#f6faff',
-                border: '1px solid #e5e7eb',
-                height: FILE_CARD_HEIGHT,
-                ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
-                transition: 'box-shadow 0.2s ease',
-                userSelect: 'none',
-                ...(isMoveMode
-                  ? {
-                      opacity: 0.5,
-                      cursor: 'not-allowed',
-                    }
-                  : {}),
+                display: 'grid',
+                gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+                gap: '20px',
               }}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                if (!isMoveMode) {
-                  handleSelect(file.id, e);
-                }
-              }}
-              onDoubleClick={(e: any) => {
-                e.stopPropagation();
-                // if (!isMoveMode) {
-                //   handleRowDoubleClick(file);
-                // }
-              }}
+              mt={20}
             >
-              <Group
-                justify="space-between"
-                align="center"
-                mb={8}
-                style={{ flexWrap: 'nowrap' }}
-              >
-                <Group gap={8} flex={1} miw={0} align="center">
-                  {file.icon(responsiveIconSize)}
-                  <Tooltip label={file.name} withArrow={false} fz={'xs'}>
-                    <Text
-                      fw={600}
-                      fz={responsiveFontSize}
-                      flex={1}
-                      truncate
-                      miw={0}
-                    >
-                      {file.name}
-                    </Text>
-                  </Tooltip>
-                </Group>
-                <Menu
-                  items={filteredMenuItems}
-                  onItemClick={actionId => handleMenuItemClick(actionId, file)}
-                  width={120}
-                  styles={{
-                    dropdown: {
-                      padding: 0,
-                    },
-                    item: {
-                      fontSize: 13,
-                    },
+              {recentFiles.map(file => (
+                <Card
+                  key={file.id}
+                  radius="md"
+                  shadow="sm"
+                  p="md"
+                  style={{
+                    // flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    background: '#f6faff',
+                    border: '1px solid #e5e7eb',
+                    height: FILE_CARD_HEIGHT,
+                    ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
+                    cursor: 'pointer',
+                    transition: 'box-shadow 0.2s ease',
+                    userSelect: 'none',
+                  }}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    handleSelect(file.id, e);
+                  }}
+                  onDoubleClick={(e: any) => {
+                    e.stopPropagation();
+                    //   handleRowDoubleClick(file);
                   }}
                 >
-                  <ActionIcon
-                    variant="subtle"
-                    color="gray"
-                    style={{ flexShrink: 0 }}
+                  <Group
+                    justify="space-between"
+                    align="center"
+                    mb={8}
+                    style={{ flexWrap: 'nowrap' }}
                   >
-                    <ICONS.IconDotsVertical size={16} />
-                  </ActionIcon>
-                </Menu>
-              </Group>
-              <Box
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 8,
-                  marginTop: 8,
-                }}
-              >
-                {file.icon(isXs ? 50 : 60)}
-                {/* {file.preview ? (
-                        <Image
-                          src={file.preview}
-                          alt={file.name}
-                          radius="md"
-                          fit="cover"
-                          h={180}
-                          w="100%"
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <Box
-                          style={{
-                            width: '100%',
-                            height: 120,
-                            background: '#e5e7eb',
-                            borderRadius: 8,
-                          }}
-                        />
-                      )} */}
-              </Box>
-              <Group justify="space-between" mt={8}>
-                <Text size="xs" c="gray.6">
-                  {file.lastModified}
-                </Text>
-                <Text size="xs" c="gray.6">
-                  {file.size}
-                </Text>
-              </Group>
-            </Card>
-          ))}
-        </Box>
+                    <Group gap={8} flex={1} miw={0} align="center">
+                      {file.icon(responsiveIconSize)}
+                      <Tooltip label={file.name} withArrow={false} fz={'xs'}>
+                        <Text
+                          fw={600}
+                          fz={responsiveFontSize}
+                          flex={1}
+                          truncate
+                          miw={0}
+                        >
+                          {file.name}
+                        </Text>
+                      </Tooltip>
+                    </Group>
+                    <Menu
+                      items={filteredMenuItems}
+                      onItemClick={actionId =>
+                        handleMenuItemClick(actionId, file)
+                      }
+                    >
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        style={{ flexShrink: 0 }}
+                      >
+                        <ICONS.IconDotsVertical size={18} />
+                      </ActionIcon>
+                    </Menu>
+                  </Group>
+                  <Box
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 8,
+                      marginTop: 8,
+                    }}
+                  >
+                    {file.icon(isXs ? 50 : 60)}
+                    {/* {file.preview ? (
+                              <Image
+                                src={file.preview}
+                                alt={file.name}
+                                radius="md"
+                                fit="cover"
+                                h={180}
+                                w="100%"
+                                style={{ objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <Box
+                                style={{
+                                  width: '100%',
+                                  height: 120,
+                                  background: '#e5e7eb',
+                                  borderRadius: 8,
+                                }}
+                              />
+                            )} */}
+                  </Box>
+                  <Group justify="space-between" mt={8}>
+                    <Text size="xs" c="gray.6">
+                      {file.lastModified}
+                    </Text>
+                    <Text size="xs" c="gray.6">
+                      {file.size}
+                    </Text>
+                  </Group>
+                </Card>
+              ))}
+            </Box>
+          ) : (
+            <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
+              <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
+                No files available.
+              </Text>
+            </Box>
+          )}
+        </Card>
       </Box>
+
+      {/* delete file/folder modal */}
+      <Modal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
+      >
+        <Text mb="md">
+          Are you sure you want to delete this{' '}
+          {itemToDelete?.type === 'folder' ? 'folder' : 'file'} "
+          {itemToDelete?.name}"{' '}
+          {itemToDelete?.UserConnectedAccount?.account_name
+            ? `from "${itemToDelete?.UserConnectedAccount?.account_name}"`
+            : ''}
+          ?
+          {itemToDelete?.type === 'folder' &&
+            ' All contents will be deleted permanently.'}
+        </Text>
+        <Group>
+          <Button
+            variant="outline"
+            onClick={() => setDeleteModalOpen(false)}
+            disabled={removeFileLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="red"
+            onClick={handleDeleteConfirm}
+            loading={removeFileLoading}
+            disabled={removeFileLoading}
+          >
+            Delete
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* Remove multiple files modal*/}
+      <Modal
+        opened={removeFilesModalOpen}
+        onClose={closeRemoveFilesModal}
+        title={`Remove items`}
+      >
+        <Text mb="md">
+          Are you sure you want to remove items? All contents will be deleted
+          permanently.
+        </Text>
+        <Group>
+          <Button
+            variant="outline"
+            onClick={() => closeRemoveFilesModal()}
+            disabled={removeFileLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="red"
+            onClick={handleRemoveFilesConfirm}
+            loading={removeFilesLoading}
+            disabled={removeFilesLoading}
+          >
+            Delete
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* rename file/folder modal */}
+      <Modal
+        opened={renameModalOpen}
+        onClose={() => setRenameModalOpen(false)}
+        title={`Rename ${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+      >
+        <Form methods={renameMethods} onSubmit={handleRenameConfirm}>
+          <Stack gap="md">
+            <TextInput
+              placeholder={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} name`}
+              label={`${itemToRename?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'} Name`}
+              {...renameMethods.register('newName')}
+              error={renameMethods.formState.errors.newName?.message}
+              withAsterisk
+            />
+            <Button
+              type="submit"
+              loading={renameFileLoading}
+              maw={150}
+              disabled={!renameMethods.formState.isValid || renameFileLoading}
+            >
+              Rename
+            </Button>
+          </Stack>
+        </Form>
+      </Modal>
+
+      {/* Preview Modal */}
+      <FilePreviewModal
+        {...{
+          previewFile,
+          previewFileLoading,
+          previewModalOpen,
+          setPreviewFile,
+          setPreviewModalOpen,
+        }}
+      />
+
+      {downloadProgress && (
+        <DownloadProgress
+          downloadProgress={downloadProgress}
+          onCancelDownload={cancelDownload}
+          onClose={clearDownload}
+        />
+      )}
     </Stack>
   );
 };

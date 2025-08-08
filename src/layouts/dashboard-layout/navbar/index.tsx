@@ -1,20 +1,23 @@
 import { NavLink as Link, useLocation } from 'react-router';
 import {
+  Autocomplete,
   Box,
   Group,
   Loader,
+  Menu,
   NavLink,
   Progress,
   rem,
   Stack,
   Text,
+  TextInput,
 } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import Icon from '../../../assets/icons/icon';
 import { useMemo } from 'react';
 import useSidebar from './use-sidebar';
-import { Button, Form, Input, Modal } from '../../../components';
+import { Button, Dropzone, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
 import { LoaderOverlay } from '../../../components/loader';
 import { formatBytes, removeLocalStorage } from '../../../utils/helper';
@@ -35,6 +38,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import SortableCloudAccountItem from './SortableCloudAccountItem';
+import useDashboard from '../../../pages/dashboard/use-dashboard';
+import { Controller } from 'react-hook-form';
+import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -87,27 +93,33 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     // closeNewModal,
     // isNewModalOpen,
     // openNewModal,
-    // connectedAccounts,
+    menuOpened,
+    setMenuOpened,
   } = useSidebar();
 
-  // const {
-  //   openModal,
-  //   handleSyncStorage,
-  //   modalOpen,
-  //   closeModal,
-  //   modalType,
-  //   folderMethods,
-  //   handleCreateFolder,
-  //   isSFDEnabled,
-  //   accountOptionsForSFD,
-  //   createFolderLoading,
-  //   handleFileUpload,
-  //   uploadMethods,
-  //   setUploadedFiles,
-  //   uploadedFiles,
-  //   uploadFilesLoading,
-  //   getFileIcon,
-  // } = useDashboard();
+  const {
+    openModal,
+    // handleSyncStorage,
+    modalOpen,
+    closeModal,
+    modalType,
+    folderMethods,
+    handleCreateFolder,
+    isSFDEnabled,
+    accountOptionsForSFD,
+    createFolderLoading,
+    handleFileUpload,
+    uploadMethods,
+    setUploadedFiles,
+    uploadedFiles,
+    uploadFilesLoading,
+    getFileIcon,
+    showUploadProgress,
+    uploadProgress,
+    uploadingFiles,
+    handleCancelUpload,
+    handleCloseUploadProgress,
+  } = useDashboard();
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
     [location.pathname]
@@ -132,32 +144,56 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
       <LoaderOverlay visible={loading} opacity={1} />
       {user?.user?.role !== ROLES.ADMIN ? (
         <>
-          {/* {connectedAccounts?.length ? (
-            <Box
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginBottom: '1rem',
-              }}
+          {sortedCloudAccounts?.length ? (
+            <Menu
+              position="bottom-start"
+              opened={menuOpened}
+              onClose={() => setMenuOpened(false)}
+              width={240}
+              shadow="lg"
             >
-              <Button
-                leftSection={<ICONS.IconPlus size={16} />}
-                onClick={openNewModal}
-                style={{
-                  backgroundColor: '#fff',
-                  color: '#5f6368',
-                  border: '1px solid #dadce0',
-                  boxShadow:
-                    '0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149)',
-                  fontWeight: 500,
-                  marginRight: '1rem',
-                }}
-              >
-                New
-              </Button>
-            </Box>
-          ) : null} */}
-          <Box style={{ flexGrow: 1 }}>
+              <Menu.Target>
+                <Button
+                  leftSection={<ICONS.IconPlus size={16} />}
+                  onClick={() => setMenuOpened(true)}
+                  style={{
+                    backgroundColor: '#fff',
+                    color: '#5f6368',
+                    border: '1px solid #dadce0',
+                    boxShadow:
+                      '0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149)',
+                    fontWeight: 500,
+                    marginRight: '1rem',
+                  }}
+                  size="sm"
+                  w={'fit-content'}
+                >
+                  New
+                </Button>
+              </Menu.Target>
+
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<ICONS.IconFolderPlus size={16} />}
+                  onClick={() => openModal('folder')}
+                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                >
+                  Create folder
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<ICONS.IconUpload size={16} />}
+                  onClick={() => openModal('files')}
+                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                >
+                  Upload files
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          ) : null}
+          <Box
+            style={{ flexGrow: 1 }}
+            mt={sortedCloudAccounts?.length ? 10 : 0}
+          >
             {accessibleNavItems.map(
               ({ id, label, icon, url, children }: AccessibleNavItemProps) => {
                 const isNested = Boolean(children?.length);
@@ -201,6 +237,42 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                 );
               }
             )}
+            {(() => {
+              const url = PRIVATE_ROUTES.RECENT_FILES.url;
+              const isActive = location?.pathname === url;
+
+              if (!sortedCloudAccounts?.length) return null;
+
+              return (
+                <NavLink
+                  component={Link}
+                  label="Recent Files"
+                  leftSection={
+                    <Icon component={ICONS.IconClock} size={18} stroke={1.25} />
+                  }
+                  active={isActive}
+                  to={url}
+                  style={{
+                    borderRadius: 'var(--mantine-radius-default)',
+                    ...(isActive && {
+                      fontWeight: 400,
+                    }),
+                  }}
+                  onClick={() => {
+                    mobileDrawerHandler?.close();
+                  }}
+                  w={{ base: '100%', sm: 'auto' }}
+                  px={{ sm: 8 }}
+                  py={{ sm: 6 }}
+                  styles={{
+                    section: {
+                      marginInlineEnd: 'var(--mantine-spacing-xs)',
+                      marginBottom: rem(-1),
+                    },
+                  }}
+                />
+              );
+            })()}
             <Stack
               mt={20}
               style={{ flexDirection: 'row' }}
@@ -670,7 +742,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
       </Modal> */}
 
       {/* Create folder / upload file modal */}
-      {/* <Modal
+      <Modal
         opened={modalOpen}
         onClose={closeModal}
         title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
@@ -793,7 +865,16 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
             </Stack>
           </Form>
         )}
-      </Modal> */}
+      </Modal>
+
+      {showUploadProgress ? (
+        <UploadProgress
+          uploadProgress={uploadProgress}
+          uploadingFiles={uploadingFiles}
+          onCancelUpload={handleCancelUpload}
+          onClose={handleCloseUploadProgress}
+        />
+      ) : null}
     </Box>
   );
 };

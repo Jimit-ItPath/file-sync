@@ -83,6 +83,12 @@ export const PRIVATE_ROUTES = {
     title: 'Dashboard',
     url: DASHBOARD_PATH,
   },
+  RECENT_FILES: {
+    path: '/recent-files',
+    roles: Object.values(ROLES),
+    title: 'Recent Files',
+    url: '/recent-files',
+  },
   GOOGLE_DRIVE: {
     path: '/google-drive/:id',
     roles: Object.values(ROLES),

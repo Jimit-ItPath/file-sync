@@ -385,6 +385,9 @@ const cloudStorageSlice = createSlice({
         currentPath: [],
       };
     },
+    resetRecentFiles: state => {
+      state.recentFiles = [];
+    },
   },
   extraReducers: builder => {
     builder
@@ -539,6 +542,7 @@ export const {
   resetPagination,
   resetMoveModalState,
   setMoveModalPath,
+  resetRecentFiles,
 } = cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

@@ -329,7 +329,7 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
 
         @media (min-width: 1900px) {
          .container {
-           min-height: 100vh;
+          //  min-height: 100vh;
            align-items: center;
          }
         }

@@ -76,22 +76,18 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'name',
         label: 'Name',
-        width: '30%',
+        width: '550px',
+        // maxWidth: '20%',
         render: (row: FileType) => (
           <Group
             gap={8}
-            wrap="nowrap"
-            maw={'70%'}
+            // wrap="nowrap"
+            // maw={'70%'}
             style={{ overflow: 'hidden' }}
           >
             {row.icon(iconSize)}
             <Tooltip label={row.name} fz={'xs'}>
-              <Text
-                fw={600}
-                fz={'sm'}
-                truncate
-                style={{ maxWidth: 'calc(100% - 40px)' }}
-              >
+              <Text fw={600} fz={'sm'} truncate style={{ maxWidth: '90%' }}>
                 {row.name}
               </Text>
             </Tooltip>
@@ -160,11 +156,6 @@ const FileTable: React.FC<FileTableProps> = ({
             });
           }
           if (row.type === 'file' || checkLocation || folderId) {
-            // menuItems.push({
-            //   id: 'move',
-            //   label: 'Move',
-            //   icon: ICONS.IconFolderShare,
-            // });
             menuItems.push({
               id: 'move',
               label: 'Move',
