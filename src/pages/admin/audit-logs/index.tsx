@@ -36,6 +36,8 @@ const AdminAuditLogs = () => {
     handleSuccessFilterChange,
     successFilterOptions,
     successFilter,
+    handleReset,
+    disableReset,
   } = useAuditLogs();
 
   return (
@@ -54,15 +56,6 @@ const AdminAuditLogs = () => {
         }}
       >
         <Group justify={'flex-start'} align="center" mt={16} gap="md">
-          {auditLogs?.length ? (
-            <Button
-              mt={26}
-              onClick={handleExportLogs}
-              disabled={downloadLogsLoading}
-            >
-              Export Logs
-            </Button>
-          ) : null}
           {/* Action Type */}
           <SelectFilter
             {...{
@@ -134,6 +127,16 @@ const AdminAuditLogs = () => {
             size="sm"
             label="Search Logs"
           />
+          <Button mt={26} onClick={handleReset} disabled={disableReset}>
+            Reset
+          </Button>
+          <Button
+            mt={26}
+            onClick={handleExportLogs}
+            disabled={downloadLogsLoading || !auditLogs?.length}
+          >
+            Export Logs
+          </Button>
         </Group>
         <Box mt={20}>
           <Card>

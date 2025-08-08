@@ -12,7 +12,11 @@ import {
 } from '../../../store/slices/adminUser.slice';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import useDebounce from '../../../hooks/use-debounce';
-import { downloadFiles, formatDate } from '../../../utils/helper';
+import {
+  downloadFiles,
+  formatDate,
+  formatDateAndTime,
+} from '../../../utils/helper';
 import { Group, Text, Tooltip } from '@mantine/core';
 import type { SelectOption } from '../../../components/inputs/autocomplete';
 import { notifications } from '@mantine/notifications';
@@ -157,6 +161,30 @@ const useAuditLogs = () => {
   const handleClearType = () => {
     setSelectedType(null);
   };
+
+  const handleReset = () => {
+    setSelectedUser(null);
+    setSelectedActionType(null);
+    setSelectedType(null);
+    setSuccessFilter(null);
+    setLocalSearchTerm('');
+  };
+
+  const disableReset = useMemo(() => {
+    return (
+      !selectedUser &&
+      !selectedActionType &&
+      !selectedType &&
+      !successFilter &&
+      !localSearchTerm
+    );
+  }, [
+    selectedUser,
+    selectedActionType,
+    selectedType,
+    successFilter,
+    localSearchTerm,
+  ]);
 
   useEffect(() => {
     handleUserSearch();
@@ -356,9 +384,17 @@ const useAuditLogs = () => {
         title: 'Last Modified',
         // width: '20%',
         render: (row: AuditLogType) => (
-          <Text size="sm">
-            {row.updatedAt ? formatDate(row.updatedAt) : '-'}
-          </Text>
+          <>
+            {row.updatedAt ? (
+              <Tooltip label={formatDateAndTime(row.updatedAt)}>
+                <Text size="sm">{formatDate(row.updatedAt)}</Text>
+              </Tooltip>
+            ) : (
+              <Text size="sm">
+                {row.updatedAt ? formatDate(row.updatedAt) : '-'}
+              </Text>
+            )}
+          </>
         ),
       },
       {
@@ -477,6 +513,8 @@ const useAuditLogs = () => {
     handleSuccessFilterChange,
     handleClearSuccessFilter,
     successFilter,
+    handleReset,
+    disableReset,
   };
 };
 

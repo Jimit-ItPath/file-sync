@@ -225,6 +225,45 @@ export const formatTime = (seconds: number): string => {
   }
 };
 
+export const formatDateAndTime = (
+  dateString: string,
+  includeTime: boolean = true
+): string => {
+  const date = new Date(dateString);
+
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const month = months[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+
+  let formattedDate = `${month} ${day}, ${year}`;
+
+  if (includeTime) {
+    let hours = date.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+    formattedDate += ` ${hours}:${minutes} ${ampm}`;
+  }
+
+  return formattedDate;
+};
+
 export const getMimeTypeFromExtension = (extension?: string) => {
   if (!extension) {
     return undefined;
