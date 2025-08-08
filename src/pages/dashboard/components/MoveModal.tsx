@@ -18,7 +18,7 @@ import {
 } from '../../../store/slices/cloudStorage.slice';
 import type { FileType } from '../use-dashboard';
 import getFileIcon from '../../../components/file-icon';
-import { Button, Modal, Tooltip } from '../../../components';
+import { Breadcrumbs, Button, Modal, Tooltip } from '../../../components';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 type MoveModalProps = {
@@ -527,6 +527,24 @@ const MoveModal: React.FC<MoveModalProps> = ({
             backgroundColor: '#f8fafc',
           }}
         >
+          <Breadcrumbs
+            items={currentPath}
+            onNavigate={folderId => {
+              if (folderId === null) {
+                dispatch(setMoveModalPath([]));
+                fetchFolders(null);
+              } else {
+                const folderIndex = currentPath.findIndex(
+                  f => f.id === folderId
+                );
+                if (folderIndex >= 0) {
+                  const newPath = currentPath.slice(0, folderIndex + 1);
+                  dispatch(setMoveModalPath(newPath));
+                  fetchFolders(folderId);
+                }
+              }
+            }}
+          />
           <Group justify="space-between" align="center">
             <Text size="xs" c="dimmed">
               {selectedDestination
