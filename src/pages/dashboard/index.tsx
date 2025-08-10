@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Autocomplete,
   Box,
   Group,
@@ -7,11 +8,8 @@ import {
   Stack,
   Text,
   TextInput,
-  useMantineTheme,
 } from '@mantine/core';
-import ActionButtons from './components/ActionButtons';
 import FileTable from './components/FileTable';
-// import RecentFiles from './RecentFiles';
 import useDashboard from './use-dashboard';
 import {
   Breadcrumbs,
@@ -21,21 +19,30 @@ import {
   Image,
   Modal,
   SelectionBar,
+  Tooltip,
 } from '../../components';
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
 import UploadProgress from './components/UploadProgress';
-import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
 import { LoaderOverlay } from '../../components/loader';
 import { Controller } from 'react-hook-form';
 import { formatFileSize } from '../../utils/helper';
+// import RecentFiles from './components/RecentFilesOld';
+import useResponsive from '../../hooks/use-responsive';
+import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
+import NoConnectedAccount from './NoConnectedAccount';
+import FilePreviewModal from './components/FilePreviewModal';
+import MoveModal from './components/MoveModal';
+import { ICONS } from '../../assets/icons';
 
-const controlBoxStyles = {
-  height: 40,
-  display: 'flex',
-  alignItems: 'center',
-  borderRadius: 6,
+const iconStyle = {
+  borderRadius: 999,
+  transition: 'background 0.2s',
+  padding: 4,
+  '&:hover': {
+    background: '#e0e7ff',
+  },
 };
 
 const Dashboard = () => {
@@ -67,7 +74,7 @@ const Dashboard = () => {
     createFolderLoading,
     handleCreateFolder,
     handleFileUpload,
-    openModal,
+    // openModal,
     uploadFilesLoading,
     currentPath,
     navigateToFolderFn,
@@ -110,7 +117,7 @@ const Dashboard = () => {
     syncCloudStorageLoading,
 
     isMoveMode,
-    handleMoveSelected,
+    // handleMoveSelected,
     handlePasteFiles,
     filesToMove,
     moveFilesLoading,
@@ -125,11 +132,55 @@ const Dashboard = () => {
     dragDropFiles,
     handleDragDropUpload,
     closeDragDropModal,
+    // recentFilesData,
+    folderId,
+    displayMoveIcon,
+    displayDownloadIcon,
+    location,
+    displayShareIcon,
+    connectedAccounts,
+    previewFile,
+    previewModalOpen,
+    setPreviewFile,
+    setPreviewModalOpen,
+    previewFileLoading,
+    displayPreviewIcon,
+    closeMoveModal,
+    handleMoveModalConfirm,
+    itemsToMove,
+    moveModalOpen,
+    currentAccountId,
+    handleModalMoveSelected,
   } = useDashboard();
-  const { connectedAccounts } = useSidebar();
-  const theme = useMantineTheme();
+  const {
+    openAccountModal,
+    isConnectModalOpen,
+    closeAccountModal,
+    handleConnectAccount,
+    methods,
+    connectAccountFormData,
+    connectAccountLoading,
+  } = useSidebar();
+  const { isSm, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
+
+  if (!connectedAccounts?.length) {
+    return (
+      <NoConnectedAccount
+        {...{
+          closeAccountModal,
+          connectAccountFormData,
+          connectAccountLoading,
+          handleConnectAccount,
+          isConnectModalOpen,
+          methods,
+          openAccountModal,
+          isSm,
+        }}
+      />
+    );
+  }
 
   return (
     <Box>
@@ -138,6 +189,19 @@ const Dashboard = () => {
         opacity={1}
       />
       {/* <ScrollArea> */}
+      {location.pathname?.startsWith('/dropbox') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in dropbox account
+        </Text>
+      ) : location.pathname?.startsWith('/google-drive') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in google drive account
+        </Text>
+      ) : location.pathname?.startsWith('/onedrive') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in onedrive account
+        </Text>
+      ) : null}
       <Box
         px={32}
         pb={20}
@@ -160,38 +224,88 @@ const Dashboard = () => {
         }}
         onScroll={handleScroll}
       >
+        {/* Top Row - Toggle and Action Buttons */}
+        {/* <Box mt={10}>
+          <Group justify="space-between" align="center" gap={20}>
+            {connectedAccounts?.length ? (
+              <ActionButtons
+                {...{
+                  openModal,
+                  handleSyncStorage,
+                }}
+              />
+            ) : null}
+            <Tooltip label="Sync" fz={'xs'}>
+                <ActionIcon
+                  h={40}
+                  w={40}
+                  variant="outline"
+                  onClick={handleSyncStorage}
+                >
+                  <ICONS.IconRefresh />
+                </ActionIcon>
+              </Tooltip>
+          </Group>
+        </Box> */}
+
+        {/* {recentFilesData?.length && !folderId ? (
+          <RecentFiles
+            {...{
+              recentFiles: recentFilesData,
+              isSm,
+              isXs,
+              allIds,
+              getIndexById,
+              handleSelect,
+              handleUnselectAll,
+              isMoveMode,
+              lastSelectedIndex,
+              selectedIds,
+              setLastSelectedIndex,
+              setSelectedIds,
+              displayDownloadIcon,
+              handleMenuItemClick,
+              displayShareIcon,
+              displayPreviewIcon,
+            }}
+          />
+        ) : null} */}
+
         {/* Sticky Section */}
         <Box
           style={{
             position: 'sticky',
             top: 0,
-            ...(files?.length || folders?.length ? { zIndex: 5 } : {}),
-            backgroundColor: '#ffffff',
-            padding: '16px 24px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            borderBottom: '1px solid #e5e7eb',
+            ...(files?.length || folders?.length ? { zIndex: 10 } : {}),
+            // backgroundColor: '#E5E7EB',
+            backgroundColor: '#f6faff',
+            border: '1px solid #e5e7eb',
+            borderRadius: 'var(--mantine-radius-default)',
+            padding: '10px 24px',
+            // boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            // borderBottom: '1px solid #e5e7eb',
           }}
+          mt={16}
           className="stickey-box"
         >
-          <DragDropOverlay
-            isDragging={isDragging}
-            message="Drop files here to upload"
-            subMessage="Support for PDF, DOC, XLS, PPT, images and more"
-          />
-          {connectedAccounts?.length ? (
-            <ActionButtons
-              {...{
-                currentPath,
-                navigateToFolderFn,
-                openModal,
-                handleSyncStorage,
-              }}
-            />
-          ) : null}
-          {/* <RecentFiles /> */}
-          <Group mb={20} align="center" style={{ width: '100%' }}>
-            {selectedIds.length > 0 ? (
-              <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
+          <Box>
+            <Group align="center" w={'100%'}>
+              <Box style={{ flexGrow: 1 }}>
+                <Breadcrumbs
+                  items={currentPath}
+                  onNavigate={folderId => {
+                    if (!folderId || folderId === null) {
+                      navigateToFolderFn(null);
+                    } else {
+                      const folder = currentPath.find(f => f.id === folderId);
+                      if (folder) {
+                        navigateToFolderFn(folder);
+                      }
+                    }
+                  }}
+                />
+              </Box>
+              {selectedIds.length > 0 ? (
                 <SelectionBar
                   count={selectedIds.length}
                   onCancel={() => {
@@ -201,139 +315,140 @@ const Dashboard = () => {
                   onDelete={handleDeleteSelected}
                   onDownload={handleDownloadSelected}
                   onShare={handleShareSelected}
-                  onMove={handleMoveSelected}
+                  // onMove={handleMoveSelected}
+                  onMove={handleModalMoveSelected}
                   onPaste={handlePasteFiles}
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
-                />
-              </Box>
-            ) : (
-              <Box style={{ flex: 1, marginRight: 12 }} />
-            )}
-            <CustomToggle
-              value={layout}
-              onChange={(value: 'list' | 'grid') => switchLayout(value)}
-            />
-            {/* <SegmentedControl
-              value={layout}
-              onChange={(value: string) =>
-                switchLayout(value as 'list' | 'grid')
-              }
-              p={4}
-              color="#1c7ed6"
-              data={[
-                {
-                  value: 'list',
-                  label: (
-                    <Tooltip label="List View" withArrow fz="xs">
-                      <ICONS.IconList
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'list' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-                {
-                  value: 'grid',
-                  label: (
-                    <Tooltip label="Grid View" withArrow fz="xs">
-                      <ICONS.IconGridDots
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'grid' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-              ]}
-              styles={() => ({
-                root: {
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: 8,
-                  padding: '4px',
-                  height: '40px', // Match the height of the SelectionBar
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering
-                },
-                control: {
-                  height: '32px', // Adjusted for compactness
-                  width: '40px', // Make controls square for better alignment
-                  display: 'flex',
-                  alignItems: 'center', // Center icon vertically
-                  justifyContent: 'center', // Center icon horizontally
-                  borderRadius: 6,
-                  transition: 'background-color 0.2s ease',
-                },
-                active: {
-                  backgroundColor: '#1c7ed6', // Active background color
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering in active state
-                  justifyContent: 'center', // Ensure horizontal centering in active state
-                },
-                label: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-              })}
-            /> */}
-          </Group>
-          <Group align="center" w={'100%'} mt={16}>
-            <Box style={{ flexGrow: 1 }}>
-              <Breadcrumbs
-                items={currentPath}
-                // onNavigate={folderId => {
-                //   if (!folderId || folderId === null) {
-                //     navigateToFolderFn(null);
-                //   } else {
-                //     const folder = currentPath.find(f => f.id === folderId);
-                //     if (folder) {
-                //       navigateToFolderFn(folder);
-                //     }
-                //   }
-                // }}
-                onNavigate={folder => {
-                  if (!folder || folder.id === null) {
-                    navigateToFolderFn(null);
-                  } else {
-                    navigateToFolderFn({ id: folder.id, name: folder.name });
+                  displayMoveIcon={displayMoveIcon}
+                  displayDownloadIcon={displayDownloadIcon}
+                  displayShareIcon={
+                    selectedIds?.length === 1 && displayShareIcon
                   }
+                />
+              ) : null}
+              <Tooltip label="Sync" fz={'xs'}>
+                <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
+                  <ICONS.IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
+              {!checkLocation && (
+                <Select
+                  data={accountOptions}
+                  value={accountId}
+                  onChange={handleAccountTypeChange}
+                  placeholder="Select account type"
+                  style={{ width: '150px' }}
+                  styles={{
+                    input: {
+                      height: '44px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #e5e7eb',
+                      backgroundColor: '#ffffff',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#374151',
+                      transition: 'all 0.2s ease',
+                      '&:focus': {
+                        borderColor: '#1e7ae8',
+                        boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                      },
+                      '&:hover': {
+                        borderColor: '#d1d5db',
+                      },
+                    },
+                    dropdown: {
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                    },
+                    option: {
+                      padding: '6px',
+                      fontSize: '14px',
+                      borderRadius: '4px',
+                      margin: '2px',
+                      '&[data-selected]': {
+                        backgroundColor: '#1e7ae8',
+                        color: '#ffffff',
+                      },
+                      '&:hover': {
+                        backgroundColor: '#f1f5f9',
+                      },
+                    },
+                  }}
+                />
+              )}
+              <TextInput
+                placeholder="Search files..."
+                value={searchTerm}
+                onChange={event => handleSearchChange(event.target.value)}
+                // style={{ width: '200px' }}
+                styles={{
+                  input: {
+                    height: '44px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #e5e7eb',
+                    backgroundColor: '#ffffff',
+                    fontSize: '14px',
+                    // paddingLeft: '44px',
+                    transition: 'all 0.2s ease',
+                    '&:focus': {
+                      borderColor: '#1e7ae8',
+                      boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                      backgroundColor: '#fefefe',
+                    },
+                    '&:hover': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&::placeholder': {
+                      color: '#9ca3af',
+                      fontSize: '14px',
+                    },
+                  },
+                  section: {
+                    paddingLeft: '16px',
+                  },
                 }}
               />
-            </Box>
-            {!checkLocation && (
-              <Select
-                data={accountOptions}
-                value={accountId}
-                onChange={handleAccountTypeChange}
-                placeholder="Select account type"
-                style={{ width: '150px' }}
+              <CustomToggle
+                value={layout}
+                onChange={(value: 'list' | 'grid') => switchLayout(value)}
               />
-            )}
-            <TextInput
-              placeholder="Search files..."
-              value={searchTerm}
-              onChange={event => handleSearchChange(event.currentTarget.value)}
-              style={{ width: '200px' }}
-            />
-          </Group>
+            </Group>
+          </Box>
+
+          <DragDropOverlay
+            isDragging={isDragging}
+            message="Drop files here to upload"
+            subMessage="Support for PDF, DOC, XLS, PPT, images and more"
+          />
         </Box>
         {layout === 'list' ? (
-          <FileTable
-            {...{
-              files,
-              handleSelect,
-              onSelectAll,
-              onSelectRow,
-              selectedIds,
-              currentPath,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-              handleUnselectAll,
-              filesToMove,
-              isMoveMode,
-              parentId,
-            }}
-          />
+          <>
+            <FileTable
+              {...{
+                files,
+                handleSelect,
+                onSelectAll,
+                onSelectRow,
+                selectedIds,
+                currentPath,
+                handleMenuItemClick,
+                handleRowDoubleClick,
+                handleUnselectAll,
+                filesToMove,
+                isMoveMode,
+                parentId,
+                checkLocation,
+                folderId,
+              }}
+            />
+            {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button mt={20} onClick={loadMoreFiles}>
+                Load More
+              </Button>
+            ) : null}
+          </>
         ) : (
           <>
             <FileGrid
@@ -353,6 +468,10 @@ const Dashboard = () => {
                 filesToMove,
                 isMoveMode,
                 parentId,
+                displayDownloadIcon,
+                displayShareIcon,
+                displayMoveIcon,
+                displayPreviewIcon,
               }}
             />
             {pagination && pagination.page_no < pagination.total_pages ? (
@@ -503,11 +622,17 @@ const Dashboard = () => {
       <Modal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title={`Delete ${itemToDelete?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+        title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
       >
         <Text mb="md">
-          Are you sure you want to delete "{itemToDelete?.name}"?
-          {itemToDelete?.mimeType === 'application/vnd.google-apps.folder' &&
+          Are you sure you want to delete this{' '}
+          {itemToDelete?.type === 'folder' ? 'folder' : 'file'} "
+          {itemToDelete?.name}"{' '}
+          {itemToDelete?.UserConnectedAccount?.account_name
+            ? `from "${itemToDelete?.UserConnectedAccount?.account_name}"`
+            : ''}
+          ?
+          {itemToDelete?.type === 'folder' &&
             ' All contents will be deleted permanently.'}
         </Text>
         <Group>
@@ -694,6 +819,29 @@ const Dashboard = () => {
           </Stack>
         </Form>
       </Modal>
+
+      {/* Preview Modal */}
+      <FilePreviewModal
+        {...{
+          previewFile,
+          previewFileLoading,
+          previewModalOpen,
+          setPreviewFile,
+          setPreviewModalOpen,
+        }}
+      />
+
+      {/* Move Modal */}
+      <MoveModal
+        opened={moveModalOpen}
+        onClose={closeMoveModal}
+        selectedItems={itemsToMove}
+        onMoveConfirm={handleMoveModalConfirm}
+        currentFolderId={folderId}
+        checkLocation={checkLocation}
+        accountId={accountId}
+        currentAccountId={currentAccountId}
+      />
     </Box>
   );
 };

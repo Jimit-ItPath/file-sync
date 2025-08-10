@@ -89,3 +89,43 @@ export const passwordRequirements = [
   { re: regex.hasDigit, label: 'Includes number' },
   { re: regex.hasSpecialChar, label: 'Includes special symbol' },
 ];
+
+export const NAME_REGEX = /^[a-zA-Z\s'-]+$/;
+
+export const IMAGE_FILE_TYPES = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'bmp',
+  'svg',
+  'webp',
+];
+
+export const VIDEO_FILE_TYPES = [
+  'mp4',
+  'avi',
+  'mov',
+  'wmv',
+  'flv',
+  'mkv',
+  'webm',
+];
+
+export const DOCUMENT_FILE_TYPES = [
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'pdf',
+];
+
+export const PREVIEW_FILE_TYPES = [
+  ...IMAGE_FILE_TYPES,
+  ...VIDEO_FILE_TYPES,
+  // ...DOCUMENT_FILE_TYPES,
+];
+
+export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;

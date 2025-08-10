@@ -9,11 +9,13 @@ type ConnectedAccountType = {
   account_name: string;
   account_type: AccountType;
   state_token: string;
-  access_token: null;
-  refresh_token: null;
   token_expires: null;
   createdAt: string;
   updatedAt: string;
+  email: string;
+  sequence_number: number | null;
+  external_account_id: string | null;
+  re_authentication_required: boolean;
 };
 
 type StorageDetailsType = {
@@ -57,6 +59,7 @@ type AuthState = {
     result: CheckStorageDetailsType[];
     storage_details: StorageDetailsType;
   } | null;
+  token: string | null;
 };
 
 const initialState: AuthState = {
@@ -68,6 +71,7 @@ const initialState: AuthState = {
   checkStorageDetails: null,
   loading: false,
   error: null,
+  token: null,
 };
 
 export const connectCloudAccount = createAsyncThunk(
@@ -155,6 +159,23 @@ export const completeProfile = createAsyncThunk(
   }
 );
 
+export const updateSequence = createAsyncThunk(
+  'auth/updateSequence',
+  async (
+    data: {
+      id: number;
+      sequence_number: number;
+    }[]
+  ) => {
+    try {
+      const response = await api.auth.updateSequence({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -171,6 +192,10 @@ const authSlice = createSlice({
     },
     resetUser: state => {
       state.user = null;
+      state.connectedAccounts = [];
+      state.checkStorageDetails = null;
+      state.isLoggedIn = false;
+      state.token = null;
     },
   },
   extraReducers: builder => {

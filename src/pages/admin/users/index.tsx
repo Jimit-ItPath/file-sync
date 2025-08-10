@@ -1,16 +1,57 @@
-import { Box, Group, Stack, Text, TextInput } from '@mantine/core';
+import {
+  Avatar,
+  Box,
+  Group,
+  Image,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import useUsers from './use-users';
-import { Button, Form, Modal, Table } from '../../../components';
+import { Button, Card, Form, Modal, Tooltip } from '../../../components';
 import { LoaderOverlay } from '../../../components/loader';
+import { DataTable } from 'mantine-datatable';
+import EmailMultiInput from './EmailMultiInput';
+import { formatDate } from '../../../utils/helper';
+import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
+
+type AccountConfig = {
+  icon: React.ReactNode;
+  color: string;
+  label: string;
+  bg: string;
+};
+
+const accountConfigs: Record<string, AccountConfig> = {
+  google_drive: {
+    icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={26} h={26} />,
+    color: 'red',
+    label: 'Google Drive',
+    bg: 'rgba(234, 67, 53, 0.1)',
+  },
+  dropbox: {
+    icon: <Image src={DropboxIcon} w={28} alt="Dropbox" />,
+    color: 'blue',
+    label: 'Dropbox',
+    bg: 'rgba(0, 97, 255, 0.1)',
+  },
+  onedrive: {
+    icon: <Image src={OneDriveIcon} alt="OneDrive" w={26} h={26} />,
+    color: 'indigo',
+    label: 'OneDrive',
+    bg: 'rgba(0, 120, 215, 0.1)',
+  },
+};
 
 const AdminUsers = () => {
   const {
     closeInviteUserModal,
     inviteUserMethods,
-    handleScroll,
     handleSearchChange,
     loading,
-    scrollBoxRef,
     searchTerm,
     itemToBlock,
     openInviteUserModal,
@@ -23,6 +64,11 @@ const AdminUsers = () => {
     closeUserBlockModal,
     blockUserLoading,
     handleBlockConfirm,
+    currentPage,
+    handlePageChange,
+    handleLimitChange,
+    totalRecords,
+    limit,
   } = useUsers();
 
   return (
@@ -32,7 +78,6 @@ const AdminUsers = () => {
         px={32}
         pb={20}
         bg="#f8fafc"
-        ref={scrollBoxRef}
         style={{
           position: 'relative',
           height: 'calc(100vh - 120px)',
@@ -40,7 +85,6 @@ const AdminUsers = () => {
           overflowX: 'hidden',
           transition: 'all 0.2s ease-in-out',
         }}
-        onScroll={handleScroll}
       >
         <Group justify="flex-end" w={'100%'} mt={16}>
           <TextInput
@@ -63,12 +107,103 @@ const AdminUsers = () => {
           </Button>
         </Group>
         <Box mt={20}>
-          <Table
-            data={users}
-            columns={columns}
-            idKey="id"
-            emptyMessage="No users available."
-          />
+          <Card>
+            {users.length > 0 ? (
+              <DataTable
+                withTableBorder
+                borderRadius="md"
+                records={users}
+                columns={columns}
+                totalRecords={totalRecords}
+                recordsPerPage={limit}
+                page={currentPage}
+                onPageChange={handlePageChange}
+                onRecordsPerPageChange={handleLimitChange}
+                recordsPerPageOptions={[10, 20, 50, 100]}
+                paginationWithEdges
+                textSelectionDisabled
+                striped
+                highlightOnHover
+                verticalSpacing="sm"
+                horizontalSpacing="md"
+                paginationActiveBackgroundColor="blue"
+                paginationActiveTextColor="white"
+                noRecordsText=""
+                className="mantine-user-data-table"
+                rowExpansion={{
+                  allowMultiple: true,
+                  content: ({ record }) => (
+                    <Box p="md" bg="gray.0" style={{ borderRadius: 8 }}>
+                      <Text size="sm" fw={600} mb="sm" c="gray.8">
+                        Connected Accounts
+                      </Text>
+
+                      {record.UserConnectedAccounts?.length > 0 ? (
+                        <SimpleGrid
+                          cols={{ base: 1, sm: 2, md: 3 }}
+                          spacing="md"
+                          verticalSpacing="md"
+                        >
+                          {record.UserConnectedAccounts.map(account => {
+                            const accountConfig =
+                              accountConfigs[account.account_type];
+                            return (
+                              <Card
+                                key={account.id}
+                                p="md"
+                                style={{ borderRadius: 8 }}
+                              >
+                                <Group justify="space-between" mb="xs">
+                                  <Tooltip
+                                    label={account.account_name}
+                                    fz={'xs'}
+                                  >
+                                    <Text fw={500} maw={'70%'} truncate>
+                                      {account.account_name}
+                                    </Text>
+                                  </Tooltip>
+                                  <Avatar
+                                    color={accountConfig.color}
+                                    radius="sm"
+                                    size="md"
+                                  >
+                                    {accountConfig.icon}
+                                  </Avatar>
+                                </Group>
+                                <Text size="xs" c="dimmed">
+                                  Created on: {formatDate(account.createdAt)}
+                                </Text>
+                              </Card>
+                            );
+                          })}
+                        </SimpleGrid>
+                      ) : (
+                        <Text size="sm" c="dimmed">
+                          No connected accounts.
+                        </Text>
+                      )}
+                    </Box>
+                  ),
+                }}
+                styles={{
+                  pagination: {
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginTop: '10px',
+                  },
+                  table: {
+                    cursor: 'pointer',
+                  },
+                }}
+              />
+            ) : (
+              <Text ta="center" py="xl" c="dimmed">
+                No users available.
+              </Text>
+            )}
+          </Card>
         </Box>
       </Box>
 
@@ -80,12 +215,9 @@ const AdminUsers = () => {
       >
         <Form methods={inviteUserMethods} onSubmit={handleInviteUser}>
           <Stack gap="md">
-            <TextInput
-              placeholder="User email"
-              label="User Email"
-              {...inviteUserMethods.register('email')}
-              error={inviteUserMethods.formState.errors.email?.message}
-              withAsterisk
+            <EmailMultiInput
+              inviteUserMethods={inviteUserMethods}
+              inviteUserLoading={inviteUserLoading}
             />
             <Button
               type="submit"

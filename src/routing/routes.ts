@@ -54,6 +54,21 @@ export const AUTH_ROUTES = {
     path: '/complete-profile',
     url: '/complete-profile',
   },
+  PRIVACY_POLICY: {
+    title: 'Privacy Policy',
+    path: '/privacy-policy',
+    url: '/privacy-policy',
+  },
+  TERMS_OF_SERVICE: {
+    title: 'Terms of Service',
+    path: '/terms-of-service',
+    url: '/terms-of-service',
+  },
+  LANDING: {
+    title: 'Landing',
+    path: '/',
+    url: '/',
+  },
 };
 
 const DASHBOARD_PATH = '/dashboard';
@@ -67,6 +82,12 @@ export const PRIVATE_ROUTES = {
     roles: Object.values(ROLES),
     title: 'Dashboard',
     url: DASHBOARD_PATH,
+  },
+  RECENT_FILES: {
+    path: '/recent-files',
+    roles: Object.values(ROLES),
+    title: 'Recent Files',
+    url: '/recent-files',
   },
   GOOGLE_DRIVE: {
     path: '/google-drive/:id/:folderId?',
@@ -103,5 +124,11 @@ export const PRIVATE_ROUTES = {
     roles: Object.values(ROLES),
     title: 'Users',
     url: '/users',
+  },
+  AUDIT_LOGS: {
+    path: '/logs',
+    roles: Object.values(ROLES),
+    title: 'Audit Logs',
+    url: '/logs',
   },
 };

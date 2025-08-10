@@ -10,14 +10,21 @@ import useAsyncOperation from '../../../hooks/use-async-operation';
 import { updateUser } from '../../../store/slices/auth.slice';
 import { notifications } from '@mantine/notifications';
 import { useAppDispatch } from '../../../store';
-import { useMantineTheme } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
 import { ROLES } from '../../../utils/constants';
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
-  password: z.string().min(1, 'Password is required'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address')
+    .refine(value => value.trim() !== '', 'Email cannot be empty spaces'),
+  password: z
+    .string()
+    .trim()
+    .min(1, 'Password is required')
+    .refine(value => value.trim() !== '', 'Password cannot be empty spaces'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -26,11 +33,6 @@ const useLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [showLoginForm, setShowLoginForm] = useState(false);
-
-  const theme = useMantineTheme();
-  const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
-  const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
-  const isMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -56,6 +58,7 @@ const useLogin = () => {
       data: {
         email: data.email,
         password: data.password,
+        role: ROLES.USER,
       },
     });
     if (response?.data?.success || response?.status === 200) {
@@ -91,7 +94,7 @@ const useLogin = () => {
       {
         id: 'email',
         name: 'email',
-        placeholder: 'Enter your email',
+        placeholder: 'Enter email',
         type: 'email',
         label: 'Email address',
         isRequired: true,
@@ -100,7 +103,7 @@ const useLogin = () => {
       {
         id: 'password',
         name: 'password',
-        placeholder: 'Enter Password',
+        placeholder: 'Enter password',
         label: 'Password',
         type: 'password-input',
         showIcon: true,
@@ -118,9 +121,7 @@ const useLogin = () => {
     methods,
     showLoginForm,
     toggleLoginForm,
-    isXs,
-    isSm,
-    isMd,
+    navigate,
   };
 };
 

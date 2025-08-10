@@ -37,7 +37,7 @@ const AccountTypeSelector = ({
       //     fill="#007ee5"
       //   />
       // ),
-      icon: <Image src={DropboxIcon} alt="Dropbox" w={16} h={16} />,
+      icon: <Image src={DropboxIcon} alt="Dropbox" w={18} />,
     },
     {
       value: 'onedrive',
@@ -80,9 +80,11 @@ const AccountTypeSelector = ({
                 gap: '10px',
                 padding: '8px 10px',
                 borderRadius: '8px',
-                border: `1px solid ${selected ? '#2C2E33' : '#DEE2E6'}`,
-                backgroundColor: selected ? '#2C2E33' : 'white',
-                color: selected ? 'white' : '#495057',
+                border: '1px solid #DEE2E6',
+                // border: `1px solid ${selected ? '#2C2E33' : '#DEE2E6'}`,
+                // backgroundColor: selected ? '#2C2E33' : 'white',
+                backgroundColor: selected ? '#e8f0fe' : 'white',
+                // color: selected ? 'white' : '#495057',
                 transition: 'all 0.2s ease',
                 userSelect: 'none',
                 fontSize: '14px',

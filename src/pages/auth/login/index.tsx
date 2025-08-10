@@ -1,14 +1,16 @@
 import { Grid, Paper, Stack, Title, Text, Box, Group } from '@mantine/core';
-import { FeatureList } from './FeatureList';
 import { LoginForm } from './LoginForm';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
 import useLogin from './use-login';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { ICONS } from '../../../assets/icons';
+import { FeatureList } from '../register/FeatureList';
+import useResponsive from '../../../hooks/use-responsive';
 
 export default function Login() {
-  const { showLoginForm, toggleLoginForm, isSm, isXs, isMd } = useLogin();
+  const { showLoginForm, toggleLoginForm, navigate } = useLogin();
+  const { isMd, isSm, isXs } = useResponsive();
   return (
     <Box>
       <Group
@@ -18,17 +20,16 @@ export default function Login() {
           top: 24,
           left: 32,
           zIndex: 2,
+          cursor: 'pointer',
         }}
+        onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
-        <ICONS.IconCloud
-          size={32}
-          color={isXs || isSm || isMd ? '#0ea5e9' : '#ffffff'}
-        />
+        <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
           fw={700}
           fz={20}
           style={{
-            color: isXs || isSm || isMd ? '#0ea5e9' : '#ffffff',
+            color: isXs || isSm || isMd ? '#0ea5e9' : '#000000',
             letterSpacing: -0.5,
           }}
         >
@@ -82,7 +83,11 @@ export default function Login() {
                       Don't have an account?{' '}
                       <Link
                         to={AUTH_ROUTES.REGISTER.url}
-                        style={{ textDecoration: 'none', color: '#0284c7' }}
+                        style={{
+                          textDecoration: 'none',
+                          color: '#0284c7',
+                          fontWeight: 500,
+                        }}
                       >
                         Sign up
                       </Link>

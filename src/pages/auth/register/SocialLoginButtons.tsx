@@ -3,12 +3,17 @@ import { Button } from '../../../components';
 import useSocialLogin from '../useSocialLogin';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import FacebookIcon from '../../../assets/svgs/Facebook.svg';
+import { ICONS } from '../../../assets/icons';
 
 interface ISocialLoginButtonsProps {
   isXs: boolean;
+  toggleRegisterForm: () => void;
 }
 
-export const SocialLoginButtons = ({ isXs }: ISocialLoginButtonsProps) => {
+export const SocialLoginButtons = ({
+  isXs,
+  toggleRegisterForm,
+}: ISocialLoginButtonsProps) => {
   const { handleFacebookLogin, handleGoogleLogin } = useSocialLogin();
 
   return (
@@ -40,6 +45,18 @@ export const SocialLoginButtons = ({ isXs }: ISocialLoginButtonsProps) => {
         type="button"
       >
         Continue with Facebook
+      </Button>
+      <Button
+        onClick={toggleRegisterForm}
+        variant="default"
+        leftSection={<ICONS.IconMail size={18} color="#0284c7" />}
+        fullWidth
+        size="md"
+        radius="md"
+        fw={500}
+        type="button"
+      >
+        Continue with Email
       </Button>
     </Stack>
   );

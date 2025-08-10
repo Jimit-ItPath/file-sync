@@ -16,8 +16,12 @@ import { ROLES } from '../../../utils/constants';
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
-  password: z.string().min(1, 'Password is required'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
+  password: z.string().trim().min(1, 'Password is required'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -51,6 +55,7 @@ const useAdminLogin = () => {
       data: {
         email: data.email,
         password: data.password,
+        role: ROLES.ADMIN,
       },
     });
     if (response?.data?.success || response?.status === 200) {
@@ -76,7 +81,6 @@ const useAdminLogin = () => {
           color: 'green',
         });
         reset();
-        // navigate(PRIVATE_ROUTES.ADMIN_DASHBOARD.url);
         navigate(PRIVATE_ROUTES.USERS.url);
       }
     }
@@ -87,7 +91,7 @@ const useAdminLogin = () => {
       {
         id: 'email',
         name: 'email',
-        placeholder: 'Enter your email',
+        placeholder: 'Enter email',
         type: 'email',
         label: 'Email address',
         isRequired: true,
@@ -96,7 +100,7 @@ const useAdminLogin = () => {
       {
         id: 'password',
         name: 'password',
-        placeholder: 'Enter Password',
+        placeholder: 'Enter password',
         label: 'Password',
         type: 'password-input',
         showIcon: true,

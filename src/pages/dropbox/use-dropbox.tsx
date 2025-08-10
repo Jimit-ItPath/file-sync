@@ -53,11 +53,11 @@ export type FileType = {
 };
 
 const folderSchema = z.object({
-  folderName: z.string().min(1, 'Folder name is required'),
+  folderName: z.string().trim().min(1, 'Folder name is required'),
 });
 
 const renameSchema = z.object({
-  newName: z.string().min(1, 'New name is required'),
+  newName: z.string().trim().min(1, 'New name is required'),
 });
 
 type FolderFormData = z.infer<typeof folderSchema>;
@@ -1156,7 +1156,7 @@ const useDropbox = () => {
     moveFilesLoading,
     isPasteEnabled,
     cancelMoveMode,
-    parentId
+    parentId,
   };
 };
 

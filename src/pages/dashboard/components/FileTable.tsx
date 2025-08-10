@@ -3,13 +3,11 @@ import { ICONS } from '../../../assets/icons';
 import { Menu, Table, Tooltip } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
+import { PREVIEW_FILE_TYPES } from '../../../utils/constants';
 
-const MENU_ITEMS = [
-  // { id: 'download', label: 'Download', icon: ICONS.IconDownload },
-  // { id: 'share', label: 'Share', icon: ICONS.IconShare },
-  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
-  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
-];
+const MENU_ITEMS: [
+  { id: string; label: string; icon: React.FC; color?: string },
+] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
 
 type FileTableProps = {
   files: FileType[];
@@ -32,6 +30,8 @@ type FileTableProps = {
   isMoveMode: boolean;
   filesToMove: string[];
   parentId?: string | null;
+  checkLocation: boolean;
+  folderId?: string | null;
 };
 
 const FileTable: React.FC<FileTableProps> = ({
@@ -47,6 +47,8 @@ const FileTable: React.FC<FileTableProps> = ({
   isMoveMode = false,
   filesToMove = [],
   parentId = null,
+  checkLocation = false,
+  folderId = null,
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -74,22 +76,18 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'name',
         label: 'Name',
-        width: '30%',
+        width: '550px',
+        // maxWidth: '20%',
         render: (row: FileType) => (
           <Group
             gap={8}
-            wrap="nowrap"
-            maw={'100%'}
+            // wrap="nowrap"
+            // maw={'70%'}
             style={{ overflow: 'hidden' }}
           >
             {row.icon(iconSize)}
             <Tooltip label={row.name} fz={'xs'}>
-              <Text
-                fw={600}
-                fz={'sm'}
-                truncate
-                style={{ maxWidth: 'calc(100% - 40px)' }}
-              >
+              <Text fw={600} fz={'sm'} truncate style={{ maxWidth: '90%' }}>
                 {row.name}
               </Text>
             </Tooltip>
@@ -99,9 +97,13 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'owner',
         label: 'Owner',
-        width: '15%',
+        // width: '15%',
         render: (row: FileType) => (
-          <Group gap={8} wrap="nowrap" style={{ maxWidth: '200px' }}>
+          <Group
+            gap={8}
+            wrap="nowrap"
+            //  style={{ maxWidth: '200px' }}
+          >
             <Avatar src={row.owner.avatar} radius="xl" size="sm" color="blue">
               {row.owner.initials}
             </Avatar>
@@ -114,30 +116,70 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'lastModified',
         label: 'Last Modified',
-        width: '20%',
+        // width: '20%',
         render: (row: FileType) => <Text size="sm">{row.lastModified}</Text>,
       },
       {
         key: 'size',
         label: 'Size',
-        width: '10%',
+        // width: '10%',
         render: (row: FileType) => <Text size="sm">{row.size || '-'}</Text>,
       },
       {
         key: 'actions',
         label: '',
-        // width: 40,
-        width: '10%',
-        render: (row: FileType) => (
-          <Menu
-            items={MENU_ITEMS}
-            onItemClick={actionId => handleMenuItemClick(actionId, row)}
-          >
-            <ActionIcon variant="subtle" color="gray">
-              <ICONS.IconDotsVertical size={18} />
-            </ActionIcon>
-          </Menu>
-        ),
+        // width: '10%',
+        render: (row: FileType) => {
+          const menuItems = [...MENU_ITEMS];
+          if (row.type === 'file') {
+            menuItems.push({
+              id: 'download',
+              label: 'Download',
+              icon: ICONS.IconDownload,
+            });
+            if (
+              row.fileExtension &&
+              PREVIEW_FILE_TYPES.includes(row.fileExtension)
+            ) {
+              menuItems.push({
+                id: 'preview',
+                label: 'Preview',
+                icon: ICONS.IconLiveView,
+              });
+            }
+          }
+          if (row.web_view_url) {
+            menuItems.push({
+              id: 'share',
+              label: 'Share',
+              icon: ICONS.IconShare,
+            });
+          }
+          if (row.type === 'file' || checkLocation || folderId) {
+            menuItems.push({
+              id: 'move',
+              label: 'Move',
+              icon: ICONS.IconFolderShare,
+            });
+          }
+          menuItems.push({
+            id: 'delete',
+            label: 'Delete',
+            icon: ICONS.IconTrash,
+            color: 'red',
+          });
+
+          return (
+            <Menu
+              items={menuItems}
+              onItemClick={actionId => handleMenuItemClick(actionId, row)}
+            >
+              <ActionIcon variant="subtle" color="gray">
+                <ICONS.IconDotsVertical size={18} />
+              </ActionIcon>
+            </Menu>
+          );
+        },
       },
     ],
     [handleMenuItemClick, iconSize]

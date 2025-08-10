@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   blockUser,
@@ -12,6 +6,7 @@ import {
   inviteUser,
   type UserType,
   setSearchTerm,
+  resetAdminUserState,
 } from '../../../store/slices/adminUser.slice';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -24,12 +19,20 @@ import { ActionIcon, Group, Text, Tooltip } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 
 const inviteUserSchema = z.object({
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  emails: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, 'Email is required')
+        .email('Invalid email address')
+    )
+    .min(1, 'At least one email is required'),
 });
 
 type InviteUserFormData = z.infer<typeof inviteUserSchema>;
 
-const useDashboard = () => {
+const useUsers = () => {
   const [inviteUserModalOpen, setInviteUserModalOpen] = useState(false);
   const [userBlockModalOpen, setUserBlockModalOpen] = useState(false);
   const [itemToBlock, setItemToBlock] = useState<UserType | null>(null);
@@ -39,13 +42,14 @@ const useDashboard = () => {
   const { loading, pagination, users, searchTerm } = useAppSelector(
     state => state.adminUser
   );
+  const [limit, setLimit] = useState(pagination?.page_limit || 10);
   const dispatch = useAppDispatch();
 
   const inviteUserMethods = useForm<InviteUserFormData>({
     resolver: zodResolver(inviteUserSchema),
     mode: 'onChange',
     defaultValues: {
-      email: '',
+      emails: [],
     },
   });
 
@@ -58,20 +62,18 @@ const useDashboard = () => {
     setLocalSearchTerm(value);
   };
 
-  const getUsers = useCallback(async () => {
-    await dispatch(
-      fetchUsers({
-        limit: pagination?.page_limit || 20,
-        page: pagination?.page_no || 1,
-        searchTerm: debouncedSearchTerm || '',
-      })
-    );
-  }, [
-    dispatch,
-    pagination?.page_limit,
-    pagination?.page_no,
-    debouncedSearchTerm,
-  ]);
+  const getUsers = useCallback(
+    async (pageNo?: number) => {
+      await dispatch(
+        fetchUsers({
+          limit,
+          page: pageNo ? pageNo : pagination?.page_no || 1,
+          searchTerm: debouncedSearchTerm || '',
+        })
+      );
+    },
+    [dispatch, limit, pagination?.page_no, debouncedSearchTerm]
+  );
 
   const [onInitialize] = useAsyncOperation(getUsers);
 
@@ -80,6 +82,9 @@ const useDashboard = () => {
       onInitialize({});
       initializedRef.current = true;
     }
+    return () => {
+      dispatch(resetAdminUserState());
+    };
   }, []);
 
   useEffect(() => {
@@ -89,60 +94,50 @@ const useDashboard = () => {
     }
 
     dispatch(setSearchTerm(debouncedSearchTerm));
-    getUsers();
+    getUsers(1);
   }, [debouncedSearchTerm]);
 
-  const scrollBoxRef = useRef<HTMLDivElement>(null);
-
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    lastScrollTop.current = e.currentTarget.scrollTop;
-    const target = e.currentTarget;
-    if (
-      target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
-      pagination &&
-      pagination.page_no < pagination.total_pages &&
-      !loading
-    ) {
-      loadMoreFiles();
-    }
-  };
-
-  useEffect(() => {
-    if (scrollBoxRef.current && lastScrollTop.current > 0) {
-      setTimeout(() => {
-        scrollBoxRef.current!.scrollTop = lastScrollTop.current;
-      }, 0);
-    }
-  }, [users.length]);
-
-  const loadMoreFiles = useCallback(async () => {
-    if (pagination && pagination.page_no < pagination.total_pages && !loading) {
-      await dispatch(
+  const handleLimitChange = useCallback(
+    (newLimit: number) => {
+      setLimit(newLimit);
+      dispatch(
         fetchUsers({
-          page: pagination.page_no + 1,
-          limit: pagination.page_limit || 20,
+          limit: newLimit,
+          page: 1,
           searchTerm: debouncedSearchTerm || '',
         })
       );
-    }
-  }, [pagination, loading, dispatch]);
+    },
+    [dispatch, debouncedSearchTerm]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      dispatch(
+        fetchUsers({
+          limit,
+          page,
+          searchTerm: debouncedSearchTerm || '',
+        })
+      );
+    },
+    [dispatch, limit, debouncedSearchTerm]
+  );
 
   // Invite User
   const [inviteUserFn, inviteUserLoading] = useAsyncOperation(
-    async (email: string) => {
+    async (emails: string[]) => {
       try {
         const res = await dispatch(
           inviteUser({
-            email,
+            emails,
           })
         );
         if (res?.payload?.success) {
           reset();
           await dispatch(
             fetchUsers({
-              limit: pagination?.page_limit || 20,
+              limit,
               page: pagination?.page_no || 1,
               searchTerm: debouncedSearchTerm || '',
             })
@@ -168,7 +163,7 @@ const useDashboard = () => {
   );
 
   const handleInviteUser = inviteUserMethods.handleSubmit(data => {
-    inviteUserFn(data.email);
+    inviteUserFn(data.emails);
   });
 
   // User Block / Unblock
@@ -183,7 +178,7 @@ const useDashboard = () => {
       if (res.payload?.success) {
         await dispatch(
           fetchUsers({
-            limit: pagination?.page_limit || 20,
+            limit,
             page: pagination?.page_no || 1,
             searchTerm: debouncedSearchTerm || '',
           })
@@ -235,9 +230,37 @@ const useDashboard = () => {
   const columns = useMemo(
     () => [
       {
-        key: 'name',
-        label: 'Name',
-        width: '30%',
+        accessor: 'name',
+        title: 'Name',
+        // width: '20%',
+        render: (row: UserType) => (
+          <Group
+            gap={8}
+            wrap="nowrap"
+            // maw={'100%'}
+            // style={{ overflow: 'hidden' }}
+          >
+            {row?.first_name && row?.last_name ? (
+              <Tooltip label={row.first_name + ' ' + row.last_name} fz={'xs'}>
+                <Text
+                  fw={600}
+                  fz={'sm'}
+                  truncate
+                  // style={{ maxWidth: 'calc(60%)' }}
+                >
+                  {row.first_name + ' ' + row.last_name}
+                </Text>
+              </Tooltip>
+            ) : (
+              '-'
+            )}
+          </Group>
+        ),
+      },
+      {
+        accessor: 'email',
+        title: 'Email',
+        // width: '20%',
         render: (row: UserType) => (
           <Group
             gap={8}
@@ -245,35 +268,18 @@ const useDashboard = () => {
             maw={'100%'}
             style={{ overflow: 'hidden' }}
           >
-            <Tooltip label={row.first_name + ' ' + row.last_name} fz={'xs'}>
-              <Text
-                fw={600}
-                fz={'sm'}
-                truncate
-                style={{ maxWidth: 'calc(100% - 40px)' }}
-              >
-                {row.first_name + ' ' + row.last_name}
+            <Tooltip label={row.email} fz={'xs'}>
+              <Text size="sm" truncate style={{ maxWidth: 'calc(80%)' }}>
+                {row.email}
               </Text>
             </Tooltip>
           </Group>
         ),
       },
       {
-        key: 'email',
-        label: 'Email',
-        width: '30%',
-        render: (row: UserType) => (
-          <Group gap={8} wrap="nowrap" style={{ maxWidth: '200px' }}>
-            <Text size="sm" truncate>
-              {row.email}
-            </Text>
-          </Group>
-        ),
-      },
-      {
-        key: 'lastModified',
-        label: 'Last Modified',
-        width: '20%',
+        accessor: 'lastModified',
+        title: 'Last Modified',
+        // width: '20%',
         render: (row: UserType) => (
           <Text size="sm">
             {row.updatedAt ? formatDate(row.updatedAt) : '-'}
@@ -281,16 +287,46 @@ const useDashboard = () => {
         ),
       },
       {
-        key: 'actions',
-        label: 'Block / Unblock',
-        width: '10%',
+        accessor: 'lastLogin',
+        title: 'Last Login',
+        render: (row: UserType) => (
+          <Text size="sm">
+            {row.last_login ? formatDate(row.last_login) : '-'}
+          </Text>
+        ),
+      },
+      {
+        accessor: 'verified',
+        title: 'Verified',
+        render: (row: UserType) => (
+          // <Text size="sm">{row.verified ? 'Yes' : 'No'}</Text>
+          <Text size="sm">
+            {row.verified ? (
+              <Tooltip label="Verified" fz={'xs'}>
+                <ICONS.IconUserCheck color="green" />
+              </Tooltip>
+            ) : (
+              <Tooltip label="Not Verified" fz={'xs'}>
+                <ICONS.IconUserCancel color="red" />
+              </Tooltip>
+            )}
+          </Text>
+        ),
+      },
+      {
+        accessor: 'actions',
+        title: 'Block / Unblock',
+        // width: '10%',
         render: (row: UserType) => (
           <>
             <Tooltip label={row.is_blocked ? 'Unblock' : 'Block'}>
               <ActionIcon
                 variant="subtle"
                 color="gray"
-                onClick={() => openUserBlockModal(row)}
+                onClick={e => {
+                  e.stopPropagation();
+                  openUserBlockModal(row);
+                }}
               >
                 {row.is_blocked ? (
                   <ICONS.IconLockCheck size={20} color={'green'} />
@@ -315,8 +351,6 @@ const useDashboard = () => {
     inviteUserMethods,
     userBlockModalOpen,
     itemToBlock,
-    handleScroll,
-    scrollBoxRef,
     searchTerm: localSearchTerm,
     handleSearchChange,
     columns,
@@ -325,7 +359,12 @@ const useDashboard = () => {
     closeUserBlockModal,
     handleBlockConfirm,
     blockUserLoading,
+    handlePageChange,
+    currentPage: pagination?.page_no || 1,
+    totalRecords: pagination?.total || 0,
+    limit,
+    handleLimitChange,
   };
 };
 
-export default useDashboard;
+export default useUsers;

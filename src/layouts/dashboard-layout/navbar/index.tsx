@@ -1,15 +1,46 @@
 import { NavLink as Link, useLocation } from 'react-router';
-import { Box, Group, NavLink, Progress, rem, Stack, Text } from '@mantine/core';
+import {
+  Autocomplete,
+  Box,
+  Group,
+  Loader,
+  Menu,
+  NavLink,
+  Progress,
+  rem,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import Icon from '../../../assets/icons/icon';
 import { useMemo } from 'react';
 import useSidebar from './use-sidebar';
-import { Button, Form, Input, Modal, Tooltip } from '../../../components';
+import { Button, Dropzone, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
 import { LoaderOverlay } from '../../../components/loader';
 import { formatBytes, removeLocalStorage } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
+import ConnectAccountDescription from '../../../pages/dashboard/ConnectAccountDescription';
+import ShowConfetti from '../../../components/confetti';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import SortableCloudAccountItem from './SortableCloudAccountItem';
+import useDashboard from '../../../pages/dashboard/use-dashboard';
+import { Controller } from 'react-hook-form';
+import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -19,41 +50,6 @@ const DASHBOARD_NAV_ITEMS = [
     url: PRIVATE_ROUTES.DASHBOARD.url,
     roles: PRIVATE_ROUTES.DASHBOARD.roles,
   },
-  // {
-  //   id: 'favorites',
-  //   label: 'Favorites',
-  //   icon: ICONS.IconStar,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'recent',
-  //   label: 'Recent',
-  //   icon: ICONS.IconClock,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'shared',
-  //   label: 'Shared',
-  //   icon: ICONS.IconUsersGroup,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'file-requests',
-  //   label: 'File requests',
-  //   icon: ICONS.IconFile,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
-  // {
-  //   id: 'trash',
-  //   label: 'Trash',
-  //   icon: ICONS.IconTrash,
-  //   url: PRIVATE_ROUTES.DASHBOARD.url,
-  //   roles: PRIVATE_ROUTES.DASHBOARD.roles,
-  // },
 ] as const;
 
 type NavItem = (typeof DASHBOARD_NAV_ITEMS)[number];
@@ -85,11 +81,45 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     removeAccessModalOpen,
     hoveredAccountId,
     setHoveredAccountId,
-    cloudAccountsWithStorage,
     checkStorageDetails,
     user,
+    height,
+    width,
+    showConfetti,
+    setShowConfetti,
+    sortedCloudAccounts,
+    handleDragEnd,
+    updateSequenceLoading,
+    // closeNewModal,
+    // isNewModalOpen,
+    // openNewModal,
+    menuOpened,
+    setMenuOpened,
   } = useSidebar();
 
+  const {
+    openModal,
+    // handleSyncStorage,
+    modalOpen,
+    closeModal,
+    modalType,
+    folderMethods,
+    handleCreateFolder,
+    isSFDEnabled,
+    accountOptionsForSFD,
+    createFolderLoading,
+    handleFileUpload,
+    uploadMethods,
+    setUploadedFiles,
+    uploadedFiles,
+    uploadFilesLoading,
+    getFileIcon,
+    showUploadProgress,
+    uploadProgress,
+    uploadingFiles,
+    handleCancelUpload,
+    handleCloseUploadProgress,
+  } = useDashboard();
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
     [location.pathname]
@@ -97,12 +127,73 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
 
   const accessibleNavItems = DASHBOARD_NAV_ITEMS;
 
+  // Configure sensors with more restrictive activation constraints
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px of movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   return (
     <Box display={'flex'} h={'100%'} style={{ flexDirection: 'column' }}>
       <LoaderOverlay visible={loading} opacity={1} />
       {user?.user?.role !== ROLES.ADMIN ? (
         <>
-          <Box style={{ flexGrow: 1 }}>
+          {sortedCloudAccounts?.length ? (
+            <Menu
+              position="bottom-start"
+              opened={menuOpened}
+              onClose={() => setMenuOpened(false)}
+              width={240}
+              shadow="lg"
+            >
+              <Menu.Target>
+                <Button
+                  leftSection={<ICONS.IconPlus size={16} />}
+                  onClick={() => setMenuOpened(true)}
+                  style={{
+                    backgroundColor: '#fff',
+                    color: '#5f6368',
+                    border: '1px solid #dadce0',
+                    boxShadow:
+                      '0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149)',
+                    fontWeight: 500,
+                    marginRight: '1rem',
+                  }}
+                  size="sm"
+                  w={'fit-content'}
+                >
+                  New
+                </Button>
+              </Menu.Target>
+
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<ICONS.IconFolderPlus size={16} />}
+                  onClick={() => openModal('folder')}
+                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                >
+                  Create folder
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<ICONS.IconUpload size={16} />}
+                  onClick={() => openModal('files')}
+                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                >
+                  Upload files
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          ) : null}
+          <Box
+            style={{ flexGrow: 1 }}
+            mt={sortedCloudAccounts?.length ? 10 : 0}
+          >
             {accessibleNavItems.map(
               ({ id, label, icon, url, children }: AccessibleNavItemProps) => {
                 const isNested = Boolean(children?.length);
@@ -146,6 +237,42 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                 );
               }
             )}
+            {(() => {
+              const url = PRIVATE_ROUTES.RECENT_FILES.url;
+              const isActive = location?.pathname === url;
+
+              if (!sortedCloudAccounts?.length) return null;
+
+              return (
+                <NavLink
+                  component={Link}
+                  label="Recent Files"
+                  leftSection={
+                    <Icon component={ICONS.IconClock} size={18} stroke={1.25} />
+                  }
+                  active={isActive}
+                  to={url}
+                  style={{
+                    borderRadius: 'var(--mantine-radius-default)',
+                    ...(isActive && {
+                      fontWeight: 400,
+                    }),
+                  }}
+                  onClick={() => {
+                    mobileDrawerHandler?.close();
+                  }}
+                  w={{ base: '100%', sm: 'auto' }}
+                  px={{ sm: 8 }}
+                  py={{ sm: 6 }}
+                  styles={{
+                    section: {
+                      marginInlineEnd: 'var(--mantine-spacing-xs)',
+                      marginBottom: rem(-1),
+                    },
+                  }}
+                />
+              );
+            })()}
             <Stack
               mt={20}
               style={{ flexDirection: 'row' }}
@@ -161,7 +288,74 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                 style={{ cursor: 'pointer' }}
               />
             </Stack>
-            {cloudAccountsWithStorage?.length
+
+            {/* Drag and Drop Context for Cloud Accounts - Constrained to this container */}
+            {sortedCloudAccounts?.length ? (
+              <Box
+                style={{
+                  position: 'relative',
+                  // Add container styles to limit drag area
+                  // overflow: 'hidden',
+                }}
+              >
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  // Add modifiers to constrain dragging
+                  modifiers={[
+                    // Custom modifier to restrict drag area
+                    ({ transform, containerNodeRect, draggingNodeRect }) => {
+                      if (!containerNodeRect || !draggingNodeRect)
+                        return transform;
+
+                      // Constrain horizontal movement
+                      const constrainedX = Math.max(
+                        containerNodeRect.left - draggingNodeRect.left,
+                        Math.min(
+                          containerNodeRect.right - draggingNodeRect.right,
+                          transform.x
+                        )
+                      );
+
+                      return {
+                        ...transform,
+                        x: constrainedX,
+                      };
+                    },
+                  ]}
+                >
+                  <SortableContext
+                    items={sortedCloudAccounts.map(account => account.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {updateSequenceLoading ? (
+                      <Group align="center" justify="center" mt={10} mr={10}>
+                        <Loader />
+                      </Group>
+                    ) : (
+                      sortedCloudAccounts?.map(account => {
+                        const isActive = isActiveRoute(account.url);
+
+                        return (
+                          <SortableCloudAccountItem
+                            key={account.id}
+                            account={account}
+                            isActive={isActive}
+                            hoveredAccountId={hoveredAccountId}
+                            setHoveredAccountId={setHoveredAccountId}
+                            openRemoveAccessModal={openRemoveAccessModal}
+                            mobileDrawerHandler={mobileDrawerHandler}
+                            sortedCloudAccounts={sortedCloudAccounts}
+                          />
+                        );
+                      })
+                    )}
+                  </SortableContext>
+                </DndContext>
+              </Box>
+            ) : null}
+            {/* {cloudAccountsWithStorage?.length
               ? cloudAccountsWithStorage?.map(
                   ({ id, url, icon, title, storageInfo }) => {
                     const isActive = isActiveRoute(url);
@@ -248,9 +442,8 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                             )}
                           </Stack>
                         </Group>
-                        {storageInfo &&
-                        storageInfo.total &&
-                        storageInfo.used ? (
+                        {storageInfo && storageInfo.total ? (
+                          // && storageInfo.used
                           <Box px={8} mt={4}>
                             <Progress
                               value={
@@ -279,7 +472,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                     );
                   }
                 )
-              : null}
+              : null} */}
 
             <Stack
               mt={20}
@@ -297,41 +490,47 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
           </Box>
 
           {checkStorageDetails?.storage_details &&
-            checkStorageDetails?.storage_details?.total &&
-            checkStorageDetails?.storage_details?.used && (
-              <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
-                <Text size="sm" fw={500} mb={8}>
-                  Storage Usage
-                </Text>
-                <Progress
-                  value={
-                    (Number(checkStorageDetails?.storage_details?.used) /
-                      Number(checkStorageDetails?.storage_details?.total)) *
-                    100
-                  }
-                  size="xl"
-                  radius="xl"
-                  styles={theme => ({
-                    root: {
-                      backgroundColor: theme.colors.gray[2],
-                    },
-                    bar: {
-                      backgroundColor: theme.colors.blue[6],
-                    },
-                  })}
-                />
-                <Text size="xs" mt={8} c="dimmed">
-                  {formatBytes(
-                    Number(checkStorageDetails?.storage_details?.used)
-                  )}{' '}
-                  of{' '}
-                  {formatBytes(
-                    Number(checkStorageDetails?.storage_details?.total)
-                  )}{' '}
-                  used
-                </Text>
-              </Box>
-            )}
+          checkStorageDetails?.storage_details?.total ? (
+            // && checkStorageDetails?.storage_details?.used
+            <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
+              <Text size="sm" fw={500} mb={8}>
+                Storage Usage
+              </Text>
+              <Progress
+                value={
+                  (Number(checkStorageDetails?.storage_details?.used) /
+                    Number(checkStorageDetails?.storage_details?.total)) *
+                  100
+                }
+                size="xl"
+                radius="xl"
+                styles={theme => ({
+                  root: {
+                    backgroundColor: theme.colors.gray[2],
+                  },
+                  bar: {
+                    backgroundColor: theme.colors.blue[6],
+                  },
+                })}
+              />
+              <Text size="xs" mt={8} c="dimmed">
+                {formatBytes(
+                  Number(checkStorageDetails?.storage_details?.used)
+                )}{' '}
+                of{' '}
+                {formatBytes(
+                  Number(checkStorageDetails?.storage_details?.total)
+                )}{' '}
+                used
+              </Text>
+            </Box>
+          ) : null}
+
+          {showConfetti && (
+            <ShowConfetti
+              {...{ height, setShowConfetti, showConfetti, width }}
+            />
+          )}
         </>
       ) : (
         <>
@@ -345,6 +544,41 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                 label="Users"
                 leftSection={
                   <Icon component={ICONS.IconUser} size={18} stroke={1.25} />
+                }
+                active={isActive}
+                to={url}
+                style={{
+                  borderRadius: 'var(--mantine-radius-default)',
+                  ...(isActive && {
+                    fontWeight: 400,
+                  }),
+                }}
+                onClick={() => {
+                  mobileDrawerHandler?.close();
+                }}
+                w={{ base: '100%', sm: 'auto' }}
+                px={{ sm: 8 }}
+                py={{ sm: 6 }}
+                styles={{
+                  section: {
+                    marginInlineEnd: 'var(--mantine-spacing-xs)',
+                    marginBottom: rem(-1),
+                  },
+                }}
+              />
+            );
+          })()}
+
+          {(() => {
+            const url = PRIVATE_ROUTES.AUDIT_LOGS.url;
+            const isActive = location?.pathname === url;
+
+            return (
+              <NavLink
+                component={Link}
+                label="Audit Logs"
+                leftSection={
+                  <Icon component={ICONS.IconLogs} size={18} stroke={1.25} />
                 }
                 active={isActive}
                 to={url}
@@ -425,6 +659,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
       >
         <Form onSubmit={handleConnectAccount} methods={methods}>
           <Stack>
+            <ConnectAccountDescription />
             {connectAccountFormData?.map(
               ({ id, name, placeholder, type, label, error, isRequired }) => (
                 <Input
@@ -496,6 +731,150 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
           </Button>
         </Group>
       </Modal>
+
+      {/* File / Folder Action Modal */}
+      {/* <Modal opened={isNewModalOpen} onClose={closeNewModal} title="Create New">
+        <ActionButtons
+          openModal={openModal}
+          handleSyncStorage={handleSyncStorage}
+          onActionComplete={closeNewModal}
+        />
+      </Modal> */}
+
+      {/* Create folder / upload file modal */}
+      <Modal
+        opened={modalOpen}
+        onClose={closeModal}
+        title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
+      >
+        {modalType === 'folder' ? (
+          <Form methods={folderMethods} onSubmit={handleCreateFolder}>
+            <Stack gap="md">
+              <TextInput
+                placeholder="Folder name"
+                label="Folder Name"
+                {...folderMethods.register('folderName')}
+                error={folderMethods.formState.errors.folderName?.message}
+                withAsterisk
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={folderMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          folderMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                type="submit"
+                loading={createFolderLoading}
+                disabled={
+                  !folderMethods.formState.isValid || createFolderLoading
+                }
+                maw={150}
+              >
+                Create Folder
+              </Button>
+            </Stack>
+          </Form>
+        ) : (
+          <Form onSubmit={handleFileUpload} methods={uploadMethods}>
+            <Stack gap={'md'}>
+              <Dropzone
+                // onFilesSelected={setUploadedFiles}
+                onFilesSelected={files => {
+                  setUploadedFiles(files);
+                  uploadMethods.setValue('files', files);
+                }}
+                // maxSize={5 * 1024 ** 2}
+                multiple={true}
+                mb="md"
+                getFileIcon={getFileIcon}
+                files={uploadedFiles}
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={uploadMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          uploadMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                // onClick={handleFileUpload}
+                type="submit"
+                loading={uploadFilesLoading}
+                disabled={
+                  uploadedFiles.length === 0 || uploadFilesLoading
+                  // ||
+                  // (!isSFDEnabled && !uploadMethods.formState.isValid)
+                }
+              >
+                Upload Files
+              </Button>
+            </Stack>
+          </Form>
+        )}
+      </Modal>
+
+      {showUploadProgress ? (
+        <UploadProgress
+          uploadProgress={uploadProgress}
+          uploadingFiles={uploadingFiles}
+          onCancelUpload={handleCancelUpload}
+          onClose={handleCloseUploadProgress}
+        />
+      ) : null}
     </Box>
   );
 };

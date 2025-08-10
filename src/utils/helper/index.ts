@@ -209,6 +209,61 @@ export const formatDate = (
   return date.toLocaleDateString('en-US', options);
 };
 
+export const formatTime = (seconds: number): string => {
+  if (!seconds || !isFinite(seconds)) return '--';
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${secs}s`;
+  } else {
+    return `${secs}s`;
+  }
+};
+
+export const formatDateAndTime = (
+  dateString: string,
+  includeTime: boolean = true
+): string => {
+  const date = new Date(dateString);
+
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const month = months[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+
+  let formattedDate = `${month} ${day}, ${year}`;
+
+  if (includeTime) {
+    let hours = date.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+    formattedDate += ` ${hours}:${minutes} ${ampm}`;
+  }
+
+  return formattedDate;
+};
+
 export const getMimeTypeFromExtension = (extension?: string) => {
   if (!extension) {
     return undefined;
@@ -260,4 +315,42 @@ export const formatBytes = (bytes: number) => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+export const truncateBreadcrumbName = (
+  name: string,
+  maxLength: number = 20
+) => {
+  if (name.length <= maxLength) {
+    return name;
+  }
+  return name.slice(0, maxLength - 3) + '...';
+};
+
+export const downloadFiles = (data: any, res: any) => {
+  const blob = new Blob([data]);
+  const contentDisposition = res?.payload?.headers?.['content-disposition'];
+  const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+  const filename = match?.[1] || `download-${Date.now()}.zip`;
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+export const downloadFilesEnhanced = async (
+  selectedIds: string[],
+  downloadFile: (ids: string[]) => Promise<void>
+) => {
+  try {
+    await downloadFile(selectedIds);
+  } catch (error: any) {
+    console.error('Download failed:', error);
+    throw error;
+  }
 };

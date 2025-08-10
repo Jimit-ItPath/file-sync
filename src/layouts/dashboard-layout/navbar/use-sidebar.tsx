@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '../../../store';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import useAsyncOperation from '../../../hooks/use-async-operation';
@@ -10,18 +10,30 @@ import {
   fetchStorageDetails,
   getConnectedAccount,
   removeAccountAccess,
+  updateSequence,
 } from '../../../store/slices/auth.slice';
-import { decodeToken } from '../../../utils/helper';
+import {
+  decodeToken,
+  getLocalStorage,
+  setLocalStorage,
+} from '../../../utils/helper';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import { generatePath, useNavigate } from 'react-router';
-import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
+import {
+  fetchRecentFiles,
+  initializeCloudStorageFromStorage,
+} from '../../../store/slices/cloudStorage.slice';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 import { Image } from '@mantine/core';
+import { useViewportSize } from '@mantine/hooks';
+import { type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
+import { ROLES } from '../../../utils/constants';
 
 const connectAccountSchema = z.object({
-  accountName: z.string().min(1, 'Account name is required'),
+  accountName: z.string().trim().min(1, 'Account name is required'),
   accountType: z.enum(['google_drive', 'dropbox', 'onedrive'], {
     errorMap: () => ({ message: 'Please select an account type' }),
   }),
@@ -32,40 +44,16 @@ type ConnectAccountFormData = z.infer<typeof connectAccountSchema>;
 const accountTypeConfig = {
   google_drive: {
     url: PRIVATE_ROUTES.GOOGLE_DRIVE.url,
-    // icon: (
-    //   <ICONS.IconBrandGoogle
-    //     size={18}
-    //     color="#ef4444"
-    //     stroke={1.25}
-    //     fill="#ef4444"
-    //   />
-    // ),
     icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={16} h={16} />,
     title: 'Google Drive',
   },
   dropbox: {
     url: PRIVATE_ROUTES.DROPBOX.url,
-    // icon: (
-    //   <ICONS.IconDroplets
-    //     size={18}
-    //     color="#007ee5"
-    //     stroke={1.25}
-    //     fill="#007ee5"
-    //   />
-    // ),
-    icon: <Image src={DropboxIcon} alt="Dropbox" w={16} h={16} />,
+    icon: <Image src={DropboxIcon} alt="Dropbox" w={18} />,
     title: 'Dropbox',
   },
   onedrive: {
     url: PRIVATE_ROUTES.ONEDRIVE.url,
-    // icon: (
-    //   <ICONS.IconBrandOnedrive
-    //     size={18}
-    //     color="#0078d4"
-    //     stroke={1.25}
-    //     fill="#0078d4"
-    //   />
-    // ),
     icon: <Image src={OneDriveIcon} alt="OneDrive" w={16} h={16} />,
     title: 'OneDrive',
   },
@@ -82,6 +70,18 @@ const useSidebar = () => {
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
     null
   );
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { width, height } = useViewportSize();
+  const [localSortedAccounts, setLocalSortedAccounts] = useState<any[] | null>(
+    null
+  );
+  const hasMountedOnce = useRef(false);
+  const [menuOpened, setMenuOpened] = useState(false);
+
+  // Add ref to track if drag operation is in progress
+  const isDragInProgress = useRef(false);
+  const pendingSequenceUpdate = useRef<any[]>([]);
 
   const methods = useForm<ConnectAccountFormData>({
     resolver: zodResolver(connectAccountSchema),
@@ -97,6 +97,10 @@ const useSidebar = () => {
   } = methods;
 
   const getAccounts = useCallback(async () => {
+    // Don't fetch accounts if drag is in progress
+    // if (isDragInProgress.current) {
+    //   return;
+    // }
     await dispatch(getConnectedAccount());
   }, [dispatch]);
 
@@ -109,9 +113,125 @@ const useSidebar = () => {
   const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   useEffect(() => {
-    onInitialize({});
-    fetchStorageData({});
-  }, []);
+    if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
+      onInitialize({});
+      fetchStorageData({});
+      hasMountedOnce.current = true;
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const isPostConnect = getLocalStorage('post_connect_redirect') === true;
+
+    if (isPostConnect && connectedAccounts?.length === 1) {
+      setShowConfetti(true);
+      localStorage.removeItem('post_connect_redirect');
+    }
+  }, [connectedAccounts]);
+
+  const cloudAccountsWithStorage = useMemo(() => {
+    return (
+      connectedAccounts?.map(account => {
+        const storageInfo = checkStorageDetails?.result?.find(
+          detail => detail.id === account.id.toString()
+        );
+
+        const config = accountTypeConfig[account.account_type];
+        return {
+          id: account.id,
+          url: generatePath(config.url, { id: account.id }),
+          icon: config.icon,
+          title: account.account_name || config.title,
+          storageInfo: storageInfo?.storage_details,
+          sequence_number: account.sequence_number || 0,
+        };
+      }) || []
+    );
+  }, [connectedAccounts, checkStorageDetails?.result]);
+
+  const sortedCloudAccounts = useMemo(() => {
+    return [...cloudAccountsWithStorage].sort((a, b) => {
+      if (a.sequence_number !== b.sequence_number) {
+        return a.sequence_number - b.sequence_number;
+      }
+      return a.id - b.id;
+    });
+  }, [cloudAccountsWithStorage]);
+
+  const displayedAccounts = localSortedAccounts || sortedCloudAccounts;
+
+  const [updateAccountSequence, updateSequenceLoading] = useAsyncOperation(
+    async (data: { id: number; sequence_number: number }[]) => {
+      try {
+        const res = await dispatch(updateSequence(data)).unwrap();
+        if (res?.success) {
+          notifications.show({
+            message: res?.message || 'Account order updated successfully',
+            color: 'green',
+          });
+
+          // Set a timeout before allowing account refresh to prevent UI glitch
+          // setTimeout(() => {
+          // isDragInProgress.current = false;
+          onInitialize({});
+          // }, 500);
+        } else {
+          // Revert optimistic update on failure
+          isDragInProgress.current = false;
+          setLocalSortedAccounts(pendingSequenceUpdate.current);
+          notifications.show({
+            message:
+              res?.message ||
+              res?.data?.message ||
+              'Failed to update account order',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        // Revert optimistic update on error
+        isDragInProgress.current = false;
+        setLocalSortedAccounts(pendingSequenceUpdate.current);
+        notifications.show({
+          message: error || 'Failed to update account order',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  // Handle drag end event with improved state management
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = sortedCloudAccounts.findIndex(
+        account => account.id === active.id
+      );
+      const newIndex = sortedCloudAccounts.findIndex(
+        account => account.id === over.id
+      );
+
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const newOrder = arrayMove(sortedCloudAccounts, oldIndex, newIndex);
+      setLocalSortedAccounts(newOrder);
+
+      const updateData = newOrder.map((account, index) => ({
+        id: account.id,
+        sequence_number: index + 1,
+      }));
+
+      try {
+        await updateAccountSequence(updateData);
+        setLocalSortedAccounts(null);
+      } catch {
+        setLocalSortedAccounts(null);
+      }
+    },
+    [sortedCloudAccounts, updateAccountSequence]
+  );
 
   const [connectAccount, connectAccountLoading] = useAsyncOperation(
     async (data: ConnectAccountFormData) => {
@@ -126,13 +246,16 @@ const useSidebar = () => {
           })
         ).unwrap();
         if (res?.success || res?.data?.redirect_url) {
+          if (!connectedAccounts?.length) {
+            setLocalStorage('post_connect_redirect', true);
+          }
           reset();
           setIsConnectModalOpen(false);
           window.location.href = res?.data?.redirect_url;
         }
       } catch (error: any) {
         notifications.show({
-          message: error || 'Failed to connect account123',
+          message: error || 'Failed to connect account',
           color: 'red',
         });
       }
@@ -175,6 +298,12 @@ const useSidebar = () => {
 
   const [getFiles] = useAsyncOperation(getCloudStorageFiles);
 
+  const getRecentFiles = useCallback(async () => {
+    await dispatch(fetchRecentFiles({}));
+  }, [dispatch]);
+
+  const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
       const res = await dispatch(
@@ -185,9 +314,10 @@ const useSidebar = () => {
           message: res?.message || 'Access removed successfully',
           color: 'green',
         });
-        await onInitialize({});
-        await getFiles({});
-        await fetchStorageData({});
+        onInitialize({});
+        onGetRecentFiles({});
+        getFiles({});
+        fetchStorageData({});
         navigate(PRIVATE_ROUTES.DASHBOARD.path);
         closeRemoveAccessModal();
       }
@@ -214,19 +344,8 @@ const useSidebar = () => {
     [errors]
   );
 
-  const cloudAccountsWithStorage = connectedAccounts?.map(account => {
-    const storageInfo = checkStorageDetails?.result?.find(
-      detail => detail.id === account.id.toString()
-    );
-    const config = accountTypeConfig[account.account_type];
-    return {
-      id: account.id,
-      url: generatePath(config.url, { id: account.id }),
-      icon: config.icon,
-      title: account.account_name || config.title,
-      storageInfo: storageInfo?.storage_details,
-    };
-  });
+  const openNewModal = () => setIsNewModalOpen(true);
+  const closeNewModal = () => setIsNewModalOpen(false);
 
   return {
     methods,
@@ -246,8 +365,20 @@ const useSidebar = () => {
     setHoveredAccountId,
     hoveredAccountId,
     cloudAccountsWithStorage,
+    sortedCloudAccounts: displayedAccounts,
+    handleDragEnd,
+    updateSequenceLoading,
     checkStorageDetails,
     user,
+    isNewModalOpen,
+    openNewModal,
+    closeNewModal,
+    showConfetti,
+    width,
+    height,
+    setShowConfetti,
+    menuOpened,
+    setMenuOpened,
   };
 };
 

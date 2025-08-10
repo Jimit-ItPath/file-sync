@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Group,
   Text,
@@ -40,12 +46,15 @@ type FileGridProps = {
   isMoveMode: boolean;
   filesToMove: string[];
   parentId?: string | null;
+  displayDownloadIcon?: boolean;
+  displayShareIcon?: boolean;
+  displayMoveIcon?: boolean;
+  displayPreviewIcon?: boolean;
 };
 
-const MENU_ITEMS = [
-  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
-  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
-];
+const MENU_ITEMS: [
+  { id: string; label: string; icon: React.FC; color?: string },
+] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
 
 const FileGrid: React.FC<FileGridProps> = ({
   folders,
@@ -64,6 +73,10 @@ const FileGrid: React.FC<FileGridProps> = ({
   isMoveMode = false,
   filesToMove = [],
   parentId = null,
+  displayDownloadIcon = true,
+  displayShareIcon = true,
+  displayMoveIcon = true,
+  displayPreviewIcon = true,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +85,55 @@ const FileGrid: React.FC<FileGridProps> = ({
   const theme = useMantineTheme();
   const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
   const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+
+  const filteredMenuItems = useMemo(() => {
+    const menuItems = [...MENU_ITEMS];
+    if (displayDownloadIcon) {
+      menuItems.push({
+        id: 'download',
+        label: 'Download',
+        icon: ICONS.IconDownload,
+      });
+    }
+    if (displayPreviewIcon) {
+      menuItems.push({
+        id: 'preview',
+        label: 'Preview',
+        icon: ICONS.IconLiveView,
+      });
+    }
+    if (displayShareIcon) {
+      menuItems.push({
+        id: 'share',
+        label: 'Share',
+        icon: ICONS.IconShare,
+      });
+    }
+    if (displayMoveIcon) {
+      // menuItems.push({
+      //   id: 'move',
+      //   label: 'Move',
+      //   icon: ICONS.IconFolderShare,
+      // });
+      menuItems.push({
+        id: 'move',
+        label: 'Move',
+        icon: ICONS.IconFolderShare,
+      });
+    }
+    menuItems.push({
+      id: 'delete',
+      label: 'Delete',
+      icon: ICONS.IconTrash,
+      color: 'red',
+    });
+    return menuItems;
+  }, [
+    displayDownloadIcon,
+    displayShareIcon,
+    displayMoveIcon,
+    displayPreviewIcon,
+  ]);
 
   useEffect(() => {
     const updateColumnsCount = () => {
@@ -174,190 +236,199 @@ const FileGrid: React.FC<FileGridProps> = ({
       ref={stackRef}
       mt={10}
     >
-      {!folders?.length && !files?.length && (
-        <Card>
+      <Card>
+        {!folders?.length && !files?.length && (
           <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
             <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
               No files available. Please upload files to see them here.
             </Text>
           </Box>
-        </Card>
-      )}
-      {/* Folders */}
-      <Box
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-          gap: '20px',
-        }}
-      >
-        {folders?.map(folder => (
-          <Card
-            key={folder.id}
-            radius="md"
-            shadow="sm"
-            p="md"
+        )}
+        {/* Folders */}
+        {folders.length > 0 ? (
+          <Box
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#f6faff',
-              border: '1px solid #e5e7eb',
-              cursor: 'pointer',
-              ...(selectedIds.includes(folder.id) ||
-              filesToMove.includes(folder.id)
-                ? selectedCardStyle
-                : {}),
-              ...(isMoveMode &&
-              (filesToMove.includes(folder.id) || parentId === folder.id)
-                ? {
-                    opacity: 0.5,
-                    cursor: 'not-allowed',
-                  }
-                : {}),
-              userSelect: 'none',
-            }}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              if (
-                isMoveMode &&
-                (filesToMove.includes(folder.id) || parentId === folder.id)
-              )
-                return;
-              handleSelect(folder.id, e);
-            }}
-            onDoubleClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              if (filesToMove.includes(folder.id)) return;
-              handleRowDoubleClick(folder);
+              display: 'grid',
+              gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+              gap: '20px',
             }}
           >
-            <Group
-              gap={12}
-              align="center"
-              style={{ width: '100%', flexWrap: 'nowrap' }}
-            >
-              {folder?.icon(responsiveIconSize)}
-              <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
-                <Text
-                  fw={600}
-                  fz={responsiveFontSize}
-                  truncate
-                  miw={0}
-                  flex={1}
-                >
-                  {folder.name}
-                </Text>
-              </Tooltip>
-              <Menu
-                items={MENU_ITEMS}
-                onItemClick={actionId => handleMenuItemClick(actionId, folder)}
+            {folders?.map(folder => (
+              <Card
+                key={folder.id}
+                radius="md"
+                shadow="sm"
+                p="md"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: '#f6faff',
+                  border: '1px solid #e5e7eb',
+                  cursor: 'pointer',
+                  height: 64,
+                  transition: 'box-shadow 0.2s ease',
+                  ...(selectedIds.includes(folder.id) ||
+                  filesToMove.includes(folder.id)
+                    ? selectedCardStyle
+                    : {}),
+                  ...(isMoveMode &&
+                  (filesToMove.includes(folder.id) || parentId === folder.id)
+                    ? {
+                        opacity: 0.5,
+                        cursor: 'not-allowed',
+                      }
+                    : {}),
+                  userSelect: 'none',
+                }}
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (
+                    isMoveMode &&
+                    (filesToMove.includes(folder.id) || parentId === folder.id)
+                  )
+                    return;
+                  handleSelect(folder.id, e);
+                }}
+                onDoubleClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (filesToMove.includes(folder.id)) return;
+                  handleRowDoubleClick(folder);
+                }}
               >
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  style={{ flexShrink: 0 }}
+                <Group
+                  gap={12}
+                  align="center"
+                  style={{ width: '100%', flexWrap: 'nowrap' }}
                 >
-                  <ICONS.IconDotsVertical size={18} />
-                </ActionIcon>
-              </Menu>
-            </Group>
-          </Card>
-        ))}
-      </Box>
-
-      <Box
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-          gap: '20px',
-        }}
-      >
-        {files.map(file => (
-          <Card
-            key={file.id}
-            radius="md"
-            shadow="sm"
-            p="md"
-            style={{
-              // flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              background: '#f6faff',
-              border: '1px solid #e5e7eb',
-              height: FILE_CARD_HEIGHT,
-              ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
-              cursor: 'pointer',
-              transition: 'box-shadow 0.2s ease',
-              userSelect: 'none',
-              ...(isMoveMode
-                ? {
-                    opacity: 0.5,
-                    cursor: 'not-allowed',
-                  }
-                : {}),
-            }}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              // handleSelect(file.id, e);
-              if (!isMoveMode) {
-                handleSelect(file.id, e);
-              }
-            }}
-            onDoubleClick={(e: any) => {
-              e.stopPropagation();
-              if (!isMoveMode) {
-                handleRowDoubleClick(file);
-              }
-              // handleRowDoubleClick(file);
-            }}
-          >
-            <Group
-              justify="space-between"
-              align="center"
-              mb={8}
-              style={{ flexWrap: 'nowrap' }}
-            >
-              <Group gap={8} flex={1} miw={0} align="center">
-                {file.icon(responsiveIconSize)}
-                <Tooltip label={file.name} withArrow={false} fz={'xs'}>
-                  <Text
-                    fw={600}
-                    fz={responsiveFontSize}
-                    flex={1}
-                    truncate
-                    miw={0}
+                  {folder?.icon(responsiveIconSize)}
+                  <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
+                    <Text
+                      fw={600}
+                      fz={responsiveFontSize}
+                      truncate
+                      miw={0}
+                      flex={1}
+                    >
+                      {folder.name}
+                    </Text>
+                  </Tooltip>
+                  <Menu
+                    items={filteredMenuItems}
+                    onItemClick={actionId =>
+                      handleMenuItemClick(actionId, folder)
+                    }
                   >
-                    {file.name}
-                  </Text>
-                </Tooltip>
-              </Group>
-              <Menu
-                items={MENU_ITEMS}
-                onItemClick={actionId => handleMenuItemClick(actionId, file)}
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <ICONS.IconDotsVertical size={18} />
+                    </ActionIcon>
+                  </Menu>
+                </Group>
+              </Card>
+            ))}
+          </Box>
+        ) : null}
+
+        {files.length > 0 ? (
+          <Box
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+              gap: '20px',
+            }}
+            mt={20}
+          >
+            {files.map(file => (
+              <Card
+                key={file.id}
+                radius="md"
+                shadow="sm"
+                p="md"
+                style={{
+                  // flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  background: '#f6faff',
+                  border: '1px solid #e5e7eb',
+                  height: FILE_CARD_HEIGHT,
+                  ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
+                  cursor: 'pointer',
+                  transition: 'box-shadow 0.2s ease',
+                  userSelect: 'none',
+                  ...(isMoveMode
+                    ? {
+                        opacity: 0.5,
+                        cursor: 'not-allowed',
+                      }
+                    : {}),
+                }}
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  // handleSelect(file.id, e);
+                  if (!isMoveMode) {
+                    handleSelect(file.id, e);
+                  }
+                }}
+                onDoubleClick={(e: any) => {
+                  e.stopPropagation();
+                  if (!isMoveMode) {
+                    handleRowDoubleClick(file);
+                  }
+                  // handleRowDoubleClick(file);
+                }}
               >
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  style={{ flexShrink: 0 }}
+                <Group
+                  justify="space-between"
+                  align="center"
+                  mb={8}
+                  style={{ flexWrap: 'nowrap' }}
                 >
-                  <ICONS.IconDotsVertical size={18} />
-                </ActionIcon>
-              </Menu>
-            </Group>
-            <Box
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 8,
-                marginTop: 8,
-              }}
-            >
-              {file.icon(isXs ? 50 : 60)}
-              {/* {file.preview ? (
+                  <Group gap={8} flex={1} miw={0} align="center">
+                    {file.icon(responsiveIconSize)}
+                    <Tooltip label={file.name} withArrow={false} fz={'xs'}>
+                      <Text
+                        fw={600}
+                        fz={responsiveFontSize}
+                        flex={1}
+                        truncate
+                        miw={0}
+                      >
+                        {file.name}
+                      </Text>
+                    </Tooltip>
+                  </Group>
+                  <Menu
+                    items={filteredMenuItems}
+                    onItemClick={actionId =>
+                      handleMenuItemClick(actionId, file)
+                    }
+                  >
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <ICONS.IconDotsVertical size={18} />
+                    </ActionIcon>
+                  </Menu>
+                </Group>
+                <Box
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                    marginTop: 8,
+                  }}
+                >
+                  {file.icon(isXs ? 50 : 60)}
+                  {/* {file.preview ? (
                   <Image
                     src={file.preview}
                     alt={file.name}
@@ -377,18 +448,20 @@ const FileGrid: React.FC<FileGridProps> = ({
                     }}
                   />
                 )} */}
-            </Box>
-            <Group justify="space-between" mt={8}>
-              <Text size="xs" c="gray.6">
-                {file.lastModified}
-              </Text>
-              <Text size="xs" c="gray.6">
-                {file.size}
-              </Text>
-            </Group>
-          </Card>
-        ))}
-      </Box>
+                </Box>
+                <Group justify="space-between" mt={8}>
+                  <Text size="xs" c="gray.6">
+                    {file.lastModified}
+                  </Text>
+                  <Text size="xs" c="gray.6">
+                    {file.size}
+                  </Text>
+                </Group>
+              </Card>
+            ))}
+          </Box>
+        ) : null}
+      </Card>
     </Stack>
   );
 };

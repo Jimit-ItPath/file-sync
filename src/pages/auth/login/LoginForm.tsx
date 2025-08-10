@@ -1,4 +1,4 @@
-import { Stack, Group, Text, ActionIcon } from '@mantine/core';
+import { Stack, Group, Text } from '@mantine/core';
 import { Button, Form, Input } from '../../../components';
 import useLogin from './use-login';
 import { Link } from 'react-router';
@@ -15,9 +15,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
   return (
     <Form methods={methods} onSubmit={handleLoginSubmit}>
       <Stack gap={16}>
-        <ActionIcon radius={'50%'} onClick={onBack}>
-          <ICONS.IconArrowLeft size={18} />
-        </ActionIcon>
+        <Group fz="sm" c="dimmed" align="center" lh={1}>
+          <Link
+            to={AUTH_ROUTES.LOGIN.url}
+            style={{
+              textDecoration: 'none',
+              color: '#0284c7',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+            onClick={onBack}
+          >
+            <ICONS.IconArrowLeft size={18} /> Back
+          </Link>
+        </Group>
         {loginFormData.map(
           ({ id, label, placeholder, type, error, name, isRequired }) => (
             <Input
@@ -34,10 +47,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
             />
           )
         )}
-        <Group justify="flex-end">
+        <Group justify="flex-end" mt={-10}>
           <Link
             to={AUTH_ROUTES.FORGOT_PASSWORD.url}
-            style={{ textDecoration: 'none', color: '#0284c7' }}
+            style={{ textDecoration: 'none', color: '#0284c7', fontSize: 14 }}
           >
             Forgot your password?
           </Link>
@@ -46,7 +59,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
           type="submit"
           fullWidth
           loading={Boolean(isLoading)}
-          disabled={Boolean(isLoading)}
+          disabled={Boolean(isLoading) || !methods.formState.isValid}
           size="md"
           radius="md"
           style={{
@@ -54,16 +67,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
             fontSize: 16,
             background: '#0284c7',
             color: '#fff',
-            marginTop: 8,
           }}
         >
           Log in
         </Button>
-        <Text ta="center" fz="sm" c="dimmed">
+        <Text ta="center" fz="sm" c="dimmed" mt={-5}>
           Don't have an account?{' '}
           <Link
             to={AUTH_ROUTES.REGISTER.url}
-            style={{ textDecoration: 'none', color: '#0284c7' }}
+            style={{
+              textDecoration: 'none',
+              color: '#0284c7',
+              fontWeight: 500,
+            }}
           >
             Sign up
           </Link>

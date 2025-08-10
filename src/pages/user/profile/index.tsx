@@ -11,6 +11,7 @@ import {
   ActionIcon,
   Switch,
   Input as MantineInput,
+  Image,
 } from '@mantine/core';
 import { Button, Form, Input, Modal, Tooltip } from '../../../components';
 import useProfile from './use-profile';
@@ -19,6 +20,11 @@ import { useState } from 'react';
 import { LoaderOverlay } from '../../../components/loader';
 import useSidebar from '../../../layouts/dashboard-layout/navbar/use-sidebar';
 import AccountTypeSelector from '../../../layouts/dashboard-layout/navbar/AccountTypeSelector';
+import { ROLES } from '../../../utils/constants';
+import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
+import ConnectAccountDescription from '../../dashboard/ConnectAccountDescription';
 
 const Profile = () => {
   const {
@@ -54,6 +60,7 @@ const Profile = () => {
     connectAccountFormData,
     methods: connectAccountMethods,
     connectAccountLoading,
+    user,
   } = useSidebar();
 
   const {
@@ -105,7 +112,7 @@ const Profile = () => {
                   >
                     <ICONS.IconUser size={60} />
                   </Avatar>
-                  {preview && isHovering && (
+                  {userProfile?.profile && preview && isHovering ? (
                     <Tooltip
                       label="Remove avatar"
                       position="bottom"
@@ -129,7 +136,7 @@ const Profile = () => {
                         <ICONS.IconTrash size={16} />
                       </ActionIcon>
                     </Tooltip>
-                  )}
+                  ) : null}
                 </Box>
 
                 <Stack gap="xs">
@@ -206,185 +213,221 @@ const Profile = () => {
         </Card>
 
         {/* Smart File Distribution Card */}
-        <Card radius="lg" p="xl" shadow="sm" withBorder>
-          <Stack gap="md">
-            <Box>
-              <Title order={4} fw={600}>
-                File Organization Preference
-              </Title>
-              <Text size="sm" c="dimmed">
-                Enable Smart File Distribution to automatically organize your
-                files based on their types and content.
-              </Text>
-            </Box>
+        {user?.user?.role === ROLES.USER ? (
+          <Card radius="lg" p="xl" shadow="sm" withBorder>
+            <Stack gap="lg">
+              <Box>
+                <Title order={4} fw={600} fz={isXs ? 18 : 22}>
+                  Smart File Distribution (SFD)
+                </Title>
+                <Text size="sm" c="dimmed" lh={1.6}>
+                  Smart File Distribution helps you automatically route uploaded
+                  files or folders to your preferred cloud storage platforms
+                  (Google Drive, Dropbox, or OneDrive) based on file types,
+                  content, or your selected preferences.
+                </Text>
+                <Text size="sm" c="dimmed" mt={8}>
+                  For example, PDFs can go to Google Drive, Images to Dropbox,
+                  and Videos to OneDrive — making your file organization
+                  seamless and efficient.
+                </Text>
+                <Text fz={13} c="gray" mt={8}>
+                  You can turn this off or choose to be asked each time during
+                  file upload.
+                </Text>
+              </Box>
 
-            <Group mt={20}>
-              <MantineInput.Label
-                htmlFor="sfd-switch"
-                w="auto"
-                fz={isXs ? 'sm' : 'md'}
-                style={{ cursor: 'pointer' }}
-              >
-                Ask Every Time
-              </MantineInput.Label>
-              <Switch
-                id="sfd-switch"
-                checked={userProfile?.is_sfd_enabled}
-                onChange={event => handleSFDToggle(event.currentTarget.checked)}
-                size="md"
-              />
-              <MantineInput.Label
-                htmlFor="sfd-switch"
-                w="auto"
-                fz={isXs ? 'sm' : 'md'}
-                style={{ cursor: 'pointer' }}
-              >
-                Smart File Distribution
-              </MantineInput.Label>
-            </Group>
-          </Stack>
-        </Card>
+              <Group mt={12} wrap="wrap" align="center">
+                <MantineInput.Label
+                  htmlFor="sfd-switch"
+                  w="auto"
+                  fz={isXs ? 'sm' : 'md'}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Ask Every Time
+                </MantineInput.Label>
+
+                <Switch
+                  id="sfd-switch"
+                  checked={userProfile?.is_sfd_enabled}
+                  onChange={event =>
+                    handleSFDToggle(event.currentTarget.checked)
+                  }
+                  size="md"
+                  color="cyan"
+                />
+
+                <MantineInput.Label
+                  htmlFor="sfd-switch"
+                  w="auto"
+                  fz={isXs ? 'sm' : 'md'}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Smart File Distribution
+                </MantineInput.Label>
+              </Group>
+            </Stack>
+          </Card>
+        ) : null}
 
         {/* Cloud Storage Access Card */}
-        <Card radius="lg" p={'xl'} shadow="sm" withBorder>
-          <Stack gap="sm">
-            <Box>
-              <Title order={4} fw={600}>
-                Connected Services
-              </Title>
-              <Text c="dimmed" size="sm">
-                Manage your cloud storage integrations
-              </Text>
-            </Box>
+        {user?.user?.role === ROLES.USER ? (
+          <Card radius="lg" p={'xl'} shadow="sm" withBorder>
+            <Stack gap="sm">
+              <Box>
+                <Title order={4} fw={600}>
+                  Connected Services
+                </Title>
+                <Text c="dimmed" size="sm">
+                  Manage your cloud storage integrations
+                </Text>
+              </Box>
 
-            {connectedAccounts.length === 0 ? (
-              <Card withBorder radius="md" bg="gray.0">
-                <Group gap="sm">
-                  <ICONS.IconCloudOff
-                    size={24}
-                    color="var(--mantine-color-gray-5)"
-                  />
-                  <Text size="sm" c="dimmed">
-                    No cloud storage accounts connected yet
-                  </Text>
-                </Group>
-                <Button
-                  mt={20}
-                  leftSection={<ICONS.IconPlus size={18} />}
-                  maw={200}
-                  onClick={openAccountModal}
-                >
-                  <span style={{ fontSize: '14px', color: '##0284C7' }}>
-                    Connect Account
-                  </span>
-                </Button>
-              </Card>
-            ) : (
-              <Grid gutter="md">
-                {connectedAccounts.map(account => {
-                  type AccountConfig = {
-                    icon: React.ReactNode;
-                    color: string;
-                    label: string;
-                    bg: string;
-                  };
+              {connectedAccounts.length === 0 ? (
+                <Card withBorder radius="md" bg="gray.0">
+                  <Group gap="sm">
+                    <ICONS.IconCloudOff
+                      size={24}
+                      color="var(--mantine-color-gray-5)"
+                    />
+                    <Text size="sm" c="dimmed">
+                      No cloud storage accounts connected yet
+                    </Text>
+                  </Group>
+                  <Button
+                    mt={20}
+                    leftSection={<ICONS.IconPlus size={18} />}
+                    maw={200}
+                    onClick={openAccountModal}
+                  >
+                    <span style={{ fontSize: '14px', color: '##0284C7' }}>
+                      Connect Account
+                    </span>
+                  </Button>
+                </Card>
+              ) : (
+                <Grid gutter="md">
+                  {connectedAccounts.map(account => {
+                    type AccountConfig = {
+                      icon: React.ReactNode;
+                      color: string;
+                      label: string;
+                      bg: string;
+                    };
 
-                  const accountConfigs: Record<string, AccountConfig> = {
-                    google_drive: {
-                      icon: <ICONS.IconBrandGoogle size={24} />,
-                      color: 'red',
-                      label: 'Google Drive',
-                      bg: 'rgba(234, 67, 53, 0.1)',
-                    },
-                    dropbox: {
-                      icon: <ICONS.IconDroplets size={24} />,
-                      color: 'blue',
-                      label: 'Dropbox',
-                      bg: 'rgba(0, 97, 255, 0.1)',
-                    },
-                    onedrive: {
-                      icon: <ICONS.IconBrandOnedrive size={24} />,
-                      color: 'indigo',
-                      label: 'OneDrive',
-                      bg: 'rgba(0, 120, 215, 0.1)',
-                    },
-                  };
+                    const accountConfigs: Record<string, AccountConfig> = {
+                      google_drive: {
+                        // icon: <ICONS.IconBrandGoogle size={24} />,
+                        icon: (
+                          <Image
+                            src={GoogleDriveIcon}
+                            alt="Google Drive"
+                            w={20}
+                            h={20}
+                          />
+                        ),
+                        color: 'red',
+                        label: 'Google Drive',
+                        bg: 'rgba(234, 67, 53, 0.1)',
+                      },
+                      dropbox: {
+                        // icon: <ICONS.IconDroplets size={24} />,
+                        icon: <Image src={DropboxIcon} alt="Dropbox" w={24} />,
+                        color: 'blue',
+                        label: 'Dropbox',
+                        bg: 'rgba(0, 97, 255, 0.1)',
+                      },
+                      onedrive: {
+                        // icon: <ICONS.IconBrandOnedrive size={24} />,
+                        icon: (
+                          <Image
+                            src={OneDriveIcon}
+                            alt="OneDrive"
+                            w={20}
+                            h={20}
+                          />
+                        ),
+                        color: 'indigo',
+                        label: 'OneDrive',
+                        bg: 'rgba(0, 120, 215, 0.1)',
+                      },
+                    };
 
-                  const accountConfig = accountConfigs[account.account_type];
+                    const accountConfig = accountConfigs[account.account_type];
 
-                  // Fallback for unknown account types
-                  if (!accountConfig) {
+                    // Fallback for unknown account types
+                    if (!accountConfig) {
+                      return (
+                        <Grid.Col
+                          key={account.id}
+                          span={{ base: 12, sm: 6, lg: 4 }}
+                        >
+                          <Card withBorder radius="md" p="lg" bg="gray.1">
+                            <Text>
+                              Unknown account type: {account.account_type}
+                            </Text>
+                          </Card>
+                        </Grid.Col>
+                      );
+                    }
+
                     return (
                       <Grid.Col
                         key={account.id}
                         span={{ base: 12, sm: 6, lg: 4 }}
                       >
-                        <Card withBorder radius="md" p="lg" bg="gray.1">
-                          <Text>
-                            Unknown account type: {account.account_type}
-                          </Text>
-                        </Card>
-                      </Grid.Col>
-                    );
-                  }
-
-                  return (
-                    <Grid.Col
-                      key={account.id}
-                      span={{ base: 12, sm: 6, lg: 4 }}
-                    >
-                      <Card
-                        withBorder
-                        radius="md"
-                        p="lg"
-                        // bg={accountConfig.bg}
-                        style={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                        }}
-                      >
-                        <Box style={{ flex: 1 }}>
-                          <Group justify="space-between" align="flex-start">
-                            <Group gap="sm">
-                              <Avatar
-                                color={accountConfig.color}
-                                radius="sm"
-                                size="lg"
+                        <Card
+                          withBorder
+                          radius="md"
+                          p="lg"
+                          // bg={accountConfig.bg}
+                          style={{
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }}
+                        >
+                          <Box style={{ flex: 1 }}>
+                            <Group justify="space-between" align="flex-start">
+                              <Group gap="sm">
+                                <Avatar
+                                  color={accountConfig.color}
+                                  radius="sm"
+                                  size="lg"
+                                >
+                                  {accountConfig.icon}
+                                </Avatar>
+                                <Stack gap={2}>
+                                  <Text fw={600}>{account.account_name}</Text>
+                                  <Text size="sm" c="dimmed">
+                                    {accountConfig.label}
+                                  </Text>
+                                  <Text size="xs" c="dimmed">
+                                    Connected on{' '}
+                                    {new Date(
+                                      account.createdAt
+                                    ).toLocaleDateString()}
+                                  </Text>
+                                </Stack>
+                              </Group>
+                              <Tooltip
+                                label={`Disconnect ${accountConfig.label}`}
+                                fz={'xs'}
                               >
-                                {accountConfig.icon}
-                              </Avatar>
-                              <Stack gap={2}>
-                                <Text fw={600}>{account.account_name}</Text>
-                                <Text size="sm" c="dimmed">
-                                  {accountConfig.label}
-                                </Text>
-                                <Text size="xs" c="dimmed">
-                                  Connected on{' '}
-                                  {new Date(
-                                    account.createdAt
-                                  ).toLocaleDateString()}
-                                </Text>
-                              </Stack>
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  onClick={() =>
+                                    openRemoveAccessModal(account.id)
+                                  }
+                                  loading={removeAccessLoading}
+                                >
+                                  <ICONS.IconTrash size={18} />
+                                </ActionIcon>
+                              </Tooltip>
                             </Group>
-                            <Tooltip
-                              label={`Disconnect ${accountConfig.label}`}
-                              fz={'xs'}
-                            >
-                              <ActionIcon
-                                variant="subtle"
-                                color="red"
-                                onClick={() =>
-                                  openRemoveAccessModal(account.id)
-                                }
-                                loading={removeAccessLoading}
-                              >
-                                <ICONS.IconTrash size={18} />
-                              </ActionIcon>
-                            </Tooltip>
-                          </Group>
 
-                          {/* {account.token_expires && (
+                            {/* {account.token_expires && (
                             <Box mt="sm">
                               <Group gap={4}>
                                 <ICONS.IconClock size={14} />
@@ -397,15 +440,16 @@ const Profile = () => {
                               </Group>
                             </Box>
                           )} */}
-                        </Box>
-                      </Card>
-                    </Grid.Col>
-                  );
-                })}
-              </Grid>
-            )}
-          </Stack>
-        </Card>
+                          </Box>
+                        </Card>
+                      </Grid.Col>
+                    );
+                  })}
+                </Grid>
+              )}
+            </Stack>
+          </Card>
+        ) : null}
       </Stack>
 
       {/* Remove Profile Pic Modal */}
@@ -475,6 +519,7 @@ const Profile = () => {
       >
         <Form onSubmit={handleConnectAccount} methods={connectAccountMethods}>
           <Stack>
+            <ConnectAccountDescription />
             {connectAccountFormData?.map(
               ({ id, name, placeholder, type, label, error, isRequired }) => (
                 <Input

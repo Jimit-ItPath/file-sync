@@ -24,7 +24,7 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
       style={{
         position: 'fixed',
         bottom: 20,
-        right: 20,
+        right: 100,
         width: 350,
         maxHeight: 400,
         backgroundColor: 'white',

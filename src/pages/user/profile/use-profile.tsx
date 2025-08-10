@@ -16,20 +16,38 @@ import {
   getConnectedAccount,
   removeAccountAccess,
 } from '../../../store/slices/auth.slice';
-import { initializeCloudStorageFromStorage } from '../../../store/slices/cloudStorage.slice';
+import {
+  fetchRecentFiles,
+  initializeCloudStorageFromStorage,
+} from '../../../store/slices/cloudStorage.slice';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import { NAME_REGEX, ROLES } from '../../../utils/constants';
 
 const profileSchema = z.object({
   firstName: z
     .string()
+    .trim()
     .min(1, 'First name is required')
-    .max(20, 'First name must be less than 20 characters'),
+    .max(20, 'First name must be less than 20 characters')
+    .regex(
+      NAME_REGEX,
+      'First name must contain only letters, spaces, hyphens, and apostrophes'
+    ),
   lastName: z
     .string()
+    .trim()
     .min(1, 'Last name is required')
-    .max(20, 'Last name must be less than 20 characters'),
-  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+    .max(20, 'Last name must be less than 20 characters')
+    .regex(
+      NAME_REGEX,
+      'Last name must contain only letters, spaces, hyphens, and apostrophes'
+    ),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
   avatar: z.union([z.string(), z.instanceof(File)]).optional(),
 });
 
@@ -37,7 +55,9 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 const UseProfile = () => {
   const { isLoading, userProfile } = useAppSelector(state => state.user);
-  const { connectedAccounts, loading } = useAppSelector(state => state.auth);
+  const { connectedAccounts, loading, user } = useAppSelector(
+    state => state.auth
+  );
   const dispatch = useAppDispatch();
   const [preview, setPreview] = useState<string | null>(null);
   const [openRemoveProfileImageModal, setOpenRemoveProfileImageModal] =
@@ -84,7 +104,9 @@ const UseProfile = () => {
 
   useEffect(() => {
     getProfile({});
-    onInitialize({});
+    if (user?.user?.role === ROLES.USER) {
+      onInitialize({});
+    }
   }, []);
 
   useEffect(() => {
@@ -211,6 +233,12 @@ const UseProfile = () => {
 
   const [getFiles] = useAsyncOperation(getCloudStorageFiles);
 
+  const getRecentFiles = useCallback(async () => {
+    await dispatch(fetchRecentFiles({}));
+  }, [dispatch]);
+
+  const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
       const res = await dispatch(
@@ -222,6 +250,7 @@ const UseProfile = () => {
           color: 'green',
         });
         await onInitialize({});
+        await onGetRecentFiles({});
         await getFiles({});
         closeRemoveAccessModal();
         await fetchStorageData({});
@@ -259,7 +288,7 @@ const UseProfile = () => {
       {
         id: 'firstName',
         name: 'firstName',
-        placeholder: 'Enter your first name',
+        placeholder: 'Enter first name',
         type: 'text',
         label: 'First name',
         isRequired: true,
@@ -268,7 +297,7 @@ const UseProfile = () => {
       {
         id: 'lastName',
         name: 'lastName',
-        placeholder: 'Enter your last name',
+        placeholder: 'Enter last name',
         type: 'text',
         label: 'Last name',
         isRequired: true,
@@ -277,7 +306,7 @@ const UseProfile = () => {
       {
         id: 'email',
         name: 'email',
-        placeholder: 'Enter your email',
+        placeholder: 'Enter email',
         type: 'email',
         label: 'Email address',
         isRequired: true,

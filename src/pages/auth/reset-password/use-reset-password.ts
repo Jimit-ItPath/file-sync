@@ -19,6 +19,7 @@ const resetSchema = z
   .object({
     password: z
       .string()
+      .min(1, 'Password is required')
       .min(8, 'Password must be at least 8 characters')
       .refine(val => passwordRequirements.every(req => req.re.test(val)), {
         message:
@@ -78,18 +79,19 @@ const useResetPassword = ({ email, validation_code }: ResetPasswordProps) => {
       {
         id: 'password',
         name: 'password',
-        placeholder: 'Enter Password',
+        placeholder: 'Enter password',
         type: 'password-input',
         label: 'Password',
         isRequired: true,
         error: errors.password?.message,
+        strengthMeter: true,
       },
       {
         id: 'confirmPassword',
         name: 'confirmPassword',
-        placeholder: 'ReEnter Password',
+        placeholder: 'Re-enter password',
         type: 'password-input',
-        label: 'Password',
+        label: 'Confirm Password',
         isRequired: true,
         error: errors.confirmPassword?.message,
       },
@@ -102,6 +104,7 @@ const useResetPassword = ({ email, validation_code }: ResetPasswordProps) => {
     handleResetPasswordSubmit: handleSubmit(onSubmit),
     isLoading: loading,
     methods,
+    navigate,
   };
 };
 

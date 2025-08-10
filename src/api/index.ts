@@ -93,7 +93,7 @@ export const api = {
     completeProfile: (data: {
       first_name: string;
       last_name: string;
-      email: string;
+      email?: string;
       password: string;
       validation_code: string;
     }) =>
@@ -101,6 +101,22 @@ export const api = {
         url: `/auth/complete-profile`,
         method: METHODS.POST,
         data,
+      }),
+    updateSequence: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        id: number;
+        sequence_number: number;
+      }[];
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/connected-account/update-sequence`,
+        method: METHODS.PUT,
+        data,
+        ...configs,
       }),
   },
   user: {
@@ -494,6 +510,12 @@ export const api = {
         method: METHODS.GET,
         params,
       }),
+    getRecentFiles: (params: { account_id?: number | string }) =>
+      client({
+        url: '/cloud-storage/recent-files',
+        method: METHODS.GET,
+        params,
+      }),
     createFolder: ({
       data,
       ...configs
@@ -614,7 +636,7 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { email: string };
+      data: { emails: string[] };
       [key: string]: any;
     }) =>
       client({
@@ -622,6 +644,43 @@ export const api = {
         method: METHODS.POST,
         data,
         ...configs,
+      }),
+    getAuditLogs: (params: {
+      user_id?: number | string;
+      page?: number;
+      limit?: number;
+      searchTerm?: string;
+      action_types?: string;
+      types?: string;
+      success?: boolean;
+    }) =>
+      client({
+        url: `/user/audit-logs`,
+        method: METHODS.GET,
+        params,
+      }),
+    exportLogs: (data: {
+      user_id?: string | null;
+      searchTerm?: string;
+      action_types?: string;
+      types?: string;
+      success?: boolean;
+    }) =>
+      client({
+        url: `/user/export-logs`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
+      }),
+    getActionTypes: () =>
+      client({
+        url: `/admin/action-type`,
+        method: METHODS.GET,
+      }),
+    getTypes: () =>
+      client({
+        url: `/admin/types`,
+        method: METHODS.GET,
       }),
   },
 };

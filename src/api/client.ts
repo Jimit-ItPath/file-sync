@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ERROR_MESSAGES } from '../utils/constants';
 import { API } from '../configs/env';
+import { AUTH_ROUTES } from '../routing/routes';
 
 export const METHODS = {
   POST: 'post',
@@ -60,6 +61,7 @@ axiosInstance.interceptors.response.use(
     if ([401].includes(status)) {
       localStorage.clear();
       // window.location.href = AUTH_ROUTES.LOGIN.url;
+      window.location.href = AUTH_ROUTES.LANDING.url;
       return Promise.reject(customError);
     }
 
