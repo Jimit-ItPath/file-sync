@@ -4,7 +4,6 @@ import { theme, colorSchemeManager } from './theme';
 import { AuthProvider } from './auth/auth-provider';
 import Routing from './routing';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import TawkToWidget from './widget/TawkToWidget';
 
 function App() {
   return (
@@ -21,7 +20,6 @@ function App() {
         <Notifications position="top-right" />
         <AuthProvider>
           <Routing />
-          <TawkToWidget />
         </AuthProvider>
       </MantineProvider>
     </GoogleOAuthProvider>

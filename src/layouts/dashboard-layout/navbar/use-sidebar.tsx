@@ -268,11 +268,11 @@ const useSidebar = () => {
 
   const openAccountModal = useCallback(() => {
     setIsConnectModalOpen(true);
-    reset();
   }, []);
 
   const closeAccountModal = useCallback(() => {
     setIsConnectModalOpen(false);
+    reset();
   }, [reset]);
 
   const openRemoveAccessModal = useCallback((id: number) => {

@@ -71,6 +71,13 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
   connectAccountLoading = false,
   isSm = false,
 }) => {
+  const handleProviderClick = (
+    providerType: 'google_drive' | 'dropbox' | 'onedrive'
+  ) => {
+    methods.setValue('accountType', providerType);
+    openAccountModal();
+  };
+
   return (
     <>
       <style>{`
@@ -430,7 +437,17 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
                     className="provider-card"
                     style={{
                       animationDelay: `${index * 0.2}s`,
+                      cursor: 'pointer',
                     }}
+                    onClick={() =>
+                      handleProviderClick(
+                        provider.name === 'Google Drive'
+                          ? 'google_drive'
+                          : provider.name === 'Dropbox'
+                            ? 'dropbox'
+                            : 'onedrive'
+                      )
+                    }
                   >
                     <div className="provider-icon">{provider.icon}</div>
                     <Text className="provider-name">{provider.name}</Text>
