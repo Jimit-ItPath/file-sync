@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import useAsyncOperation from '../../../../hooks/use-async-operation';
 import { notifications } from '@mantine/notifications';
 import { api } from '../../../../api';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { PRIVATE_ROUTES } from '../../../../routing/routes';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
@@ -18,11 +18,11 @@ import { updateUser } from '../../../../store/slices/auth.slice';
 const completeProfileSchema = z.object({
   first_name: z.string().trim().min(1, 'First name is required'),
   last_name: z.string().trim().min(1, 'Last name is required'),
-  email: z
-    .string()
-    .trim()
-    .min(1, 'Email is required')
-    .email('Invalid email address'),
+  // email: z
+  //   .string()
+  //   .trim()
+  //   .min(1, 'Email is required')
+  //   .email('Invalid email address'),
   password: z
     .string()
     .trim()
@@ -57,7 +57,7 @@ const features = [
 const useCompleteProfile = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email');
+  // const email = searchParams.get('email');
   const validation_code = searchParams.get('validation_code');
   const dispatch = useAppDispatch();
 
@@ -72,7 +72,7 @@ const useCompleteProfile = () => {
     defaultValues: {
       first_name: '',
       last_name: '',
-      email: '',
+      // email: '',
       password: '',
     },
   });
@@ -81,20 +81,19 @@ const useCompleteProfile = () => {
     handleSubmit,
     reset,
     formState: { errors },
-    setValue,
   } = methods;
 
-  useEffect(() => {
-    if (email) {
-      setValue('email', email);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (email) {
+  //     setValue('email', email);
+  //   }
+  // }, []);
 
   const [onSubmit, loading] = useAsyncOperation(
     async (data: CompleteProfileFormData) => {
-      if (!email || !validation_code) {
+      if (!validation_code) {
         notifications.show({
-          message: 'Email and validation code are required.',
+          message: 'Validation code is required.',
           color: 'red',
         });
         return;
@@ -148,16 +147,16 @@ const useCompleteProfile = () => {
         isRequired: true,
         error: errors.last_name?.message,
       },
-      {
-        id: 'email',
-        name: 'email',
-        placeholder: 'Enter email',
-        type: 'email-input',
-        label: 'Email',
-        isRequired: true,
-        error: errors.email?.message,
-        disabled: true,
-      },
+      // {
+      //   id: 'email',
+      //   name: 'email',
+      //   placeholder: 'Enter email',
+      //   type: 'email-input',
+      //   label: 'Email',
+      //   isRequired: true,
+      //   error: errors.email?.message,
+      //   disabled: true,
+      // },
       {
         id: 'password',
         name: 'password',
