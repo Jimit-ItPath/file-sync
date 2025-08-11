@@ -151,6 +151,7 @@ const Dashboard = () => {
     moveModalOpen,
     currentAccountId,
     handleModalMoveSelected,
+    loading,
   } = useDashboard();
   const {
     openAccountModal,
@@ -167,18 +168,21 @@ const Dashboard = () => {
 
   if (!connectedAccounts?.length) {
     return (
-      <NoConnectedAccount
-        {...{
-          closeAccountModal,
-          connectAccountFormData,
-          connectAccountLoading,
-          handleConnectAccount,
-          isConnectModalOpen,
-          methods,
-          openAccountModal,
-          isSm,
-        }}
-      />
+      <>
+        <LoaderOverlay visible={loading} opacity={1} />
+        <NoConnectedAccount
+          {...{
+            closeAccountModal,
+            connectAccountFormData,
+            connectAccountLoading,
+            handleConnectAccount,
+            isConnectModalOpen,
+            methods,
+            openAccountModal,
+            isSm,
+          }}
+        />
+      </>
     );
   }
 

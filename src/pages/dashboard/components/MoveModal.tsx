@@ -116,25 +116,21 @@ const MoveModal: React.FC<MoveModalProps> = ({
   const isMoveValid = useMemo(() => {
     if (!selectedDestination) return false;
 
-    const currentLocationId =
-      currentPath.length > 0 ? currentPath[currentPath.length - 1].id : null;
-    if (
-      selectedDestination.id === currentFolderId &&
-      currentLocationId === currentFolderId
-    ) {
-      return false;
-    }
+    // Prevent moving into same folder as currentFolderId
+    if (selectedDestination.id === currentFolderId) return false;
 
+    // Prevent moving to root if already at root
+    if (selectedDestination.id === null && currentFolderId === null)
+      return false;
+
+    // Prevent moving a folder into itself
     const movingFolderIds = validSelectedItems
       .filter(item => item.type === 'folder')
       .map(item => item.id);
-
-    if (movingFolderIds.includes(selectedDestination.id || '')) {
-      return false;
-    }
+    if (movingFolderIds.includes(selectedDestination.id || '')) return false;
 
     return true;
-  }, [selectedDestination, currentPath, currentFolderId, validSelectedItems]);
+  }, [selectedDestination, currentFolderId, validSelectedItems]);
 
   // Fetch folders for current level
   const fetchFolders = useCallback(
@@ -203,16 +199,38 @@ const MoveModal: React.FC<MoveModalProps> = ({
   }, [dispatch, currentPath, navigateToFolder]);
 
   // Handle folder selection/deselection
-  const handleFolderSelect = useCallback((folder: FolderData) => {
-    setSelectedDestination(prev => {
-      // If clicking the same folder, deselect it
-      if (prev?.id === folder.id) {
-        return null;
-      }
-      // Otherwise select the new folder
-      return { id: folder.id, name: folder.name };
-    });
-  }, []);
+
+  const handleFolderSelect = useCallback(
+    (folder: FolderData) => {
+      setSelectedDestination(prev => {
+        const isSameFolder = prev?.id === folder.id;
+
+        // CASE 1: From root level
+        if (currentFolderId === null) {
+          if (isSameFolder && folder.parent_id === null) {
+            // Root folder is the current path — don't allow deselect
+            return prev;
+          }
+        }
+
+        // CASE 2: From nested level
+        // Allow toggling root folders freely
+        if (isSameFolder) {
+          // Deselect → fallback to current location
+          if (currentPath.length > 0) {
+            const currentFolder = currentPath[currentPath.length - 1];
+            return { id: currentFolder.id ?? null, name: currentFolder.name };
+          } else {
+            return { id: null, name: 'All Files' };
+          }
+        }
+
+        // Selecting a new folder
+        return { id: folder.id, name: folder.name };
+      });
+    },
+    [currentPath, currentFolderId]
+  );
 
   // Handle folder double click (navigate into)
   const handleFolderDoubleClick = useCallback(
@@ -223,13 +241,13 @@ const MoveModal: React.FC<MoveModalProps> = ({
   );
 
   // Handle clicking outside folders (deselect)
-  const handleContentClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    // Check if click is not on a folder card or its children
-    if (!target.closest('[data-folder-card]')) {
-      setSelectedDestination(null);
-    }
-  }, []);
+  // const handleContentClick = useCallback((e: React.MouseEvent) => {
+  //   const target = e.target as HTMLElement;
+  //   // Check if click is not on a folder card or its children
+  //   if (!target.closest('[data-folder-card]')) {
+  //     setSelectedDestination(null);
+  //   }
+  // }, []);
 
   // Handle move confirmation
   const handleMoveConfirm = useCallback(async () => {
@@ -355,7 +373,9 @@ const MoveModal: React.FC<MoveModalProps> = ({
         </Box>
 
         {/* Folders List */}
-        <Box onClick={handleContentClick}>
+        <Box
+        // onClick={handleContentClick}
+        >
           {/* {loading && (
             <Center h="100%">
               <Stack align="center" gap="md">
@@ -532,6 +552,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
             onNavigate={folderId => {
               if (folderId === null) {
                 dispatch(setMoveModalPath([]));
+                setSelectedDestination({ id: null, name: 'All Files' });
                 fetchFolders(null);
               } else {
                 const folderIndex = currentPath.findIndex(
@@ -540,6 +561,10 @@ const MoveModal: React.FC<MoveModalProps> = ({
                 if (folderIndex >= 0) {
                   const newPath = currentPath.slice(0, folderIndex + 1);
                   dispatch(setMoveModalPath(newPath));
+                  setSelectedDestination({
+                    id: folderId!,
+                    name: newPath[folderIndex].name,
+                  });
                   fetchFolders(folderId);
                 }
               }
