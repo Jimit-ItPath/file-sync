@@ -319,7 +319,7 @@ const useUsers = () => {
         // width: '10%',
         render: (row: UserType) => (
           <>
-            <Tooltip label={row.is_blocked ? 'Unblock' : 'Block'}>
+            <Tooltip label={row.is_blocked ? 'Unblock' : 'Block'} fz={'xs'}>
               <ActionIcon
                 variant="subtle"
                 color="gray"

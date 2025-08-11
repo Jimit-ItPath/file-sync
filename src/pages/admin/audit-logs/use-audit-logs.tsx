@@ -34,6 +34,7 @@ const useAuditLogs = () => {
   const [localSearchTerm, setLocalSearchTerm] = useState(auditLogSearchTerm);
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [initialUserList, setInitialUserList] = useState<SelectOption[]>([]);
   const [userSearchResults, setUserSearchResults] = useState<SelectOption[]>(
     []
   );
@@ -187,7 +188,35 @@ const useAuditLogs = () => {
   ]);
 
   useEffect(() => {
-    handleUserSearch();
+    const fetchInitialUsers = async () => {
+      try {
+        const res = await dispatch(
+          fetchUsers({
+            limit: 10,
+            page: 1,
+          })
+        );
+
+        const users: SelectOption[] =
+          res.payload?.data?.data?.map((user: any) => ({
+            value: user.id,
+            label: user?.email,
+          })) || [];
+
+        setUserSearchResults(users);
+        setInitialUserList(users);
+      } catch (err) {
+        console.error('Initial user fetch failed:', err);
+      }
+    };
+
+    fetchInitialUsers();
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      handleUserSearch();
+    }
   }, [selectedUser]);
 
   useEffect(() => {
@@ -275,15 +304,9 @@ const useAuditLogs = () => {
             limit,
             page: 1,
             searchTerm: query || '',
-            ...(selectedActionType && {
-              action_types: selectedActionType,
-            }),
-            ...(selectedType && {
-              types: selectedType,
-            }),
-            ...(successFilter && {
-              success: successFilter === 'true',
-            }),
+            ...(selectedActionType && { action_types: selectedActionType }),
+            ...(selectedType && { types: selectedType }),
+            ...(successFilter && { success: successFilter === 'true' }),
           })
         );
 
@@ -301,7 +324,7 @@ const useAuditLogs = () => {
         return [];
       }
     },
-    [dispatch]
+    [dispatch, limit, selectedActionType, selectedType, successFilter]
   );
 
   const handleUserSelect = (userId: string | string[] | null) => {
@@ -310,6 +333,7 @@ const useAuditLogs = () => {
 
   const handleClearSelection = () => {
     setSelectedUser(null);
+    setUserSearchResults(initialUserList);
   };
 
   const filteredOptions = useMemo(() => {

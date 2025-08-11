@@ -305,7 +305,7 @@ const Dashboard = () => {
                   }}
                 />
               </Box>
-              <Box flex={1}>
+              <Box style={{ flexGrow: 1 }}>
                 {selectedIds.length > 0 ? (
                   <SelectionBar
                     count={selectedIds.length}

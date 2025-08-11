@@ -97,9 +97,13 @@ export const CustomAutocomplete: React.FC<CustomAutocompleteProps> = ({
       }
     };
 
+    if (!value && !searchQuery?.trim()) {
+      onClear?.();
+    }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [value, onClear, searchQuery]);
 
   // Handle search
   useEffect(() => {
