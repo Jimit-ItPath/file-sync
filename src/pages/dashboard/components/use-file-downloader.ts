@@ -249,7 +249,7 @@ const useFileDownloader = () => {
   }, []);
 
   const clearDownload = useCallback(() => {
-    // setDownloadProgress(null);
+    setDownloadProgress(null);
   }, []);
 
   return {

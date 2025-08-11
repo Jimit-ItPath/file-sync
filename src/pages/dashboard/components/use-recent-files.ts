@@ -365,31 +365,6 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     }
   });
 
-  // const [downloadItems] = useAsyncOperation(async data => {
-  //   try {
-  //     const res = await dispatch(
-  //       downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
-  //     );
-  //     if (res?.payload?.status !== 200) {
-  //       notifications.show({
-  //         message:
-  //           res?.payload?.message ||
-  //           `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
-  //         color: 'red',
-  //       });
-  //       return;
-  //     }
-  //     downloadFilesHelper(res.payload.data, res);
-  //   } catch (error: any) {
-  //     notifications.show({
-  //       message:
-  //         error ||
-  //         `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
-  //       color: 'red',
-  //     });
-  //   }
-  // });
-
   const handleDownloadSelected = useCallback(() => {
     downloadItems({});
   }, [selectedIds]);

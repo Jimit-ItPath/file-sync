@@ -1,5 +1,13 @@
 import { Group, Box, Text, Stack, ActionIcon, TextInput } from '@mantine/core';
-import { Button, Card, Form, Menu, Modal, Tooltip } from '../../../components';
+import {
+  Button,
+  Card,
+  Form,
+  Menu,
+  Modal,
+  SelectionBar,
+  Tooltip,
+} from '../../../components';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ICONS } from '../../../assets/icons';
 import useResponsive from '../../../hooks/use-responsive';
@@ -41,6 +49,9 @@ const RecentFiles = () => {
     handleDeleteConfirm,
     removeFilesModalOpen,
     removeFilesLoading,
+    handleDeleteSelected,
+    handleDownloadSelected,
+    handleShareSelected,
 
     renameModalOpen,
     setRenameModalOpen,
@@ -187,22 +198,43 @@ const RecentFiles = () => {
       style={{ outline: 'none' }}
       onClick={handleStackClick}
       ref={stackRef}
-      mt={10}
     >
       <LoaderOverlay visible={loading} opacity={1} />
-      <Box mt={10} mb={32}>
-        <Group justify="space-between" mb={16}>
+      <Box mb={32}>
+        <Group
+          justify={isXs ? 'flex-start' : 'space-between'}
+          align={isXs ? 'flex-start' : 'center'}
+          gap={isXs ? 8 : 16}
+          mb={16}
+          style={{
+            position: 'relative',
+            minHeight: 50,
+            flexDirection: isXs ? 'column' : 'row',
+          }}
+        >
           <Text fw={700} fz="md" c="gray.9">
             Recent Files
           </Text>
-          {/* <Button
-        variant="subtle"
-        color="blue"
-        size="xs"
-        style={{ fontWeight: 500 }}
-      >
-        View All
-      </Button> */}
+          <Box flex={isXs ? 1 : 2} w={isXs ? '100%' : 'max-content'}>
+            {selectedIds.length > 0 ? (
+              <SelectionBar
+                count={selectedIds.length}
+                onCancel={() => {
+                  handleUnselectAll();
+                }}
+                onDelete={handleDeleteSelected}
+                onDownload={handleDownloadSelected}
+                onShare={handleShareSelected}
+                onMove={() => {}}
+                onPaste={() => {}}
+                isMoveMode={false}
+                isPasteEnabled={false}
+                displayMoveIcon={false}
+                displayDownloadIcon={displayDownloadIcon}
+                displayShareIcon={selectedIds?.length === 1 && displayShareIcon}
+              />
+            ) : null}
+          </Box>
         </Group>
         <Card>
           {recentFiles.length > 0 ? (

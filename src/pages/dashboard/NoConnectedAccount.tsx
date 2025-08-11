@@ -183,7 +183,7 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
         }
 
         .celebration-icon {
-          font-size: 60px;
+          font-size: 50px;
           margin-bottom: 2rem;
           position: relative;
           display: inline-block;
@@ -220,7 +220,7 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
         }
 
         .main-title {
-          font-size: 3rem;
+          font-size: 2.5rem;
           font-weight: 700;
           // color: white;
           text-align: center;
@@ -353,10 +353,6 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
           .connect-button {
             padding: 14px 32px !important;
             font-size: 1rem !important;
-          }
-          
-          .celebration-icon {
-            font-size: 60px;
           }
           
           .shape-1, .shape-2, .shape-3, .shape-4 {

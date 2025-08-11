@@ -289,7 +289,7 @@ const Dashboard = () => {
           className="stickey-box"
         >
           <Box>
-            <Group align="center" w={'100%'}>
+            <Group align="center" w={'100%'} mih={50}>
               <Box style={{ flexGrow: 1 }}>
                 <Breadcrumbs
                   items={currentPath}
@@ -305,28 +305,30 @@ const Dashboard = () => {
                   }}
                 />
               </Box>
-              {selectedIds.length > 0 ? (
-                <SelectionBar
-                  count={selectedIds.length}
-                  onCancel={() => {
-                    handleUnselectAll();
-                    cancelMoveMode();
-                  }}
-                  onDelete={handleDeleteSelected}
-                  onDownload={handleDownloadSelected}
-                  onShare={handleShareSelected}
-                  // onMove={handleMoveSelected}
-                  onMove={handleModalMoveSelected}
-                  onPaste={handlePasteFiles}
-                  isMoveMode={isMoveMode}
-                  isPasteEnabled={isPasteEnabled()}
-                  displayMoveIcon={displayMoveIcon}
-                  displayDownloadIcon={displayDownloadIcon}
-                  displayShareIcon={
-                    selectedIds?.length === 1 && displayShareIcon
-                  }
-                />
-              ) : null}
+              <Box flex={1}>
+                {selectedIds.length > 0 ? (
+                  <SelectionBar
+                    count={selectedIds.length}
+                    onCancel={() => {
+                      handleUnselectAll();
+                      cancelMoveMode();
+                    }}
+                    onDelete={handleDeleteSelected}
+                    onDownload={handleDownloadSelected}
+                    onShare={handleShareSelected}
+                    // onMove={handleMoveSelected}
+                    onMove={handleModalMoveSelected}
+                    onPaste={handlePasteFiles}
+                    isMoveMode={isMoveMode}
+                    isPasteEnabled={isPasteEnabled()}
+                    displayMoveIcon={displayMoveIcon}
+                    displayDownloadIcon={displayDownloadIcon}
+                    displayShareIcon={
+                      selectedIds?.length === 1 && displayShareIcon
+                    }
+                  />
+                ) : null}
+              </Box>
               <Tooltip label="Sync" fz={'xs'}>
                 <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
                   <ICONS.IconRefresh size={18} />
