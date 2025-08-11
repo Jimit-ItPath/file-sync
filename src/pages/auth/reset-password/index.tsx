@@ -9,7 +9,7 @@ import { FeatureList } from '../register/FeatureList';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email');
+  // const email = searchParams.get('email');
   const validation_code = searchParams.get('validation_code');
 
   const {
@@ -18,7 +18,7 @@ const ResetPassword = () => {
     isLoading,
     resetPasswordFormData,
     navigate,
-  } = useResetPassword({ email, validation_code });
+  } = useResetPassword({ validation_code });
   const { isMd, isSm, isXs } = useResponsive();
 
   return (

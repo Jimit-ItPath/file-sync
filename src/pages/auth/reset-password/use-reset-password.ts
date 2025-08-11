@@ -10,7 +10,7 @@ import { notifications } from '@mantine/notifications';
 import { passwordRequirements } from '../../../utils/constants';
 
 interface ResetPasswordProps {
-  email: string | null;
+  // email: string | null;
   validation_code: string | null;
 }
 
@@ -34,7 +34,7 @@ const resetSchema = z
 
 type ResetFormData = z.infer<typeof resetSchema>;
 
-const useResetPassword = ({ email, validation_code }: ResetPasswordProps) => {
+const useResetPassword = ({ validation_code }: ResetPasswordProps) => {
   const navigate = useNavigate();
 
   const methods = useForm<ResetFormData>({
@@ -49,16 +49,16 @@ const useResetPassword = ({ email, validation_code }: ResetPasswordProps) => {
   } = methods;
 
   const [onSubmit, loading] = useAsyncOperation(async (data: ResetFormData) => {
-    if (!email || !validation_code) {
+    if (!validation_code) {
       notifications.show({
-        message: 'Email and validation code are required.',
+        message: 'Validation code is required.',
         color: 'red',
       });
       return;
     }
     const res = await api.auth.restPassword({
       data: {
-        email,
+        // email,
         validation_code,
         password: data.password,
       },
@@ -66,7 +66,7 @@ const useResetPassword = ({ email, validation_code }: ResetPasswordProps) => {
 
     if (res?.data?.success || res.status === 200) {
       notifications.show({
-        message: res?.data?.message || 'Password reset link sent to your email',
+        message: res?.data?.message || 'Password reset successfully',
         color: 'green',
       });
       navigate(AUTH_ROUTES.LOGIN.url);

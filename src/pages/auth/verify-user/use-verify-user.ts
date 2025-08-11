@@ -15,13 +15,13 @@ const useVerifyUser = () => {
   const [status, setStatus] = useState<Status>('loading');
   const [message, setMessage] = useState('Verifying your account...');
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email');
+  // const email = searchParams.get('email');
   const validation_code = searchParams.get('validation_code');
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const [verifyUser, loading] = useAsyncOperation(
-    async (data: { email: string | null; validation_code: string | null }) => {
+    async (data: { validation_code: string | null }) => {
       const res = await api.auth.verifyUser({ data });
       return res;
     }
@@ -30,12 +30,15 @@ const useVerifyUser = () => {
   useEffect(() => {
     const verify = async () => {
       setStatus('loading');
-      if (!email) {
+      if (!validation_code) {
         setStatus('error');
         setMessage('Invalid verification link.');
         return;
       }
-      const res = await verifyUser({ email, validation_code });
+      const res = await verifyUser({
+        // email,
+        validation_code,
+      });
       if (res?.data?.success || res?.status === 200) {
         const decodeData: any = decodeToken(res?.data?.data?.access_token);
         localStorage.setItem('token', res?.data?.data?.access_token);
@@ -62,12 +65,12 @@ const useVerifyUser = () => {
         }
       } else {
         setStatus('error');
-        setMessage(res?.data?.message || 'Invalid email or validation code');
+        setMessage(res?.data?.message || 'Invalid validation code');
       }
     };
 
     verify();
-  }, [email]);
+  }, [validation_code]);
 
   return { status, message, loading };
 };
