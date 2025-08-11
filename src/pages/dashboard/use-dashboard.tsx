@@ -170,6 +170,7 @@ const useDashboard = () => {
   const dispatch = useAppDispatch();
 
   const folderId = getLocalStorage(folderIdKey);
+  const globalSearchState = getLocalStorage('globalSearchState');
 
   const checkLocation = useMemo(
     () =>
@@ -362,8 +363,10 @@ const useDashboard = () => {
     return () => {
       dispatch(resetPagination());
       dispatch(resetCloudStorageFolder());
-      removeLocalStorage(pathKey);
-      removeLocalStorage(folderIdKey);
+      if (!globalSearchState) {
+        removeLocalStorage(pathKey);
+        removeLocalStorage(folderIdKey);
+      }
       removeLocalStorage(layoutKey);
     };
   }, []);

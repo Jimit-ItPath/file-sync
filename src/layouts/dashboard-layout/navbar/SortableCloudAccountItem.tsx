@@ -2,7 +2,11 @@ import { useSortable } from '@dnd-kit/sortable';
 import { Box, Group, Progress, Stack, Text } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { NavLink as Link } from 'react-router';
-import { formatBytes, removeLocalStorage } from '../../../utils/helper';
+import {
+  formatBytes,
+  getLocalStorage,
+  removeLocalStorage,
+} from '../../../utils/helper';
 import { Tooltip } from '../../../components';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -31,6 +35,7 @@ const SortableCloudAccountItem = ({
     transition,
     isDragging,
   } = useSortable({ id: account.id });
+  const globalSearchState = getLocalStorage('globalSearchState');
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -89,8 +94,10 @@ const SortableCloudAccountItem = ({
               marginLeft: showDragHandle ? '-20px' : '0px',
             }}
             onClick={() => {
-              removeLocalStorage('folderId');
-              removeLocalStorage('cloudStoragePath');
+              if (!globalSearchState) {
+                removeLocalStorage('folderId');
+                removeLocalStorage('cloudStoragePath');
+              }
               mobileDrawerHandler?.close();
             }}
             onMouseEnter={e => {

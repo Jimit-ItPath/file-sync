@@ -165,10 +165,10 @@ const useSidebar = () => {
       try {
         const res = await dispatch(updateSequence(data)).unwrap();
         if (res?.success) {
-          notifications.show({
-            message: res?.message || 'Account order updated successfully',
-            color: 'green',
-          });
+          // notifications.show({
+          //   message: res?.message || 'Account order updated successfully',
+          //   color: 'green',
+          // });
 
           // Set a timeout before allowing account refresh to prevent UI glitch
           // setTimeout(() => {

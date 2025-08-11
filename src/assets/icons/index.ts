@@ -108,6 +108,8 @@ import {
   IconShieldHalfFilled,
   IconLayoutDistributeVertical,
   IconForbid,
+  IconAlertCircle,
+  IconSearchOff,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -220,4 +222,6 @@ export const ICONS = {
   IconShieldHalfFilled,
   IconLayoutDistributeVertical,
   IconForbid,
+  IconAlertCircle,
+  IconSearchOff,
 };

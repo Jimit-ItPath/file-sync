@@ -19,8 +19,11 @@ import { useMemo } from 'react';
 import useSidebar from './use-sidebar';
 import { Button, Dropzone, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
-import { LoaderOverlay } from '../../../components/loader';
-import { formatBytes, removeLocalStorage } from '../../../utils/helper';
+import {
+  formatBytes,
+  getLocalStorage,
+  removeLocalStorage,
+} from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
 import ConnectAccountDescription from '../../../pages/dashboard/ConnectAccountDescription';
 import ShowConfetti from '../../../components/confetti';
@@ -73,7 +76,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     closeAccountModal,
     connectAccountFormData,
     connectAccountLoading,
-    loading,
+    // loading,
     closeRemoveAccessModal,
     openRemoveAccessModal,
     removeAccess,
@@ -141,7 +144,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
 
   return (
     <Box display={'flex'} h={'100%'} style={{ flexDirection: 'column' }}>
-      <LoaderOverlay visible={loading} opacity={1} />
+      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
       {user?.user?.role !== ROLES.ADMIN ? (
         <>
           {sortedCloudAccounts?.length ? (
@@ -222,6 +225,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                     onClick={() => {
                       removeLocalStorage('folderId');
                       removeLocalStorage('cloudStoragePath');
+                      removeLocalStorage('globalSearchState');
                       mobileDrawerHandler?.close();
                     }}
                     w={{ base: '100%', sm: 'auto' }}

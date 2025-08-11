@@ -29,8 +29,15 @@ import {
   updateUser,
 } from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
-import { ROLES } from '../../utils/constants';
+import {
+  DOCUMENT_FILE_TYPES,
+  ROLES,
+  VIDEO_FILE_TYPES,
+} from '../../utils/constants';
 import { decodeToken } from '../../utils/helper';
+import GlobalSearchBar from './GlobalSearchBar';
+import { downloadFiles } from '../../store/slices/cloudStorage.slice';
+import TawkToWidget from '../../widget/TawkToWidget';
 
 const DashboardLayout = () => {
   usePageData();
@@ -103,12 +110,12 @@ const DashboardLayout = () => {
     // };
   }, []);
 
-  useEffect(() => {
-    if (userProfile?.role === ROLES.USER) {
-      onInitialize({});
-      fetchStorageData({});
-    }
-  }, [userProfile]);
+  // useEffect(() => {
+  //   if (userProfile?.role === ROLES.USER) {
+  //     onInitialize({});
+  //     fetchStorageData({});
+  //   }
+  // }, [userProfile]);
 
   const fullName = useMemo(
     () =>
@@ -187,15 +194,16 @@ const DashboardLayout = () => {
                     AllCloudHub
                   </Box>
                 )}
-                {!isSm ? (
+                {/* {!isSm ? (
                   <Group
                     align="center"
                     gap={0}
                     style={{ position: 'relative' }}
+                    ml={60}
                   >
                     <TextInput
                       placeholder="Search files and folders..."
-                      w={300}
+                      w={600}
                       size="sm"
                       pl={36}
                       leftSection={
@@ -211,11 +219,21 @@ const DashboardLayout = () => {
                       aria-label="Search files and folders"
                     />
                   </Group>
+                ) : null} */}
+                {!isSm ? (
+                  <Group
+                    align="center"
+                    gap={0}
+                    style={{ position: 'relative' }}
+                    ml={60}
+                  >
+                    <GlobalSearchBar placeholder="Search files and folders..." />
+                  </Group>
                 ) : null}
               </Group>
 
               <Group gap={16} align="center">
-                <ICONS.IconBell size={isXs ? 20 : 24} />
+                {/* <ICONS.IconBell size={isXs ? 20 : 24} /> */}
                 {/* <ICONS.IconSettings size={isXs ? 20 : 24} /> */}
                 <Menu
                   width={140}
@@ -281,6 +299,8 @@ const DashboardLayout = () => {
           onClick: onLogoutConfirm,
         }}
       />
+
+      <TawkToWidget />
     </>
   );
 };
