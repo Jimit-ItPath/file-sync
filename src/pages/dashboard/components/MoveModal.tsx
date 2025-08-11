@@ -20,6 +20,7 @@ import type { FileType } from '../use-dashboard';
 import getFileIcon from '../../../components/file-icon';
 import { Breadcrumbs, Button, Modal, Tooltip } from '../../../components';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import useResponsive from '../../../hooks/use-responsive';
 
 type MoveModalProps = {
   opened: boolean;
@@ -56,6 +57,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
 }) => {
   if (!opened) return null;
   const dispatch = useAppDispatch();
+  const { isXs } = useResponsive();
 
   const { moveModal } = useAppSelector(state => state.cloudStorage);
   const { folders, loading, currentPath, pagination } = moveModal;
@@ -298,7 +300,13 @@ const MoveModal: React.FC<MoveModalProps> = ({
       closeOnClickOutside={false}
       size="lg"
       styles={{
-        body: { padding: 0 },
+        body: {
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          maxHeight: '80vh',
+        },
         close: {
           background: '#fff',
         },
@@ -307,20 +315,24 @@ const MoveModal: React.FC<MoveModalProps> = ({
           marginBottom: 0,
           background: '#0056b3',
           color: '#fff',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
         },
         title: {
-          fontSize: '18px',
+          fontSize: isXs ? '14px !important' : '18px',
           fontWeight: 600,
         },
       }}
     >
-      <Stack gap={0}>
+      <Stack gap={0} style={{ height: '100%', overflow: 'hidden' }}>
         {hasUnmovableItems && (
           <Box
             p="lg"
             style={{
               borderBottom: '1px solid #e5e7eb',
               backgroundColor: '#fef3c7',
+              flexShrink: 0,
             }}
           >
             <Group gap="sm">
@@ -340,6 +352,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
           style={{
             borderBottom: '1px solid #e5e7eb',
             backgroundColor: '#f8fafc',
+            flexShrink: 0,
           }}
         >
           <Group justify="space-between" align="center">
@@ -374,7 +387,12 @@ const MoveModal: React.FC<MoveModalProps> = ({
 
         {/* Folders List */}
         <Box
-        // onClick={handleContentClick}
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
+          // onClick={handleContentClick}
         >
           {/* {loading && (
             <Center h="100%">
@@ -410,6 +428,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
                 <Loader size="md" color="blue" />
               </Center>
             }
+            // height={'100%'}
             height={folderData?.length ? 400 : '100%'}
             style={{ padding: '10px' }}
             scrollThreshold={0.8}
@@ -545,6 +564,10 @@ const MoveModal: React.FC<MoveModalProps> = ({
           style={{
             borderTop: '1px solid #e5e7eb',
             backgroundColor: '#f8fafc',
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 1,
+            flexShrink: 0,
           }}
         >
           <Breadcrumbs
@@ -570,7 +593,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
               }
             }}
           />
-          <Group justify="space-between" align="center">
+          <Group justify="space-between" align="center" mt={isXs ? 10 : 0}>
             <Text size="xs" c="dimmed">
               {selectedDestination
                 ? `Moving to: ${selectedDestination.name}`
