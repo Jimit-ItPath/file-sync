@@ -200,10 +200,68 @@ const MoveModal: React.FC<MoveModalProps> = ({
     }
   }, [dispatch, currentPath, navigateToFolder]);
 
+  const selectedFolderIds = useMemo(
+    () => selectedItems.filter(i => i.type === 'folder').map(i => i.id),
+    [selectedItems]
+  );
+
+  // build set of disabled folders = selected folders + their descendants (from current folderData)
+  const disabledFolderIds = useMemo(() => {
+    if (!selectedFolderIds.length) return new Set<string>();
+
+    // parent -> [children]
+    const childrenMap = new Map<string | null, string[]>();
+    folderData.forEach(f => {
+      const pid = f.parent_id ?? null;
+      if (!childrenMap.has(pid)) childrenMap.set(pid, []);
+      childrenMap.get(pid)!.push(f.id);
+    });
+
+    const result = new Set<string>(selectedFolderIds);
+    const stack = [...selectedFolderIds];
+
+    while (stack.length) {
+      const id = stack.pop()!;
+      const children = childrenMap.get(id) || [];
+      children.forEach(childId => {
+        if (!result.has(childId)) {
+          result.add(childId);
+          stack.push(childId);
+        }
+      });
+    }
+
+    return result;
+  }, [selectedFolderIds, folderData]);
+
+  const isFolderDisabled = useCallback(
+    (folderId: string) => disabledFolderIds.has(folderId),
+    [disabledFolderIds]
+  );
+
+  // if the current selectedDestination becomes disabled, fallback to current location
+  useEffect(() => {
+    if (
+      selectedDestination?.id &&
+      disabledFolderIds.has(selectedDestination.id)
+    ) {
+      if (currentPath.length > 0) {
+        const currentFolder = currentPath[currentPath.length - 1];
+        setSelectedDestination({
+          id: currentFolder.id ?? null,
+          name: currentFolder.name,
+        });
+      } else {
+        setSelectedDestination({ id: null, name: 'All Files' });
+      }
+    }
+  }, [disabledFolderIds, selectedDestination, currentPath]);
+
   // Handle folder selection/deselection
 
   const handleFolderSelect = useCallback(
     (folder: FolderData) => {
+      if (isFolderDisabled(folder.id)) return;
       setSelectedDestination(prev => {
         const isSameFolder = prev?.id === folder.id;
 
@@ -231,15 +289,16 @@ const MoveModal: React.FC<MoveModalProps> = ({
         return { id: folder.id, name: folder.name };
       });
     },
-    [currentPath, currentFolderId]
+    [currentPath, currentFolderId, isFolderDisabled]
   );
 
   // Handle folder double click (navigate into)
   const handleFolderDoubleClick = useCallback(
     (folder: FolderData) => {
+      if (isFolderDisabled(folder.id)) return;
       navigateToFolder({ id: folder.id, name: folder.name });
     },
-    [navigateToFolder]
+    [navigateToFolder, isFolderDisabled]
   );
 
   // Handle clicking outside folders (deselect)
@@ -456,103 +515,115 @@ const MoveModal: React.FC<MoveModalProps> = ({
               </Center>
             ) : (
               <Stack gap={5}>
-                {folderData.map(folder => (
-                  <Box
-                    key={folder.id}
-                    data-folder-card
-                    p={5}
-                    style={{
-                      cursor: 'pointer',
-                      border:
-                        selectedDestination?.id === folder.id
-                          ? '2px solid #2563eb'
-                          : '2px solid transparent',
-                      backgroundColor:
-                        selectedDestination?.id === folder.id
-                          ? '#eff6ff'
-                          : '#ffffff',
-                      borderRadius: '12px',
-                      transition: 'all 0.15s ease',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                    onClick={() => handleFolderSelect(folder)}
-                    onDoubleClick={() => handleFolderDoubleClick(folder)}
-                    className="folder-card"
-                  >
-                    <Group justify="space-between" gap={10} align="center">
-                      <Group gap="sm" style={{ flex: 1, minWidth: 0 }}>
-                        <Box
-                          style={{
-                            padding: '4px',
-                            borderRadius: '4px',
-                            backgroundColor:
-                              selectedDestination?.id === folder.id
-                                ? '#dbeafe'
-                                : '#f8fafc',
-                            transition: 'all 0.15s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {folder.icon(22)}
-                        </Box>
-                        <Box style={{ flex: 1, minWidth: 0 }}>
-                          <Tooltip label={folder.name} fz={'xs'}>
-                            <Text
-                              size="sm"
-                              fw={500}
-                              truncate
-                              style={{
-                                color:
-                                  selectedDestination?.id === folder.id
-                                    ? '#1e40af'
-                                    : '#374151',
-                                transition: 'color 0.15s ease',
-                              }}
+                {folderData.map(folder => {
+                  const disabled = isFolderDisabled(folder.id);
+                  return (
+                    <Box
+                      key={folder.id}
+                      data-folder-card
+                      p={5}
+                      style={{
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        opacity: disabled ? 0.5 : 1,
+                        pointerEvents: disabled ? 'none' : 'auto',
+                        border:
+                          selectedDestination?.id === folder.id
+                            ? '2px solid #2563eb'
+                            : '2px solid transparent',
+                        backgroundColor:
+                          selectedDestination?.id === folder.id
+                            ? '#eff6ff'
+                            : '#ffffff',
+                        borderRadius: '12px',
+                        transition: 'all 0.15s ease',
+                        position: 'relative',
+                        overflow: 'hidden',
+                      }}
+                      onClick={() => handleFolderSelect(folder)}
+                      onDoubleClick={() => handleFolderDoubleClick(folder)}
+                      className="folder-card"
+                    >
+                      <Group justify="space-between" gap={10} align="center">
+                        <Group gap="sm" style={{ flex: 1, minWidth: 0 }}>
+                          <Box
+                            style={{
+                              padding: '4px',
+                              borderRadius: '4px',
+                              backgroundColor:
+                                selectedDestination?.id === folder.id
+                                  ? '#dbeafe'
+                                  : '#f8fafc',
+                              transition: 'all 0.15s ease',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {folder.icon(22)}
+                          </Box>
+                          <Box style={{ flex: 1, minWidth: 0 }}>
+                            <Tooltip
+                              label={
+                                disabled
+                                  ? "Can't move into this folder"
+                                  : folder.name
+                              }
+                              fz={'xs'}
                             >
-                              {folder.name}
-                            </Text>
-                          </Tooltip>
-                        </Box>
+                              <Text
+                                size="sm"
+                                fw={500}
+                                truncate
+                                style={{
+                                  color:
+                                    selectedDestination?.id === folder.id
+                                      ? '#1e40af'
+                                      : '#374151',
+                                  transition: 'color 0.15s ease',
+                                }}
+                              >
+                                {folder.name}
+                              </Text>
+                            </Tooltip>
+                          </Box>
+                        </Group>
+
+                        <ActionIcon
+                          variant="subtle"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleFolderDoubleClick(folder);
+                          }}
+                          style={{
+                            borderRadius: '6px',
+                            transition: 'all 0.15s ease',
+                            opacity: 0,
+                          }}
+                          mr={10}
+                          className="folder-arrow"
+                        >
+                          <ICONS.IconChevronRight size={16} />
+                        </ActionIcon>
                       </Group>
 
-                      <ActionIcon
-                        variant="subtle"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          handleFolderDoubleClick(folder);
-                        }}
-                        style={{
-                          borderRadius: '6px',
-                          transition: 'all 0.15s ease',
-                          opacity: 0,
-                        }}
-                        mr={10}
-                        className="folder-arrow"
-                      >
-                        <ICONS.IconChevronRight size={16} />
-                      </ActionIcon>
-                    </Group>
-
-                    {/* Selection indicator */}
-                    {selectedDestination?.id === folder.id && (
-                      <Box
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: '2px',
-                          backgroundColor: '#2563eb',
-                          borderRadius: '0 4px 4px 0',
-                        }}
-                      />
-                    )}
-                  </Box>
-                ))}
+                      {/* Selection indicator */}
+                      {selectedDestination?.id === folder.id && (
+                        <Box
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: '2px',
+                            backgroundColor: '#2563eb',
+                            borderRadius: '0 4px 4px 0',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  );
+                })}
               </Stack>
             )}
           </InfiniteScroll>
