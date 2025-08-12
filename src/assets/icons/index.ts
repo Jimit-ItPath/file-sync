@@ -111,6 +111,10 @@ import {
   IconAlertCircle,
   IconSearchOff,
   IconMinus,
+  IconScale,
+  IconCalendar,
+  IconFileText,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -226,4 +230,8 @@ export const ICONS = {
   IconAlertCircle,
   IconSearchOff,
   IconMinus,
+  IconScale,
+  IconCalendar,
+  IconFileText,
+  IconInfoCircle,
 };

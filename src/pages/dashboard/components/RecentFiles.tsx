@@ -16,6 +16,7 @@ import { LoaderOverlay } from '../../../components/loader';
 import FilePreviewModal from './FilePreviewModal';
 import DownloadProgress from './DownloadProgress';
 import useFileDownloader from './use-file-downloader';
+import FileDetailsDrawer from './FileDetailsDrawer';
 
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
@@ -25,9 +26,15 @@ const selectedCardStyle = {
   boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.1)',
 };
 
-const MENU_ITEMS: [
-  { id: string; label: string; icon: React.FC; color?: string },
-] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
+const MENU_ITEMS: {
+  id: string;
+  label: string;
+  icon: React.FC;
+  color?: string;
+}[] = [
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
+  { id: 'details', label: 'Details', icon: ICONS.IconInfoSquareRounded },
+];
 
 const RecentFiles = () => {
   const { isXs, isSm } = useResponsive();
@@ -76,6 +83,10 @@ const RecentFiles = () => {
     setPreviewFile,
     previewFileLoading,
     displayPreviewIcon,
+
+    closeDetailsDrawer,
+    detailsDrawerOpen,
+    selectedItemForDetails,
   } = useRecentFiles({ downloadFile });
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
@@ -472,6 +483,17 @@ const RecentFiles = () => {
           onClose={clearDownload}
         />
       )}
+
+      {/* File Details Drawer */}
+      <FileDetailsDrawer
+        opened={detailsDrawerOpen}
+        onClose={closeDetailsDrawer}
+        item={selectedItemForDetails}
+        onPreview={item => {
+          handleMenuItemClick('preview', item);
+          closeDetailsDrawer();
+        }}
+      />
     </Stack>
   );
 };

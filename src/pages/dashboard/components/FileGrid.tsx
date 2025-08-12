@@ -52,9 +52,15 @@ type FileGridProps = {
   displayPreviewIcon?: boolean;
 };
 
-const MENU_ITEMS: [
-  { id: string; label: string; icon: React.FC; color?: string },
-] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
+const MENU_ITEMS: {
+  id: string;
+  label: string;
+  icon: React.FC;
+  color?: string;
+}[] = [
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
+  { id: 'details', label: 'Details', icon: ICONS.IconInfoCircle },
+];
 
 const FileGrid: React.FC<FileGridProps> = ({
   folders,

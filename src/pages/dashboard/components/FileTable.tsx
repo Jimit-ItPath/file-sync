@@ -5,9 +5,15 @@ import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
 import { PREVIEW_FILE_TYPES } from '../../../utils/constants';
 
-const MENU_ITEMS: [
-  { id: string; label: string; icon: React.FC; color?: string },
-] = [{ id: 'rename', label: 'Rename', icon: ICONS.IconEdit }];
+const MENU_ITEMS: {
+  id: string;
+  label: string;
+  icon: React.FC;
+  color?: string;
+}[] = [
+  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
+  { id: 'details', label: 'Details', icon: ICONS.IconInfoCircle },
+];
 
 type FileTableProps = {
   files: FileType[];

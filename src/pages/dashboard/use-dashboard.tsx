@@ -68,6 +68,7 @@ export type FileType = {
     account_name: string;
     account_type: string;
   } | null;
+  account_type?: string | null;
 };
 
 const folderSchema = z.object({
@@ -153,6 +154,10 @@ const useDashboard = () => {
 
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [itemsToMove, setItemsToMove] = useState<FileType[]>([]);
+
+  const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
+  const [selectedItemForDetails, setSelectedItemForDetails] =
+    useState<FileType | null>(null);
 
   const {
     cloudStorage,
@@ -594,6 +599,8 @@ const useDashboard = () => {
     // }
     else if (actionId === 'move') {
       handleModalMoveSelected([row?.id]);
+    } else if (actionId === 'details') {
+      handleShowDetails(row);
     } else if (actionId === 'preview') {
       // preview code
       try {
@@ -1472,6 +1479,16 @@ const useDashboard = () => {
     [files, openMoveModal]
   );
 
+  const handleShowDetails = useCallback((item: FileType) => {
+    setSelectedItemForDetails(item);
+    setDetailsDrawerOpen(true);
+  }, []);
+
+  const closeDetailsDrawer = useCallback(() => {
+    setDetailsDrawerOpen(false);
+    setSelectedItemForDetails(null);
+  }, []);
+
   return {
     layout,
     switchLayout,
@@ -1592,6 +1609,11 @@ const useDashboard = () => {
     handleMoveModalConfirm,
     currentAccountId,
     handleModalMoveSelected,
+
+    // details drawer
+    closeDetailsDrawer,
+    detailsDrawerOpen,
+    selectedItemForDetails,
   };
 };
 

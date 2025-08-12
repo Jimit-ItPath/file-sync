@@ -56,6 +56,10 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     null
   );
 
+  const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
+  const [selectedItemForDetails, setSelectedItemForDetails] =
+    useState<FileType | null>(null);
+
   const renameMethods = useForm<RenameFormData>({
     resolver: zodResolver(renameSchema),
     mode: 'onChange',
@@ -93,6 +97,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
       web_view_url: item.web_view_url,
       external_parent_id: item.external_parent_id,
       UserConnectedAccount: item.UserConnectedAccount,
+      account_type: item?.account_type,
     }));
   }, [recentFiles]);
 
@@ -120,6 +125,8 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
       setDeleteModalOpen(true);
     } else if (actionId === 'share' && row.web_view_url) {
       window.open(row.web_view_url, '_blank');
+    } else if (actionId === 'details') {
+      handleShowDetails(row);
     } else if (actionId === 'preview') {
       // preview code
       previewItems(row);
@@ -422,6 +429,16 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
       : false;
   }, [selectedIds, recentFilesData]);
 
+  const handleShowDetails = useCallback((item: FileType) => {
+    setSelectedItemForDetails(item);
+    setDetailsDrawerOpen(true);
+  }, []);
+
+  const closeDetailsDrawer = useCallback(() => {
+    setDetailsDrawerOpen(false);
+    setSelectedItemForDetails(null);
+  }, []);
+
   return {
     loading,
     selectedIds,
@@ -471,6 +488,11 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     setPreviewFile,
     previewFileLoading,
     displayPreviewIcon,
+
+    // details drawer
+    closeDetailsDrawer,
+    detailsDrawerOpen,
+    selectedItemForDetails,
   };
 };
 

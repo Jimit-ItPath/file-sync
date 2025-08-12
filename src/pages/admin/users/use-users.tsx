@@ -303,11 +303,11 @@ const useUsers = () => {
           <Text size="sm">
             {row.verified ? (
               <Tooltip label="Verified" fz={'xs'}>
-                <ICONS.IconUserCheck color="green" />
+                <ICONS.IconCircleCheck color="green" />
               </Tooltip>
             ) : (
               <Tooltip label="Not Verified" fz={'xs'}>
-                <ICONS.IconUserCancel color="red" />
+                <ICONS.IconCircleMinus color="#FFDB58" />
               </Tooltip>
             )}
           </Text>

@@ -389,7 +389,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
             display: 'flex',
             justifyContent: 'center',
             padding: '20px 0',
-            width: '1000px',
+            width: 'fit-content',
             margin: '0 auto',
           }}
         >

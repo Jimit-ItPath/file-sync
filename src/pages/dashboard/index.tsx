@@ -37,6 +37,7 @@ import { ICONS } from '../../assets/icons';
 import FullScreenPreview from './components/FullScreenPreview';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import FileDetailsDrawer from './components/FileDetailsDrawer';
 
 const iconStyle = {
   borderRadius: 999,
@@ -155,7 +156,11 @@ const Dashboard = () => {
     handleModalMoveSelected,
     loading,
     downloadItems,
+    closeDetailsDrawer,
+    detailsDrawerOpen,
+    selectedItemForDetails,
   } = useDashboard();
+
   const {
     openAccountModal,
     isConnectModalOpen,
@@ -874,6 +879,19 @@ const Dashboard = () => {
         checkLocation={checkLocation}
         accountId={accountId}
         currentAccountId={currentAccountId}
+      />
+
+      {/* File Details Drawer */}
+      <FileDetailsDrawer
+        opened={detailsDrawerOpen}
+        onClose={closeDetailsDrawer}
+        item={selectedItemForDetails}
+        onNavigateToFolder={navigateToFolderFn}
+        previewFile={previewFile}
+        onPreview={item => {
+          handleMenuItemClick('preview', item);
+          // closeDetailsDrawer();
+        }}
       />
     </Box>
   );
