@@ -13,10 +13,10 @@ import { ICONS } from '../../../assets/icons';
 import useResponsive from '../../../hooks/use-responsive';
 import useRecentFiles from './use-recent-files';
 import { LoaderOverlay } from '../../../components/loader';
-import FilePreviewModal from './FilePreviewModal';
 import DownloadProgress from './DownloadProgress';
 import useFileDownloader from './use-file-downloader';
 import FileDetailsDrawer from './FileDetailsDrawer';
+import FullScreenPreview from './FullScreenPreview';
 
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
@@ -87,6 +87,9 @@ const RecentFiles = () => {
     closeDetailsDrawer,
     detailsDrawerOpen,
     selectedItemForDetails,
+    detailsFile,
+    detailsFileLoading,
+    downloadItems,
   } = useRecentFiles({ downloadFile });
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
@@ -282,7 +285,7 @@ const RecentFiles = () => {
                   }}
                   onDoubleClick={(e: any) => {
                     e.stopPropagation();
-                    //   handleRowDoubleClick(file);
+                    handleMenuItemClick('preview', file);
                   }}
                 >
                   <Group
@@ -466,13 +469,37 @@ const RecentFiles = () => {
       </Modal>
 
       {/* Preview Modal */}
-      <FilePreviewModal
-        {...{
-          previewFile,
-          previewFileLoading,
-          previewModalOpen,
-          setPreviewFile,
-          setPreviewModalOpen,
+      <FullScreenPreview
+        previewFile={previewFile}
+        previewFileLoading={previewFileLoading}
+        previewModalOpen={previewModalOpen}
+        setPreviewModalOpen={setPreviewModalOpen}
+        setPreviewFile={setPreviewFile}
+        onDownload={() => {
+          if (
+            previewFile &&
+            recentFiles.find(f => f.name === previewFile.name)
+          ) {
+            const fileToDownload = recentFiles.find(
+              f => f.name === previewFile.name
+            );
+            if (fileToDownload) {
+              downloadItems([fileToDownload.id]);
+            }
+          }
+        }}
+        onShare={() => {
+          if (
+            previewFile &&
+            recentFiles.find(f => f.name === previewFile.name)
+          ) {
+            const fileToShare = recentFiles.find(
+              f => f.name === previewFile.name
+            );
+            if (fileToShare?.web_view_url) {
+              window.open(fileToShare.web_view_url, '_blank');
+            }
+          }
         }}
       />
 
@@ -491,8 +518,9 @@ const RecentFiles = () => {
         item={selectedItemForDetails}
         onPreview={item => {
           handleMenuItemClick('preview', item);
-          closeDetailsDrawer();
         }}
+        detailsFile={detailsFile}
+        detailsFileLoading={detailsFileLoading}
       />
     </Stack>
   );

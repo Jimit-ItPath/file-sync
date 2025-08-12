@@ -19,6 +19,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   DOCUMENT_FILE_TYPES,
+  IMAGE_FILE_TYPES,
   PREVIEW_FILE_TYPES,
   VIDEO_FILE_TYPES,
 } from '../../../utils/constants';
@@ -48,8 +49,20 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     url: string;
     type: string;
     name: string;
+    size?: number;
     isVideo?: boolean;
     isDocument?: boolean;
+    share?: string | null;
+  } | null>(null);
+  const [detailsFileLoading, setDetailsFileLoading] = useState(false);
+  const [detailsFile, setDetailsFile] = useState<{
+    url: string;
+    type: string;
+    name: string;
+    size?: number;
+    isVideo?: boolean;
+    isDocument?: boolean;
+    share?: string | null;
   } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
@@ -126,9 +139,11 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     } else if (actionId === 'share' && row.web_view_url) {
       window.open(row.web_view_url, '_blank');
     } else if (actionId === 'details') {
+      previewItems(row, false);
       handleShowDetails(row);
     } else if (actionId === 'preview') {
       // preview code
+      setPreviewModalOpen(true);
       previewItems(row);
     }
   };
@@ -320,41 +335,106 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     }
   }, [recentFilesData, selectedIds]);
 
-  const previewItems = async (row: FileType) => {
-    try {
-      setPreviewFileLoading(true);
-      setPreviewModalOpen(true);
-      const res = await dispatch(downloadFiles({ ids: [row.id] }));
-      if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
-        const url = URL.createObjectURL(res.payload?.data);
-        const isVideo = row.fileExtension
-          ? VIDEO_FILE_TYPES.includes(row.fileExtension.toLowerCase())
-          : false;
-        const isDocument = row.fileExtension
-          ? DOCUMENT_FILE_TYPES.includes(row.fileExtension.toLowerCase())
-          : false;
-        setPreviewFile({
-          url,
-          type: row.fileExtension || row.mimeType || '',
-          name: row.name,
-          isVideo,
-          isDocument,
-        });
-      } else {
+  const previewItems = useCallback(
+    async (row: FileType, isPreview = true) => {
+      try {
+        if (isPreview) {
+          setPreviewFileLoading(true);
+          setPreviewFile({
+            name: row.name,
+          } as any);
+        } else {
+          setDetailsFileLoading(true);
+          setDetailsFile({
+            name: row.name,
+          } as any);
+        }
+
+        const ext = row.fileExtension
+          ? `${row.fileExtension.toLowerCase()}`
+          : '';
+        const isSupported = isPreview
+          ? PREVIEW_FILE_TYPES.includes(ext)
+          : IMAGE_FILE_TYPES.includes(ext);
+
+        if (!isSupported) {
+          if (isPreview) {
+            setPreviewFile({
+              url: '',
+              type: ext || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              share: row.web_view_url ?? null,
+            });
+            setPreviewFileLoading(false);
+          } else {
+            setDetailsFile({
+              url: '',
+              type: ext || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              share: row.web_view_url ?? null,
+            });
+            setDetailsFileLoading(false);
+          }
+          return;
+        }
+
+        const res = await dispatch(downloadFiles({ ids: [row.id] }));
+        if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
+          const url = URL.createObjectURL(res.payload?.data);
+          const isVideo = VIDEO_FILE_TYPES.includes(ext);
+          const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
+          if (isPreview) {
+            setPreviewFile({
+              url,
+              type: row.fileExtension || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              isVideo,
+              isDocument,
+              share: row.web_view_url ?? null,
+            });
+          } else {
+            setDetailsFile({
+              url,
+              type: row.fileExtension || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              isVideo,
+              isDocument,
+              share: row.web_view_url ?? null,
+            });
+          }
+        } else {
+          notifications.show({
+            message: res?.payload?.message || 'Failed to preview file',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
         notifications.show({
-          message: res?.payload?.message || 'Failed to preview file',
+          message: error || 'Failed to preview file',
           color: 'red',
         });
+      } finally {
+        if (isPreview) {
+          setPreviewFileLoading(false);
+        } else {
+          setDetailsFileLoading(false);
+        }
       }
-    } catch (error: any) {
-      notifications.show({
-        message: error || 'Failed to preview file',
-        color: 'red',
-      });
-    } finally {
-      setPreviewFileLoading(false);
-    }
-  };
+    },
+    [dispatch]
+  );
 
   const [downloadItems] = useAsyncOperation(async data => {
     try {
@@ -374,7 +454,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
 
   const handleDownloadSelected = useCallback(() => {
     downloadItems({});
-  }, [selectedIds]);
+  }, [downloadItems]);
 
   const [syncStorage, syncCloudStorageLoading] = useAsyncOperation(async () => {
     try {
@@ -493,6 +573,9 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     closeDetailsDrawer,
     detailsDrawerOpen,
     selectedItemForDetails,
+    detailsFile,
+    detailsFileLoading,
+    downloadItems,
   };
 };
 

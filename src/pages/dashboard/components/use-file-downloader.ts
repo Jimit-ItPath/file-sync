@@ -89,7 +89,7 @@ const useFileDownloader = () => {
 
         // Use your existing Redux action but intercept the response for streaming
         const response = await fetch(
-          'http://192.168.0.26:3051/cloud-storage/download',
+          `${import.meta.env.VITE_REACT_APP_BASE_URL}/cloud-storage/download`,
           {
             method: 'POST',
             headers: {
