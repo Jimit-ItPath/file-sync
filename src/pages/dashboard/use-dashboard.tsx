@@ -145,8 +145,10 @@ const useDashboard = () => {
     url: string;
     type: string;
     name: string;
+    size?: number;
     isVideo?: boolean;
     isDocument?: boolean;
+    share?: string | null;
   } | null>(null);
 
   const [moveModalOpen, setMoveModalOpen] = useState(false);
@@ -555,6 +557,8 @@ const useDashboard = () => {
         //   setLastSelectedIndex(null);
         // }
         navigateToFolderFn({ id: row.id, name: row.name });
+      } else if (row.type === 'file') {
+        handleMenuItemClick('preview', row);
       }
     },
     [navigateToFolderFn]
@@ -594,22 +598,45 @@ const useDashboard = () => {
       // preview code
       try {
         setPreviewFileLoading(true);
+        setPreviewFile({
+          name: row.name,
+        } as any);
         setPreviewModalOpen(true);
+
+        const ext = row.fileExtension
+          ? `${row.fileExtension.toLowerCase()}`
+          : '';
+        const isSupported = PREVIEW_FILE_TYPES.includes(ext);
+
+        if (!isSupported) {
+          setPreviewFile({
+            url: '',
+            type: ext || row.mimeType || '',
+            name: row.name,
+            size: row.size
+              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+              : undefined,
+            share: row.web_view_url ?? null,
+          });
+          setPreviewFileLoading(false);
+          return;
+        }
+
         const res = await dispatch(downloadFiles({ ids: [row.id] }));
         if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
           const url = URL.createObjectURL(res.payload?.data);
-          const isVideo = row.fileExtension
-            ? VIDEO_FILE_TYPES.includes(row.fileExtension.toLowerCase())
-            : false;
-          const isDocument = row.fileExtension
-            ? DOCUMENT_FILE_TYPES.includes(row.fileExtension.toLowerCase())
-            : false;
+          const isVideo = VIDEO_FILE_TYPES.includes(ext);
+          const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
           setPreviewFile({
             url,
             type: row.fileExtension || row.mimeType || '',
             name: row.name,
+            size: row.size
+              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+              : undefined,
             isVideo,
             isDocument,
+            share: row.web_view_url ?? null,
           });
         } else {
           notifications.show({
@@ -1556,6 +1583,7 @@ const useDashboard = () => {
     setPreviewFile,
     previewFileLoading,
     displayPreviewIcon,
+    downloadItems,
 
     // modal move
     moveModalOpen,

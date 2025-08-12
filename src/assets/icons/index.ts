@@ -110,6 +110,7 @@ import {
   IconForbid,
   IconAlertCircle,
   IconSearchOff,
+  IconMinus,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -224,4 +225,5 @@ export const ICONS = {
   IconForbid,
   IconAlertCircle,
   IconSearchOff,
+  IconMinus,
 };

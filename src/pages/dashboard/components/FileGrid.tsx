@@ -377,7 +377,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                 onDoubleClick={(e: any) => {
                   e.stopPropagation();
                   if (!isMoveMode) {
-                    handleRowDoubleClick(file);
+                    handleRowDoubleClick(file, e);
                   }
                   // handleRowDoubleClick(file);
                 }}

@@ -211,9 +211,10 @@ const FileTable: React.FC<FileTableProps> = ({
           // handleRowDoubleClick(row);
           if (
             !isMoveMode ||
-            (row.type === 'folder' && !filesToMove.includes(row.id))
+            !filesToMove.includes(row.id)
+            // || (row.type === 'folder' && !filesToMove.includes(row.id))
           ) {
-            handleRowDoubleClick(row);
+            handleRowDoubleClick(row, e);
           }
         }}
         idKey="id"

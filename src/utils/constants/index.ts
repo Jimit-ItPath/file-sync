@@ -98,34 +98,35 @@ export const IMAGE_FILE_TYPES = [
   'png',
   'gif',
   'bmp',
-  'svg',
   'webp',
+  'svg',
 ];
 
 export const VIDEO_FILE_TYPES = [
   'mp4',
-  'avi',
-  'mov',
-  'wmv',
-  'flv',
-  'mkv',
-  'webm',
+  // 'avi',
+  // 'mov',
+  // 'wmv',
+  // 'flv',
+  // 'mkv',
+  // 'webm',
 ];
 
 export const DOCUMENT_FILE_TYPES = [
-  'doc',
-  'docx',
-  'xls',
-  'xlsx',
-  'ppt',
-  'pptx',
+  // 'doc',
+  // 'docx',
+  // 'xls',
+  // 'xlsx',
+  // 'ppt',
+  // 'pptx',
   'pdf',
 ];
 
 export const PREVIEW_FILE_TYPES = [
   ...IMAGE_FILE_TYPES,
   ...VIDEO_FILE_TYPES,
-  // ...DOCUMENT_FILE_TYPES,
+  ...DOCUMENT_FILE_TYPES,
+  'txt',
 ];
 
 export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;

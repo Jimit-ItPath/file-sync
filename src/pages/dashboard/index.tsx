@@ -32,9 +32,11 @@ import { formatFileSize } from '../../utils/helper';
 import useResponsive from '../../hooks/use-responsive';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import NoConnectedAccount from './NoConnectedAccount';
-import FilePreviewModal from './components/FilePreviewModal';
 import MoveModal from './components/MoveModal';
 import { ICONS } from '../../assets/icons';
+import FullScreenPreview from './components/FullScreenPreview';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 const iconStyle = {
   borderRadius: 999,
@@ -152,6 +154,7 @@ const Dashboard = () => {
     currentAccountId,
     handleModalMoveSelected,
     loading,
+    downloadItems,
   } = useDashboard();
   const {
     openAccountModal,
@@ -827,13 +830,37 @@ const Dashboard = () => {
       </Modal>
 
       {/* Preview Modal */}
-      <FilePreviewModal
+      {/* <FilePreviewModal
         {...{
           previewFile,
           previewFileLoading,
           previewModalOpen,
           setPreviewFile,
           setPreviewModalOpen,
+        }}
+      /> */}
+
+      <FullScreenPreview
+        previewFile={previewFile}
+        previewFileLoading={previewFileLoading}
+        previewModalOpen={previewModalOpen}
+        setPreviewModalOpen={setPreviewModalOpen}
+        setPreviewFile={setPreviewFile}
+        onDownload={() => {
+          if (previewFile && files.find(f => f.name === previewFile.name)) {
+            const fileToDownload = files.find(f => f.name === previewFile.name);
+            if (fileToDownload) {
+              downloadItems([fileToDownload.id]);
+            }
+          }
+        }}
+        onShare={() => {
+          if (previewFile && files.find(f => f.name === previewFile.name)) {
+            const fileToShare = files.find(f => f.name === previewFile.name);
+            if (fileToShare?.web_view_url) {
+              window.open(fileToShare.web_view_url, '_blank');
+            }
+          }
         }}
       />
 

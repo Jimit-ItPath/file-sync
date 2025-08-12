@@ -354,3 +354,17 @@ export const downloadFilesEnhanced = async (
     throw error;
   }
 };
+
+export const getVideoMimeType = (ext: string) => {
+  const map: Record<string, string> = {
+    mp4: 'video/mp4',
+    mkv: 'video/x-matroska',
+    avi: 'video/x-msvideo',
+    mov: 'video/quicktime',
+    wmv: 'video/x-ms-wmv',
+    flv: 'video/x-flv',
+    webm: 'video/webm',
+    m4v: 'video/x-m4v',
+  };
+  return map?.[ext?.toLowerCase()] || 'video/mp4';
+};
