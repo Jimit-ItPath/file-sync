@@ -106,9 +106,16 @@ const useFileDownloader = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Get total file size from Content-Length header
-        const contentLength = response.headers.get('Content-Length');
-        const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+        // Use appropriate header for total size
+        let totalSize = 0;
+
+        if (selectedIds.length === 1) {
+          const contentLength = response.headers.get('Content-Length');
+          totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+        } else {
+          const approxSize = response.headers.get('approximate-size');
+          totalSize = approxSize ? parseInt(approxSize, 10) : 0;
+        }
 
         updateProgress({ totalSize });
 
@@ -215,9 +222,11 @@ const useFileDownloader = () => {
           throw writeError;
         }
       } catch (error: any) {
-        if (error.name === 'AbortError') {
+        if (error?.name === 'AbortError') {
           updateProgress({
             status: 'cancelled',
+            fileName: downloadProgress?.fileName || '',
+            fileCount: downloadProgress?.fileCount || 0,
           });
           notifications.show({
             message: 'Download was cancelled',
@@ -226,9 +235,11 @@ const useFileDownloader = () => {
         } else {
           updateProgress({
             status: 'failed',
+            fileName: downloadProgress?.fileName || '',
+            fileCount: downloadProgress?.fileCount || 0,
           });
           notifications.show({
-            message: `Failed to download: ${error.message}`,
+            message: `Failed to download: ${error?.message ? error?.message : 'given file.'}`,
             color: 'red',
           });
         }
