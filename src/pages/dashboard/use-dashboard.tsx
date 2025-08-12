@@ -44,6 +44,7 @@ import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import { PRIVATE_ROUTES } from '../../routing/routes';
 import {
   DOCUMENT_FILE_TYPES,
+  IMAGE_FILE_TYPES,
   PREVIEW_FILE_TYPES,
   VIDEO_FILE_TYPES,
 } from '../../utils/constants';
@@ -143,6 +144,16 @@ const useDashboard = () => {
   const [previewFileLoading, setPreviewFileLoading] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    type: string;
+    name: string;
+    size?: number;
+    isVideo?: boolean;
+    isDocument?: boolean;
+    share?: string | null;
+  } | null>(null);
+  const [detailsFileLoading, setDetailsFileLoading] = useState(false);
+  const [detailsFile, setDetailsFile] = useState<{
     url: string;
     type: string;
     name: string;
@@ -600,32 +611,60 @@ const useDashboard = () => {
     else if (actionId === 'move') {
       handleModalMoveSelected([row?.id]);
     } else if (actionId === 'details') {
+      handleFilePreview(row, false);
       handleShowDetails(row);
     } else if (actionId === 'preview') {
-      // preview code
+      setPreviewModalOpen(true);
+      handleFilePreview(row);
+    }
+  };
+
+  const handleFilePreview = useCallback(
+    async (row: FileType, isPreview = true) => {
       try {
-        setPreviewFileLoading(true);
-        setPreviewFile({
-          name: row.name,
-        } as any);
-        setPreviewModalOpen(true);
+        if (isPreview) {
+          setPreviewFileLoading(true);
+          setPreviewFile({
+            name: row.name,
+          } as any);
+        } else {
+          setDetailsFileLoading(true);
+          setDetailsFile({
+            name: row.name,
+          } as any);
+        }
 
         const ext = row.fileExtension
           ? `${row.fileExtension.toLowerCase()}`
           : '';
-        const isSupported = PREVIEW_FILE_TYPES.includes(ext);
+        const isSupported = isPreview
+          ? PREVIEW_FILE_TYPES.includes(ext)
+          : IMAGE_FILE_TYPES.includes(ext);
 
         if (!isSupported) {
-          setPreviewFile({
-            url: '',
-            type: ext || row.mimeType || '',
-            name: row.name,
-            size: row.size
-              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-              : undefined,
-            share: row.web_view_url ?? null,
-          });
-          setPreviewFileLoading(false);
+          if (isPreview) {
+            setPreviewFile({
+              url: '',
+              type: ext || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              share: row.web_view_url ?? null,
+            });
+            setPreviewFileLoading(false);
+          } else {
+            setDetailsFile({
+              url: '',
+              type: ext || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              share: row.web_view_url ?? null,
+            });
+            setDetailsFileLoading(false);
+          }
           return;
         }
 
@@ -634,17 +673,31 @@ const useDashboard = () => {
           const url = URL.createObjectURL(res.payload?.data);
           const isVideo = VIDEO_FILE_TYPES.includes(ext);
           const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
-          setPreviewFile({
-            url,
-            type: row.fileExtension || row.mimeType || '',
-            name: row.name,
-            size: row.size
-              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-              : undefined,
-            isVideo,
-            isDocument,
-            share: row.web_view_url ?? null,
-          });
+          if (isPreview) {
+            setPreviewFile({
+              url,
+              type: row.fileExtension || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              isVideo,
+              isDocument,
+              share: row.web_view_url ?? null,
+            });
+          } else {
+            setDetailsFile({
+              url,
+              type: row.fileExtension || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              isVideo,
+              isDocument,
+              share: row.web_view_url ?? null,
+            });
+          }
         } else {
           notifications.show({
             message: res?.payload?.message || 'Failed to preview file',
@@ -657,10 +710,15 @@ const useDashboard = () => {
           color: 'red',
         });
       } finally {
-        setPreviewFileLoading(false);
+        if (isPreview) {
+          setPreviewFileLoading(false);
+        } else {
+          setDetailsFileLoading(false);
+        }
       }
-    }
-  };
+    },
+    [dispatch]
+  );
 
   // Folder creation functionality
   const [createFolder, createFolderLoading] = useAsyncOperation(
@@ -1487,6 +1545,7 @@ const useDashboard = () => {
   const closeDetailsDrawer = useCallback(() => {
     setDetailsDrawerOpen(false);
     setSelectedItemForDetails(null);
+    setPreviewFile(null);
   }, []);
 
   return {
@@ -1614,6 +1673,8 @@ const useDashboard = () => {
     closeDetailsDrawer,
     detailsDrawerOpen,
     selectedItemForDetails,
+    detailsFile,
+    detailsFileLoading,
   };
 };
 

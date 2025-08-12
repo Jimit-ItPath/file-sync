@@ -13,6 +13,7 @@ import {
   Paper,
   ThemeIcon,
   Image,
+  Loader,
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { FileType } from '../use-dashboard';
@@ -20,6 +21,7 @@ import { formatDateAndTime, formatFileSize } from '../../../utils/helper';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OnedriveIcon from '../../../assets/svgs/OneDrive.svg';
+import { IMAGE_FILE_TYPES } from '../../../utils/constants';
 
 interface FileDetailsDrawerProps {
   opened: boolean;
@@ -27,7 +29,7 @@ interface FileDetailsDrawerProps {
   item: FileType | null;
   onNavigateToFolder?: (folder: { id: string; name: string }) => void;
   onPreview?: (item: FileType) => void;
-  previewFile: {
+  detailsFile: {
     url: string;
     type: string;
     name: string;
@@ -36,6 +38,7 @@ interface FileDetailsDrawerProps {
     isDocument?: boolean | undefined;
     share?: string | null | undefined;
   } | null;
+  detailsFileLoading?: boolean;
 }
 
 const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
@@ -44,7 +47,8 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
   item,
   onNavigateToFolder,
   onPreview,
-  previewFile = null,
+  detailsFile = null,
+  detailsFileLoading = false,
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -133,16 +137,27 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
           </Center>
         </Paper>
       );
-    } else {
-      return (
-        <Paper
-          p="xl"
-          style={{
-            backgroundColor: '#f8f9fa',
-            borderRadius: '12px',
-          }}
-        >
-          <Center>
+    }
+    return (
+      <Paper
+        p="xl"
+        style={{
+          backgroundColor: '#f8f9fa',
+          borderRadius: '12px',
+        }}
+      >
+        <Center>
+          {detailsFileLoading ? (
+            <Loader />
+          ) : detailsFile && IMAGE_FILE_TYPES.includes(detailsFile?.type) ? (
+            <Stack
+              align="center"
+              style={{ cursor: 'pointer' }}
+              onClick={() => onPreview?.(item)}
+            >
+              <Image src={detailsFile.url} alt={detailsFile.name} w={200} />
+            </Stack>
+          ) : (
             <Stack align="center" gap="sm">
               <ThemeIcon size="xl" variant="light" radius="xl">
                 {item.icon(48)}
@@ -158,10 +173,10 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
                 </Group>
               </Box>
             </Stack>
-          </Center>
-        </Paper>
-      );
-    }
+          )}
+        </Center>
+      </Paper>
+    );
   };
 
   const renderMetadataItem = (

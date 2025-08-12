@@ -108,8 +108,6 @@ const Dashboard = () => {
     scrollBoxRef,
     accountId,
     handleAccountTypeChange,
-    handleSearchChange,
-    searchTerm,
     allIds,
     lastSelectedIndex,
     loadMoreFiles,
@@ -159,6 +157,8 @@ const Dashboard = () => {
     closeDetailsDrawer,
     detailsDrawerOpen,
     selectedItemForDetails,
+    detailsFile,
+    detailsFileLoading,
   } = useDashboard();
 
   const {
@@ -392,7 +392,7 @@ const Dashboard = () => {
                   }}
                 />
               )}
-              <TextInput
+              {/* <TextInput
                 placeholder="Search files..."
                 value={searchTerm}
                 onChange={event => handleSearchChange(event.target.value)}
@@ -423,7 +423,7 @@ const Dashboard = () => {
                     paddingLeft: '16px',
                   },
                 }}
-              />
+              /> */}
               <CustomToggle
                 value={layout}
                 onChange={(value: 'list' | 'grid') => switchLayout(value)}
@@ -887,7 +887,8 @@ const Dashboard = () => {
         onClose={closeDetailsDrawer}
         item={selectedItemForDetails}
         onNavigateToFolder={navigateToFolderFn}
-        previewFile={previewFile}
+        detailsFile={detailsFile}
+        detailsFileLoading={detailsFileLoading}
         onPreview={item => {
           handleMenuItemClick('preview', item);
           // closeDetailsDrawer();
