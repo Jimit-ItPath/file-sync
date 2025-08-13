@@ -519,7 +519,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       <DateInput
                         label="After"
                         placeholder="Pick date"
-                        value={customDateRange.after}
+                        value={customDateRange.after || null}
                         onChange={(date: any) =>
                           setCustomDateRange(prev => ({
                             ...prev,
@@ -527,6 +527,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                           }))
                         }
                         clearable
+                        // minDate={new Date(2000, 0, 1)} // Example min date
+                        maxDate={customDateRange.before || new Date()}
                         popoverProps={{
                           withinPortal: true,
                           position: 'bottom-end',
@@ -557,7 +559,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       <DateInput
                         label="Before"
                         placeholder="Pick date"
-                        value={customDateRange.before}
+                        value={customDateRange.before || null}
                         onChange={(date: any) =>
                           setCustomDateRange(prev => ({
                             ...prev,
@@ -565,6 +567,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                           }))
                         }
                         clearable
+                        minDate={customDateRange.after} // Min date is either "After" date or Jan 1, 2000
+                        maxDate={new Date()}
                         popoverProps={{
                           withinPortal: true,
                           position: 'bottom-end',
@@ -593,14 +597,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                     </Box>
                   </Stack>
                   <Box className="filterActions">
-                    <Button
-                      variant="subtle"
-                      size="sm"
-                      onClick={() => {
-                        setCustomDateRange({});
-                        handleClearAll();
-                      }}
-                    >
+                    <Button variant="subtle" size="sm" onClick={handleClearAll}>
                       Clear
                     </Button>
                     <Button
