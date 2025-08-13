@@ -95,7 +95,6 @@ const CompleteProfile = () => {
                         error,
                         name,
                         isRequired,
-                        disabled,
                         strengthMeter,
                       }) => (
                         <Input
@@ -108,7 +107,6 @@ const CompleteProfile = () => {
                           radius="md"
                           size="md"
                           withAsterisk={isRequired}
-                          disabled={disabled}
                           strengthMeter={strengthMeter}
                           // autoComplete={type === 'password-input' ? 'new-password' : 'off'}
                         />

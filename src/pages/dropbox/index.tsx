@@ -177,6 +177,9 @@ const Dropbox = () => {
                   onPaste={handlePasteFiles}
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
+                  displayDownloadIcon={true}
+                  displayShareIcon={true}
+                  displayMoveIcon={true}
                 />
               </Box>
             ) : (
@@ -226,6 +229,7 @@ const Dropbox = () => {
               handleUnselectAll,
               filesToMove,
               isMoveMode,
+              checkLocation: false,
             }}
           />
         ) : (

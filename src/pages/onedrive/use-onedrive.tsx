@@ -50,6 +50,7 @@ export type FileType = {
   fileExtension?: string | null;
   download_url?: string | null;
   parent_id: string | null;
+  web_view_url: string | null;
 };
 
 const folderSchema = z.object({
@@ -246,7 +247,7 @@ const useOneDrive = () => {
 
   // Convert cloud storage data to FileType format
   const files = useMemo(() => {
-    return oneDriveFiles.map(item => ({
+    return oneDriveFiles.map((item: any) => ({
       id: item.id,
       name: item.name,
       type:
@@ -266,6 +267,7 @@ const useOneDrive = () => {
       fileExtension: item.file_extension,
       preview: item.download_url,
       parent_id: item.parent_id,
+      web_view_url: item.web_view_url,
     }));
   }, [oneDriveFiles]);
 

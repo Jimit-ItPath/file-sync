@@ -21,7 +21,6 @@ import { Button, Dropzone, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
 import {
   formatBytes,
-  getLocalStorage,
   removeLocalStorage,
 } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
