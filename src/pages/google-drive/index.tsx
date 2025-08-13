@@ -177,6 +177,9 @@ const GoogleDrive = () => {
                   onPaste={handlePasteFiles}
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
+                  displayDownloadIcon={true}
+                  displayShareIcon={true}
+                  displayMoveIcon={true}
                 />
               </Box>
             ) : (
@@ -226,6 +229,7 @@ const GoogleDrive = () => {
               handleUnselectAll,
               filesToMove,
               isMoveMode,
+              checkLocation: false,
             }}
           />
         ) : (

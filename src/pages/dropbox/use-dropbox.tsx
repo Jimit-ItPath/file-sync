@@ -49,6 +49,7 @@ export type FileType = {
   mimeType?: string;
   fileExtension?: string | null;
   download_url?: string | null;
+  web_view_url: string | null;
 };
 
 const folderSchema = z.object({
@@ -247,7 +248,7 @@ const useDropbox = () => {
 
   // Convert cloud storage data to FileType format
   const files = useMemo(() => {
-    return dropboxFiles.map(item => ({
+    return dropboxFiles.map((item: any) => ({
       id: item.id,
       name: item.name,
       type:
@@ -267,6 +268,7 @@ const useDropbox = () => {
       fileExtension: item.file_extension,
       preview: item.download_url,
       parent_id: item.parent_id,
+      web_view_url: item.web_view_url,
     }));
   }, [dropboxFiles]);
 

@@ -7,7 +7,6 @@ import {
   Burger,
   Container,
   Group,
-  TextInput,
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
 import { usePageData } from '../../hooks/use-page-data';
@@ -23,20 +22,15 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import {
-  fetchStorageDetails,
-  getConnectedAccount,
+  // fetchStorageDetails,
+  // getConnectedAccount,
   resetUser,
   updateUser,
 } from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
-import {
-  DOCUMENT_FILE_TYPES,
-  ROLES,
-  VIDEO_FILE_TYPES,
-} from '../../utils/constants';
+import { ROLES } from '../../utils/constants';
 import { decodeToken } from '../../utils/helper';
 import GlobalSearchBar from './GlobalSearchBar';
-import { downloadFiles } from '../../store/slices/cloudStorage.slice';
 import TawkToWidget from '../../widget/TawkToWidget';
 
 const DashboardLayout = () => {
@@ -53,17 +47,17 @@ const DashboardLayout = () => {
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
 
-  const getAccounts = useCallback(async () => {
-    await dispatch(getConnectedAccount());
-  }, [dispatch]);
+  // const getAccounts = useCallback(async () => {
+  //   await dispatch(getConnectedAccount());
+  // }, [dispatch]);
 
-  const [onInitialize] = useAsyncOperation(getAccounts);
+  // const [onInitialize] = useAsyncOperation(getAccounts);
 
-  const getStorageDetails = useCallback(async () => {
-    await dispatch(fetchStorageDetails());
-  }, [dispatch]);
+  // const getStorageDetails = useCallback(async () => {
+  //   await dispatch(fetchStorageDetails());
+  // }, [dispatch]);
 
-  const [fetchStorageData] = useAsyncOperation(getStorageDetails);
+  // const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   const getUserProfile = useCallback(async () => {
     const res = await dispatch(fetchProfile());

@@ -176,6 +176,9 @@ const OneDrive = () => {
                   onPaste={handlePasteFiles}
                   isMoveMode={isMoveMode}
                   isPasteEnabled={isPasteEnabled()}
+                  displayDownloadIcon={true}
+                  displayShareIcon={true}
+                  displayMoveIcon={true}
                 />
               </Box>
             ) : (
@@ -225,6 +228,7 @@ const OneDrive = () => {
               handleUnselectAll,
               filesToMove,
               isMoveMode,
+              checkLocation: false,
             }}
           />
         ) : (
