@@ -115,6 +115,8 @@ import {
   IconCalendar,
   IconFileText,
   IconInfoCircle,
+  IconArrowsHorizontal,
+  IconArrowsVertical,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -234,4 +236,6 @@ export const ICONS = {
   IconCalendar,
   IconFileText,
   IconInfoCircle,
+  IconArrowsHorizontal,
+  IconArrowsVertical,
 };
