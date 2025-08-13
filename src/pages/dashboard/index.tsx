@@ -38,6 +38,8 @@ import FullScreenPreview from './components/FullScreenPreview';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import FileDetailsDrawer from './components/FileDetailsDrawer';
+import useFileDownloader from './components/use-file-downloader';
+import DownloadProgress from './components/DownloadProgress';
 
 const iconStyle = {
   borderRadius: 999,
@@ -49,6 +51,8 @@ const iconStyle = {
 };
 
 const Dashboard = () => {
+  const { downloadProgress, cancelDownload, clearDownload, downloadFile } =
+    useFileDownloader();
   const {
     layout,
     switchLayout,
@@ -159,7 +163,7 @@ const Dashboard = () => {
     selectedItemForDetails,
     detailsFile,
     detailsFileLoading,
-  } = useDashboard();
+  } = useDashboard({ downloadFile });
 
   const {
     openAccountModal,
@@ -894,6 +898,14 @@ const Dashboard = () => {
           // closeDetailsDrawer();
         }}
       />
+
+      {downloadProgress && (
+        <DownloadProgress
+          downloadProgress={downloadProgress}
+          onCancelDownload={cancelDownload}
+          onClose={clearDownload}
+        />
+      )}
     </Box>
   );
 };

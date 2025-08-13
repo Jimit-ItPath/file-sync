@@ -29,7 +29,7 @@ import {
 } from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
 import { ROLES } from '../../utils/constants';
-import { decodeToken } from '../../utils/helper';
+import { decodeToken, removeLocalStorage } from '../../utils/helper';
 import GlobalSearchBar from './GlobalSearchBar';
 import TawkToWidget from '../../widget/TawkToWidget';
 
@@ -177,13 +177,26 @@ const DashboardLayout = () => {
                   size="sm"
                 />
                 {isXs ? (
-                  <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+                  <ICONS.IconCloud
+                    size={32}
+                    color={'#0ea5e9'}
+                    onClick={() => {
+                      removeLocalStorage('folderId');
+                      removeLocalStorage('cloudStoragePath');
+                      navigate(PRIVATE_ROUTES.DASHBOARD.url);
+                    }}
+                  />
                 ) : (
                   <Box
                     fw={700}
                     fz={22}
                     c="blue.7"
-                    style={{ letterSpacing: -0.5 }}
+                    style={{ letterSpacing: -0.5, cursor: 'pointer' }}
+                    onClick={() => {
+                      removeLocalStorage('folderId');
+                      removeLocalStorage('cloudStoragePath');
+                      navigate(PRIVATE_ROUTES.DASHBOARD.url);
+                    }}
                   >
                     AllCloudHub
                   </Box>
@@ -271,7 +284,7 @@ const DashboardLayout = () => {
             </Group>
           </Container>
         </AppShell.Header>
-        <AppShell.Navbar p="md">
+        <AppShell.Navbar p="md" styles={{ navbar: { zIndex: 20 } }}>
           <NavBar />
         </AppShell.Navbar>
         <AppShell.Main>

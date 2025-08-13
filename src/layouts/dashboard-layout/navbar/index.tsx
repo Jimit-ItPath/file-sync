@@ -3,7 +3,6 @@ import {
   Autocomplete,
   Box,
   Group,
-  Loader,
   Menu,
   NavLink,
   Progress,
@@ -19,10 +18,7 @@ import { useMemo } from 'react';
 import useSidebar from './use-sidebar';
 import { Button, Dropzone, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
-import {
-  formatBytes,
-  removeLocalStorage,
-} from '../../../utils/helper';
+import { formatBytes, removeLocalStorage } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
 import ConnectAccountDescription from '../../../pages/dashboard/ConnectAccountDescription';
 import ShowConfetti from '../../../components/confetti';
@@ -91,7 +87,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     setShowConfetti,
     sortedCloudAccounts,
     handleDragEnd,
-    updateSequenceLoading,
+    // updateSequenceLoading,
     // closeNewModal,
     // isNewModalOpen,
     // openNewModal,
@@ -121,7 +117,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
     uploadingFiles,
     handleCancelUpload,
     handleCloseUploadProgress,
-  } = useDashboard();
+  } = useDashboard({});
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
     [location.pathname]
@@ -332,28 +328,28 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
                     items={sortedCloudAccounts.map(account => account.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {updateSequenceLoading ? (
+                    {/* {updateSequenceLoading ? (
                       <Group align="center" justify="center" mt={10} mr={10}>
                         <Loader />
                       </Group>
-                    ) : (
-                      sortedCloudAccounts?.map(account => {
-                        const isActive = isActiveRoute(account.url);
+                    ) : ( */}
+                    {sortedCloudAccounts?.map(account => {
+                      const isActive = isActiveRoute(account.url);
 
-                        return (
-                          <SortableCloudAccountItem
-                            key={account.id}
-                            account={account}
-                            isActive={isActive}
-                            hoveredAccountId={hoveredAccountId}
-                            setHoveredAccountId={setHoveredAccountId}
-                            openRemoveAccessModal={openRemoveAccessModal}
-                            mobileDrawerHandler={mobileDrawerHandler}
-                            sortedCloudAccounts={sortedCloudAccounts}
-                          />
-                        );
-                      })
-                    )}
+                      return (
+                        <SortableCloudAccountItem
+                          key={account.id}
+                          account={account}
+                          isActive={isActive}
+                          hoveredAccountId={hoveredAccountId}
+                          setHoveredAccountId={setHoveredAccountId}
+                          openRemoveAccessModal={openRemoveAccessModal}
+                          mobileDrawerHandler={mobileDrawerHandler}
+                          sortedCloudAccounts={sortedCloudAccounts}
+                        />
+                      );
+                    })}
+                    {/* )} */}
                   </SortableContext>
                 </DndContext>
               </Box>

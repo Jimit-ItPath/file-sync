@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  downloadFilesEnhanced,
   formatDate,
   formatFileSize,
   getLocalStorage,
@@ -39,7 +40,7 @@ import { notifications } from '@mantine/notifications';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
-import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
+// import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import { PRIVATE_ROUTES } from '../../routing/routes';
 import {
@@ -48,6 +49,10 @@ import {
   PREVIEW_FILE_TYPES,
   VIDEO_FILE_TYPES,
 } from '../../utils/constants';
+
+type UseDashboardProps = {
+  downloadFile?: (ids: string[]) => Promise<void>;
+};
 
 export type FileType = {
   id: string;
@@ -90,7 +95,7 @@ type FolderFormData = z.infer<typeof folderSchema>;
 type UploadFormData = z.infer<typeof uploadSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
-const useDashboard = () => {
+const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
@@ -1207,21 +1212,37 @@ const useDashboard = () => {
     setModalOpen(false);
   }, []);
 
+  // const [downloadItems] = useAsyncOperation(async data => {
+  //   try {
+  //     const res = await dispatch(
+  //       downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
+  //     );
+  //     if (res?.payload?.status !== 200) {
+  //       notifications.show({
+  //         message:
+  //           res?.payload?.message ||
+  //           `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
+  //         color: 'red',
+  //       });
+  //       return;
+  //     }
+  //     downloadFilesHelper(res.payload.data, res);
+  //   } catch (error: any) {
+  //     notifications.show({
+  //       message:
+  //         error ||
+  //         `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+  //       color: 'red',
+  //     });
+  //   }
+  // });
+
   const [downloadItems] = useAsyncOperation(async data => {
     try {
-      const res = await dispatch(
-        downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
-      );
-      if (res?.payload?.status !== 200) {
-        notifications.show({
-          message:
-            res?.payload?.message ||
-            `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
-          color: 'red',
-        });
-        return;
-      }
-      downloadFilesHelper(res.payload.data, res);
+      const idsToDownload = Array.isArray(data) ? data : selectedIds;
+
+      // Use the enhanced download system
+      await downloadFilesEnhanced(idsToDownload, downloadFile!);
     } catch (error: any) {
       notifications.show({
         message:
