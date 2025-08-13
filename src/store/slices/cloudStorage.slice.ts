@@ -99,6 +99,9 @@ export const fetchCloudStorageFiles = createAsyncThunk(
       searchTerm?: string;
       page?: number;
       limit?: number;
+      type?: string;
+      start_date?: string;
+      end_date?: string;
     },
     { rejectWithValue }
   ) => {
@@ -139,6 +142,9 @@ export const navigateToFolder = createAsyncThunk(
       page?: number;
       limit?: number;
       searchTerm?: string;
+      type?: string;
+      start_date?: string;
+      end_date?: string;
     } | null,
     { dispatch }
   ) => {
@@ -162,6 +168,9 @@ export const navigateToFolder = createAsyncThunk(
           page: data.page ?? defaultPage,
           limit: data.limit ?? defaultLimit,
           searchTerm: data.searchTerm,
+          type: data.type,
+          start_date: data.start_date,
+          end_date: data.end_date,
         })
       );
       return {
@@ -183,6 +192,9 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
       id?: string;
       searchTerm?: string;
       account_id?: string;
+      type?: string;
+      start_date?: string;
+      end_date?: string;
     },
     { dispatch }
   ) => {
@@ -201,6 +213,9 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
             page: data.page ?? defaultPage,
             limit: data.limit ?? defaultLimit,
             searchTerm: data.searchTerm,
+            type: data.type,
+            start_date: data.start_date,
+            end_date: data.end_date,
           })
         );
       }
@@ -213,6 +228,9 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
           limit: data.limit ?? defaultLimit,
           account_id: data.account_id,
           searchTerm: data.searchTerm,
+          type: data.type,
+          start_date: data.start_date,
+          end_date: data.end_date,
         })
       );
     }

@@ -308,13 +308,13 @@ const useFileDownloader = () => {
 
         // Get total size
         let totalSize = 0;
-        if (selectedIds.length === 1) {
-          const contentLength = response.headers.get('Content-Length');
-          totalSize = contentLength ? parseInt(contentLength, 10) : 0;
-        } else {
-          const approxSize = response.headers.get('approximate-size');
-          totalSize = approxSize ? parseInt(approxSize, 10) : 0;
-        }
+        // if (selectedIds.length === 1) {
+        //   const contentLength = response.headers.get('Content-Length');
+        //   totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+        // } else {
+        const approxSize = response.headers.get('approximate-size');
+        totalSize = approxSize ? parseInt(approxSize, 10) : 0;
+        // }
 
         updateProgress({ totalSize });
 

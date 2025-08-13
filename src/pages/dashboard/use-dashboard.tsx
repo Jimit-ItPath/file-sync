@@ -175,6 +175,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const [selectedItemForDetails, setSelectedItemForDetails] =
     useState<FileType | null>(null);
 
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [modifiedFilter, setModifiedFilter] = useState<{
+    after?: Date;
+    before?: Date;
+  } | null>(null);
+
   const {
     cloudStorage,
     loading,
@@ -275,13 +281,19 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   };
 
   const getCloudStorageFiles = useCallback(
-    async (page?: number) => {
+    async (
+      page?: number,
+      filters?: { type?: string; after?: string; before?: string }
+    ) => {
       const requestParams: any = {
         ...(folderId && { id: folderId }),
         limit: pagination?.page_limit || 20,
         // page: typeof page === 'number' ? page : pagination?.page_no || 1,
         page: typeof page === 'number' ? page : 1,
         searchTerm: debouncedSearchTerm || '',
+        ...(filters?.type && { type: filters.type }),
+        ...(filters?.after && { start_date: filters.after }),
+        ...(filters?.before && { end_date: filters.before }),
       };
 
       if (checkLocation && currentAccountId) {
@@ -299,8 +311,41 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       pagination?.page_no,
       accountId,
       debouncedSearchTerm,
+      checkLocation,
+      currentAccountId,
     ]
   );
+
+  // Add filter handler functions:
+  const handleTypeFilter = useCallback(
+    async (type: string | null) => {
+      setTypeFilter(type);
+      await getCloudStorageFiles(1, {
+        type: type || undefined,
+        after: modifiedFilter?.after?.toISOString(),
+        before: modifiedFilter?.before?.toISOString(),
+      });
+    },
+    [modifiedFilter]
+  );
+
+  const handleModifiedFilter = useCallback(
+    async (dateRange: { after?: Date; before?: Date } | null) => {
+      setModifiedFilter(dateRange);
+      await getCloudStorageFiles(1, {
+        type: typeFilter || undefined,
+        after: dateRange?.after?.toISOString(),
+        before: dateRange?.before?.toISOString(),
+      });
+    },
+    [typeFilter]
+  );
+
+  const handleClearFilters = useCallback(async () => {
+    setTypeFilter(null);
+    setModifiedFilter(null);
+    await getCloudStorageFiles(1);
+  }, []);
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
@@ -406,9 +451,18 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
     dispatch(setSearchTerm(debouncedSearchTerm));
     if (checkLocation || accountId !== 'all') {
-      getCloudStorageFiles(1);
+      getCloudStorageFiles(1, {
+        type: typeFilter || undefined,
+        after: modifiedFilter?.after?.toISOString(),
+        before: modifiedFilter?.before?.toISOString(),
+      });
     } else {
-      getCloudStorageFiles();
+      // getCloudStorageFiles();
+      getCloudStorageFiles(undefined, {
+        type: typeFilter || undefined,
+        after: modifiedFilter?.after?.toISOString(),
+        before: modifiedFilter?.before?.toISOString(),
+      });
     }
   }, [debouncedSearchTerm, accountId, checkLocation]);
 
@@ -746,7 +800,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after?.toISOString(),
+            before: modifiedFilter?.before?.toISOString(),
+          });
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
             color: 'green',
@@ -851,7 +910,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         // if (!folderId || folderId === null) {
         //   onGetRecentFiles({});
         // }
-        await getCloudStorageFiles(1);
+        // await getCloudStorageFiles(1);
+        await getCloudStorageFiles(1, {
+          type: typeFilter || undefined,
+          after: modifiedFilter?.after?.toISOString(),
+          before: modifiedFilter?.before?.toISOString(),
+        });
       } catch (error: any) {
         notifications.show({
           message:
@@ -874,7 +938,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         // if (!folderId || folderId === null) {
         //   onGetRecentFiles({});
         // }
-        await getCloudStorageFiles(1);
+        // await getCloudStorageFiles(1);
+        await getCloudStorageFiles(1, {
+          type: typeFilter || undefined,
+          after: modifiedFilter?.after?.toISOString(),
+          before: modifiedFilter?.before?.toISOString(),
+        });
         notifications.show({
           message: 'Item renamed successfully',
           color: 'green',
@@ -905,7 +974,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after?.toISOString(),
+            before: modifiedFilter?.before?.toISOString(),
+          });
           notifications.show({
             message: res?.payload?.message || 'Item deleted successfully',
             color: 'green',
@@ -1163,7 +1237,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after?.toISOString(),
+            before: modifiedFilter?.before?.toISOString(),
+          });
           notifications.show({
             message:
               res?.payload?.message ||
@@ -1279,7 +1358,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after?.toISOString(),
+            before: modifiedFilter?.before?.toISOString(),
+          });
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
             color: 'green',
@@ -1324,7 +1408,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after?.toISOString(),
+            before: modifiedFilter?.before?.toISOString(),
+          });
         } else {
           notifications.show({
             message: res?.message || 'Failed to move items',
@@ -1514,7 +1603,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after?.toISOString(),
+            before: modifiedFilter?.before?.toISOString(),
+          });
 
           // Clear selections
           setSelectedIds([]);
@@ -1696,6 +1790,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     selectedItemForDetails,
     detailsFile,
     detailsFileLoading,
+
+    //filters
+    handleClearFilters,
+    handleModifiedFilter,
+    handleTypeFilter,
+    typeFilter,
+    modifiedFilter,
   };
 };
 
