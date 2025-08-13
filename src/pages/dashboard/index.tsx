@@ -417,11 +417,11 @@ const Dashboard = () => {
                   justifyContent: 'space-between',
                   padding: '6px 14px',
                   // background: 'rgba(255, 255, 255, 0.75)',
-                  backdropFilter: 'blur(8px)',
+                  // backdropFilter: 'blur(8px)',
                   borderRadius: 9999,
                   margin: 'auto',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  border: '1px solid rgba(200, 200, 200, 0.4)',
+                  // boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  // border: '1px solid rgba(200, 200, 200, 0.4)',
                   transition: 'opacity 0.25s ease, transform 0.25s ease',
                 }}
                 h={40}
