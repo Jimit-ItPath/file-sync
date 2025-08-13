@@ -33,7 +33,6 @@ export const Modal = ({
           </Title>
         )
       }
-      zIndex={1000}
       scrollAreaComponent={ScrollArea.Autosize}
       closeButtonProps={{ bg: 'white', c: 'gray' }}
       styles={{

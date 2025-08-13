@@ -90,6 +90,34 @@ export const api = {
         method: METHODS.DELETE,
         ...configs,
       }),
+    completeProfile: (data: {
+      first_name: string;
+      last_name: string;
+      email?: string;
+      password: string;
+      validation_code: string;
+    }) =>
+      client({
+        url: `/auth/complete-profile`,
+        method: METHODS.POST,
+        data,
+      }),
+    updateSequence: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        id: number;
+        sequence_number: number;
+      }[];
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/connected-account/update-sequence`,
+        method: METHODS.PUT,
+        data,
+        ...configs,
+      }),
   },
   user: {
     get: ({ id, ...configs }: { id: string; [key: string]: any }) =>
@@ -134,217 +162,25 @@ export const api = {
         data,
         ...configs,
       }),
-  },
-  googleDrive: {
-    hasAccess: () =>
-      client({
-        url: `/google-drive/has-access`,
-        method: METHODS.GET,
-      }),
-    auth: () =>
-      client({
-        url: '/google/drive/auth',
-        method: METHODS.GET,
-      }),
-    getFiles: (params: { pageToken?: string; folderId?: string | null }) =>
-      client({
-        url: '/google-drive/files',
-        method: METHODS.GET,
-        params,
-      }),
-    createFolder: ({
+    updateSFDPreference: ({
       data,
       ...configs
     }: {
-      data: { folder_name: string };
+      data: {
+        is_sfd_enabled: boolean;
+      };
       [key: string]: any;
     }) =>
       client({
-        url: '/google-drive/create-folder',
-        method: METHODS.POST,
+        url: `/user/sfd-status`,
+        method: METHODS.PATCH,
         data,
-        ...configs,
-      }),
-    renameFile: ({
-      data,
-      ...configs
-    }: {
-      data: { file_id: string; name: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/google-drive/rename-file-or-folder',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    uploadFiles: ({
-      data,
-      ...configs
-    }: {
-      data: FormData;
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/google-drive/upload-file',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    deleteFile: ({
-      data,
-      ...configs
-    }: {
-      data: { field: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: `/google-drive/delete-file/${data.field}`,
-        method: METHODS.DELETE,
         ...configs,
       }),
   },
-  dropbox: {
-    hasAccess: () =>
-      client({
-        url: `/dropbox/has-access`,
-        method: METHODS.GET,
-      }),
-    auth: () =>
-      client({
-        url: '/dropbox/auth',
-        method: METHODS.GET,
-      }),
-    getFiles: (params: { cursor?: string }) =>
-      client({
-        url: '/dropbox/list',
-        method: METHODS.GET,
-        params,
-      }),
-    createFolder: ({
-      data,
-      ...configs
-    }: {
-      data: { folder_name: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/dropbox/create-folder',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    renameFile: ({
-      data,
-      ...configs
-    }: {
-      data: { id: string; name: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/dropbox/rename-item',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    uploadFiles: ({
-      data,
-      ...configs
-    }: {
-      data: FormData;
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/dropbox/upload-file',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    deleteFile: ({
-      data,
-      ...configs
-    }: {
-      data: { id: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: `/dropbox/delete-item/${data.id}`,
-        method: METHODS.DELETE,
-        ...configs,
-      }),
-  },
-  oneDrive: {
-    hasAccess: () =>
-      client({
-        url: `/onedrive/has-access`,
-        method: METHODS.GET,
-      }),
-    auth: () =>
-      client({
-        url: '/onedrive/auth',
-        method: METHODS.GET,
-      }),
-    getFiles: (params: { nextLink?: string; parentId?: string }) =>
-      client({
-        url: '/onedrive/list',
-        method: METHODS.GET,
-        params,
-      }),
-    createFolder: ({
-      data,
-      ...configs
-    }: {
-      data: { folder_name: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/onedrive/create-folder',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    renameFile: ({
-      data,
-      ...configs
-    }: {
-      data: { id: string; name: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/onedrive/rename-item',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    uploadFiles: ({
-      data,
-      ...configs
-    }: {
-      data: FormData;
-      [key: string]: any;
-    }) =>
-      client({
-        url: '/onedrive/upload-file',
-        method: METHODS.POST,
-        data,
-        ...configs,
-      }),
-    deleteFile: ({
-      data,
-      ...configs
-    }: {
-      data: { id: string };
-      [key: string]: any;
-    }) =>
-      client({
-        url: `/onedrive/delete-item/${data.id}`,
-        method: METHODS.DELETE,
-        ...configs,
-      }),
-  },
-  cloudStorage: {
+  googleDrive: {
     getFiles: (params: {
-      account_id?: number | string;
+      account_id: number | string;
       account_type?: 'google_drive' | 'dropbox' | 'onedrive';
       id?: string;
       searchTerm?: string;
@@ -360,7 +196,7 @@ export const api = {
       data,
       ...configs
     }: {
-      data: { name: string; id?: string | null };
+      data: { name: string; id?: string | null; account_id: number | string };
       [key: string]: any;
     }) =>
       client({
@@ -421,6 +257,430 @@ export const api = {
         data,
         responseType: 'blob',
         ...configs,
+      }),
+    moveFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[]; destination_id: string | null };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/move`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+  },
+  dropbox: {
+    getFiles: (params: {
+      account_id: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      client({
+        url: '/cloud-storage',
+        method: METHODS.GET,
+        params,
+      }),
+    createFolder: ({
+      data,
+      ...configs
+    }: {
+      data: { name: string; id?: string | null; account_id: number | string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/create-folder',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    renameFile: ({
+      data,
+      ...configs
+    }: {
+      data: { id: string; name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/rename',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    uploadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: FormData;
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/upload-file',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    deleteFile: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/delete`,
+        method: METHODS.DELETE,
+        data,
+        ...configs,
+      }),
+    downloadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/download`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
+        ...configs,
+      }),
+    moveFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[]; destination_id: string | null };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/move`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+  },
+  oneDrive: {
+    getFiles: (params: {
+      account_id: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      client({
+        url: '/cloud-storage',
+        method: METHODS.GET,
+        params,
+      }),
+    createFolder: ({
+      data,
+      ...configs
+    }: {
+      data: { name: string; id?: string | null; account_id: number | string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/create-folder',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    renameFile: ({
+      data,
+      ...configs
+    }: {
+      data: { id: string; name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/rename',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    uploadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: FormData;
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/upload-file',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    deleteFile: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/delete`,
+        method: METHODS.DELETE,
+        data,
+        ...configs,
+      }),
+    downloadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/download`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
+        ...configs,
+      }),
+    moveFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[]; destination_id: string | null };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/move`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+  },
+  cloudStorage: {
+    getFiles: (params: {
+      account_id?: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      client({
+        url: '/cloud-storage',
+        method: METHODS.GET,
+        params,
+      }),
+    getRecentFiles: (params: { account_id?: number | string }) =>
+      client({
+        url: '/cloud-storage/recent-files',
+        method: METHODS.GET,
+        params,
+      }),
+    createFolder: ({
+      data,
+      ...configs
+    }: {
+      data: { name: string; id?: string | null; account_id?: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/create-folder',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    renameFile: ({
+      data,
+      ...configs
+    }: {
+      data: { id: string; name: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/rename',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    uploadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: FormData;
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/upload-file',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    deleteFile: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/delete`,
+        method: METHODS.DELETE,
+        data,
+        ...configs,
+      }),
+    downloadFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/download`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
+        ...configs,
+      }),
+    moveFiles: ({
+      data,
+      ...configs
+    }: {
+      data: { ids: string[]; destination_id: string | null };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/cloud-storage/move`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    syncStorage: ({
+      data,
+      ...configs
+    }: {
+      data: { account_id?: number | string; directory_id?: number | string };
+    }) =>
+      client({
+        url: `/cloud-storage/sync`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+  },
+  adminUsers: {
+    getUsers: (params: {
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      client({
+        url: `/admin/users`,
+        method: METHODS.GET,
+        params,
+      }),
+    blockUser: ({
+      data,
+      ...configs
+    }: {
+      data: { id: number; is_blocked: boolean };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/admin/block-user`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    inviteUser: ({
+      data,
+      ...configs
+    }: {
+      data: { emails: string[] };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/admin/invite-user`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    getAuditLogs: (params: {
+      user_id?: number | string;
+      page?: number;
+      limit?: number;
+      searchTerm?: string;
+      action_types?: string;
+      types?: string;
+      success?: boolean;
+    }) =>
+      client({
+        url: `/user/audit-logs`,
+        method: METHODS.GET,
+        params,
+      }),
+    exportLogs: (data: {
+      user_id?: string | null;
+      searchTerm?: string;
+      action_types?: string;
+      types?: string;
+      success?: boolean;
+    }) =>
+      client({
+        url: `/user/export-logs`,
+        method: METHODS.POST,
+        data,
+        responseType: 'blob',
+      }),
+    getActionTypes: () =>
+      client({
+        url: `/admin/action-type`,
+        method: METHODS.GET,
+      }),
+    getTypes: () =>
+      client({
+        url: `/admin/types`,
+        method: METHODS.GET,
       }),
   },
 };

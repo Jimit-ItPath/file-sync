@@ -1,15 +1,25 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { api } from '../../api';
-import { getLocalStorage, setLocalStorage } from '../../utils/helper';
+import {
+  getLocalStorage,
+  removeLocalStorage,
+  setLocalStorage,
+} from '../../utils/helper';
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
-type CloudStorageType = {
+export type CloudStorageType = {
+  UserConnectedAccount: {
+    id: string;
+    account_name: string;
+    account_type: string;
+  };
   id: string;
   account_id: string;
   account_type: string;
   external_id: string;
   parent_id: null | string;
+  external_parent_id?: null | string;
   name: string;
   entry_type: 'folder' | 'file';
   mime_type: string;
@@ -21,10 +31,12 @@ type CloudStorageType = {
   download_url: null | string;
   createdAt: string;
   updatedAt: string;
+  web_view_url: null | string;
 };
 
 type CloudStorageState = {
   cloudStorage: CloudStorageType[];
+  recentFiles: CloudStorageType[];
   pagination: {
     total: number;
     total_pages: number;
@@ -37,12 +49,26 @@ type CloudStorageState = {
   currentFolderId: string | null;
   currentPath: Array<{ id?: string; name: string }>;
   uploadLoading: boolean;
-  accountType: AccountType | 'all';
+  accountId: string;
   searchTerm: string;
+  navigateLoading: boolean;
+  moveModal: {
+    folders: CloudStorageType[];
+    loading: boolean;
+    error: string | null;
+    currentPath: Array<{ id?: string; name: string }>;
+    pagination?: {
+      total: number;
+      total_pages: number;
+      page_no: number;
+      page_limit: number;
+    } | null;
+  };
 };
 
 const initialState: CloudStorageState = {
   cloudStorage: [],
+  recentFiles: [],
   pagination: null,
   loading: false,
   error: null,
@@ -51,8 +77,16 @@ const initialState: CloudStorageState = {
     ? JSON.parse(localStorage.getItem('cloudStoragePath') || '')
     : [],
   uploadLoading: false,
-  accountType: 'all',
+  accountId: 'all',
   searchTerm: '',
+  navigateLoading: false,
+  moveModal: {
+    folders: [],
+    loading: false,
+    error: null,
+    currentPath: [],
+    pagination: null,
+  },
 };
 
 export const fetchCloudStorageFiles = createAsyncThunk(
@@ -72,7 +106,24 @@ export const fetchCloudStorageFiles = createAsyncThunk(
       const response = await api.cloudStorage.getFiles(params);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error?.message || 'Failed to connect account');
+      return rejectWithValue(error?.message || 'Failed to fetch files');
+    }
+  }
+);
+
+export const fetchRecentFiles = createAsyncThunk(
+  'cloudStorage/fetchRecentFiles',
+  async (
+    params: {
+      account_id?: number | string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.cloudStorage.getRecentFiles(params);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch recent files');
     }
   }
 );
@@ -92,7 +143,7 @@ export const navigateToFolder = createAsyncThunk(
     { dispatch }
   ) => {
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (data === null) {
       dispatch(resetCloudStorageFolder());
       await dispatch(
@@ -131,13 +182,13 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
       limit?: number;
       id?: string;
       searchTerm?: string;
-      account_type?: string;
+      account_id?: string;
     },
     { dispatch }
   ) => {
     const savedPath = getLocalStorage('cloudStoragePath');
     const defaultPage = 1;
-    const defaultLimit = 10;
+    const defaultLimit = 20;
     if (savedPath && savedPath.length > 0) {
       // Navigate to the last folder in the path
       const lastFolder = savedPath[savedPath.length - 1];
@@ -149,7 +200,6 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
             name: lastFolder.name,
             page: data.page ?? defaultPage,
             limit: data.limit ?? defaultLimit,
-            account_type: lastFolder.account_type,
             searchTerm: data.searchTerm,
           })
         );
@@ -161,7 +211,7 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
           id: data.id,
           page: data.page ?? defaultPage,
           limit: data.limit ?? defaultLimit,
-          account_type: data.account_type as AccountType,
+          account_id: data.account_id,
           searchTerm: data.searchTerm,
         })
       );
@@ -171,14 +221,15 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
 
 export const createCloudStorageFolder = createAsyncThunk(
   'cloudStorage/createCloudStorageFolder',
-  async (data: { name: string; id?: string | null }, { rejectWithValue }) => {
+  async (
+    data: { name: string; id?: string | null; account_id?: string },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await api.cloudStorage.createFolder({ data });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to create Google Drive folder'
-      );
+      return rejectWithValue(error?.message || 'Failed to create folder');
     }
   }
 );
@@ -190,9 +241,7 @@ export const renameCloudStorageFile = createAsyncThunk(
       const response = await api.cloudStorage.renameFile({ data });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to rename Google Drive file'
-      );
+      return rejectWithValue(error?.message || 'Failed to rename file');
     }
   }
 );
@@ -216,23 +265,19 @@ export const uploadCloudStorageFiles = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to upload Google Drive files'
-      );
+      return rejectWithValue(error?.message || 'Failed to upload files');
     }
   }
 );
 
 export const removeCloudStorageFiles = createAsyncThunk(
   'cloudStorage/removeCloudStorageFiles',
-  async (data: { ids: string[] }, { rejectWithValue }) => {
+  async (data: { ids: string[] }) => {
     try {
       const response = await api.cloudStorage.deleteFile({ data });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.message || 'Failed to remove Google Drive files'
-      );
+      return error;
     }
   }
 );
@@ -250,12 +295,60 @@ export const downloadFiles = createAsyncThunk(
   }
 );
 
-export const cloudStorageSlice = createSlice({
+export const moveCloudStorageFiles = createAsyncThunk(
+  'cloudStorage/moveCloudStorageFiles',
+  async (data: { ids: string[]; destination_id: string | null }) => {
+    try {
+      const response = await api.cloudStorage.moveFiles({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const syncCloudStorage = createAsyncThunk(
+  'cloudStorage/syncCloudStorage',
+  async (data: {
+    account_id?: string | number;
+    directory_id?: string | number;
+  }) => {
+    try {
+      const response = await api.cloudStorage.syncStorage({ data });
+      return response;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const fetchMoveModalFolders = createAsyncThunk(
+  'cloudStorage/fetchMoveModalFolders',
+  async (
+    params: {
+      account_id?: number | string;
+      account_type?: 'google_drive' | 'dropbox' | 'onedrive';
+      id?: string;
+      page?: number;
+      limit?: number;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.cloudStorage.getFiles(params);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch folders');
+    }
+  }
+);
+
+const cloudStorageSlice = createSlice({
   name: 'cloudStorage',
   initialState,
   reducers: {
-    setAccountType: (state, action) => {
-      state.accountType = action.payload;
+    setAccountId: (state, action) => {
+      state.accountId = action.payload;
     },
     setSearchTerm: (state, action) => {
       state.searchTerm = action.payload;
@@ -263,6 +356,37 @@ export const cloudStorageSlice = createSlice({
     resetCloudStorageFolder: state => {
       state.currentFolderId = null;
       state.currentPath = [];
+      state.cloudStorage = [];
+      state.pagination = null;
+      state.searchTerm = '';
+      state.moveModal = {
+        folders: [],
+        loading: false,
+        error: null,
+        currentPath: [],
+        pagination: null,
+      };
+      state.recentFiles = [];
+      state.accountId = 'all';
+    },
+    resetPagination: state => {
+      if (state.pagination) {
+        state.pagination.page_no = 1;
+      }
+    },
+    setMoveModalPath: (state, action) => {
+      state.moveModal.currentPath = action.payload;
+    },
+    resetMoveModalState: state => {
+      state.moveModal = {
+        folders: [],
+        loading: false,
+        error: null,
+        currentPath: [],
+      };
+    },
+    resetRecentFiles: state => {
+      state.recentFiles = [];
     },
   },
   extraReducers: builder => {
@@ -279,7 +403,10 @@ export const cloudStorageSlice = createSlice({
         const newFolderId = action.meta.arg?.id ?? null;
 
         // If folder id changed, replace data; if same, append for pagination
-        if (state.currentFolderId !== newFolderId) {
+        if (
+          state.currentFolderId !== newFolderId &&
+          action.meta.arg.page === 1
+        ) {
           state.cloudStorage = data;
           state.currentFolderId = newFolderId;
         } else if (action.meta.arg.page && action.meta.arg.page > 1) {
@@ -295,15 +422,28 @@ export const cloudStorageSlice = createSlice({
         state.cloudStorage = [];
         state.pagination = null;
       })
-      .addCase(navigateToFolder.pending, state => {
+      .addCase(fetchRecentFiles.pending, state => {
         state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchRecentFiles.fulfilled, (state, action) => {
+        state.loading = false;
+        state.recentFiles = action.payload?.data?.rows || [];
+      })
+      .addCase(fetchRecentFiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.recentFiles = [];
+      })
+      .addCase(navigateToFolder.pending, state => {
+        state.navigateLoading = true;
         state.error = null;
       })
       .addCase(navigateToFolder.fulfilled, (state, action) => {
         const { folderId, folderName, isRoot } = action.payload;
         state.currentFolderId = folderId;
 
-        if (isRoot) {
+        if (isRoot || !folderId) {
           state.currentPath = [];
         } else {
           // Check if we're navigating deeper or to a sibling folder
@@ -317,15 +457,23 @@ export const cloudStorageSlice = createSlice({
             // Navigated to a new folder
             state.currentPath = [
               ...state.currentPath,
-              { id: folderId ? String(folderId) : undefined, name: folderName },
+              {
+                id: folderId ? String(folderId) : undefined,
+                name: String(folderName),
+              },
             ];
           }
         }
+        state.navigateLoading = false;
         setLocalStorage('cloudStoragePath', state.currentPath);
-        setLocalStorage('folderId', state.currentFolderId);
+        if (state.currentFolderId) {
+          setLocalStorage('folderId', state.currentFolderId);
+        } else {
+          removeLocalStorage('folderId');
+        }
       })
       .addCase(navigateToFolder.rejected, (state, action) => {
-        state.loading = false;
+        state.navigateLoading = false;
         state.error = action.payload as string;
         state.currentFolderId = null;
         state.currentPath = [];
@@ -357,11 +505,44 @@ export const cloudStorageSlice = createSlice({
       .addCase(uploadCloudStorageFiles.rejected, (state, action) => {
         state.uploadLoading = false;
         state.error = action.payload as string;
+      })
+      .addCase(fetchMoveModalFolders.pending, state => {
+        state.moveModal.loading = true;
+        state.moveModal.error = null;
+      })
+      .addCase(fetchMoveModalFolders.fulfilled, (state, action) => {
+        const { data = [], paging = null } = action.payload?.data;
+        state.moveModal.loading = false;
+        if (action.meta.arg.page && action.meta.arg.page > 1) {
+          state.moveModal.folders = [
+            ...state.moveModal.folders,
+            ...data.filter(
+              (item: CloudStorageType) => item.entry_type === 'folder'
+            ),
+          ];
+        } else {
+          state.moveModal.folders = data.filter(
+            (item: CloudStorageType) => item.entry_type === 'folder'
+          );
+        }
+        state.moveModal.pagination = paging;
+      })
+      .addCase(fetchMoveModalFolders.rejected, (state, action) => {
+        state.moveModal.loading = false;
+        state.moveModal.error = action.payload as string;
+        state.moveModal.folders = [];
       });
   },
 });
 
-export const { resetCloudStorageFolder, setAccountType, setSearchTerm } =
-  cloudStorageSlice.actions;
+export const {
+  resetCloudStorageFolder,
+  setAccountId,
+  setSearchTerm,
+  resetPagination,
+  resetMoveModalState,
+  setMoveModalPath,
+  resetRecentFiles,
+} = cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

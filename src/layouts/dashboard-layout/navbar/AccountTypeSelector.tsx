@@ -1,5 +1,7 @@
-import { Box, Group, Input, Text, UnstyledButton } from '@mantine/core';
-import { ICONS } from '../../../assets/icons';
+import { Box, Group, Image, Input, Text, UnstyledButton } from '@mantine/core';
+import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 
 const AccountTypeSelector = ({
   value,
@@ -14,38 +16,41 @@ const AccountTypeSelector = ({
     {
       value: 'google_drive',
       label: 'Google Drive',
-      icon: (
-        <ICONS.IconBrandGoogle
-          size={22}
-          color="#ef4444"
-          stroke={1.25}
-          fill="#ef4444"
-        />
-      ),
+      // icon: (
+      //   <ICONS.IconBrandGoogle
+      //     size={22}
+      //     color="#ef4444"
+      //     stroke={1.25}
+      //     fill="#ef4444"
+      //   />
+      // ),
+      icon: <Image src={GoogleDriveIcon} alt="Google Drive" w={16} h={16} />,
     },
     {
       value: 'dropbox',
       label: 'Dropbox',
-      icon: (
-        <ICONS.IconDroplets
-          size={22}
-          color="#007ee5"
-          stroke={1.25}
-          fill="#007ee5"
-        />
-      ),
+      // icon: (
+      //   <ICONS.IconDroplets
+      //     size={22}
+      //     color="#007ee5"
+      //     stroke={1.25}
+      //     fill="#007ee5"
+      //   />
+      // ),
+      icon: <Image src={DropboxIcon} alt="Dropbox" w={18} />,
     },
     {
       value: 'onedrive',
       label: 'OneDrive',
-      icon: (
-        <ICONS.IconBrandOnedrive
-          size={22}
-          color="#0078d4"
-          stroke={1.25}
-          fill="#0078d4"
-        />
-      ),
+      // icon: (
+      //   <ICONS.IconBrandOnedrive
+      //     size={22}
+      //     color="#0078d4"
+      //     stroke={1.25}
+      //     fill="#0078d4"
+      //   />
+      // ),
+      icon: <Image src={OneDriveIcon} alt="OneDrive" w={16} h={16} />,
     },
   ];
 
@@ -75,8 +80,10 @@ const AccountTypeSelector = ({
                 gap: '10px',
                 padding: '8px 10px',
                 borderRadius: '8px',
-                border: `1px solid ${selected ? '#2C2E33' : '#DEE2E6'}`,
-                backgroundColor: selected ? '#2C2E33' : 'white',
+                border: '1px solid #DEE2E6',
+                // border: `1px solid ${selected ? '#2C2E33' : '#DEE2E6'}`,
+                // backgroundColor: selected ? '#2C2E33' : 'white',
+                backgroundColor: selected ? 'rgba(55,151,228,0.8)' : 'white',
                 color: selected ? 'white' : '#495057',
                 transition: 'all 0.2s ease',
                 userSelect: 'none',

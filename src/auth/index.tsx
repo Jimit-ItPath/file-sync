@@ -15,7 +15,9 @@ declare module 'jwt-decode' {
 }
 
 export const REDIRECTION = {
-  [ROLES.ADMIN]: PRIVATE_ROUTES.DASHBOARD.url,
+  [ROLES.USER]: PRIVATE_ROUTES.DASHBOARD.url,
+  // [ROLES.ADMIN]: PRIVATE_ROUTES.ADMIN_DASHBOARD.url,
+  [ROLES.ADMIN]: PRIVATE_ROUTES.USERS.url,
 };
 
 export interface GetAuthOptions {
@@ -44,28 +46,47 @@ export const getAuth = (options: GetAuthOptions): AuthResult => {
 
   // const token = getLocalStorage(LOCAL_STORAGE_KEY)
   const token = localStorage.getItem('token');
-  const cachedRedirectUrl = getLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY);
+  // const cachedRedirectUrl = getLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY);
   const isAuthenticated = isTokenActive(token);
 
-  let redirectUrl = AUTH_ROUTES.LOGIN.url;
+  // let redirectUrl = AUTH_ROUTES.LOGIN.url;
+  let redirectUrl = AUTH_ROUTES.LANDING.url;
   let role = '';
 
   if (isAuthenticated) {
-    const decodedToken = decodeToken(token);
-    role = decodedToken?.role || '';
-    // redirectUrl = role
-    //   ? cachedRedirectUrl || REDIRECTION[role]
-    //   : AUTH_ROUTES.LOGIN.url;
-    redirectUrl =
-      cachedRedirectUrl ||
-      PRIVATE_ROUTES.DASHBOARD.url ||
-      AUTH_ROUTES.LOGIN.url;
+    const decodedToken: any = decodeToken(token);
+    // role = decodedToken?.role || '';
+    role = decodedToken?.user?.role || '';
+    const roleKey = `${CACHED_URL_LOCAL_STORAGE_KEY}-${role}`;
+    const cachedRedirectUrl = getLocalStorage(roleKey);
+    redirectUrl = role
+      ? cachedRedirectUrl || REDIRECTION[role]
+      : // : AUTH_ROUTES.LOGIN.url;
+        AUTH_ROUTES.LANDING.url;
+    // redirectUrl =
+    //   cachedRedirectUrl ||
+    //   PRIVATE_ROUTES.DASHBOARD.url ||
+    //   AUTH_ROUTES.LOGIN.url;
   }
 
   if (isCacheRedirection && !isAuthenticated) {
     const { pathname, search } = window?.location || {};
     const cachedRedirectUrl = pathname + search;
-    setLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY, cachedRedirectUrl);
+    // setLocalStorage(CACHED_URL_LOCAL_STORAGE_KEY, cachedRedirectUrl);
+    // Try to extract role from token (if expired token is still present)
+    const maybeToken = localStorage.getItem('token');
+    let tempRole = '';
+    if (maybeToken) {
+      try {
+        const decoded: any = decodeToken(maybeToken);
+        tempRole = decoded?.user?.role || '';
+      } catch {
+        tempRole = '';
+      }
+    }
+
+    const roleKey = `${CACHED_URL_LOCAL_STORAGE_KEY}-${tempRole || 'unknown'}`;
+    setLocalStorage(roleKey, cachedRedirectUrl);
   }
 
   return {

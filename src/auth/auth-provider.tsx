@@ -3,6 +3,7 @@ import { decodeToken } from '../utils/helper';
 import { AUTH_ROUTES, PRIVATE_ROUTES } from '../routing/routes';
 import { useTimeout } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
+import { ROLES } from '../utils/constants';
 
 const AuthContext = createContext<unknown>(undefined);
 
@@ -24,14 +25,18 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     return {};
   });
 
-  // const role = user?.role || '';
+  const role = user?.role || '';
 
-  // const isAdmin = role === ROLES.ADMIN;
+  const isAdmin = role === ROLES.ADMIN;
 
   // const redirectUrl = role ? REDIRECTION[role] : AUTH_ROUTES.LOGIN.url;
   const redirectUrl = Object.keys(user).length
-    ? PRIVATE_ROUTES.DASHBOARD.url
-    : AUTH_ROUTES.LOGIN.url;
+    ? isAdmin
+      ? // ? PRIVATE_ROUTES.ADMIN_DASHBOARD.url
+        PRIVATE_ROUTES.USERS.url
+      : PRIVATE_ROUTES.DASHBOARD.url
+    : // : AUTH_ROUTES.LOGIN.url;
+      AUTH_ROUTES.LANDING.url;
 
   const login = (newToken: string) => {
     localStorage.setItem('token', newToken);
@@ -45,6 +50,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     // removeToken();
     localStorage.removeItem('token');
+    localStorage.clear();
     start();
     setToken(null);
     setUser({});

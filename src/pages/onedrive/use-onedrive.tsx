@@ -1,59 +1,63 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
-  checkOneDriveAccess,
-  createOneDriveFolder,
-  fetchOneDriveFiles,
-  removeOneDriveFiles,
-  renameOneDriveFile,
-  uploadOneDriveFiles,
-} from '../../store/slices/onedrive.slice';
-import useAsyncOperation from '../../hooks/use-async-operation';
-import { useAppDispatch, useAppSelector } from '../../store';
-import {
-  decodeToken,
   formatDate,
   formatFileSize,
-  getMimeTypeFromExtension,
+  getLocalStorage,
+  removeLocalStorage,
+  setLocalStorage,
 } from '../../utils/helper';
-import { Menu } from '../../components';
-import { ICONS } from '../../assets/icons';
+import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
+import { v4 as uuidv4 } from 'uuid';
+import { useAppDispatch, useAppSelector } from '../../store';
+import {
+  createOneDriveFolder,
+  downloadOneDriveFiles,
+  initializeOneDriveFromStorage,
+  navigateToFolder,
+  removeOneDriveFiles,
+  renameOneDriveFile,
+  resetOneDriveFolder,
+  setSearchTerm,
+  uploadOneDriveFiles,
+  moveOneDriveFiles,
+  syncOneDrive,
+} from '../../store/slices/onedrive.slice';
+import useAsyncOperation from '../../hooks/use-async-operation';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { notifications } from '@mantine/notifications';
+import { useParams } from 'react-router';
+import useDebounce from '../../hooks/use-debounce';
+import getFileIcon from '../../components/file-icon';
 
-type FileRow = {
+export type FileType = {
   id: string;
   name: string;
-  webUrl: string;
-  icon: React.ReactNode;
-  owner: {
-    displayName: string;
-    email: string;
-  };
-  lastModifiedDateTime: string;
-  size: number;
-  '.tag': 'file' | 'folder';
-  downloadUrl?: string;
+  type: 'folder' | 'file';
+  icon: (size: number) => React.ReactNode;
+  owner: { name: string; avatar: string | null; initials: string };
+  lastModified: string;
+  size: string | null;
+  preview?: string | null;
   mimeType?: string;
+  fileExtension?: string | null;
+  download_url?: string | null;
+  parent_id: string | null;
 };
 
-// Constants
-const MENU_ITEMS = [
-  { id: 'view', label: 'View', icon: ICONS.IconEye },
-  { id: 'rename', label: 'Rename', icon: ICONS.IconEdit },
-  { id: 'download', label: 'Download', icon: ICONS.IconDownload },
-  { id: 'share', label: 'Share', icon: ICONS.IconShare },
-  { id: 'delete', label: 'Delete', icon: ICONS.IconTrash },
-];
-
 const folderSchema = z.object({
-  folderName: z.string().min(1, 'Folder name is required'),
+  folderName: z.string().trim().min(1, 'Folder name is required'),
 });
 
 const renameSchema = z.object({
-  newName: z.string().min(1, 'New name is required'),
+  newName: z.string().trim().min(1, 'New name is required'),
 });
 
 type FolderFormData = z.infer<typeof folderSchema>;
@@ -61,21 +65,54 @@ type FolderFormData = z.infer<typeof folderSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
 const useOneDrive = () => {
-  const dispatch = useAppDispatch();
-  const { hasAccess, isLoading, files, nextLink } = useAppSelector(
-    state => state.oneDrive
+  const params = useParams();
+  const [layout, setLayout] = useState<'list' | 'grid'>(() => {
+    const savedLayout = getLocalStorage('oneDriveLayout');
+    return savedLayout ? savedLayout : 'list';
+  });
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
+    null
   );
+  const [showUploadProgress, setShowUploadProgress] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    [key: string]: number;
+  }>({});
+  const [uploadingFiles, setUploadingFiles] = useState<{
+    [key: string]: { name: string; size: string };
+  }>({});
+  const uploadControllers = useRef<{ [key: string]: AbortController }>({});
+  const cancelledUploadsRef = useRef<Set<string>>(new Set());
+  const uploadsInProgressRef = useRef(false);
+  const initializedRef = useRef(false);
+  const hasMountedOnce = useRef(false);
 
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'files'>('folder');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<FileRow | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<FileType | null>(null);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
-  const [itemToRename, setItemToRename] = useState<FileRow | null>(null);
+  const [itemToRename, setItemToRename] = useState<FileType | null>(null);
+  const [removeFilesModalOpen, setRemoveFilesModalOpen] = useState(false);
 
-  // Form handling
+  const [isMoveMode, setIsMoveMode] = useState(false);
+  const [filesToMove, setFilesToMove] = useState<string[]>([]);
+  const [sourceFolderId, setSourceFolderId] = useState<string | null>(null);
+  const [destinationId, setDestinationId] = useState<string | null>(null);
+
+  const {
+    oneDriveFiles,
+    isLoading,
+    pagination,
+    currentFolderId,
+    currentPath,
+    uploadLoading,
+    searchTerm,
+    navigateLoading,
+  } = useAppSelector(state => state.oneDrive);
+  const dispatch = useAppDispatch();
+
   const folderMethods = useForm<FolderFormData>({
     resolver: zodResolver(folderSchema),
     mode: 'onChange',
@@ -92,138 +129,208 @@ const useOneDrive = () => {
   const { reset: resetFolderForm } = folderMethods;
   const { reset: resetRenameForm } = renameMethods;
 
-  // Initialization and connection
-  const initializeOneDrive = useCallback(async () => {
-    const resultAction = await dispatch(checkOneDriveAccess());
-    if (resultAction?.payload?.data?.hasAccess) {
-      await dispatch(fetchOneDriveFiles({}));
-    }
-  }, [dispatch]);
+  const accountId = params.id;
+  const folderIdPath = params['*']
+    ? params['*'].split('/').filter(Boolean)
+    : [];
+  const folderId = folderIdPath?.length
+    ? folderIdPath[folderIdPath.length - 1]
+    : '';
 
-  const [onInitialize, loading] = useAsyncOperation(initializeOneDrive);
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
+
+  const handleSearchChange = (value: string) => {
+    setLocalSearchTerm(value);
+  };
+
+  const getOneDriveFiles = useCallback(async () => {
+    await dispatch(
+      initializeOneDriveFromStorage({
+        ...(folderId && { id: folderId }),
+        limit: pagination?.page_limit || 20,
+        page: pagination?.page_no || 1,
+        account_id: Number(accountId),
+        searchTerm: debouncedSearchTerm || '',
+      })
+    );
+  }, [
+    dispatch,
+    folderId,
+    pagination?.page_limit,
+    pagination?.page_no,
+    debouncedSearchTerm,
+  ]);
+
+  const [onInitialize] = useAsyncOperation(getOneDriveFiles);
 
   useEffect(() => {
-    onInitialize({});
-  }, []);
-
-  const loadMoreFiles = useCallback(() => {
-    if (nextLink && !isLoading) {
-      dispatch(fetchOneDriveFiles({ nextLink }));
+    if (!initializedRef.current) {
+      onInitialize({});
+      initializedRef.current = true;
     }
-  }, [nextLink, isLoading, dispatch]);
 
-  const connectWithOneDrive = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    const decodedData: any = decodeToken(token);
-    window.open(
-      `${import.meta.env.VITE_REACT_APP_BASE_URL}/onedrive/auth?email=${decodedData?.user?.email}`,
-      '_self'
-    );
+    return () => {
+      dispatch(resetOneDriveFolder());
+      removeLocalStorage('oneDrivePath');
+      removeLocalStorage('oneDriveFolderId');
+      removeLocalStorage('oneDriveLayout');
+    };
   }, []);
 
-  // File icon handling
-  const getFileIcon = (mimeType: string) => {
-    const iconSize = 20;
+  useEffect(() => {
+    if (!hasMountedOnce.current) {
+      hasMountedOnce.current = true;
+      return;
+    }
 
-    switch (true) {
-      case mimeType === 'folder':
-        return <ICONS.IconFolder size={iconSize} color="#38bdf8" />;
-      case mimeType?.startsWith('image/'):
-        return <ICONS.IconPhoto size={iconSize} color="#3b82f6" />;
-      case mimeType === 'application/pdf':
-        return <ICONS.IconFileTypePdf size={iconSize} color="#ef4444" />;
-      case [
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/rtf',
-        'text/rtf',
-      ].includes(mimeType):
-        return <ICONS.IconFileTypeDoc size={iconSize} color="#2563eb" />;
-      case [
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ].includes(mimeType):
-        return <ICONS.IconFileTypeXls size={iconSize} color="#16a34a" />;
-      case [
-        'application/vnd.ms-powerpoint',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      ].includes(mimeType):
-        return <ICONS.IconFileTypePpt size={iconSize} color="#e11d48" />;
-      case ['text/plain', 'text/markdown'].includes(mimeType):
-        return <ICONS.IconFileTypeTxt size={iconSize} color="#64748b" />;
-      case mimeType === 'text/csv':
-        return <ICONS.IconFileTypeCsv size={iconSize} color="#16a34a" />;
-      case ['application/zip', 'application/x-zip-compressed'].includes(
-        mimeType
-      ):
-        return <ICONS.IconFileTypeZip size={iconSize} color="#7c3aed" />;
-      case mimeType?.startsWith('audio/'):
-        return <ICONS.IconDeviceAudioTape size={iconSize} color="#9333ea" />;
-      case mimeType?.startsWith('video/'):
-        return <ICONS.IconVideo size={iconSize} color="#dc2626" />;
-      case [
-        'text/html',
-        'text/css',
-        'text/javascript',
-        'application/javascript',
-        'application/json',
-      ].includes(mimeType):
-        return <ICONS.IconCode size={iconSize} color="#f59e0b" />;
-      default:
-        return <ICONS.IconFile size={iconSize} color="#64748b" />;
+    dispatch(setSearchTerm(debouncedSearchTerm));
+    getOneDriveFiles();
+  }, [debouncedSearchTerm]);
+
+  const scrollBoxRef = useRef<HTMLDivElement>(null);
+
+  const lastScrollTop = useRef(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    lastScrollTop.current = e.currentTarget.scrollTop;
+    const target = e.currentTarget;
+    if (
+      target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
+      pagination &&
+      pagination.page_no < pagination.total_pages &&
+      !isLoading
+    ) {
+      loadMoreFiles();
     }
   };
 
-  // File data transformation
-  const transformFiles = useCallback((files: any[]) => {
-    return files.map(file => {
-      const isFolder = 'folder' in file;
-      const mimeType = isFolder
-        ? 'folder'
-        : file.file?.mimeType ||
-          getMimeTypeFromExtension(file.name.split('.').pop());
+  useEffect(() => {
+    if (scrollBoxRef.current && lastScrollTop.current > 0) {
+      // Use setTimeout to ensure DOM is updated before restoring scroll
+      setTimeout(() => {
+        scrollBoxRef.current!.scrollTop = lastScrollTop.current;
+      }, 0);
+    }
+  }, [oneDriveFiles.length]);
 
-      return {
-        id: file.id,
-        name: file.name,
-        webUrl: file.webUrl,
-        icon: getFileIcon(mimeType),
-        owner: {
-          displayName: file.lastModifiedBy?.user?.displayName || 'You',
-          email: file.lastModifiedBy?.user?.email || '',
-        },
-        lastModifiedDateTime:
-          file.lastModifiedDateTime ||
-          file.fileSystemInfo?.lastModifiedDateTime,
-        size: file.size || 0,
-        '.tag': isFolder ? 'folder' : 'file',
-        downloadUrl: file['@microsoft.graph.downloadUrl'],
-        mimeType: mimeType,
-      } as FileRow;
-    });
-  }, []);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMoveMode) {
+        setIsMoveMode(false);
+        setFilesToMove([]);
+      }
+    };
 
-  const transformedFiles = useMemo(
-    () => (files?.length ? transformFiles(files) : []),
-    [files, transformFiles]
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMoveMode]);
+
+  const loadMoreFiles = useCallback(async () => {
+    if (
+      pagination &&
+      pagination.page_no < pagination.total_pages &&
+      !isLoading
+    ) {
+      await dispatch(
+        initializeOneDriveFromStorage({
+          page: pagination.page_no + 1,
+          limit: pagination.page_limit,
+          account_id: Number(accountId),
+          ...(currentFolderId && { id: currentFolderId }),
+          searchTerm: debouncedSearchTerm || '',
+        })
+      );
+    }
+  }, [pagination, isLoading, dispatch, currentFolderId]);
+
+  // Convert cloud storage data to FileType format
+  const files = useMemo(() => {
+    return oneDriveFiles.map(item => ({
+      id: item.id,
+      name: item.name,
+      type:
+        item.entry_type === 'folder' ? 'folder' : ('file' as 'file' | 'folder'),
+      icon: getFileIcon({
+        entry_type: item.entry_type,
+        mime_type: item.mime_type,
+        file_extension: item.file_extension,
+        name: item.name,
+      }),
+      owner: { name: 'You', avatar: null, initials: 'JS' },
+      lastModified: item.modified_at
+        ? formatDate(item.modified_at)
+        : formatDate(item.updatedAt),
+      size: item.size ? formatFileSize(item.size.toString()) : null,
+      mimeType: item.mime_type,
+      fileExtension: item.file_extension,
+      preview: item.download_url,
+      parent_id: item.parent_id,
+    }));
+  }, [oneDriveFiles]);
+
+  const navigateToFolderFn = useCallback(
+    (folder: { id?: string; name: string } | null) => {
+      if (folder?.id) {
+        setDestinationId(folder?.id);
+        dispatch(
+          navigateToFolder({
+            id: String(folder?.id),
+            name: String(folder?.name),
+            account_id: Number(accountId),
+          })
+        );
+      } else {
+        dispatch(navigateToFolder({ account_id: Number(accountId) }));
+        setDestinationId(null);
+      }
+      // setSelectedIds([]);
+      // setLastSelectedIndex(null);
+    },
+    [dispatch, currentPath, isMoveMode]
   );
 
-  // File actions
-  const handleMenuItemClick = (actionId: string, row: FileRow) => {
-    if (actionId === 'download' && row.downloadUrl) {
-      // Direct download for OneDrive files
-      window.open(row.downloadUrl, '_blank');
-    } else if (actionId === 'view') {
-      // Open in OneDrive web interface
-      window.open(row.webUrl, '_blank');
-    } else if (actionId === 'rename') {
+  const handleRowDoubleClick = useCallback(
+    (row: FileType, _?: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
+      if (
+        row.mimeType === 'application/vnd.google-apps.folder' ||
+        row.type === 'folder'
+      ) {
+        if (!isMoveMode) {
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+        }
+        navigateToFolderFn({ id: row.id, name: row.name });
+      }
+    },
+    [navigateToFolderFn]
+  );
+
+  const handleMenuItemClick = (actionId: string, row: FileType) => {
+    if (
+      actionId === 'download' &&
+      (row.type !== 'folder' ||
+        row.mimeType !== 'application/vnd.google-apps.folder') &&
+      row.download_url
+    ) {
+      window.open(row.download_url, '_blank');
+    }
+    // else if (actionId === 'view') {
+    //   if (row.mimeType === 'application/vnd.google-apps.folder') {
+    //     navigateToFolderFn({ id: row.id, name: row.name });
+    //   } else if (row.webViewLink) {
+    //     window.open(row.webViewLink, '_blank');
+    //   }
+    // }
+    else if (actionId === 'rename') {
       setItemToRename(row);
       setRenameModalOpen(true);
       resetRenameForm({ newName: row.name });
-    } else if (actionId === 'share') {
-      // OneDrive sharing link
-      window.open(`${row.webUrl}?web=1`, '_blank');
-    } else if (actionId === 'delete') {
+    }
+    // else if (actionId === 'share' && row.webViewLink) {
+    //   window.open(`https://drive.google.com/file/d/${row.id}/share`, '_blank');
+    // }
+    else if (actionId === 'delete') {
       setItemToDelete(row);
       setDeleteModalOpen(true);
     }
@@ -233,15 +340,36 @@ const useOneDrive = () => {
   const [createFolder, createFolderLoading] = useAsyncOperation(
     async (folderName: string) => {
       try {
-        await dispatch(
-          createOneDriveFolder({ folder_name: folderName })
-        ).unwrap();
-        resetFolderForm();
-        await dispatch(fetchOneDriveFiles({}));
-        setModalOpen(false);
-      } catch (error) {
+        const res = await dispatch(
+          createOneDriveFolder({
+            name: folderName,
+            ...(currentFolderId && {
+              id: currentFolderId,
+            }),
+            account_id: Number(accountId),
+          })
+        );
+        if (res?.payload?.success) {
+          resetFolderForm();
+          await dispatch(
+            initializeOneDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              // page: pagination?.page_no || 1,
+              page: 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+          notifications.show({
+            message: res?.payload?.message || 'Folder created successfully',
+            color: 'green',
+          });
+          setModalOpen(false);
+        }
+      } catch (error: any) {
         notifications.show({
-          message: 'Failed to create folder',
+          message: error || 'Failed to create folder',
           color: 'red',
         });
       }
@@ -252,47 +380,142 @@ const useOneDrive = () => {
     createFolder(data.folderName);
   });
 
-  // File upload functionality
   const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
     async (files: File[]) => {
       try {
+        setShowUploadProgress(true); // Show the progress UI
+        const fileIds = files.map(() => uuidv4()); // Generate unique IDs for each file
+
+        // Initialize progress and uploading files state
+        files.forEach((file, index) => {
+          const fileId = fileIds[index];
+          setUploadingFiles(prev => ({
+            ...prev,
+            [fileId]: {
+              name: file.name,
+              size: formatFileSize(file.size.toString()),
+            },
+          }));
+          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        });
+
         const formData = new FormData();
         files.forEach(file => formData.append('file', file));
-        await dispatch(uploadOneDriveFiles(formData)).unwrap();
-        await dispatch(fetchOneDriveFiles({}));
-        setUploadedFiles([]);
-        setModalOpen(false);
-      } catch (error) {
+        formData.append('account_id', String(accountId));
+        if (currentFolderId) {
+          formData.append('id', currentFolderId);
+        }
+
+        // Simulate progress manually up to 95%
+        const simulateProgress = (fileId: string) => {
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 5; // Increment progress by 5%
+            setUploadProgress(prev => ({
+              ...prev,
+              [fileId]: Math.min(progress, 95), // Cap progress at 95%
+            }));
+            if (progress >= 95 || !uploadLoading) {
+              clearInterval(interval); // Stop simulation when progress reaches 95% or upload completes
+            }
+          }, 300); // Update progress every 300ms
+        };
+
+        // Start simulating progress for each file
+        files.forEach((_, index) => {
+          const fileId = fileIds[index];
+          simulateProgress(fileId);
+        });
+
+        // Call the API and track progress
+        await dispatch(
+          uploadOneDriveFiles({
+            data: formData,
+            onUploadProgress: (progressEvent: ProgressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              files.forEach((_, index) => {
+                const fileId = fileIds[index];
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [fileId]: Math.min(percentCompleted, 95), // Cap progress at 95%
+                }));
+              });
+            },
+          })
+        ).unwrap();
+
+        closeModal();
+
+        // Wait for `uploadLoading` to become false and set progress to 100%
+        const waitForUploadCompletion = () => {
+          const interval = setInterval(() => {
+            if (!uploadLoading) {
+              files.forEach((_, index) => {
+                const fileId = fileIds[index];
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [fileId]: 100, // Set progress to 100% when upload completes
+                }));
+              });
+              clearInterval(interval); // Clear interval once upload is complete
+            }
+          }, 100); // Check every 100ms
+        };
+
+        waitForUploadCompletion();
+
+        // Refresh the file list after upload
+        await dispatch(
+          initializeOneDriveFromStorage({
+            ...(folderId && { id: folderId }),
+            limit: pagination?.page_limit || 20,
+            // page: pagination?.page_no || 1,
+            page: 1,
+            account_id: Number(accountId),
+            searchTerm: debouncedSearchTerm || '',
+          })
+        );
+
+        // Do not reset states here to keep the progress bar visible
+      } catch (error: any) {
         notifications.show({
-          message: 'Failed to upload files',
+          message: error?.message || 'Failed to upload files',
           color: 'red',
         });
       }
     }
   );
 
-  const handleFileUpload = useCallback(() => {
-    if (uploadedFiles.length > 0) {
-      uploadFiles(uploadedFiles);
-    }
-  }, [uploadFiles, uploadedFiles]);
-
   // File rename functionality
   const [renameFile, renameFileLoading] = useAsyncOperation(
     async ({ fileId, newName }: { fileId: string; newName: string }) => {
       try {
         await dispatch(
-          renameOneDriveFile({ id: fileId, name: newName })
+          renameOneDriveFile({
+            id: fileId,
+            name: newName,
+          })
         ).unwrap();
-        await dispatch(fetchOneDriveFiles({}));
+        await dispatch(
+          initializeOneDriveFromStorage({
+            ...(folderId && { id: folderId }),
+            limit: pagination?.page_limit || 20,
+            // page: pagination?.page_no || 1,
+            page: 1,
+            account_id: Number(accountId),
+            searchTerm: debouncedSearchTerm || '',
+          })
+        );
         notifications.show({
-          message: 'File renamed successfully',
+          message: 'Item renamed successfully',
           color: 'green',
         });
         setRenameModalOpen(false);
-      } catch (error) {
+      } catch (error: any) {
         notifications.show({
-          message: 'Failed to rename file',
+          message: error || 'Failed to rename item',
           color: 'red',
         });
       }
@@ -310,24 +533,40 @@ const useOneDrive = () => {
     async (fileId: string) => {
       try {
         const res = await dispatch(
-          removeOneDriveFiles({ id: fileId })
-        ).unwrap();
-        await dispatch(fetchOneDriveFiles({}));
+          removeOneDriveFiles({
+            ids: [fileId],
+          })
+        );
+        if (res?.payload?.status === 200) {
+          await dispatch(
+            initializeOneDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              // page: pagination?.page_no || 1,
+              page: 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+          notifications.show({
+            message: 'File deleted successfully',
+            color: 'green',
+          });
+          if (selectedIds.includes(fileId)) {
+            cancelMoveMode();
+          }
+          setDeleteModalOpen(false);
+          // setSelectedIds([]);
+          // setLastSelectedIndex(null);
+        } else {
+          notifications.show({
+            message: res?.payload?.message || `Failed to delete item`,
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
         notifications.show({
-          message:
-            res?.message ||
-            (itemToDelete?.['.tag'] === 'folder'
-              ? 'Folder deleted successfully'
-              : 'File deleted successfully'),
-          color: 'green',
-        });
-        setDeleteModalOpen(false);
-      } catch (error) {
-        notifications.show({
-          message:
-            itemToDelete?.['.tag'] === 'folder'
-              ? 'Failed to delete folder'
-              : 'Failed to delete file',
+          message: error || 'Failed to delete item',
           color: 'red',
         });
       }
@@ -340,21 +579,249 @@ const useOneDrive = () => {
     }
   }, [itemToDelete, removeFile]);
 
-  // Selection handling
-  const onSelectRow = useCallback((id: string, checked: boolean) => {
-    setSelectedRows(prev =>
-      checked ? [...prev, id] : prev.filter(rowId => rowId !== id)
-    );
+  const handleFileUpload = useCallback(
+    async (files: File[]) => {
+      const filesToUpload = files?.length ? files : uploadedFiles;
+      if (filesToUpload.length === 0) return;
+
+      uploadsInProgressRef.current = true;
+      setShowUploadProgress(true);
+
+      // Reset states for new uploads
+      setUploadProgress({});
+      setUploadingFiles({});
+
+      filesToUpload.forEach(file => {
+        const fileId = uuidv4();
+        const controller = new AbortController();
+        uploadControllers.current[fileId] = controller;
+
+        setUploadingFiles(prev => ({
+          ...prev,
+          [fileId]: {
+            name: file.name,
+            size: formatFileSize(file.size.toString()),
+            fileObject: file,
+          },
+        }));
+      });
+      uploadFiles(filesToUpload);
+    },
+    [uploadFiles, uploadedFiles]
+  );
+
+  const cleanupUpload = (fileId: string) => {
+    setUploadProgress(prev => {
+      const updated = { ...prev };
+      delete updated[fileId];
+      return updated;
+    });
+    setUploadingFiles(prev => {
+      const updated = { ...prev };
+      delete updated[fileId];
+      return updated;
+    });
+    delete uploadControllers.current[fileId];
+    cancelledUploadsRef.current.delete(fileId);
+  };
+
+  const handleCancelUpload = useCallback((fileId: string) => {
+    cancelledUploadsRef.current.add(fileId);
+    if (uploadControllers.current[fileId]) {
+      uploadControllers.current[fileId].abort();
+    }
+    cleanupUpload(fileId);
   }, []);
+
+  const handleCloseUploadProgress = useCallback(() => {
+    // Cancel all ongoing uploads when closing the progress panel
+    Object.keys(uploadControllers.current).forEach(fileId => {
+      uploadControllers.current[fileId].abort();
+    });
+    setShowUploadProgress(false);
+    setUploadProgress({});
+    setUploadingFiles({});
+    uploadsInProgressRef.current = false;
+    cancelledUploadsRef.current.clear();
+    uploadControllers.current = {};
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      uploadsInProgressRef.current = false;
+    };
+  }, []);
+
+  // Drag and drop functionality
+  const { dragRef, isDragging } = useDragDrop({
+    onFileDrop: handleFileUpload,
+    acceptedFileTypes: ['*'],
+  });
+
+  useEffect(() => {
+    setLocalStorage('oneDriveLayout', layout);
+  }, [layout]);
+
+  const switchLayout = useCallback((type: 'list' | 'grid') => {
+    setLayout(type);
+  }, []);
+
+  const folders = useMemo(
+    () => files.filter(f => f.type === 'folder'),
+    [files]
+  );
+  const regularFiles = useMemo(
+    () => files.filter(f => f.type === 'file'),
+    [files]
+  );
+
+  const allIds = useMemo(() => files.map(f => f.id), [files]);
+
+  // Helper to get index by id
+  const getIndexById = useCallback(
+    (id: string) => allIds.findIndex(i => i === id),
+    [allIds]
+  );
+
+  // Multi-select handler
+  const handleSelect = useCallback(
+    (id: string, event: React.MouseEvent) => {
+      const idx = getIndexById(id);
+
+      // Check if this is a checkbox click (no need for modifier keys)
+      const isCheckboxClick = (event.target as HTMLElement).closest(
+        '[type="checkbox"]'
+      );
+
+      if (isMoveMode) {
+        // In move mode, allow selecting only one folder different from filesToMove
+        if (filesToMove.includes(id)) return;
+        setSelectedIds([id]);
+        setLastSelectedIndex(idx);
+      } else if (isCheckboxClick) {
+        // For checkbox clicks, simply toggle the selection
+        setSelectedIds(prev =>
+          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+        setLastSelectedIndex(idx);
+      } else if (event.shiftKey && lastSelectedIndex !== null) {
+        // Range selection for row clicks with shift key
+        const start = Math.min(lastSelectedIndex, idx);
+        const end = Math.max(lastSelectedIndex, idx);
+        const rangeIds = allIds.slice(start, end + 1);
+        setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
+      } else if (event.ctrlKey || event.metaKey) {
+        // Multi-selection for row clicks with ctrl/cmd key
+        setSelectedIds(prev =>
+          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+        setLastSelectedIndex(idx);
+      } else {
+        // Single selection for regular row clicks
+        setSelectedIds([id]);
+        setLastSelectedIndex(idx);
+      }
+    },
+    [allIds, lastSelectedIndex, getIndexById]
+  );
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(files.map(f => f.id));
+  }, [files]);
+
+  const handleUnselectAll = useCallback(() => {
+    if (!isMoveMode) {
+      setSelectedIds([]);
+      setLastSelectedIndex(null);
+    }
+  }, [isMoveMode]);
+
+  // Handle row selection
+  const onSelectRow = useCallback(
+    (id: string, checked: boolean) => {
+      if (isMoveMode) {
+        // In move mode, allow selecting only one folder, but not one of the files being moved
+        if (filesToMove.includes(id)) return;
+        setSelectedIds([id]);
+        setLastSelectedIndex(getIndexById(id));
+      } else {
+        setSelectedIds(prev =>
+          checked ? [...prev, id] : prev.filter(i => i !== id)
+        );
+        setLastSelectedIndex(getIndexById(id));
+      }
+    },
+    [getIndexById, isMoveMode, filesToMove]
+  );
 
   const onSelectAll = useCallback(
     (checked: boolean) => {
-      setSelectedRows(checked ? transformedFiles.map(file => file.id) : []);
+      if (isMoveMode) return;
+      if (checked) {
+        handleSelectAll();
+      } else {
+        handleUnselectAll();
+      }
     },
-    [transformedFiles]
+    [handleSelectAll, handleUnselectAll, isMoveMode]
   );
 
-  // Modal handling
+  // Actions for selected items
+  const handleDeleteSelected = useCallback(() => {
+    setRemoveFilesModalOpen(true);
+  }, [selectedIds]);
+
+  const closeRemoveFilesModal = useCallback(() => {
+    setRemoveFilesModalOpen(false);
+  }, [setRemoveFilesModalOpen]);
+
+  const [handleRemoveFilesConfirm, removeFilesLoading] = useAsyncOperation(
+    async () => {
+      try {
+        const res = await dispatch(
+          removeOneDriveFiles({
+            ids: selectedIds,
+          })
+        );
+        if (res?.payload?.status === 200) {
+          await dispatch(
+            initializeOneDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              // page: pagination?.page_no || 1,
+              page: 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+          notifications.show({
+            message: `${selectedIds?.length > 1 ? 'Items' : 'Item'} deleted successfully`,
+            color: 'green',
+          });
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+          closeRemoveFilesModal();
+        } else {
+          notifications.show({
+            message:
+              res?.payload?.message ||
+              `Failed to delete ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message:
+            error ||
+            `Failed to delete ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleShareSelected = useCallback(() => {}, [selectedIds]);
+
   const openModal = useCallback((type: 'folder' | 'files') => {
     setModalType(type);
     setModalOpen(true);
@@ -366,108 +833,320 @@ const useOneDrive = () => {
     setModalOpen(false);
   }, []);
 
-  // Table columns
-  const columns = useMemo(
-    () => [
-      {
-        key: 'name',
-        label: 'Name',
-        width: '30%',
-        render: (row: FileRow) => (
-          <Group gap={8} wrap="nowrap">
-            {row.icon}
-            <Text fw={600}>{row.name}</Text>
-          </Group>
-        ),
-      },
-      {
-        key: 'owner',
-        label: 'Owner',
-        width: '20%',
-        render: (row: FileRow) => (
-          <Group gap={8} wrap="nowrap">
-            <Avatar radius="xl" size="sm" color="blue">
-              {row.owner.displayName.charAt(0)}
-            </Avatar>
-            <Text size="sm" truncate>
-              {row.owner.displayName}
-            </Text>
-          </Group>
-        ),
-      },
-      {
-        key: 'lastModified',
-        label: 'Last Modified',
-        width: '20%',
-        render: (row: FileRow) => (
-          <Text size="sm">{formatDate(row.lastModifiedDateTime, true)}</Text>
-        ),
-      },
-      {
-        key: 'size',
-        label: 'Size',
-        width: '15%',
-        render: (row: FileRow) => (
-          <Text size="sm">
-            {row['.tag'] === 'folder'
-              ? '–-'
-              : formatFileSize(row?.size ? String(row.size) : '')}
-          </Text>
-        ),
-      },
-      {
-        key: 'actions',
-        label: '',
-        width: 40,
-        render: (row: FileRow) => (
-          <Menu
-            items={MENU_ITEMS}
-            onItemClick={actionId => handleMenuItemClick(actionId, row)}
-          >
-            <ActionIcon variant="subtle" color="gray">
-              <ICONS.IconDotsVertical size={18} />
-            </ActionIcon>
-          </Menu>
-        ),
-      },
-    ],
-    [handleMenuItemClick]
+  const [downloadItems] = useAsyncOperation(async () => {
+    try {
+      const res = await dispatch(
+        downloadOneDriveFiles({
+          ids: selectedIds,
+        })
+      );
+      if (res?.payload?.status !== 200) {
+        notifications.show({
+          message:
+            res?.payload?.message ||
+            `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
+          color: 'red',
+        });
+        return;
+      }
+
+      const blob = new Blob([res.payload.data]);
+
+      // ✅ Extract filename from Content-Disposition header
+      const contentDisposition = res.payload.headers?.['content-disposition'];
+      const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+      const filename = match?.[1] || `download-${Date.now()}.zip`;
+
+      // ✅ Trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      notifications.show({
+        message:
+          error ||
+          `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+        color: 'red',
+      });
+    }
+  });
+
+  const handleDownloadSelected = useCallback(() => {
+    downloadItems({});
+  }, [selectedIds]);
+
+  // Sync storage
+  const [syncStorage, syncOneDriveLoading] = useAsyncOperation(
+    async (folderId: string | null) => {
+      try {
+        const res = await dispatch(
+          syncOneDrive({
+            account_id: accountId,
+            ...(folderId && {
+              directory_id: folderId,
+            }),
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          await dispatch(
+            initializeOneDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              // page: pagination?.page_no || 1,
+              page: 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+          notifications.show({
+            message: res?.data?.message || 'Items synced successfully',
+            color: 'green',
+          });
+        } else {
+          notifications.show({
+            message:
+              res?.message || res?.data?.message || 'Failed to sync items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to sync items',
+          color: 'red',
+        });
+      }
+    }
   );
 
+  const handleSyncStorage = useCallback(() => {
+    const folderId = getLocalStorage('oneDriveFolderId');
+    syncStorage(folderId);
+  }, []);
+
+  // Moving files
+  const [moveFiles, moveFilesLoading] = useAsyncOperation(
+    async (destId: string | null) => {
+      try {
+        const res = await dispatch(
+          moveOneDriveFiles({
+            ids: filesToMove,
+            destination_id: destId,
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: 'Items moved successfully',
+            color: 'green',
+          });
+          await dispatch(
+            initializeOneDriveFromStorage({
+              ...(folderId && { id: folderId }),
+              limit: pagination?.page_limit || 20,
+              // page: pagination?.page_no || 1,
+              page: 1,
+              account_id: Number(accountId),
+              searchTerm: debouncedSearchTerm || '',
+            })
+          );
+        } else {
+          notifications.show({
+            message: res?.message || 'Failed to move items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to move items',
+          color: 'red',
+        });
+      } finally {
+        setIsMoveMode(false);
+        setFilesToMove([]);
+        handleUnselectAll();
+        setSelectedIds([]);
+        setSourceFolderId(null);
+      }
+    }
+  );
+
+  const cancelMoveMode = useCallback(() => {
+    setIsMoveMode(false);
+    setFilesToMove([]);
+    setSelectedIds([]);
+    setLastSelectedIndex(null);
+    setSourceFolderId(null);
+  }, []);
+
+  const handleMoveSelected = useCallback(() => {
+    setIsMoveMode(true);
+    setFilesToMove([...selectedIds]);
+    setSourceFolderId(currentFolderId ?? null);
+  }, [selectedIds]);
+
+  const isPasteEnabled = useCallback(() => {
+    if (!isMoveMode || filesToMove.length === 0) return false;
+
+    // Disable paste if currentFolderId is same as sourceFolderId and selected folder is among filesToMove
+    if (
+      currentFolderId === sourceFolderId &&
+      selectedIds.length === 1 &&
+      filesToMove.includes(selectedIds[0])
+    ) {
+      return false;
+    }
+
+    // Also disable paste if currentFolderId is null (root) and no folder selected different from filesToMove
+    // if (currentFolderId === null) {
+    //   // Paste disabled on root until user selects a different folder
+    //   return false;
+    // }
+
+    return true;
+  }, [isMoveMode, filesToMove, currentFolderId, sourceFolderId, selectedIds]);
+
+  const handlePasteFiles = useCallback(() => {
+    if (filesToMove.length === 0) return;
+
+    // Get the destination folder ID (currentFolderId could be null for root)
+    let destId: string | null = null;
+
+    if (currentFolderId !== null) {
+      if (layout === 'list') {
+        const checkId = files.find(item => selectedIds?.includes(item.id));
+        destId = checkId ? checkId.id : destinationId;
+      } else {
+        destId = selectedIds.length > 0 ? selectedIds[0] : null;
+      }
+    } else {
+      const checkId = files.find(item => selectedIds?.includes(item.id));
+      destId = checkId ? checkId.id : destinationId;
+    }
+
+    // Check if any of the files being moved is the destination folder itself
+    const isMovingFolderIntoItself = oneDriveFiles.some(
+      file =>
+        filesToMove.includes(file.id) &&
+        file.entry_type === 'folder' &&
+        file.id === destId
+    );
+
+    if (isMovingFolderIntoItself) {
+      notifications.show({
+        message: 'Cannot move a folder into itself',
+        color: 'red',
+      });
+      return;
+    }
+
+    // Check if trying to move items into one of the selected folders
+    const selectedFolders = oneDriveFiles.filter(
+      file => filesToMove.includes(file.id) && file.entry_type === 'folder'
+    );
+
+    const isMovingIntoSelectedFolder = selectedFolders.some(
+      folder => folder.id === destId
+    );
+
+    if (isMovingIntoSelectedFolder) {
+      notifications.show({
+        message: 'Cannot move items into one of the selected folders',
+        color: 'red',
+      });
+      return;
+    }
+
+    moveFiles(destId);
+  }, [filesToMove, currentFolderId, moveFiles, oneDriveFiles]);
+
   return {
-    isLoading: isLoading || loading,
-    files: transformedFiles,
-    hasAccess,
-    connectWithOneDrive,
-    columns,
-    selectedRows,
-    onSelectRow,
+    layout,
+    switchLayout,
+    files,
+    loading: isLoading,
+    folders,
+    regularFiles,
+    selectedIds,
+    setSelectedIds,
+    setLastSelectedIndex,
+    handleSelect,
+    handleUnselectAll,
+    handleDeleteSelected,
+    handleDownloadSelected,
+    handleShareSelected,
+    getIndexById,
     onSelectAll,
-    modalType,
-    uploadedFiles,
-    setUploadedFiles,
-    folderMethods,
-    createFolderLoading,
-    uploadFilesLoading,
-    handleCreateFolder,
+    onSelectRow,
+    dragRef,
+    isDragging,
     handleFileUpload,
-    modalOpen,
+    uploadProgress,
+    uploadingFiles,
+    handleCancelUpload,
+    handleCloseUploadProgress,
+    showUploadProgress,
+
+    // create file / folder
+    createFolderLoading,
+    handleCreateFolder,
+    uploadFilesLoading,
     openModal,
     closeModal,
+    currentPath,
+    navigateToFolderFn,
+    modalOpen,
+    modalType,
+    folderMethods,
+    setUploadedFiles,
+    uploadedFiles,
     getFileIcon,
+
     deleteModalOpen,
     setDeleteModalOpen,
-    handleDeleteConfirm,
     itemToDelete,
     removeFileLoading,
-    loadMoreFiles,
-    nextLink,
+    handleDeleteConfirm,
+    removeFilesModalOpen,
+    removeFilesLoading,
+
     renameModalOpen,
     setRenameModalOpen,
     itemToRename,
     renameMethods,
     handleRenameConfirm,
     renameFileLoading,
+    handleRemoveFilesConfirm,
+    closeRemoveFilesModal,
+
+    handleMenuItemClick,
+    handleRowDoubleClick,
+
+    handleScroll,
+    scrollBoxRef,
+    searchTerm: localSearchTerm,
+    handleSearchChange,
+
+    lastSelectedIndex,
+    allIds,
+    loadMoreFiles,
+    pagination,
+    navigateLoading,
+    handleSyncStorage,
+    syncOneDriveLoading,
+
+    isMoveMode,
+    filesToMove,
+    handleMoveSelected,
+    handlePasteFiles,
+    moveFilesLoading,
+    isPasteEnabled,
+    cancelMoveMode,
   };
 };
 

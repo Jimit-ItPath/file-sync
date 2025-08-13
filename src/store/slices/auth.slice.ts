@@ -9,11 +9,13 @@ type ConnectedAccountType = {
   account_name: string;
   account_type: AccountType;
   state_token: string;
-  access_token: null;
-  refresh_token: null;
   token_expires: null;
   createdAt: string;
   updatedAt: string;
+  email: string;
+  sequence_number: number | null;
+  external_account_id: string | null;
+  re_authentication_required: boolean;
 };
 
 type StorageDetailsType = {
@@ -33,9 +35,21 @@ type CheckStorageDetailsType = {
   };
 };
 
+type UserType = {
+  user: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    role: string;
+  };
+  iat: number;
+  exp: number;
+};
+
 type AuthState = {
   isLoggedIn: boolean;
-  user: {};
+  user: UserType | null;
   isTemporary: boolean;
   activeUI: string;
   connectedAccounts: ConnectedAccountType[];
@@ -45,17 +59,19 @@ type AuthState = {
     result: CheckStorageDetailsType[];
     storage_details: StorageDetailsType;
   } | null;
+  token: string | null;
 };
 
 const initialState: AuthState = {
   isLoggedIn: false,
-  user: {},
+  user: null,
   isTemporary: false,
   activeUI: '',
   connectedAccounts: [],
   checkStorageDetails: null,
   loading: false,
   error: null,
+  token: null,
 };
 
 export const connectCloudAccount = createAsyncThunk(
@@ -122,7 +138,45 @@ export const removeAccountAccess = createAsyncThunk(
   }
 );
 
-export const authSlice = createSlice({
+export const completeProfile = createAsyncThunk(
+  'auth/completeProfile',
+  async (
+    data: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      password: string;
+      validation_code: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.auth.completeProfile(data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to complete profile');
+    }
+  }
+);
+
+export const updateSequence = createAsyncThunk(
+  'auth/updateSequence',
+  async (
+    data: {
+      id: number;
+      sequence_number: number;
+    }[]
+  ) => {
+    try {
+      const response = await api.auth.updateSequence({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
@@ -135,6 +189,13 @@ export const authSlice = createSlice({
     },
     logout: () => {
       return { ...initialState };
+    },
+    resetUser: state => {
+      state.user = null;
+      state.connectedAccounts = [];
+      state.checkStorageDetails = null;
+      state.isLoggedIn = false;
+      state.token = null;
     },
   },
   extraReducers: builder => {
@@ -168,5 +229,5 @@ export const authSlice = createSlice({
   },
 });
 
-export const { logout, updateUser } = authSlice.actions;
+export const { logout, updateUser, resetUser } = authSlice.actions;
 export default authSlice.reducer;

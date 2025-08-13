@@ -25,10 +25,18 @@ import ForgotPassword from '../pages/auth/forgot-password';
 import ResetPassword from '../pages/auth/reset-password';
 import VerifyUser from '../pages/auth/verify-user';
 import OAuthCallback from '../pages/auth/OAuthCallback';
-import GoogleDrive from '../pages/google-drive';
-import Dropbox from '../pages/dropbox';
-import OneDrive from '../pages/onedrive';
 import Profile from '../pages/user/profile';
+import AdminLogin from '../pages/auth/admin/AdminLogin';
+import AdminDashboard from '../pages/admin/dashboard';
+import AdminUsers from '../pages/admin/users';
+import CompleteProfile from '../pages/auth/admin/complete-profile';
+import { ROLES } from '../utils/constants';
+import React from 'react';
+import AdminAuditLogs from '../pages/admin/audit-logs';
+import PrivacyPolicy from '../pages/auth/register/PrivacyPolicy';
+import TermsAndConditions from '../pages/auth/register/TermsAndConditions';
+import UnifidriveLanding from '../pages/landing';
+import RecentFiles from '../pages/dashboard/components/RecentFiles';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -68,11 +76,25 @@ export const router = createBrowserRouter([
   {
     path: '/',
     loader: () => {
-      const { isAuthenticated } = getAuth({});
-      return redirect(
-        isAuthenticated ? PRIVATE_ROUTES.DASHBOARD.url : AUTH_ROUTES.LOGIN.url
-      );
+      const { isAuthenticated, role } = getAuth({});
+      if (isAuthenticated) {
+        return redirect(
+          role === ROLES.ADMIN
+            ? PRIVATE_ROUTES.USERS.url
+            : PRIVATE_ROUTES.DASHBOARD.url
+        );
+      }
+      return null;
+      // return redirect(
+      //   isAuthenticated
+      //     ? role === ROLES.ADMIN
+      //       ? PRIVATE_ROUTES.USERS.url
+      //       : PRIVATE_ROUTES.DASHBOARD.url
+      //     : // : AUTH_ROUTES.LOGIN.url
+      //       AUTH_ROUTES.LANDING.url
+      // );
     },
+    Component: UnifidriveLanding,
   },
   {
     ...AUTH_ROUTES.layout,
@@ -83,7 +105,8 @@ export const router = createBrowserRouter([
       {
         // ...PLAIN_ROUTES.root,
         loader: () => {
-          return redirect(AUTH_ROUTES.LOGIN.url);
+          // return redirect(AUTH_ROUTES.LOGIN.url);
+          return redirect(AUTH_ROUTES.LANDING.url);
         },
       },
       { ...AUTH_ROUTES.LOGIN, Component: Login },
@@ -92,7 +115,10 @@ export const router = createBrowserRouter([
       { ...AUTH_ROUTES.RESET_PASSWORD, Component: ResetPassword },
       { ...AUTH_ROUTES.VERIFY_USER, Component: VerifyUser },
       { ...AUTH_ROUTES.OAUTH_CALLBACK, Component: OAuthCallback },
-      // { ...PRIVATE_ROUTES.DASHBOARD, Component: Dashboard },
+      { ...AUTH_ROUTES.ADMIN_LOGIN, Component: AdminLogin },
+      { ...AUTH_ROUTES.COMPLETE_PROFILE, Component: CompleteProfile },
+      { ...AUTH_ROUTES.PRIVACY_POLICY, Component: PrivacyPolicy },
+      { ...AUTH_ROUTES.TERMS_OF_SERVICE, Component: TermsAndConditions },
     ],
   },
   {
@@ -106,24 +132,50 @@ export const router = createBrowserRouter([
         loader: dashboardPageLoader(PRIVATE_ROUTES.DASHBOARD.roles),
       },
       {
+        ...PRIVATE_ROUTES.RECENT_FILES,
+        Component: RecentFiles,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.RECENT_FILES.roles),
+      },
+      {
         ...PRIVATE_ROUTES.GOOGLE_DRIVE,
-        Component: GoogleDrive,
+        // Component: GoogleDrive,
+        // Component: Dashboard,
+        element: React.createElement(Dashboard, { key: 'google-drive' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.GOOGLE_DRIVE.roles),
       },
       {
         ...PRIVATE_ROUTES.DROPBOX,
-        Component: Dropbox,
+        // Component: Dropbox,
+        // Component: Dashboard,
+        element: React.createElement(Dashboard, { key: 'dropbox' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.DROPBOX.roles),
       },
       {
         ...PRIVATE_ROUTES.ONEDRIVE,
-        Component: OneDrive,
+        // Component: OneDrive,
+        // Component: Dashboard,
+        element: React.createElement(Dashboard, { key: 'onedrive' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.ONEDRIVE.roles),
       },
       {
         ...PRIVATE_ROUTES.PROFILE,
         Component: Profile,
         loader: dashboardPageLoader(PRIVATE_ROUTES.PROFILE.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.ADMIN_DASHBOARD,
+        Component: AdminDashboard,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.ADMIN_DASHBOARD.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.USERS,
+        Component: AdminUsers,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.USERS.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.AUDIT_LOGS,
+        Component: AdminAuditLogs,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.AUDIT_LOGS.roles),
       },
     ],
   },

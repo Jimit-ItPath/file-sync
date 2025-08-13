@@ -1,28 +1,51 @@
-import { Box, Group, Select, Stack, Text, TextInput } from '@mantine/core';
-import ActionButtons from './components/ActionButtons';
+import {
+  ActionIcon,
+  Autocomplete,
+  Box,
+  Group,
+  rem,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import FileTable from './components/FileTable';
-// import RecentFiles from './RecentFiles';
 import useDashboard from './use-dashboard';
 import {
   Breadcrumbs,
   Button,
   Dropzone,
   Form,
+  Image,
   Modal,
   SelectionBar,
+  Tooltip,
 } from '../../components';
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
 import UploadProgress from './components/UploadProgress';
-import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import CustomToggle from './components/CustomToggle';
-import type { AccountType } from '../../store/slices/cloudStorage.slice';
+import { LoaderOverlay } from '../../components/loader';
+import { Controller } from 'react-hook-form';
+import { formatFileSize } from '../../utils/helper';
+// import RecentFiles from './components/RecentFilesOld';
+import useResponsive from '../../hooks/use-responsive';
+import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
+import NoConnectedAccount from './NoConnectedAccount';
+import MoveModal from './components/MoveModal';
+import { ICONS } from '../../assets/icons';
+import FullScreenPreview from './components/FullScreenPreview';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+import FileDetailsDrawer from './components/FileDetailsDrawer';
 
-const controlBoxStyles = {
-  height: 40,
-  display: 'flex',
-  alignItems: 'center',
-  borderRadius: 6,
+const iconStyle = {
+  borderRadius: 999,
+  transition: 'background 0.2s',
+  padding: 4,
+  '&:hover': {
+    background: '#e0e7ff',
+  },
 };
 
 const Dashboard = () => {
@@ -38,7 +61,6 @@ const Dashboard = () => {
     handleShareSelected,
     handleUnselectAll,
     selectedIds,
-    handleKeyDown,
     setSelectedIds,
     setLastSelectedIndex,
     getIndexById,
@@ -51,12 +73,11 @@ const Dashboard = () => {
     uploadingFiles,
     showUploadProgress,
     handleCloseUploadProgress,
-    loading,
     closeModal,
     createFolderLoading,
     handleCreateFolder,
     handleFileUpload,
-    openModal,
+    // openModal,
     uploadFilesLoading,
     currentPath,
     navigateToFolderFn,
@@ -85,19 +106,114 @@ const Dashboard = () => {
     removeFilesLoading,
     handleScroll,
     scrollBoxRef,
-    accountType,
+    accountId,
     handleAccountTypeChange,
-    handleSearchChange,
-    searchTerm,
+    allIds,
+    lastSelectedIndex,
+    loadMoreFiles,
+    pagination,
+    accountOptions,
+    navigateLoading,
+    handleSyncStorage,
+    syncCloudStorageLoading,
+
+    isMoveMode,
+    // handleMoveSelected,
+    handlePasteFiles,
+    filesToMove,
+    moveFilesLoading,
+    isPasteEnabled,
+    cancelMoveMode,
+    isSFDEnabled,
+    uploadMethods,
+    accountOptionsForSFD,
+    checkLocation,
+    parentId,
+    dragDropModalOpen,
+    dragDropFiles,
+    handleDragDropUpload,
+    closeDragDropModal,
+    // recentFilesData,
+    folderId,
+    displayMoveIcon,
+    displayDownloadIcon,
+    location,
+    displayShareIcon,
+    connectedAccounts,
+    previewFile,
+    previewModalOpen,
+    setPreviewFile,
+    setPreviewModalOpen,
+    previewFileLoading,
+    displayPreviewIcon,
+    closeMoveModal,
+    handleMoveModalConfirm,
+    itemsToMove,
+    moveModalOpen,
+    currentAccountId,
+    handleModalMoveSelected,
+    loading,
+    downloadItems,
+    closeDetailsDrawer,
+    detailsDrawerOpen,
+    selectedItemForDetails,
+    detailsFile,
+    detailsFileLoading,
   } = useDashboard();
-  const { connectedAccounts } = useSidebar();
+
+  const {
+    openAccountModal,
+    isConnectModalOpen,
+    closeAccountModal,
+    handleConnectAccount,
+    methods,
+    connectAccountFormData,
+    connectAccountLoading,
+  } = useSidebar();
+  const { isSm, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
+  if (!connectedAccounts?.length) {
+    return (
+      <>
+        <LoaderOverlay visible={loading} opacity={1} />
+        <NoConnectedAccount
+          {...{
+            closeAccountModal,
+            connectAccountFormData,
+            connectAccountLoading,
+            handleConnectAccount,
+            isConnectModalOpen,
+            methods,
+            openAccountModal,
+            isSm,
+          }}
+        />
+      </>
+    );
+  }
+
   return (
     <Box>
-      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
+      <LoaderOverlay
+        visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
+        opacity={1}
+      />
       {/* <ScrollArea> */}
+      {location.pathname?.startsWith('/dropbox') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in dropbox account
+        </Text>
+      ) : location.pathname?.startsWith('/google-drive') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in google drive account
+        </Text>
+      ) : location.pathname?.startsWith('/onedrive') ? (
+        <Text fz={'sm'} fw={500}>
+          You are in onedrive account
+        </Text>
+      ) : null}
       <Box
         px={32}
         pb={20}
@@ -120,177 +236,264 @@ const Dashboard = () => {
         }}
         onScroll={handleScroll}
       >
+        {/* Top Row - Toggle and Action Buttons */}
+        {/* <Box mt={10}>
+          <Group justify="space-between" align="center" gap={20}>
+            {connectedAccounts?.length ? (
+              <ActionButtons
+                {...{
+                  openModal,
+                  handleSyncStorage,
+                }}
+              />
+            ) : null}
+            <Tooltip label="Sync" fz={'xs'}>
+                <ActionIcon
+                  h={40}
+                  w={40}
+                  variant="outline"
+                  onClick={handleSyncStorage}
+                >
+                  <ICONS.IconRefresh />
+                </ActionIcon>
+              </Tooltip>
+          </Group>
+        </Box> */}
+
+        {/* {recentFilesData?.length && !folderId ? (
+          <RecentFiles
+            {...{
+              recentFiles: recentFilesData,
+              isSm,
+              isXs,
+              allIds,
+              getIndexById,
+              handleSelect,
+              handleUnselectAll,
+              isMoveMode,
+              lastSelectedIndex,
+              selectedIds,
+              setLastSelectedIndex,
+              setSelectedIds,
+              displayDownloadIcon,
+              handleMenuItemClick,
+              displayShareIcon,
+              displayPreviewIcon,
+            }}
+          />
+        ) : null} */}
+
         {/* Sticky Section */}
         <Box
           style={{
             position: 'sticky',
             top: 0,
-            ...(files?.length || folders?.length ? { zIndex: 5 } : {}),
-            backgroundColor: '#ffffff',
-            padding: '16px 24px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            borderBottom: '1px solid #e5e7eb',
+            ...(files?.length || folders?.length ? { zIndex: 10 } : {}),
+            // backgroundColor: '#E5E7EB',
+            backgroundColor: '#f6faff',
+            border: '1px solid #e5e7eb',
+            borderRadius: 'var(--mantine-radius-default)',
+            padding: '10px 24px',
+            // boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            // borderBottom: '1px solid #e5e7eb',
           }}
+          mt={16}
+          className="stickey-box"
         >
+          <Box>
+            <Group align="center" w={'100%'} mih={50}>
+              <Box style={{ flexGrow: 1 }}>
+                <Breadcrumbs
+                  items={currentPath}
+                  onNavigate={folderId => {
+                    if (!folderId || folderId === null) {
+                      navigateToFolderFn(null);
+                    } else {
+                      const folder = currentPath.find(f => f.id === folderId);
+                      if (folder) {
+                        navigateToFolderFn(folder);
+                      }
+                    }
+                  }}
+                />
+              </Box>
+              <Box style={{ flexGrow: 1 }}>
+                {selectedIds.length > 0 ? (
+                  <SelectionBar
+                    count={selectedIds.length}
+                    onCancel={() => {
+                      handleUnselectAll();
+                      cancelMoveMode();
+                    }}
+                    onDelete={handleDeleteSelected}
+                    onDownload={handleDownloadSelected}
+                    onShare={handleShareSelected}
+                    // onMove={handleMoveSelected}
+                    onMove={handleModalMoveSelected}
+                    onPaste={handlePasteFiles}
+                    isMoveMode={isMoveMode}
+                    isPasteEnabled={isPasteEnabled()}
+                    displayMoveIcon={displayMoveIcon}
+                    displayDownloadIcon={displayDownloadIcon}
+                    displayShareIcon={
+                      selectedIds?.length === 1 && displayShareIcon
+                    }
+                  />
+                ) : null}
+              </Box>
+              <Tooltip label="Sync" fz={'xs'}>
+                <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
+                  <ICONS.IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
+              {!checkLocation && (
+                <Select
+                  data={accountOptions}
+                  value={accountId}
+                  onChange={handleAccountTypeChange}
+                  placeholder="Select account type"
+                  style={{ width: '150px' }}
+                  styles={{
+                    input: {
+                      height: '44px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #e5e7eb',
+                      backgroundColor: '#ffffff',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#374151',
+                      transition: 'all 0.2s ease',
+                      '&:focus': {
+                        borderColor: '#1e7ae8',
+                        boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                      },
+                      '&:hover': {
+                        borderColor: '#d1d5db',
+                      },
+                    },
+                    dropdown: {
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                    },
+                    option: {
+                      padding: '6px',
+                      fontSize: '14px',
+                      borderRadius: '4px',
+                      margin: '2px',
+                      '&[data-selected]': {
+                        backgroundColor: '#1e7ae8',
+                        color: '#ffffff',
+                      },
+                      '&:hover': {
+                        backgroundColor: '#f1f5f9',
+                      },
+                    },
+                  }}
+                />
+              )}
+              {/* <TextInput
+                placeholder="Search files..."
+                value={searchTerm}
+                onChange={event => handleSearchChange(event.target.value)}
+                // style={{ width: '200px' }}
+                styles={{
+                  input: {
+                    height: '44px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #e5e7eb',
+                    backgroundColor: '#ffffff',
+                    fontSize: '14px',
+                    // paddingLeft: '44px',
+                    transition: 'all 0.2s ease',
+                    '&:focus': {
+                      borderColor: '#1e7ae8',
+                      boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
+                      backgroundColor: '#fefefe',
+                    },
+                    '&:hover': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&::placeholder': {
+                      color: '#9ca3af',
+                      fontSize: '14px',
+                    },
+                  },
+                  section: {
+                    paddingLeft: '16px',
+                  },
+                }}
+              /> */}
+              <CustomToggle
+                value={layout}
+                onChange={(value: 'list' | 'grid') => switchLayout(value)}
+              />
+            </Group>
+          </Box>
+
           <DragDropOverlay
             isDragging={isDragging}
             message="Drop files here to upload"
             subMessage="Support for PDF, DOC, XLS, PPT, images and more"
           />
-          {connectedAccounts?.length ? (
-            <ActionButtons
-              {...{ currentPath, navigateToFolderFn, openModal }}
-            />
-          ) : null}
-          {/* <RecentFiles /> */}
-          <Group mb={20} align="center" style={{ width: '100%' }}>
-            {selectedIds.length > 0 ? (
-              <Box style={{ ...controlBoxStyles, flex: 1, marginRight: 12 }}>
-                <SelectionBar
-                  count={selectedIds.length}
-                  onCancel={handleUnselectAll}
-                  onDelete={handleDeleteSelected}
-                  onDownload={handleDownloadSelected}
-                  onShare={handleShareSelected}
-                />
-              </Box>
-            ) : (
-              <Box style={{ flex: 1, marginRight: 12 }} />
-            )}
-            <CustomToggle
-              value={layout}
-              onChange={(value: 'list' | 'grid') => switchLayout(value)}
-            />
-            {/* <SegmentedControl
-              value={layout}
-              onChange={(value: string) =>
-                switchLayout(value as 'list' | 'grid')
-              }
-              p={4}
-              color="#1c7ed6"
-              data={[
-                {
-                  value: 'list',
-                  label: (
-                    <Tooltip label="List View" withArrow fz="xs">
-                      <ICONS.IconList
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'list' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-                {
-                  value: 'grid',
-                  label: (
-                    <Tooltip label="Grid View" withArrow fz="xs">
-                      <ICONS.IconGridDots
-                        size={18} // Adjusted size for compactness
-                        color={layout === 'grid' ? '#ffffff' : '#1c7ed6'}
-                      />
-                    </Tooltip>
-                  ),
-                },
-              ]}
-              styles={() => ({
-                root: {
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: 8,
-                  padding: '4px',
-                  height: '40px', // Match the height of the SelectionBar
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering
-                },
-                control: {
-                  height: '32px', // Adjusted for compactness
-                  width: '40px', // Make controls square for better alignment
-                  display: 'flex',
-                  alignItems: 'center', // Center icon vertically
-                  justifyContent: 'center', // Center icon horizontally
-                  borderRadius: 6,
-                  transition: 'background-color 0.2s ease',
-                },
-                active: {
-                  backgroundColor: '#1c7ed6', // Active background color
-                  display: 'flex',
-                  alignItems: 'center', // Ensure vertical centering in active state
-                  justifyContent: 'center', // Ensure horizontal centering in active state
-                },
-                label: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-              })}
-            /> */}
-          </Group>
-          <Group align="center" w={'100%'} mt={16}>
-            <Box style={{ flexGrow: 1 }}>
-              <Breadcrumbs
-                items={currentPath}
-                onNavigate={folderId => {
-                  if (!folderId || folderId === null) {
-                    navigateToFolderFn(null);
-                  } else {
-                    const folder = currentPath.find(f => f.id === folderId);
-                    if (folder) {
-                      navigateToFolderFn(folder);
-                    }
-                  }
-                }}
-              />
-            </Box>
-            <Select
-              value={accountType}
-              onChange={(value: AccountType | 'all') =>
-                handleAccountTypeChange(value)
-              }
-              data={[
-                { value: 'all', label: 'All Accounts' },
-                { value: 'google_drive', label: 'Google Drive' },
-                { value: 'dropbox', label: 'Dropbox' },
-                { value: 'onedrive', label: 'OneDrive' },
-              ]}
-              style={{ width: '150px' }}
-            />
-            <TextInput
-              placeholder="Search files..."
-              value={searchTerm}
-              onChange={event => handleSearchChange(event.currentTarget.value)}
-              style={{ width: '200px' }}
-            />
-          </Group>
         </Box>
         {layout === 'list' ? (
-          <FileTable
-            {...{
-              files,
-              handleSelect,
-              handleKeyDown,
-              onSelectAll,
-              onSelectRow,
-              selectedIds,
-              currentPath,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-            }}
-          />
+          <>
+            <FileTable
+              {...{
+                files,
+                handleSelect,
+                onSelectAll,
+                onSelectRow,
+                selectedIds,
+                currentPath,
+                handleMenuItemClick,
+                handleRowDoubleClick,
+                handleUnselectAll,
+                filesToMove,
+                isMoveMode,
+                parentId,
+                checkLocation,
+                folderId,
+              }}
+            />
+            {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button mt={20} onClick={loadMoreFiles}>
+                Load More
+              </Button>
+            ) : null}
+          </>
         ) : (
-          <FileGrid
-            {...{
-              files: regularFiles,
-              handleSelect,
-              selectedIds,
-              folders,
-              handleKeyDown,
-              handleUnselectAll,
-              getIndexById,
-              setLastSelectedIndex,
-              setSelectedIds,
-              handleMenuItemClick,
-              handleRowDoubleClick,
-            }}
-          />
+          <>
+            <FileGrid
+              {...{
+                files: regularFiles,
+                handleSelect,
+                selectedIds,
+                folders,
+                handleUnselectAll,
+                getIndexById,
+                setLastSelectedIndex,
+                setSelectedIds,
+                handleMenuItemClick,
+                handleRowDoubleClick,
+                allIds,
+                lastSelectedIndex,
+                filesToMove,
+                isMoveMode,
+                parentId,
+                displayDownloadIcon,
+                displayShareIcon,
+                displayMoveIcon,
+                displayPreviewIcon,
+              }}
+            />
+            {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button mt={20} onClick={loadMoreFiles}>
+                Load More
+              </Button>
+            ) : null}
+          </>
         )}
       </Box>
       {/* </ScrollArea> */}
@@ -319,6 +522,39 @@ const Dashboard = () => {
                 error={folderMethods.formState.errors.folderName?.message}
                 withAsterisk
               />
+              {!isSFDEnabled && (
+                <Controller
+                  control={folderMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          folderMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
               <Button
                 type="submit"
                 loading={createFolderLoading}
@@ -332,23 +568,67 @@ const Dashboard = () => {
             </Stack>
           </Form>
         ) : (
-          <>
-            <Dropzone
-              onFilesSelected={setUploadedFiles}
-              maxSize={5 * 1024 ** 2}
-              // multiple={false}
-              mb="md"
-              getFileIcon={getFileIcon}
-              files={uploadedFiles}
-            />
-            <Button
-              onClick={handleFileUpload}
-              loading={uploadFilesLoading}
-              disabled={uploadedFiles.length === 0 || uploadFilesLoading}
-            >
-              Upload Files
-            </Button>
-          </>
+          <Form onSubmit={handleFileUpload} methods={uploadMethods}>
+            <Stack gap={'md'}>
+              <Dropzone
+                // onFilesSelected={setUploadedFiles}
+                onFilesSelected={files => {
+                  setUploadedFiles(files);
+                  uploadMethods.setValue('files', files);
+                }}
+                // maxSize={5 * 1024 ** 2}
+                multiple={true}
+                mb="md"
+                getFileIcon={getFileIcon}
+                files={uploadedFiles}
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={uploadMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          uploadMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                // onClick={handleFileUpload}
+                type="submit"
+                loading={uploadFilesLoading}
+                disabled={
+                  uploadedFiles.length === 0 || uploadFilesLoading
+                  // ||
+                  // (!isSFDEnabled && !uploadMethods.formState.isValid)
+                }
+              >
+                Upload Files
+              </Button>
+            </Stack>
+          </Form>
         )}
       </Modal>
 
@@ -356,11 +636,17 @@ const Dashboard = () => {
       <Modal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title={`Delete ${itemToDelete?.mimeType === 'application/vnd.google-apps.folder' ? 'Folder' : 'File'}`}
+        title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
       >
         <Text mb="md">
-          Are you sure you want to delete "{itemToDelete?.name}"?
-          {itemToDelete?.mimeType === 'application/vnd.google-apps.folder' &&
+          Are you sure you want to delete this{' '}
+          {itemToDelete?.type === 'folder' ? 'folder' : 'file'} "
+          {itemToDelete?.name}"{' '}
+          {itemToDelete?.UserConnectedAccount?.account_name
+            ? `from "${itemToDelete?.UserConnectedAccount?.account_name}"`
+            : ''}
+          ?
+          {itemToDelete?.type === 'folder' &&
             ' All contents will be deleted permanently.'}
         </Text>
         <Group>
@@ -386,12 +672,11 @@ const Dashboard = () => {
       <Modal
         opened={removeFilesModalOpen}
         onClose={closeRemoveFilesModal}
-        title={`Delete ${selectedIds.length} items`}
+        title={`Remove items`}
       >
         <Text mb="md">
-          Are you sure you want to delete "{selectedIds.length}" items?
-          {selectedIds.length > 0 &&
-            ' All contents will be deleted permanently.'}
+          Are you sure you want to remove items? All contents will be deleted
+          permanently.
         </Text>
         <Group>
           <Button
@@ -438,6 +723,177 @@ const Dashboard = () => {
           </Stack>
         </Form>
       </Modal>
+
+      {/* Drag & Drop Upload Modal - shown when files are dragged without SFD enabled */}
+      <Modal
+        opened={dragDropModalOpen}
+        onClose={closeDragDropModal}
+        title="Upload Dragged Files"
+      >
+        <Form onSubmit={handleDragDropUpload} methods={uploadMethods}>
+          <Stack gap={'md'}>
+            <Text size="sm" c="dimmed" mb="xs">
+              {dragDropFiles.length} file{dragDropFiles.length > 1 ? 's' : ''}{' '}
+              selected for upload:
+            </Text>
+            <Box
+              style={{
+                maxHeight: '250px',
+                overflowY: 'auto',
+                padding: '8px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px',
+                border: '1px solid #e9ecef',
+              }}
+            >
+              {dragDropFiles.map((file, index) => {
+                const isImage = file.type.startsWith('image/');
+                return (
+                  <Group key={index} gap={'md'} mt={index > 0 ? 15 : 0}>
+                    <Box
+                      style={{
+                        width: rem(60),
+                        height: rem(60),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        borderRadius: rem(4),
+                        backgroundColor: theme.colors.gray[0],
+                        flexShrink: 0,
+                        marginRight: rem(12),
+                      }}
+                    >
+                      {isImage ? (
+                        <Image
+                          src={URL.createObjectURL(file)}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'cover',
+                          }}
+                          alt={file.name}
+                        />
+                      ) : (
+                        getFileIcon({
+                          entry_type: file.type,
+                          mime_type: file.type,
+                          file_extension: file.type,
+                          name: file.name,
+                        })(40)
+                      )}
+                    </Box>
+                    <Text size="sm" style={{ marginBottom: '4px' }}>
+                      📄 {file.name} ({formatFileSize(file.size.toString())})
+                    </Text>
+                  </Group>
+                );
+              })}
+            </Box>
+
+            <Controller
+              control={uploadMethods.control}
+              name="accountId"
+              render={({ field }) => {
+                const selectedOption = accountOptionsForSFD.find(
+                  option => option.value === field.value
+                );
+
+                return (
+                  <Autocomplete
+                    label="Select Account"
+                    placeholder="Choose an account"
+                    data={accountOptionsForSFD}
+                    value={selectedOption ? selectedOption.label : ''}
+                    onChange={value => {
+                      const matchedOption = accountOptionsForSFD.find(
+                        option =>
+                          option.label === value || option.value === value
+                      );
+                      field.onChange(matchedOption ? matchedOption.value : '');
+                    }}
+                    error={uploadMethods.formState.errors.accountId?.message}
+                    required
+                  />
+                );
+              }}
+            />
+
+            <Button
+              type="submit"
+              loading={uploadFilesLoading}
+              disabled={
+                dragDropFiles.length === 0 ||
+                uploadFilesLoading ||
+                !uploadMethods.formState.isValid
+              }
+            >
+              Upload Files
+            </Button>
+          </Stack>
+        </Form>
+      </Modal>
+
+      {/* Preview Modal */}
+      {/* <FilePreviewModal
+        {...{
+          previewFile,
+          previewFileLoading,
+          previewModalOpen,
+          setPreviewFile,
+          setPreviewModalOpen,
+        }}
+      /> */}
+
+      <FullScreenPreview
+        previewFile={previewFile}
+        previewFileLoading={previewFileLoading}
+        previewModalOpen={previewModalOpen}
+        setPreviewModalOpen={setPreviewModalOpen}
+        setPreviewFile={setPreviewFile}
+        onDownload={() => {
+          if (previewFile && files.find(f => f.name === previewFile.name)) {
+            const fileToDownload = files.find(f => f.name === previewFile.name);
+            if (fileToDownload) {
+              downloadItems([fileToDownload.id]);
+            }
+          }
+        }}
+        onShare={() => {
+          if (previewFile && files.find(f => f.name === previewFile.name)) {
+            const fileToShare = files.find(f => f.name === previewFile.name);
+            if (fileToShare?.web_view_url) {
+              window.open(fileToShare.web_view_url, '_blank');
+            }
+          }
+        }}
+      />
+
+      {/* Move Modal */}
+      <MoveModal
+        opened={moveModalOpen}
+        onClose={closeMoveModal}
+        selectedItems={itemsToMove}
+        onMoveConfirm={handleMoveModalConfirm}
+        currentFolderId={folderId}
+        checkLocation={checkLocation}
+        accountId={accountId}
+        currentAccountId={currentAccountId}
+      />
+
+      {/* File Details Drawer */}
+      <FileDetailsDrawer
+        opened={detailsDrawerOpen}
+        onClose={closeDetailsDrawer}
+        item={selectedItemForDetails}
+        onNavigateToFolder={navigateToFolderFn}
+        detailsFile={detailsFile}
+        detailsFileLoading={detailsFileLoading}
+        onPreview={item => {
+          handleMenuItemClick('preview', item);
+          // closeDetailsDrawer();
+        }}
+      />
     </Box>
   );
 };

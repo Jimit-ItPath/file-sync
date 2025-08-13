@@ -12,7 +12,6 @@ import {
   TableTd,
 } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
-import { ICONS } from '../../assets/icons';
 import { Card } from '../card';
 
 type Column<T> = {
@@ -35,6 +34,9 @@ type TableProps<T> = {
   title?: string;
   idKey: keyof T; // key to identify row id
   emptyMessage?: string;
+  isMoveMode?: boolean;
+  filesToMove?: string[];
+  parentId?: string | null;
 };
 
 export function Table<T extends Record<string, any>>({
@@ -47,6 +49,9 @@ export function Table<T extends Record<string, any>>({
   idKey,
   emptyMessage = 'No data available',
   onRowDoubleClick,
+  isMoveMode = false,
+  filesToMove = [],
+  parentId = null,
 }: TableProps<T>) {
   const [allChecked, setAllChecked] = useState(false);
 
@@ -86,7 +91,7 @@ export function Table<T extends Record<string, any>>({
                 <TableThead>
                   <TableTr>
                     {onSelectRow && (
-                      <TableTh w={20} maw={20} miw={20}>
+                      <TableTh w={'3%'}>
                         <Checkbox
                           checked={allChecked}
                           onChange={e =>
@@ -101,7 +106,7 @@ export function Table<T extends Record<string, any>>({
                         {typeof label === 'string' ? (
                           <Group gap={4}>
                             {label}
-                            <ICONS.IconChevronDown size={14} color="#9ca3af" />
+                            {/* <ICONS.IconChevronDown size={14} color="#9ca3af" /> */}
                           </Group>
                         ) : (
                           label
@@ -117,20 +122,41 @@ export function Table<T extends Record<string, any>>({
                       onDoubleClick={e => onRowDoubleClick?.(row, e)}
                       style={{
                         cursor: onRowDoubleClick ? 'pointer' : 'default',
+                        ...(isMoveMode &&
+                        (filesToMove.includes(row.id) ||
+                          row.type === 'file' ||
+                          parentId === row.id)
+                          ? {
+                              cursor: 'not-allowed',
+                            }
+                          : {}),
                       }}
                     >
                       {onSelectRow && (
-                        <TableTd w={20} maw={20} miw={20}>
+                        <TableTd w={'3%'}>
                           <Checkbox
                             checked={selectedRows.includes(
                               row[idKey] as string
                             )}
-                            onChange={e =>
+                            onChange={e => {
+                              if (
+                                isMoveMode &&
+                                (filesToMove.includes(row.id) ||
+                                  row.type === 'file' ||
+                                  parentId === row.id)
+                              )
+                                return;
                               onSelectRow?.(
                                 row[idKey] as string,
                                 e.currentTarget.checked,
                                 e
-                              )
+                              );
+                            }}
+                            disabled={
+                              isMoveMode &&
+                              (filesToMove.includes(row.id) ||
+                                row.type === 'file' ||
+                                parentId === row.id)
                             }
                             aria-label="Select row"
                           />

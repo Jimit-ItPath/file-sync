@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ICONS } from '../../assets/icons';
 import {
   formatDate,
   formatFileSize,
@@ -13,7 +12,6 @@ import {
   removeLocalStorage,
   setLocalStorage,
 } from '../../utils/helper';
-import { useMediaQuery } from '@mantine/hooks';
 import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 import { useAppDispatch, useAppSelector } from '../../store';
@@ -25,17 +23,31 @@ import {
   removeCloudStorageFiles,
   renameCloudStorageFile,
   resetCloudStorageFolder,
-  setAccountType,
+  setAccountId,
   setSearchTerm,
   uploadCloudStorageFiles,
-  type AccountType,
+  moveCloudStorageFiles,
+  syncCloudStorage,
+  resetPagination,
+  setMoveModalPath,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { notifications } from '@mantine/notifications';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
+import useDebounce from '../../hooks/use-debounce';
+import getFileIcon from '../../components/file-icon';
+import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
+import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
+import { PRIVATE_ROUTES } from '../../routing/routes';
+import {
+  DOCUMENT_FILE_TYPES,
+  IMAGE_FILE_TYPES,
+  PREVIEW_FILE_TYPES,
+  VIDEO_FILE_TYPES,
+} from '../../utils/constants';
 
 export type FileType = {
   id: string;
@@ -45,240 +57,51 @@ export type FileType = {
   owner: { name: string; avatar: string | null; initials: string };
   lastModified: string;
   size: string | null;
-  preview?: string;
+  preview?: string | null;
   mimeType?: string;
-  fileExtension?: string | null;
-  download_url: string | null;
-};
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
-const getFileIcon = (item: {
-  entry_type: string;
-  mime_type?: string;
-  file_extension?: string | null;
-  name?: string;
-}) => {
-  const getIconComponent = (size: number) => {
-    const iconSize = size || 20;
-
-    // First handle folders
-    if (
-      item.entry_type === 'folder' ||
-      item.mime_type === 'folder' ||
-      item.mime_type === 'application/vnd.google-apps.folder'
-    ) {
-      return <ICONS.IconFolder size={iconSize} color="#38bdf8" />;
-    }
-
-    // Then handle by mime_type if available
-    if (item.mime_type) {
-      switch (true) {
-        case item.mime_type.startsWith('image/'):
-          return <ICONS.IconPhoto size={iconSize} color="#3b82f6" />;
-        case item.mime_type === 'application/pdf':
-          return <ICONS.IconFileTypePdf size={iconSize} color="#ef4444" />;
-        case [
-          'application/vnd.google-apps.document',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/rtf',
-          'text/rtf',
-        ].includes(item.mime_type):
-          return <ICONS.IconFileTypeDoc size={iconSize} color="#2563eb" />;
-        case [
-          'application/vnd.google-apps.spreadsheet',
-          'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'application/vnd.oasis.opendocument.spreadsheet',
-        ].includes(item.mime_type):
-          return <ICONS.IconFileTypeXls size={iconSize} color="#16a34a" />;
-        case [
-          'application/vnd.google-apps.presentation',
-          'application/vnd.ms-powerpoint',
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-          'application/vnd.oasis.opendocument.presentation',
-        ].includes(item.mime_type):
-          return <ICONS.IconFileTypePpt size={iconSize} color="#e11d48" />;
-        case ['text/plain', 'text/markdown', 'text/x-markdown'].includes(
-          item.mime_type
-        ):
-          return <ICONS.IconFileTypeTxt size={iconSize} color="#64748b" />;
-        case item.mime_type === 'text/csv':
-          return <ICONS.IconFileTypeCsv size={iconSize} color="#16a34a" />;
-        case [
-          'application/zip',
-          'application/x-zip-compressed',
-          'application/x-rar-compressed',
-          'application/x-7z-compressed',
-          'application/x-tar',
-          'application/gzip',
-        ].includes(item.mime_type):
-          return <ICONS.IconFileTypeZip size={iconSize} color="#7c3aed" />;
-        case item.mime_type.startsWith('audio/'):
-          return <ICONS.IconDeviceAudioTape size={iconSize} color="#9333ea" />;
-        case item.mime_type.startsWith('video/'):
-          return <ICONS.IconVideo size={iconSize} color="#dc2626" />;
-        case [
-          'text/html',
-          'text/css',
-          'text/javascript',
-          'application/javascript',
-          'application/json',
-          'application/xml',
-          'text/x-python',
-          'text/x-java-source',
-          'text/x-c',
-          'text/x-c++',
-          'text/x-php',
-          'text/x-ruby',
-          'text/x-shellscript',
-          'application/x-httpd-php',
-          'application/x-sh',
-          'application/x-typescript',
-        ].includes(item.mime_type):
-          return <ICONS.IconCode size={iconSize} color="#f59e0b" />;
-        case [
-          'application/x-sql',
-          'application/sql',
-          'application/x-sqlite3',
-          'application/x-mdb',
-        ].includes(item.mime_type):
-          return <ICONS.IconDatabase size={iconSize} color="#10b981" />;
-        case [
-          'application/x-msdownload',
-          'application/x-ms-dos-executable',
-          'application/x-executable',
-          'application/x-mach-binary',
-        ].includes(item.mime_type):
-          return <ICONS.IconBinary size={iconSize} color="#6b7280" />;
-        case [
-          'application/epub+zip',
-          'application/x-mobipocket-ebook',
-          'application/vnd.amazon.ebook',
-        ].includes(item.mime_type):
-          return <ICONS.IconBook size={iconSize} color="#14b8a6" />;
-      }
-    }
-
-    // Fall back to file extension if mime_type is not provided or not matched
-    const extension =
-      item.file_extension || item.name?.split('.')?.pop()?.toLowerCase();
-
-    switch (extension) {
-      case 'pdf':
-        return <ICONS.IconFileTypePdf size={iconSize} color="#ef4444" />;
-      case 'doc':
-      case 'docx':
-        return <ICONS.IconFileTypeDoc size={iconSize} color="#2563eb" />;
-      case 'xls':
-      case 'xlsx':
-        return <ICONS.IconFileTypeXls size={iconSize} color="#16a34a" />;
-      case 'ppt':
-      case 'pptx':
-        return <ICONS.IconFileTypePpt size={iconSize} color="#e11d48" />;
-      case 'png':
-      case 'jpg':
-      case 'jpeg':
-      case 'gif':
-      case 'svg':
-      case 'webp':
-        return <ICONS.IconPhoto size={iconSize} color="#3b82f6" />;
-      case 'txt':
-      case 'md':
-        return <ICONS.IconFileTypeTxt size={iconSize} color="#64748b" />;
-      case 'csv':
-        return <ICONS.IconFileTypeCsv size={iconSize} color="#16a34a" />;
-      case 'zip':
-      case 'rar':
-      case '7z':
-      case 'tar':
-      case 'gz':
-        return <ICONS.IconFileTypeZip size={iconSize} color="#7c3aed" />;
-      // Audio extensions
-      case 'mp3':
-      case 'wav':
-      case 'ogg':
-      case 'flac':
-      case 'aac':
-      case 'm4a':
-        return <ICONS.IconDeviceAudioTape size={iconSize} color="#9333ea" />;
-      // Video extensions
-      case 'mp4':
-      case 'mov':
-      case 'avi':
-      case 'mkv':
-      case 'flv':
-      case 'webm':
-        return <ICONS.IconVideo size={iconSize} color="#dc2626" />;
-      // Code extensions
-      case 'html':
-      case 'css':
-      case 'js':
-      case 'jsx':
-      case 'ts':
-      case 'tsx':
-      case 'json':
-      case 'xml':
-      case 'py':
-      case 'java':
-      case 'c':
-      case 'cpp':
-      case 'php':
-      case 'rb':
-      case 'sh':
-        return <ICONS.IconCode size={iconSize} color="#f59e0b" />;
-      // Database extensions
-      case 'sql':
-      case 'db':
-      case 'sqlite':
-      case 'mdb':
-        return <ICONS.IconDatabase size={iconSize} color="#10b981" />;
-      // Executable extensions
-      case 'exe':
-      case 'dmg':
-      case 'app':
-      case 'msi':
-        return <ICONS.IconBinary size={iconSize} color="#6b7280" />;
-      // Ebook extensions
-      case 'epub':
-      case 'mobi':
-      case 'azw':
-        return <ICONS.IconBook size={iconSize} color="#14b8a6" />;
-      default:
-        return <ICONS.IconFile size={iconSize} color="#64748b" />;
-    }
-  };
-
-  return getIconComponent;
+  fileExtension: string | null;
+  download_url?: string | null;
+  parent_id: string | null;
+  web_view_url: string | null;
+  external_parent_id?: null | string;
+  UserConnectedAccount?: {
+    id: string;
+    account_name: string;
+    account_type: string;
+  } | null;
+  account_type?: string | null;
 };
 
 const folderSchema = z.object({
-  folderName: z.string().min(1, 'Folder name is required'),
+  folderName: z.string().trim().min(1, 'Folder name is required'),
+  accountId: z.string().min(1, 'Account selection is required').optional(),
+});
+
+const uploadSchema = z.object({
+  accountId: z.string().min(1, 'Account selection is required').optional(),
+  files: z.any().optional(),
 });
 
 const renameSchema = z.object({
-  newName: z.string().min(1, 'New name is required'),
+  newName: z.string().trim().min(1, 'New name is required'),
 });
 
 type FolderFormData = z.infer<typeof folderSchema>;
-
+type UploadFormData = z.infer<typeof uploadSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = () => {
   const navigate = useNavigate();
   const params = useParams();
+  const location = useLocation();
+
+  const layoutKey = 'dashboardLayout';
+  const folderIdKey = 'folderId';
+  const pathKey = 'cloudStoragePath';
+
   const [layout, setLayout] = useState<'list' | 'grid'>(() => {
-    const savedLayout = getLocalStorage('dashboardLayout');
-    return savedLayout ? savedLayout : 'list';
+    const savedLayout = getLocalStorage(layoutKey);
+    return savedLayout ? savedLayout : 'grid';
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
@@ -296,6 +119,10 @@ const useDashboard = () => {
   const uploadsInProgressRef = useRef(false);
   const initializedRef = useRef(false);
   const hasMountedOnce = useRef(false);
+  const hasCalledPostConnectAPIs = useRef(false);
+  const prevConnectedAccountsLength = useRef(0);
+  const hasCalledInitializeAPI = useRef(false);
+  const hasCalledRecentFilesAPI = useRef(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'files'>('folder');
@@ -306,6 +133,43 @@ const useDashboard = () => {
   const [itemToRename, setItemToRename] = useState<FileType | null>(null);
   const [removeFilesModalOpen, setRemoveFilesModalOpen] = useState(false);
 
+  const [isMoveMode, setIsMoveMode] = useState(false);
+  const [filesToMove, setFilesToMove] = useState<string[]>([]);
+  const [parentId, selectParentId] = useState<string | null>(null);
+  const [sourceFolderId, setSourceFolderId] = useState<string | null>(null);
+  const [destinationId, setDestinationId] = useState<string | null>(null);
+
+  const [dragDropModalOpen, setDragDropModalOpen] = useState(false);
+  const [dragDropFiles, setDragDropFiles] = useState<File[]>([]);
+  const [previewFileLoading, setPreviewFileLoading] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    type: string;
+    name: string;
+    size?: number;
+    isVideo?: boolean;
+    isDocument?: boolean;
+    share?: string | null;
+  } | null>(null);
+  const [detailsFileLoading, setDetailsFileLoading] = useState(false);
+  const [detailsFile, setDetailsFile] = useState<{
+    url: string;
+    type: string;
+    name: string;
+    size?: number;
+    isVideo?: boolean;
+    isDocument?: boolean;
+    share?: string | null;
+  } | null>(null);
+
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [itemsToMove, setItemsToMove] = useState<FileType[]>([]);
+
+  const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
+  const [selectedItemForDetails, setSelectedItemForDetails] =
+    useState<FileType | null>(null);
+
   const {
     cloudStorage,
     loading,
@@ -313,22 +177,55 @@ const useDashboard = () => {
     currentFolderId,
     currentPath,
     uploadLoading,
-    accountType,
+    accountId,
     searchTerm,
+    navigateLoading,
+    recentFiles,
   } = useAppSelector(state => state.cloudStorage);
+  const { userProfile } = useAppSelector(state => state.user);
+  const { checkStorageDetails } = useAppSelector(state => state.auth);
+  const { connectedAccounts } = useSidebar();
   const dispatch = useAppDispatch();
 
-  const isXs = useMediaQuery('(max-width: 575px)');
-  const isSm = useMediaQuery('(min-width: 576px) and (max-width: 767px)');
-  const isMd = useMediaQuery('(min-width: 768px) and (max-width: 991px)');
+  const folderId = getLocalStorage(folderIdKey);
+  const globalSearchState = getLocalStorage('globalSearchState');
 
-  const gridColumns = isXs ? 1 : isSm ? 2 : isMd ? 3 : 4;
+  const checkLocation = useMemo(
+    () =>
+      location.pathname.startsWith('/google-drive') ||
+      location.pathname.startsWith('/dropbox') ||
+      location.pathname.startsWith('/onedrive'),
+    [location.pathname]
+  );
+  const currentAccountId = checkLocation ? params.id : accountId;
+
+  const isSFDEnabled = useMemo(() => {
+    return checkLocation
+      ? true
+      : !folderId
+        ? (userProfile?.is_sfd_enabled ?? false)
+        : true;
+  }, [userProfile, folderId, checkLocation]);
 
   const folderMethods = useForm<FolderFormData>({
-    resolver: zodResolver(folderSchema),
+    resolver: zodResolver(
+      isSFDEnabled ? folderSchema.omit({ accountId: true }) : folderSchema
+    ),
     mode: 'onChange',
     defaultValues: {
       folderName: '',
+      accountId: '',
+    },
+  });
+
+  const uploadMethods = useForm<UploadFormData>({
+    resolver: zodResolver(
+      isSFDEnabled ? uploadSchema.omit({ accountId: true }) : uploadSchema
+    ),
+    mode: 'onChange',
+    defaultValues: {
+      files: [],
+      accountId: '',
     },
   });
 
@@ -340,74 +237,177 @@ const useDashboard = () => {
   const { reset: resetFolderForm } = folderMethods;
   const { reset: resetRenameForm } = renameMethods;
 
-  const folderIdPath = params['*']
-    ? params['*'].split('/').filter(Boolean)
-    : [];
-  // const folderId = getLocalStorage('folderId');
-  // console.log("folder id path-", folderIdPath)
-  const folderId = folderIdPath?.length
-    ? folderIdPath[folderIdPath.length - 1]
-    : '';
-
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
 
-  const handleAccountTypeChange = (value: AccountType | 'all') => {
-    dispatch(setAccountType(value));
-  };
+  const accountOptions = useMemo(() => {
+    if (checkStorageDetails && checkStorageDetails.result?.length) {
+      const options = checkStorageDetails?.result?.map(account => ({
+        value: account.id,
+        label: account.account_name,
+      }));
+      return [{ value: 'all', label: 'All Accounts' }, ...options];
+    }
+    return [{ value: 'all', label: 'All Accounts' }];
+  }, [checkStorageDetails]);
+
+  const accountOptionsForSFD = useMemo(
+    () => accountOptions?.filter(account => account.value !== 'all'),
+    [accountOptions]
+  );
+
+  const handleAccountTypeChange = useCallback(
+    (value: string | null) => {
+      if (value && !checkLocation) {
+        dispatch(setAccountId(value));
+      }
+    },
+    [dispatch, checkLocation]
+  );
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
   };
 
-  const getCloudStorageFiles = useCallback(async () => {
-    await dispatch(
-      initializeCloudStorageFromStorage({
+  const getCloudStorageFiles = useCallback(
+    async (page?: number) => {
+      const requestParams: any = {
         ...(folderId && { id: folderId }),
-        limit: pagination?.page_limit || 10,
-        page: pagination?.page_no || 1,
-        ...(accountType !== 'all' && {
-          account_type: accountType,
-        }),
+        limit: pagination?.page_limit || 20,
+        // page: typeof page === 'number' ? page : pagination?.page_no || 1,
+        page: typeof page === 'number' ? page : 1,
         searchTerm: debouncedSearchTerm || '',
-      })
-    );
-  }, [
-    dispatch,
-    folderId,
-    pagination?.page_limit,
-    pagination?.page_no,
-    accountType,
-    debouncedSearchTerm,
-  ]);
+      };
+
+      if (checkLocation && currentAccountId) {
+        requestParams.account_id = Number(currentAccountId);
+      } else if (!checkLocation && accountId !== 'all') {
+        requestParams.account_id = accountId;
+      }
+
+      await dispatch(initializeCloudStorageFromStorage(requestParams));
+    },
+    [
+      dispatch,
+      folderId,
+      pagination?.page_limit,
+      pagination?.page_no,
+      accountId,
+      debouncedSearchTerm,
+    ]
+  );
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
+  // const getRecentFiles = useCallback(async () => {
+  //   const requestParams = {
+  //     ...(currentAccountId !== 'all' &&
+  //       currentAccountId && {
+  //         account_id: currentAccountId,
+  //       }),
+  //   };
+  //   await dispatch(fetchRecentFiles(requestParams));
+  // }, [dispatch, currentAccountId]);
+
+  // const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+
   useEffect(() => {
-    if (!initializedRef.current) {
+    if (moveModalOpen) {
+      dispatch(setMoveModalPath(currentPath));
+    }
+  }, [moveModalOpen, currentPath, dispatch]);
+
+  useEffect(() => {
+    if (checkLocation && !connectedAccounts?.length) {
+      navigate(PRIVATE_ROUTES.DASHBOARD.url);
+    }
+  }, [checkLocation, navigate, connectedAccounts]);
+
+  // useEffect(() => {
+  //   if (
+  //     (!folderId || folderId === null) &&
+  //     connectedAccounts?.length &&
+  //     !hasCalledRecentFilesAPI.current
+  //   ) {
+  //     onGetRecentFiles({});
+  //     hasCalledRecentFilesAPI.current = true;
+  //   }
+  // }, [folderId]);
+
+  useEffect(() => {
+    const currentLength = connectedAccounts?.length || 0;
+    if (
+      currentLength > 0 &&
+      currentLength > prevConnectedAccountsLength.current &&
+      !hasCalledPostConnectAPIs.current &&
+      !hasCalledInitializeAPI.current
+    ) {
+      // if (
+      //   !hasCalledRecentFilesAPI.current &&
+      //   (!folderId || folderId === null)
+      // ) {
+      //   onGetRecentFiles({});
+      //   hasCalledRecentFilesAPI.current = true;
+      // }
+      onInitialize({});
+      hasCalledPostConnectAPIs.current = true;
+      hasCalledInitializeAPI.current = true;
+    }
+
+    prevConnectedAccountsLength.current = currentLength;
+
+    if (currentLength === 0) {
+      hasCalledPostConnectAPIs.current = false;
+      hasCalledInitializeAPI.current = false;
+      hasCalledRecentFilesAPI.current = false;
+    }
+  }, [
+    connectedAccounts?.length,
+    onInitialize,
+    // onGetRecentFiles
+  ]);
+
+  useEffect(() => {
+    if (
+      !initializedRef.current &&
+      connectedAccounts?.length &&
+      !hasCalledInitializeAPI.current
+    ) {
       onInitialize({});
       initializedRef.current = true;
+      hasCalledInitializeAPI.current = true;
     }
 
     return () => {
+      dispatch(resetPagination());
       dispatch(resetCloudStorageFolder());
-      removeLocalStorage('cloudStoragePath');
-      removeLocalStorage('folderId');
+      if (!globalSearchState) {
+        removeLocalStorage(pathKey);
+        removeLocalStorage(folderIdKey);
+      }
+      removeLocalStorage(layoutKey);
     };
   }, []);
 
   useEffect(() => {
-    if (!hasMountedOnce.current) {
+    if (
+      !hasMountedOnce.current ||
+      // !checkLocation ||
+      !connectedAccounts?.length
+    ) {
       hasMountedOnce.current = true;
       return;
     }
 
     dispatch(setSearchTerm(debouncedSearchTerm));
-    getCloudStorageFiles();
-  }, [debouncedSearchTerm, accountType]);
+    if (checkLocation || accountId !== 'all') {
+      getCloudStorageFiles(1);
+    } else {
+      getCloudStorageFiles();
+    }
+  }, [debouncedSearchTerm, accountId, checkLocation]);
 
   const scrollBoxRef = useRef<HTMLDivElement>(null);
-
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -425,36 +425,60 @@ const useDashboard = () => {
 
   useEffect(() => {
     if (scrollBoxRef.current && lastScrollTop.current > 0) {
-      // Use setTimeout to ensure DOM is updated before restoring scroll
       setTimeout(() => {
         scrollBoxRef.current!.scrollTop = lastScrollTop.current;
       }, 0);
     }
   }, [cloudStorage.length]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMoveMode) {
+        setIsMoveMode(false);
+        setFilesToMove([]);
+        selectParentId(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMoveMode]);
+
   const loadMoreFiles = useCallback(async () => {
     if (pagination && pagination.page_no < pagination.total_pages && !loading) {
-      await dispatch(
-        initializeCloudStorageFromStorage({
-          page: pagination.page_no + 1,
-          limit: pagination.page_limit,
-          ...(currentFolderId && { id: currentFolderId }),
-          ...(accountType !== 'all' && {
-            account_type: accountType,
-          }),
-          searchTerm: debouncedSearchTerm || '',
-        })
-      );
+      const requestParams: any = {
+        page: pagination.page_no + 1,
+        limit: pagination.page_limit || 20,
+        ...(currentFolderId && { id: currentFolderId }),
+        searchTerm: debouncedSearchTerm || '',
+      };
+
+      if (checkLocation && currentAccountId) {
+        requestParams.account_id = Number(currentAccountId);
+      } else if (!checkLocation && accountId !== 'all') {
+        requestParams.account_id = accountId;
+      }
+
+      await dispatch(initializeCloudStorageFromStorage(requestParams));
     }
-  }, [pagination, loading, dispatch, currentFolderId]);
+  }, [
+    pagination,
+    loading,
+    dispatch,
+    currentFolderId,
+    accountId,
+    currentAccountId,
+    debouncedSearchTerm,
+    checkLocation,
+  ]);
 
   // Convert cloud storage data to FileType format
   const files = useMemo(() => {
     return cloudStorage.map(item => ({
       id: item.id,
       name: item.name,
-      type: item.entry_type === 'folder' ? 'folder' : 'file',
-      // icon: getFileIcon(item.name, item.mime_type),
+      type:
+        item.entry_type === 'folder' ? 'folder' : ('file' as 'file' | 'folder'),
       icon: getFileIcon({
         entry_type: item.entry_type,
         mime_type: item.mime_type,
@@ -462,35 +486,80 @@ const useDashboard = () => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: formatDate(item.modified_at),
+      lastModified: item.modified_at
+        ? formatDate(item.modified_at)
+        : formatDate(item.updatedAt),
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
+      parent_id: item.parent_id,
+      web_view_url: item.web_view_url,
+      external_parent_id: item.external_parent_id,
+      UserConnectedAccount: item.UserConnectedAccount,
     }));
   }, [cloudStorage]);
 
+  const recentFilesData = useMemo(() => {
+    return recentFiles.map(item => ({
+      id: item.id,
+      name: item.name,
+      type:
+        item.entry_type === 'folder' ? 'folder' : ('file' as 'file' | 'folder'),
+      icon: getFileIcon({
+        entry_type: 'file',
+        mime_type: item.mime_type,
+        file_extension: item.file_extension,
+        name: item.name,
+      }),
+      owner: { name: 'You', avatar: null, initials: 'JS' },
+      lastModified: item.modified_at
+        ? formatDate(item.modified_at)
+        : formatDate(item.updatedAt),
+      size: item.size ? formatFileSize(item.size.toString()) : null,
+      mimeType: item.mime_type,
+      fileExtension: item.file_extension,
+      preview: item.download_url,
+      parent_id: item.parent_id,
+      web_view_url: item.web_view_url,
+      external_parent_id: item.external_parent_id,
+      UserConnectedAccount: item.UserConnectedAccount,
+    }));
+  }, [recentFiles]);
+
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
+      const requestParams: any = {};
+
       if (folder?.id) {
-        const idx = currentPath.findIndex(f => f.id === folder.id);
-        const path = currentPath
-          .slice(0, idx + 1)
-          .map(f => f.id)
-          .join('/');
-        navigate(`/dashboard/${path}`);
-        dispatch(
-          navigateToFolder({
-            id: String(folder?.id),
-            name: String(folder?.name),
-          })
-        );
+        setDestinationId(folder?.id);
+        requestParams.id = String(folder?.id);
+        requestParams.name = String(folder?.name);
       } else {
-        dispatch(navigateToFolder(null));
-        navigate('/dashboard');
+        setDestinationId(null);
+        dispatch(resetCloudStorageFolder());
       }
+
+      if (checkLocation && currentAccountId) {
+        requestParams.account_id = Number(currentAccountId);
+      }
+
+      if (!isMoveMode) {
+        setSelectedIds([]);
+        setLastSelectedIndex(null);
+      }
+
+      dispatch(
+        navigateToFolder(
+          folder
+            ? requestParams
+            : checkLocation && currentAccountId
+              ? { account_id: Number(currentAccountId) }
+              : null
+        )
+      );
     },
-    [dispatch, currentPath]
+    [dispatch, currentPath, isMoveMode, checkLocation, currentAccountId]
   );
 
   const handleRowDoubleClick = useCallback(
@@ -499,22 +568,25 @@ const useDashboard = () => {
         row.mimeType === 'application/vnd.google-apps.folder' ||
         row.type === 'folder'
       ) {
-        setSelectedIds([]);
-        setLastSelectedIndex(null);
+        // if (!isMoveMode) {
+        //   setSelectedIds([]);
+        //   setLastSelectedIndex(null);
+        // }
         navigateToFolderFn({ id: row.id, name: row.name });
+      } else if (row.type === 'file') {
+        handleMenuItemClick('preview', row);
       }
     },
     [navigateToFolderFn]
   );
 
-  const handleMenuItemClick = (actionId: string, row: FileType) => {
+  const handleMenuItemClick = async (actionId: string, row: FileType) => {
     if (
       actionId === 'download' &&
       (row.type !== 'folder' ||
-        row.mimeType !== 'application/vnd.google-apps.folder') &&
-      row.download_url
+        row.mimeType !== 'application/vnd.google-apps.folder')
     ) {
-      window.open(row.download_url, '_blank');
+      downloadItems([row.id]);
     }
     // else if (actionId === 'view') {
     //   if (row.mimeType === 'application/vnd.google-apps.folder') {
@@ -527,41 +599,156 @@ const useDashboard = () => {
       setItemToRename(row);
       setRenameModalOpen(true);
       resetRenameForm({ newName: row.name });
-    }
-    // else if (actionId === 'share' && row.webViewLink) {
-    //   window.open(`https://drive.google.com/file/d/${row.id}/share`, '_blank');
-    // }
-    else if (actionId === 'delete') {
+    } else if (actionId === 'delete') {
       setItemToDelete(row);
       setDeleteModalOpen(true);
+    } else if (actionId === 'share' && row.web_view_url) {
+      window.open(row.web_view_url, '_blank');
+    }
+    // else if (actionId === 'move') {
+    //   handleMoveSelected([row?.id]);
+    // }
+    else if (actionId === 'move') {
+      handleModalMoveSelected([row?.id]);
+    } else if (actionId === 'details') {
+      handleFilePreview(row, false);
+      handleShowDetails(row);
+    } else if (actionId === 'preview') {
+      setPreviewModalOpen(true);
+      handleFilePreview(row);
     }
   };
 
+  const handleFilePreview = useCallback(
+    async (row: FileType, isPreview = true) => {
+      try {
+        if (isPreview) {
+          setPreviewFileLoading(true);
+          setPreviewFile({
+            name: row.name,
+          } as any);
+        } else {
+          setDetailsFileLoading(true);
+          setDetailsFile({
+            name: row.name,
+          } as any);
+        }
+
+        const ext = row.fileExtension
+          ? `${row.fileExtension.toLowerCase()}`
+          : '';
+        const isSupported = isPreview
+          ? PREVIEW_FILE_TYPES.includes(ext)
+          : IMAGE_FILE_TYPES.includes(ext);
+
+        if (!isSupported) {
+          if (isPreview) {
+            setPreviewFile({
+              url: '',
+              type: ext || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              share: row.web_view_url ?? null,
+            });
+            setPreviewFileLoading(false);
+          } else {
+            setDetailsFile({
+              url: '',
+              type: ext || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              share: row.web_view_url ?? null,
+            });
+            setDetailsFileLoading(false);
+          }
+          return;
+        }
+
+        const res = await dispatch(downloadFiles({ ids: [row.id] }));
+        if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
+          const url = URL.createObjectURL(res.payload?.data);
+          const isVideo = VIDEO_FILE_TYPES.includes(ext);
+          const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
+          if (isPreview) {
+            setPreviewFile({
+              url,
+              type: row.fileExtension || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              isVideo,
+              isDocument,
+              share: row.web_view_url ?? null,
+            });
+          } else {
+            setDetailsFile({
+              url,
+              type: row.fileExtension || row.mimeType || '',
+              name: row.name,
+              size: row.size
+                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+                : undefined,
+              isVideo,
+              isDocument,
+              share: row.web_view_url ?? null,
+            });
+          }
+        } else {
+          notifications.show({
+            message: res?.payload?.message || 'Failed to preview file',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to preview file',
+          color: 'red',
+        });
+      } finally {
+        if (isPreview) {
+          setPreviewFileLoading(false);
+        } else {
+          setDetailsFileLoading(false);
+        }
+      }
+    },
+    [dispatch]
+  );
+
   // Folder creation functionality
   const [createFolder, createFolderLoading] = useAsyncOperation(
-    async (folderName: string) => {
+    async (data: { folderName: string; accountId?: string | undefined }) => {
       try {
-        await dispatch(
-          createCloudStorageFolder({
-            name: folderName,
-            ...(currentFolderId && {
-              id: currentFolderId,
-            }),
-          })
-        ).unwrap();
-        resetFolderForm();
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
-            page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
-        );
-        setModalOpen(false);
+        const requestParams: any = {
+          name: data.folderName,
+          ...(currentFolderId && { id: currentFolderId }),
+        };
+
+        if (checkLocation && currentAccountId) {
+          requestParams.account_id = Number(currentAccountId);
+        } else if (!checkLocation && !isSFDEnabled && data.accountId) {
+          requestParams.account_id = data.accountId;
+        }
+
+        const res = await dispatch(createCloudStorageFolder(requestParams));
+
+        if (res?.payload?.success) {
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
+          await getCloudStorageFiles(1);
+          notifications.show({
+            message: res?.payload?.message || 'Folder created successfully',
+            color: 'green',
+          });
+          setModalOpen(false);
+          resetFolderForm();
+        }
       } catch (error: any) {
         notifications.show({
           message: error || 'Failed to create folder',
@@ -572,43 +759,20 @@ const useDashboard = () => {
   );
 
   const handleCreateFolder = folderMethods.handleSubmit(data => {
-    createFolder(data.folderName);
+    createFolder(data);
   });
 
-  // const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
-  //   async (files: File[]) => {
-  //     try {
-  //       const formData = new FormData();
-  //       files.forEach(file => formData.append('file', file));
-  //       if (currentFolderId) {
-  //         formData.append('id', currentFolderId);
-  //       }
-  //       await dispatch(uploadCloudStorageFiles(formData)).unwrap();
-  //       await dispatch(
-  //         initializeCloudStorageFromStorage({
-  //           ...(folderId && {
-  //             id: folderId,
-  //           }),
-  //           limit: pagination?.page_limit || 10,
-  //           page: pagination?.page_no || 1,
-  //         })
-  //       );
-  //       setUploadedFiles([]);
-  //       setModalOpen(false);
-  //     } catch (error: any) {
-  //       notifications.show({
-  //         message: error || 'Failed to upload files',
-  //         color: 'red',
-  //       });
-  //     }
-  //   }
-  // );
-
   const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
-    async (files: File[]) => {
+    async ({
+      files,
+      formData,
+    }: {
+      files: File[];
+      formData: UploadFormData;
+    }) => {
       try {
-        setShowUploadProgress(true); // Show the progress UI
-        const fileIds = files.map(() => uuidv4()); // Generate unique IDs for each file
+        setShowUploadProgress(true);
+        const fileIds = files.map(() => uuidv4());
 
         // Initialize progress and uploading files state
         files.forEach((file, index) => {
@@ -623,37 +787,25 @@ const useDashboard = () => {
           setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
         });
 
-        const formData = new FormData();
-        files.forEach(file => formData.append('file', file));
+        const formDataToUpload = new FormData();
+        files.forEach(file => formDataToUpload.append('file', file));
         if (currentFolderId) {
-          formData.append('id', currentFolderId);
+          formDataToUpload.append('id', currentFolderId);
         }
 
-        // Simulate progress manually up to 95%
-        const simulateProgress = (fileId: string) => {
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 5; // Increment progress by 5%
-            setUploadProgress(prev => ({
-              ...prev,
-              [fileId]: Math.min(progress, 95), // Cap progress at 95%
-            }));
-            if (progress >= 95 || !uploadLoading) {
-              clearInterval(interval); // Stop simulation when progress reaches 95% or upload completes
-            }
-          }, 300); // Update progress every 300ms
-        };
+        if (checkLocation && currentAccountId) {
+          formDataToUpload.append('account_id', String(currentAccountId));
+        } else if (!checkLocation && !isSFDEnabled && formData.accountId) {
+          formDataToUpload.append('account_id', formData.accountId);
+        }
 
-        // Start simulating progress for each file
-        files.forEach((_, index) => {
-          const fileId = fileIds[index];
-          simulateProgress(fileId);
-        });
+        closeModal();
+        closeDragDropModal();
 
         // Call the API and track progress
         await dispatch(
           uploadCloudStorageFiles({
-            data: formData,
+            data: formDataToUpload,
             onUploadProgress: (progressEvent: ProgressEvent) => {
               const percentCompleted = Math.round(
                 (progressEvent.loaded * 100) / progressEvent.total
@@ -662,12 +814,15 @@ const useDashboard = () => {
                 const fileId = fileIds[index];
                 setUploadProgress(prev => ({
                   ...prev,
-                  [fileId]: Math.min(percentCompleted, 95), // Cap progress at 95%
+                  [fileId]: percentCompleted,
                 }));
               });
             },
           })
         ).unwrap();
+
+        uploadMethods.reset();
+        // closeModal();
 
         // Wait for `uploadLoading` to become false and set progress to 100%
         const waitForUploadCompletion = () => {
@@ -677,33 +832,27 @@ const useDashboard = () => {
                 const fileId = fileIds[index];
                 setUploadProgress(prev => ({
                   ...prev,
-                  [fileId]: 100, // Set progress to 100% when upload completes
+                  [fileId]: 100,
                 }));
               });
-              clearInterval(interval); // Clear interval once upload is complete
+              clearInterval(interval);
             }
-          }, 100); // Check every 100ms
+          }, 100);
         };
 
         waitForUploadCompletion();
 
         // Refresh the file list after upload
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
-            page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
-        );
-
-        // Do not reset states here to keep the progress bar visible
+        // if (!folderId || folderId === null) {
+        //   onGetRecentFiles({});
+        // }
+        await getCloudStorageFiles(1);
       } catch (error: any) {
         notifications.show({
-          message: error?.message || 'Failed to upload files',
+          message:
+            typeof error === 'string'
+              ? error
+              : error?.message || 'Failed to upload files',
           color: 'red',
         });
       }
@@ -717,25 +866,18 @@ const useDashboard = () => {
         await dispatch(
           renameCloudStorageFile({ id: fileId, name: newName })
         ).unwrap();
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
-            page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
-        );
+        // if (!folderId || folderId === null) {
+        //   onGetRecentFiles({});
+        // }
+        await getCloudStorageFiles(1);
         notifications.show({
-          message: 'File renamed successfully',
+          message: 'Item renamed successfully',
           color: 'green',
         });
         setRenameModalOpen(false);
       } catch (error: any) {
         notifications.show({
-          message: error || 'Failed to rename file',
+          message: error || 'Failed to rename item',
           color: 'red',
         });
       }
@@ -752,26 +894,30 @@ const useDashboard = () => {
   const [removeFile, removeFileLoading] = useAsyncOperation(
     async (fileId: string) => {
       try {
-        await dispatch(removeCloudStorageFiles({ ids: [fileId] })).unwrap();
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
-            page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
-        );
-        notifications.show({
-          message: 'File deleted successfully',
-          color: 'green',
-        });
-        setDeleteModalOpen(false);
+        const res = await dispatch(removeCloudStorageFiles({ ids: [fileId] }));
+
+        if (res?.payload?.status === 200 || res?.payload?.success !== false) {
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
+          await getCloudStorageFiles(1);
+          notifications.show({
+            message: res?.payload?.message || 'Item deleted successfully',
+            color: 'green',
+          });
+          if (selectedIds.includes(fileId)) {
+            cancelMoveMode();
+          }
+          setDeleteModalOpen(false);
+        } else {
+          notifications.show({
+            message: res?.payload?.message || 'Failed to delete item',
+            color: 'red',
+          });
+        }
       } catch (error: any) {
         notifications.show({
-          message: error || 'Failed to delete file',
+          message: error || 'Failed to delete item',
           color: 'red',
         });
       }
@@ -784,19 +930,17 @@ const useDashboard = () => {
     }
   }, [itemToDelete, removeFile]);
 
-  const handleFileUpload = useCallback(
-    async (files: File[]) => {
-      const filesToUpload = files?.length ? files : uploadedFiles;
-      if (filesToUpload.length === 0) return;
+  const uploadFilesHandler = useCallback(
+    async (files: File[], formData?: UploadFormData) => {
+      if (files.length === 0) return;
 
       uploadsInProgressRef.current = true;
       setShowUploadProgress(true);
 
-      // Reset states for new uploads
       setUploadProgress({});
       setUploadingFiles({});
 
-      filesToUpload.forEach(file => {
+      files.forEach(file => {
         const fileId = uuidv4();
         const controller = new AbortController();
         uploadControllers.current[fileId] = controller;
@@ -809,13 +953,17 @@ const useDashboard = () => {
             fileObject: file,
           },
         }));
-
-        // setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
       });
-      uploadFiles(filesToUpload);
+
+      await uploadFiles({ files, formData: formData || { accountId: '' } });
     },
-    [uploadFiles, uploadedFiles]
+    [uploadFiles]
   );
+
+  const handleFileUpload = uploadMethods.handleSubmit(async data => {
+    const filesToUpload = uploadedFiles.length > 0 ? uploadedFiles : [];
+    await uploadFilesHandler(filesToUpload, data);
+  });
 
   const cleanupUpload = (fileId: string) => {
     setUploadProgress(prev => {
@@ -830,17 +978,7 @@ const useDashboard = () => {
     });
     delete uploadControllers.current[fileId];
     cancelledUploadsRef.current.delete(fileId);
-    // checkUploadsComplete();
   };
-
-  // const checkUploadsComplete = () => {
-  //   if (
-  //     Object.keys(uploadProgress).length === 0 &&
-  //     Object.keys(uploadingFiles).length === 0
-  //   ) {
-  //     uploadsInProgressRef.current = false;
-  //   }
-  // };
 
   const handleCancelUpload = useCallback((fileId: string) => {
     cancelledUploadsRef.current.add(fileId);
@@ -851,7 +989,6 @@ const useDashboard = () => {
   }, []);
 
   const handleCloseUploadProgress = useCallback(() => {
-    // Cancel all ongoing uploads when closing the progress panel
     Object.keys(uploadControllers.current).forEach(fileId => {
       uploadControllers.current[fileId].abort();
     });
@@ -869,16 +1006,40 @@ const useDashboard = () => {
     };
   }, []);
 
+  const handleFileDrop = useCallback(
+    async (files: File[]) => {
+      if (!isSFDEnabled) {
+        setDragDropFiles(files);
+        setDragDropModalOpen(true);
+        uploadMethods.reset({ accountId: '', files: files });
+      } else {
+        await uploadFilesHandler(files);
+      }
+    },
+    [uploadFilesHandler, isSFDEnabled, uploadMethods]
+  );
+
+  const handleDragDropUpload = uploadMethods.handleSubmit(async data => {
+    await uploadFilesHandler(dragDropFiles, data);
+    setDragDropModalOpen(false);
+    setDragDropFiles([]);
+  });
+
+  const closeDragDropModal = useCallback(() => {
+    setDragDropFiles([]);
+    setDragDropModalOpen(false);
+    uploadMethods.reset();
+  }, [uploadMethods]);
+
   // Drag and drop functionality
   const { dragRef, isDragging } = useDragDrop({
-    onFileDrop: handleFileUpload,
+    onFileDrop: handleFileDrop,
     acceptedFileTypes: ['*'],
-    // maxFileSize: 100 * 1024 * 1024,
   });
 
   useEffect(() => {
-    setLocalStorage('dashboardLayout', layout);
-  }, [layout]);
+    setLocalStorage(layoutKey, layout);
+  }, [layout, layoutKey]);
 
   const switchLayout = useCallback((type: 'list' | 'grid') => {
     setLayout(type);
@@ -906,71 +1067,35 @@ const useDashboard = () => {
     (id: string, event: React.MouseEvent) => {
       const idx = getIndexById(id);
 
-      // Check if this is a checkbox click (no need for modifier keys)
       const isCheckboxClick = (event.target as HTMLElement).closest(
         '[type="checkbox"]'
       );
 
-      if (isCheckboxClick) {
-        // For checkbox clicks, simply toggle the selection
+      if (isMoveMode) {
+        if (filesToMove.includes(id)) return;
+        setSelectedIds([id]);
+        setLastSelectedIndex(idx);
+      } else if (isCheckboxClick) {
         setSelectedIds(prev =>
           prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
         setLastSelectedIndex(idx);
       } else if (event.shiftKey && lastSelectedIndex !== null) {
-        // Range selection for row clicks with shift key
         const start = Math.min(lastSelectedIndex, idx);
         const end = Math.max(lastSelectedIndex, idx);
         const rangeIds = allIds.slice(start, end + 1);
         setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
       } else if (event.ctrlKey || event.metaKey) {
-        // Multi-selection for row clicks with ctrl/cmd key
         setSelectedIds(prev =>
           prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
         setLastSelectedIndex(idx);
       } else {
-        // Single selection for regular row clicks
         setSelectedIds([id]);
         setLastSelectedIndex(idx);
       }
     },
-    [allIds, lastSelectedIndex, getIndexById]
-  );
-
-  // Shift+arrow key selection
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (!selectedIds.length) return;
-
-      const currentIdx =
-        lastSelectedIndex ?? getIndexById(selectedIds[selectedIds.length - 1]);
-      let nextIdx = currentIdx;
-
-      if (event.shiftKey) {
-        if (event.key === 'ArrowDown') {
-          nextIdx = Math.min(currentIdx + gridColumns, allIds.length - 1);
-        } else if (event.key === 'ArrowUp') {
-          nextIdx = Math.max(currentIdx - gridColumns, 0);
-        } else if (event.key === 'ArrowRight') {
-          nextIdx = Math.min(currentIdx + 1, allIds.length - 1);
-        } else if (event.key === 'ArrowLeft') {
-          nextIdx = Math.max(currentIdx - 1, 0);
-        }
-        if (nextIdx !== currentIdx) {
-          const rangeStart =
-            selectedIds.length === 1
-              ? currentIdx
-              : getIndexById(selectedIds[0]);
-          const start = Math.min(rangeStart, nextIdx);
-          const end = Math.max(rangeStart, nextIdx);
-          const rangeIds = allIds.slice(start, end + 1);
-          setSelectedIds(rangeIds);
-          setLastSelectedIndex(nextIdx);
-        }
-      }
-    },
-    [selectedIds, lastSelectedIndex, allIds, getIndexById, gridColumns]
+    [allIds, lastSelectedIndex, getIndexById, isMoveMode, filesToMove]
   );
 
   const handleSelectAll = useCallback(() => {
@@ -978,63 +1103,79 @@ const useDashboard = () => {
   }, [files]);
 
   const handleUnselectAll = useCallback(() => {
-    setSelectedIds([]);
-    setLastSelectedIndex(null);
-  }, []);
+    if (!isMoveMode) {
+      setSelectedIds([]);
+      setLastSelectedIndex(null);
+    }
+  }, [isMoveMode]);
 
   // Handle row selection
   const onSelectRow = useCallback(
     (id: string, checked: boolean) => {
-      setSelectedIds(prev =>
-        checked ? [...prev, id] : prev.filter(i => i !== id)
-      );
-      setLastSelectedIndex(getIndexById(id));
+      if (isMoveMode) {
+        if (filesToMove.includes(id)) return;
+        setSelectedIds([id]);
+        setLastSelectedIndex(getIndexById(id));
+      } else {
+        setSelectedIds(prev =>
+          checked ? [...prev, id] : prev.filter(i => i !== id)
+        );
+        setLastSelectedIndex(getIndexById(id));
+      }
     },
-    [getIndexById]
+    [getIndexById, isMoveMode, filesToMove]
   );
 
   const onSelectAll = useCallback(
     (checked: boolean) => {
+      if (isMoveMode) return;
       if (checked) {
         handleSelectAll();
       } else {
         handleUnselectAll();
       }
     },
-    [handleSelectAll, handleUnselectAll]
+    [handleSelectAll, handleUnselectAll, isMoveMode]
   );
 
   // Actions for selected items
   const handleDeleteSelected = useCallback(() => {
     setRemoveFilesModalOpen(true);
-  }, [selectedIds]);
+  }, []);
 
   const closeRemoveFilesModal = useCallback(() => {
     setRemoveFilesModalOpen(false);
-  }, [setRemoveFilesModalOpen]);
+  }, []);
 
   const [handleRemoveFilesConfirm, removeFilesLoading] = useAsyncOperation(
     async () => {
       try {
-        await dispatch(removeCloudStorageFiles({ ids: selectedIds }));
-        await dispatch(
-          initializeCloudStorageFromStorage({
-            ...(folderId && { id: folderId }),
-            limit: pagination?.page_limit || 10,
-            page: pagination?.page_no || 1,
-            ...(accountType !== 'all' && {
-              account_type: accountType,
-            }),
-            searchTerm: debouncedSearchTerm || '',
-          })
+        const res = await dispatch(
+          removeCloudStorageFiles({ ids: selectedIds })
         );
-        notifications.show({
-          message: `${selectedIds?.length > 1 ? 'Items' : 'Item'} deleted successfully`,
-          color: 'green',
-        });
-        setSelectedIds([]);
-        setLastSelectedIndex(null);
-        closeRemoveFilesModal();
+
+        if (res?.payload?.status === 200 || res?.payload?.success) {
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
+          await getCloudStorageFiles(1);
+          notifications.show({
+            message:
+              res?.payload?.message ||
+              `${selectedIds?.length > 1 ? 'Items' : 'Item'} deleted successfully`,
+            color: 'green',
+          });
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+          closeRemoveFilesModal();
+        } else {
+          notifications.show({
+            message:
+              res?.payload?.message ||
+              `Failed to delete ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+            color: 'red',
+          });
+        }
       } catch (error: any) {
         notifications.show({
           message:
@@ -1046,22 +1187,31 @@ const useDashboard = () => {
     }
   );
 
-  const handleShareSelected = useCallback(() => {}, [selectedIds]);
+  const handleShareSelected = useCallback(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    if (checkFiles?.web_view_url) {
+      window.open(checkFiles.web_view_url, '_blank');
+    }
+  }, [files, selectedIds]);
 
   const openModal = useCallback((type: 'folder' | 'files') => {
     setModalType(type);
     setModalOpen(true);
     setUploadedFiles([]);
+    if (type === 'files') uploadMethods.reset({ accountId: '' });
     resetFolderForm();
   }, []);
 
   const closeModal = useCallback(() => {
+    setUploadedFiles([]);
     setModalOpen(false);
   }, []);
 
-  const [downloadItems] = useAsyncOperation(async () => {
+  const [downloadItems] = useAsyncOperation(async data => {
     try {
-      const res = await dispatch(downloadFiles({ ids: selectedIds }));
+      const res = await dispatch(
+        downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
+      );
       if (res?.payload?.status !== 200) {
         notifications.show({
           message:
@@ -1071,23 +1221,7 @@ const useDashboard = () => {
         });
         return;
       }
-
-      const blob = new Blob([res.payload.data]);
-
-      // ✅ Extract filename from Content-Disposition header
-      const contentDisposition = res.payload.headers?.['content-disposition'];
-      const match = contentDisposition?.match(/filename="?([^"]+)"?/);
-      const filename = match?.[1] || `download-${Date.now()}.zip`;
-
-      // ✅ Trigger download
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      downloadFilesHelper(res.payload.data, res);
     } catch (error: any) {
       notifications.show({
         message:
@@ -1102,6 +1236,318 @@ const useDashboard = () => {
     downloadItems({});
   }, [selectedIds]);
 
+  // Sync storage
+  const [syncStorage, syncCloudStorageLoading] = useAsyncOperation(
+    async (folderId: string | null) => {
+      try {
+        const requestParams: any = {};
+
+        if (checkLocation && currentAccountId) {
+          requestParams.account_id = currentAccountId;
+        } else if (!checkLocation && accountId !== 'all') {
+          requestParams.account_id = accountId;
+        }
+
+        if (folderId) {
+          requestParams.directory_id = folderId;
+        }
+
+        const res = await dispatch(syncCloudStorage(requestParams)).unwrap();
+
+        if (res?.status === 200) {
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
+          await getCloudStorageFiles(1);
+          notifications.show({
+            message: res?.data?.message || 'Items synced successfully',
+            color: 'green',
+          });
+        } else {
+          notifications.show({
+            message:
+              res?.message || res?.data?.message || 'Failed to sync items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to sync items',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleSyncStorage = useCallback(() => {
+    const folderId = getLocalStorage(folderIdKey);
+    syncStorage(folderId);
+  }, [syncStorage, folderIdKey]);
+
+  // Moving files
+  const [moveFiles, moveFilesLoading] = useAsyncOperation(
+    async (destId: string | null) => {
+      try {
+        const res = await dispatch(
+          moveCloudStorageFiles({
+            ids: filesToMove,
+            destination_id: destId,
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: 'Items moved successfully',
+            color: 'green',
+          });
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
+          await getCloudStorageFiles(1);
+        } else {
+          notifications.show({
+            message: res?.message || 'Failed to move items',
+            color: 'red',
+          });
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to move items',
+          color: 'red',
+        });
+      } finally {
+        setIsMoveMode(false);
+        setFilesToMove([]);
+        selectParentId(null);
+        handleUnselectAll();
+        setSelectedIds([]);
+        setSourceFolderId(null);
+      }
+    }
+  );
+
+  const cancelMoveMode = useCallback(() => {
+    setIsMoveMode(false);
+    setFilesToMove([]);
+    selectParentId(null);
+    setSelectedIds([]);
+    setLastSelectedIndex(null);
+    setSourceFolderId(null);
+  }, []);
+
+  const displayMoveIcon = useMemo(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    return checkFiles?.type === 'file' || checkLocation || folderId
+      ? true
+      : false;
+  }, [selectedIds, files, checkLocation, folderId]);
+
+  const displayDownloadIcon = useMemo(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    return checkFiles?.type === 'file' ? true : false;
+  }, [selectedIds, files]);
+
+  const displayShareIcon = useMemo(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    return checkFiles?.web_view_url ? true : false;
+  }, [selectedIds, files]);
+
+  const displayPreviewIcon = useMemo(() => {
+    const checkFiles = files.find(file => selectedIds.includes(file.id));
+    return checkFiles?.type === 'file' &&
+      checkFiles.fileExtension &&
+      PREVIEW_FILE_TYPES.includes(checkFiles?.fileExtension)
+      ? true
+      : false;
+  }, [selectedIds, files]);
+
+  const handleMoveSelected = useCallback(
+    (ids?: string[]) => {
+      setIsMoveMode(true);
+      if (Array.isArray(ids) && ids?.length) {
+        setSelectedIds(ids);
+        const checkFiles = files.find(file => ids?.includes(file.id));
+        setFilesToMove([...ids]);
+        selectParentId(checkFiles?.parent_id ?? null);
+        setSourceFolderId(currentFolderId ?? null);
+      } else {
+        const checkFiles = files.find(file => selectedIds.includes(file.id));
+        setFilesToMove([...selectedIds]);
+        selectParentId(checkFiles?.parent_id ?? null);
+        setSourceFolderId(currentFolderId ?? null);
+      }
+    },
+    [selectedIds, currentFolderId]
+  );
+
+  const isPasteEnabled = useCallback(() => {
+    if (!isMoveMode || filesToMove.length === 0) return false;
+
+    // Disable paste if currentFolderId is same as sourceFolderId and selected folder is among filesToMove
+    if (
+      currentFolderId === sourceFolderId &&
+      selectedIds.length === 1 &&
+      filesToMove.includes(selectedIds[0])
+    ) {
+      return false;
+    }
+
+    return true;
+  }, [isMoveMode, filesToMove, currentFolderId, sourceFolderId, selectedIds]);
+
+  const handlePasteFiles = useCallback(() => {
+    if (filesToMove.length === 0) return;
+
+    // Get the destination folder ID (currentFolderId could be null for root)
+    let destId: string | null = null;
+
+    if (currentFolderId) {
+      if (layout === 'list') {
+        const checkId = files.find(item => selectedIds?.includes(item.id));
+        destId = checkId ? checkId.id : destinationId;
+      } else {
+        destId = selectedIds.length > 0 ? selectedIds[0] : null;
+      }
+    } else {
+      const checkId = files.find(item => selectedIds?.includes(item.id));
+      destId = checkId ? checkId.id : destinationId;
+    }
+
+    // Check if any of the files being moved is the destination folder itself
+    const isMovingFolderIntoItself = cloudStorage.some(
+      file =>
+        filesToMove.includes(file.id) &&
+        file.entry_type === 'folder' &&
+        file.id === destId
+    );
+
+    if (isMovingFolderIntoItself) {
+      notifications.show({
+        message: 'Cannot move a folder into itself',
+        color: 'red',
+      });
+      return;
+    }
+
+    // Check if trying to move items into one of the selected folders
+    const selectedFolders = cloudStorage.filter(
+      file => filesToMove.includes(file.id) && file.entry_type === 'folder'
+    );
+
+    const isMovingIntoSelectedFolder = selectedFolders.some(
+      folder => folder.id === destId
+    );
+
+    if (isMovingIntoSelectedFolder) {
+      notifications.show({
+        message: 'Cannot move items into one of the selected folders',
+        color: 'red',
+      });
+      return;
+    }
+
+    moveFiles(destId);
+  }, [
+    filesToMove,
+    currentFolderId,
+    cloudStorage,
+    moveFiles,
+    layout,
+    files,
+    destinationId,
+    selectedIds,
+  ]);
+
+  const openMoveModal = useCallback(
+    (items?: FileType[]) => {
+      const selectedFiles =
+        items || files.filter(file => selectedIds.includes(file.id));
+      setItemsToMove(selectedFiles);
+      setMoveModalOpen(true);
+    },
+    [files, selectedIds]
+  );
+
+  const closeMoveModal = useCallback(() => {
+    setMoveModalOpen(false);
+    setItemsToMove([]);
+  }, []);
+
+  const handleMoveModalConfirm = useCallback(
+    async (destinationId: string | null, destinationName: string) => {
+      try {
+        const itemIds = itemsToMove.map(item => item.id);
+
+        const res = await dispatch(
+          moveCloudStorageFiles({
+            ids: itemIds,
+            destination_id: destinationId,
+          })
+        ).unwrap();
+
+        if (res?.status === 200) {
+          notifications.show({
+            message: `Items moved to ${destinationName} successfully`,
+            color: 'green',
+          });
+          // if (!folderId || folderId === null) {
+          //   onGetRecentFiles({});
+          // }
+          await getCloudStorageFiles(1);
+
+          // Clear selections
+          setSelectedIds([]);
+          setLastSelectedIndex(null);
+          cancelMoveMode();
+          closeMoveModal();
+        } else {
+          notifications.show({
+            message: res?.message || 'Failed to move items',
+            color: 'red',
+          });
+        }
+        return res;
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to move items',
+          color: 'red',
+        });
+      }
+    },
+    [
+      itemsToMove,
+      dispatch,
+      folderId,
+      // onGetRecentFiles,
+      getCloudStorageFiles,
+      cancelMoveMode,
+      closeMoveModal,
+    ]
+  );
+
+  const handleModalMoveSelected = useCallback(
+    (ids?: string[]) => {
+      if (Array.isArray(ids) && ids?.length) {
+        const selectedFiles = files.filter(file => ids.includes(file.id));
+        openMoveModal(selectedFiles);
+      } else {
+        openMoveModal();
+      }
+    },
+    [files, openMoveModal]
+  );
+
+  const handleShowDetails = useCallback((item: FileType) => {
+    setSelectedItemForDetails(item);
+    setDetailsDrawerOpen(true);
+  }, []);
+
+  const closeDetailsDrawer = useCallback(() => {
+    setDetailsDrawerOpen(false);
+    setSelectedItemForDetails(null);
+    setPreviewFile(null);
+  }, []);
+
   return {
     layout,
     switchLayout,
@@ -1113,8 +1559,6 @@ const useDashboard = () => {
     setSelectedIds,
     setLastSelectedIndex,
     handleSelect,
-    handleKeyDown,
-    handleSelectAll,
     handleUnselectAll,
     handleDeleteSelected,
     handleDownloadSelected,
@@ -1166,15 +1610,71 @@ const useDashboard = () => {
     handleMenuItemClick,
     handleRowDoubleClick,
 
-    loadMoreFiles,
-    pagination,
     handleScroll,
     scrollBoxRef,
     navigate,
-    accountType,
+    accountId: checkLocation ? currentAccountId : accountId,
     searchTerm: localSearchTerm,
     handleAccountTypeChange,
     handleSearchChange,
+
+    allIds,
+    lastSelectedIndex,
+    loadMoreFiles,
+    pagination,
+    accountOptions,
+    navigateLoading,
+
+    isMoveMode,
+    filesToMove,
+    handleMoveSelected,
+    handlePasteFiles,
+    moveFilesLoading,
+    isPasteEnabled,
+    cancelMoveMode,
+    handleSyncStorage,
+    syncCloudStorageLoading,
+    uploadMethods,
+    isSFDEnabled,
+    accountOptionsForSFD,
+
+    checkLocation,
+    parentId,
+    dragDropModalOpen,
+    dragDropFiles,
+    handleDragDropUpload,
+    closeDragDropModal,
+    recentFilesData,
+    folderId,
+    displayMoveIcon,
+    displayDownloadIcon,
+    displayShareIcon,
+    location,
+    connectedAccounts,
+
+    // preview
+    previewModalOpen,
+    setPreviewModalOpen,
+    previewFile,
+    setPreviewFile,
+    previewFileLoading,
+    displayPreviewIcon,
+    downloadItems,
+
+    // modal move
+    moveModalOpen,
+    closeMoveModal,
+    itemsToMove,
+    handleMoveModalConfirm,
+    currentAccountId,
+    handleModalMoveSelected,
+
+    // details drawer
+    closeDetailsDrawer,
+    detailsDrawerOpen,
+    selectedItemForDetails,
+    detailsFile,
+    detailsFileLoading,
   };
 };
 

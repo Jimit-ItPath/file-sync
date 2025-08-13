@@ -20,27 +20,86 @@ import { ConfirmModal } from '../../components/confirm-modal';
 import Icon from '../../assets/icons/icon';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { fetchProfile } from '../../store/slices/user.slice';
+import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
+import {
+  fetchStorageDetails,
+  getConnectedAccount,
+  resetUser,
+  updateUser,
+} from '../../store/slices/auth.slice';
+import useResponsive from '../../hooks/use-responsive';
+import {
+  DOCUMENT_FILE_TYPES,
+  ROLES,
+  VIDEO_FILE_TYPES,
+} from '../../utils/constants';
+import { decodeToken } from '../../utils/helper';
+import GlobalSearchBar from './GlobalSearchBar';
+import { downloadFiles } from '../../store/slices/cloudStorage.slice';
+import TawkToWidget from '../../widget/TawkToWidget';
 
 const DashboardLayout = () => {
   usePageData();
   const [mobileDrawerOpened, mobileDrawerHandler] = useDisclosure();
   const [logoutConfirmOpened, logoutConfirmHandler] = useDisclosure();
+  const { isSm, isXs } = useResponsive();
 
   const { logout } = useAuth() as any;
   const dispatch = useAppDispatch();
   const { userProfile } = useAppSelector(state => state.user);
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  // const location = useLocation();
+  // const hasRedirectedRef = useRef(false);
+
+  const getAccounts = useCallback(async () => {
+    await dispatch(getConnectedAccount());
+  }, [dispatch]);
+
+  const [onInitialize] = useAsyncOperation(getAccounts);
+
+  const getStorageDetails = useCallback(async () => {
+    await dispatch(fetchStorageDetails());
+  }, [dispatch]);
+
+  const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   const getUserProfile = useCallback(async () => {
-    await dispatch(fetchProfile());
+    const res = await dispatch(fetchProfile());
+    if (res?.payload?.data?.role === ROLES.USER && token) {
+      const decodeData: any = decodeToken(token);
+      dispatch(
+        updateUser({
+          token,
+          activeUI: '',
+          user: { ...decodeData },
+        })
+      );
+    }
   }, [dispatch]);
 
   const [getProfile] = useAsyncOperation(getUserProfile);
 
+  // useEffect(() => {
+  //   if (!hasRedirectedRef.current) {
+  //     hasRedirectedRef.current = true;
+
+  //     const role = user?.user?.role; // or get from auth state
+  //     const currentPath = location.pathname;
+
+  //     if (role === ROLES.ADMIN && !currentPath.startsWith('/admin')) {
+  //       // navigate('/admin/dashboard', { replace: true });
+  //       navigate(PRIVATE_ROUTES.USERS.url);
+  //     }
+  //     // else if (role === ROLES.USER && currentPath === '/dashboard') {
+  //     //   navigate('/dashboard', { replace: true });
+  //     // }
+  //   }
+  // }, [user, navigate, location]);
+
   useEffect(() => {
     getProfile({});
-
     // const handleBeforeUnload = () => {
     //   removeLocalStorage('googleDrivePath');
     // };
@@ -51,14 +110,19 @@ const DashboardLayout = () => {
     // };
   }, []);
 
+  // useEffect(() => {
+  //   if (userProfile?.role === ROLES.USER) {
+  //     onInitialize({});
+  //     fetchStorageData({});
+  //   }
+  // }, [userProfile]);
+
   const fullName = useMemo(
     () =>
       `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() ||
       '',
     [userProfile?.first_name, userProfile?.last_name]
   );
-
-  const navigate = useNavigate();
 
   const PROFILE_MENU_ITEMS = [
     { id: 'profile', label: 'Profile', icon: ICONS.IconUser },
@@ -76,7 +140,16 @@ const DashboardLayout = () => {
 
   const onLogoutConfirm = () => {
     logout();
-    navigate(AUTH_ROUTES.LOGIN.url);
+    if (userProfile?.role === ROLES.ADMIN) {
+      navigate(AUTH_ROUTES.ADMIN_LOGIN.url);
+    } else {
+      // navigate(AUTH_ROUTES.LOGIN.url);
+      navigate(AUTH_ROUTES.LANDING.url);
+    }
+    setTimeout(() => {
+      dispatch(resetUser());
+      dispatch(resetUserProfile());
+    }, 1000);
     logoutConfirmHandler.close();
   };
 
@@ -98,9 +171,10 @@ const DashboardLayout = () => {
               <Group
                 gap={16}
                 align="center"
-                justify="space-between"
-                maw={600}
-                w="100%"
+                wrap="nowrap"
+                // justify="space-between"
+                // maw={600}
+                // w="100%"
               >
                 <Burger
                   opened={mobileDrawerOpened}
@@ -108,38 +182,59 @@ const DashboardLayout = () => {
                   hiddenFrom="sm"
                   size="sm"
                 />
-                <Box
-                  fw={700}
-                  fz={22}
-                  c="blue.7"
-                  style={{ letterSpacing: -0.5 }}
-                >
-                  CloudSync
-                </Box>
-                <Group align="center" gap={0} style={{ position: 'relative' }}>
-                  <TextInput
-                    placeholder="Search files and folders..."
-                    w={300}
-                    size="sm"
-                    pl={36}
-                    leftSection={
-                      <Icon component={ICONS.IconSearch} size={16} />
-                    }
-                    styles={{
-                      input: {
-                        borderRadius: 8,
-                        border: '1px solid #d1d5db',
-                        background: '#fff',
-                      },
-                    }}
-                    aria-label="Search files and folders"
-                  />
-                </Group>
+                {isXs ? (
+                  <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+                ) : (
+                  <Box
+                    fw={700}
+                    fz={22}
+                    c="blue.7"
+                    style={{ letterSpacing: -0.5 }}
+                  >
+                    AllCloudHub
+                  </Box>
+                )}
+                {/* {!isSm ? (
+                  <Group
+                    align="center"
+                    gap={0}
+                    style={{ position: 'relative' }}
+                    ml={60}
+                  >
+                    <TextInput
+                      placeholder="Search files and folders..."
+                      w={600}
+                      size="sm"
+                      pl={36}
+                      leftSection={
+                        <Icon component={ICONS.IconSearch} size={16} />
+                      }
+                      styles={{
+                        input: {
+                          borderRadius: 8,
+                          border: '1px solid #d1d5db',
+                          background: '#fff',
+                        },
+                      }}
+                      aria-label="Search files and folders"
+                    />
+                  </Group>
+                ) : null} */}
+                {!isSm ? (
+                  <Group
+                    align="center"
+                    gap={0}
+                    style={{ position: 'relative' }}
+                    ml={60}
+                  >
+                    <GlobalSearchBar placeholder="Search files and folders..." />
+                  </Group>
+                ) : null}
               </Group>
 
               <Group gap={16} align="center">
-                <ICONS.IconBell />
-                <ICONS.IconSettings />
+                {/* <ICONS.IconBell size={isXs ? 20 : 24} /> */}
+                {/* <ICONS.IconSettings size={isXs ? 20 : 24} /> */}
                 <Menu
                   width={140}
                   onItemClick={onItemClick}
@@ -149,7 +244,7 @@ const DashboardLayout = () => {
                 >
                   <ActionIcon
                     variant="filled"
-                    size="lg"
+                    size={isXs ? 'md' : 'lg'}
                     color="blue"
                     radius="xl"
                     aria-label="User"
@@ -163,7 +258,9 @@ const DashboardLayout = () => {
                         style={{ objectFit: 'contain' }}
                       />
                     ) : (
-                      <Box style={{ fontWeight: 600, fontSize: 14 }}>
+                      <Box
+                        style={{ fontWeight: 600, fontSize: isXs ? 12 : 14 }}
+                      >
                         {fullName
                           ? fullName
                               .split(' ')
@@ -202,6 +299,8 @@ const DashboardLayout = () => {
           onClick: onLogoutConfirm,
         }}
       />
+
+      <TawkToWidget />
     </>
   );
 };

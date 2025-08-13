@@ -1,15 +1,36 @@
-import { Stack, Group } from '@mantine/core';
+import { Stack, Group, Text } from '@mantine/core';
 import { Button, Form, Input } from '../../../components';
 import useLogin from './use-login';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
+import { ICONS } from '../../../assets/icons';
 
-export const LoginForm = () => {
+interface LoginFormProps {
+  onBack: () => void;
+}
+
+export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
   const { loginFormData, isLoading, handleLoginSubmit, methods } = useLogin();
 
   return (
     <Form methods={methods} onSubmit={handleLoginSubmit}>
       <Stack gap={16}>
+        <Group fz="sm" c="dimmed" align="center" lh={1}>
+          <Link
+            to={AUTH_ROUTES.LOGIN.url}
+            style={{
+              textDecoration: 'none',
+              color: '#0284c7',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+            onClick={onBack}
+          >
+            <ICONS.IconArrowLeft size={18} /> Back
+          </Link>
+        </Group>
         {loginFormData.map(
           ({ id, label, placeholder, type, error, name, isRequired }) => (
             <Input
@@ -26,10 +47,10 @@ export const LoginForm = () => {
             />
           )
         )}
-        <Group justify="flex-end">
+        <Group justify="flex-end" mt={-10}>
           <Link
             to={AUTH_ROUTES.FORGOT_PASSWORD.url}
-            style={{ textDecoration: 'none', color: '#0284c7' }}
+            style={{ textDecoration: 'none', color: '#0284c7', fontSize: 14 }}
           >
             Forgot your password?
           </Link>
@@ -38,7 +59,7 @@ export const LoginForm = () => {
           type="submit"
           fullWidth
           loading={Boolean(isLoading)}
-          disabled={Boolean(isLoading)}
+          disabled={Boolean(isLoading) || !methods.formState.isValid}
           size="md"
           radius="md"
           style={{
@@ -46,11 +67,23 @@ export const LoginForm = () => {
             fontSize: 16,
             background: '#0284c7',
             color: '#fff',
-            marginTop: 8,
           }}
         >
           Log in
         </Button>
+        <Text ta="center" fz="sm" c="dimmed" mt={-5}>
+          Don't have an account?{' '}
+          <Link
+            to={AUTH_ROUTES.REGISTER.url}
+            style={{
+              textDecoration: 'none',
+              color: '#0284c7',
+              fontWeight: 500,
+            }}
+          >
+            Sign up
+          </Link>
+        </Text>
       </Stack>
     </Form>
   );
