@@ -11,9 +11,18 @@ import {
   rem,
   CloseButton,
 } from '@mantine/core';
-import { DateInput, DatePickerInput } from '@mantine/dates';
+import { DateInput } from '@mantine/dates';
 import { ICONS } from '../../../assets/icons';
 import './css/DashboardFilters.css';
+
+type ModifiedFilter =
+  | 'today'
+  | 'last7days'
+  | 'last30days'
+  | 'thisyear'
+  | 'lastyear'
+  | 'custom'
+  | null;
 
 interface DashboardFiltersProps {
   onTypeFilter: (type: string | null) => void;
@@ -48,40 +57,116 @@ const modifiedOptions = [
   { value: 'custom', label: 'Custom range', icon: ICONS.IconChevronRight },
 ];
 
-const getModifiedRange = (value: string) => {
+const startOfDay = (date: Date): Date => {
+  const newDate = new Date(date);
+  newDate.setHours(0, 0, 0, 0);
+  return newDate;
+};
+
+const endOfDay = (date: Date): Date => {
+  const newDate = new Date(date);
+  newDate.setHours(23, 59, 59, 999);
+  return newDate;
+};
+
+const getModifiedRange = (
+  value: ModifiedFilter
+): { after?: Date; before?: Date } | null => {
   const now = new Date();
   switch (value) {
     case 'today':
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return { after: today };
+      return {
+        after: startOfDay(new Date()),
+        before: endOfDay(new Date()),
+      };
     case 'last7days':
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(now.getDate() - 7);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-      return { after: sevenDaysAgo };
+      return {
+        after: startOfDay(sevenDaysAgo),
+        before: endOfDay(new Date()),
+      };
     case 'last30days':
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(now.getDate() - 30);
-      thirtyDaysAgo.setHours(0, 0, 0, 0);
-      return { after: thirtyDaysAgo };
+      return {
+        after: startOfDay(thirtyDaysAgo),
+        before: endOfDay(new Date()),
+      };
     case 'thisyear':
       const janFirst = new Date(now.getFullYear(), 0, 1);
-      return { after: janFirst };
+      return {
+        after: startOfDay(janFirst),
+        before: endOfDay(new Date()),
+      };
     case 'lastyear':
       const lastYearJanFirst = new Date(now.getFullYear() - 1, 0, 1);
-      const lastYearDecEnd = new Date(
-        now.getFullYear() - 1,
-        11,
-        31,
-        23,
-        59,
-        59
-      );
-      return { after: lastYearJanFirst, before: lastYearDecEnd };
+      const lastYearDecEnd = new Date(now.getFullYear() - 1, 11, 31);
+      return {
+        after: startOfDay(lastYearJanFirst),
+        before: endOfDay(lastYearDecEnd),
+      };
     default:
       return null;
   }
+};
+
+// Helper to detect which preset is currently active
+const getActivePreset = (
+  activeModifiedFilter: { after?: Date; before?: Date } | null
+): ModifiedFilter => {
+  if (!activeModifiedFilter?.after || !activeModifiedFilter?.before) {
+    if (activeModifiedFilter?.after || activeModifiedFilter?.before) {
+      return 'custom';
+    }
+    return null;
+  }
+
+  const { after, before } = activeModifiedFilter;
+  const afterTime = after.getTime();
+  const beforeTime = before.getTime();
+
+  // Check for today
+  const todayStart = startOfDay(new Date()).getTime();
+  const todayEnd = endOfDay(new Date()).getTime();
+  if (afterTime === todayStart && beforeTime === todayEnd) {
+    return 'today';
+  }
+
+  // Check for last 7 days
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysStart = startOfDay(sevenDaysAgo).getTime();
+  const nowEnd = endOfDay(new Date()).getTime();
+  if (afterTime === sevenDaysStart && beforeTime === nowEnd) {
+    return 'last7days';
+  }
+
+  // Check for last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysStart = startOfDay(thirtyDaysAgo).getTime();
+  if (afterTime === thirtyDaysStart && beforeTime === nowEnd) {
+    return 'last30days';
+  }
+
+  // Check for this year
+  const thisYearStart = startOfDay(
+    new Date(new Date().getFullYear(), 0, 1)
+  ).getTime();
+  if (afterTime === thisYearStart && beforeTime === nowEnd) {
+    return 'thisyear';
+  }
+
+  // Check for last year
+  const lastYear = new Date().getFullYear() - 1;
+  const lastYearStart = startOfDay(new Date(lastYear, 0, 1)).getTime();
+  const lastYearEnd = endOfDay(new Date(lastYear, 11, 31)).getTime();
+  if (afterTime === lastYearStart && beforeTime === lastYearEnd) {
+    return 'lastyear';
+  }
+
+  return 'custom';
 };
 
 const DashboardFilters: React.FC<DashboardFiltersProps> = ({
@@ -94,7 +179,6 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
 }) => {
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [modifiedDropdownOpen, setModifiedDropdownOpen] = useState(false);
-  const [selectedModified, setSelectedModified] = useState<string | null>(null);
   const [customDateRange, setCustomDateRange] = useState<{
     after?: Date;
     before?: Date;
@@ -106,24 +190,13 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   const modifiedRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    // const handleClick = (e: MouseEvent) => {
-    //   if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
-    //     setTypeDropdownOpen(false);
-    //   }
-    //   if (
-    //     modifiedRef.current &&
-    //     !modifiedRef.current.contains(e.target as Node)
-    //   ) {
-    //     setModifiedDropdownOpen(false);
-    //   }
-    // };
-
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       // Skip if click is inside a date picker
       if (
         target.closest('.mantine-DatePicker-day') ||
-        target.closest('.mantine-DatePicker-input')
+        target.closest('.mantine-DatePicker-input') ||
+        target.closest('.mantine-Popover-dropdown')
       ) {
         return;
       }
@@ -133,6 +206,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
       }
       if (modifiedRef.current && !modifiedRef.current.contains(target)) {
         setModifiedDropdownOpen(false);
+        setShowCustomDate(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -140,36 +214,50 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   }, []);
 
   const getModifiedFilterLabel = () => {
+    const preset = getActivePreset(activeModifiedFilter);
+    if (preset && preset !== 'custom') {
+      return (
+        modifiedOptions.find(opt => opt.value === preset)?.label || 'Modified'
+      );
+    }
     if (!activeModifiedFilter) return 'Modified';
+
     const { after, before } = activeModifiedFilter;
-    if (after && before)
+    if (after && before) {
       return `${after.toLocaleDateString()} - ${before.toLocaleDateString()}`;
+    }
     if (after) return `After ${after.toLocaleDateString()}`;
     if (before) return `Before ${before.toLocaleDateString()}`;
     return 'Modified';
   };
 
   const handleModifiedSelect = (value: string) => {
-    setSelectedModified(value);
     if (value === 'custom') {
       setShowCustomDate(!showCustomDate);
       return;
     }
     setShowCustomDate(false);
     setCustomDateRange({});
-    onModifiedFilter(getModifiedRange(value));
+    const range = getModifiedRange(value as ModifiedFilter);
+    onModifiedFilter(range);
     setModifiedDropdownOpen(false);
   };
 
   const handleCustomApply = () => {
-    onModifiedFilter(customDateRange);
+    const range = {
+      ...(customDateRange.after && {
+        after: startOfDay(customDateRange.after),
+      }),
+      ...(customDateRange.before && {
+        before: endOfDay(customDateRange.before),
+      }),
+    };
+    onModifiedFilter(Object.keys(range).length > 0 ? range : null);
     setModifiedDropdownOpen(false);
     setShowCustomDate(false);
-    setSelectedModified('custom');
   };
 
   const handleClearAll = () => {
-    setSelectedModified(null);
     setCustomDateRange({});
     setShowCustomDate(false);
     onClearFilters();
@@ -187,7 +275,6 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
 
   const handleClearModifiedFilter = () => {
     onModifiedFilter(null);
-    setSelectedModified(null);
     setCustomDateRange({});
     setShowCustomDate(false);
     setModifiedDropdownOpen(false);
@@ -261,7 +348,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                 <Menu.Item
                   key={option.value}
                   rightSection={
-                    selectedModified === option.value ? (
+                    getActivePreset(activeModifiedFilter) === option.value ? (
                       <ICONS.IconCheck size={16} />
                     ) : option.value === 'custom' ? (
                       <ICONS.IconChevronRight size={16} />
@@ -301,8 +388,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
               shadow="md"
               style={{
                 width: 240,
-                top: '100%', // Position below button
-                marginTop: 4, // Small gap
+                top: '100%',
+                marginTop: 4,
               }}
             >
               <Text className="filterDropdownLabel">Type</Text>
@@ -322,7 +409,6 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
             </Paper>
           )}
 
-          {/* Always show as menu chip style */}
           <Box
             className={`filterOption ${activeTypeFilter ? 'filterOptionActive' : ''}`}
             style={{
@@ -402,23 +488,27 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
               {/* Left column: options */}
               <Box className="filterOptionsColumn">
                 <Text className="filterDropdownLabel">Modified</Text>
-                {modifiedOptions.map(option => (
-                  <Box
-                    key={option.value}
-                    className={`filterOption ${selectedModified === option.value ? 'filterOptionActive' : ''}`}
-                    onClick={() => handleModifiedSelect(option.value)}
-                  >
-                    <Text fz={'sm'}>{option.label}</Text>
-                    {selectedModified === option.value ? (
-                      <ICONS.IconCheck
-                        size={16}
-                        className="filterOptionCheck"
-                      />
-                    ) : option.value === 'custom' ? (
-                      <ICONS.IconChevronRight size={16} />
-                    ) : null}
-                  </Box>
-                ))}
+                {modifiedOptions.map(option => {
+                  const isActive =
+                    getActivePreset(activeModifiedFilter) === option.value;
+                  return (
+                    <Box
+                      key={option.value}
+                      className={`filterOption ${isActive ? 'filterOptionActive' : ''}`}
+                      onClick={() => handleModifiedSelect(option.value)}
+                    >
+                      <Text fz={'sm'}>{option.label}</Text>
+                      {isActive ? (
+                        <ICONS.IconCheck
+                          size={16}
+                          className="filterOptionCheck"
+                        />
+                      ) : option.value === 'custom' ? (
+                        <ICONS.IconChevronRight size={16} />
+                      ) : null}
+                    </Box>
+                  );
+                })}
               </Box>
 
               {/* Right column: custom date range */}
@@ -426,29 +516,11 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                 <Box className="customDateColumn">
                   <Stack gap="md" p="md">
                     <Box>
-                      {/* <Text className="dateLabel">From</Text> */}
-                      {/* <DatePickerInput
-                        className="dateInput"
-                        placeholder="Select date"
-                        value={customDateRange.after}
-                        onChange={date =>
-                          setCustomDateRange(prev => ({
-                            ...prev,
-                            after: date || undefined,
-                          }))
-                        }
-                        size="sm"
-                        clearable
-                        popoverProps={{
-                          withinPortal: false,
-                          position: 'bottom',
-                        }}
-                      /> */}
                       <DateInput
                         label="After"
                         placeholder="Pick date"
                         value={customDateRange.after}
-                        onChange={date =>
+                        onChange={(date: any) =>
                           setCustomDateRange(prev => ({
                             ...prev,
                             after: date || undefined,
@@ -456,52 +528,79 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                         }
                         clearable
                         popoverProps={{
-                          //   position: 'top',
-                          //   withinPortal: false,
-                          clickOutsideEvents: [],
-                          onClose: () => {},
+                          withinPortal: true,
+                          position: 'bottom-end',
+                          offset: 5,
+                          shadow: 'md',
+                        }}
+                        styles={{
+                          input: {
+                            borderRadius: 4,
+                            border: '1px solid #dadce0',
+                            fontSize: '0.875rem',
+                            height: '2.25rem',
+                            '&:focus': {
+                              borderColor: '#1a73e8',
+                              boxShadow: '0 0 0 1px #1a73e8',
+                            },
+                          },
+                          label: {
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            color: '#5f6368',
+                            marginBottom: 4,
+                          },
                         }}
                       />
                     </Box>
                     <Box>
-                      <Text className="dateLabel">To</Text>
-                      {/* <DatePickerInput
-                        className="dateInput"
-                        placeholder="Select date"
-                        value={customDateRange.before}
-                        onChange={date =>
-                          setCustomDateRange(prev => ({
-                            ...prev,
-                            before: date || undefined,
-                          }))
-                        }
-                        size="sm"
-                        clearable
-                        popoverProps={{
-                          withinPortal: false,
-                          position: 'top',
-                        }}
-                      /> */}
                       <DateInput
                         label="Before"
                         placeholder="Pick date"
                         value={customDateRange.before}
-                        onChange={date =>
+                        onChange={(date: any) =>
                           setCustomDateRange(prev => ({
                             ...prev,
                             before: date || undefined,
                           }))
                         }
                         clearable
-                        // popoverProps={{
-                        //   position: 'top',
-                        //   withinPortal: false,
-                        // }}
+                        popoverProps={{
+                          withinPortal: true,
+                          position: 'bottom-end',
+                          offset: 5,
+                          shadow: 'md',
+                        }}
+                        styles={{
+                          input: {
+                            borderRadius: 4,
+                            border: '1px solid #dadce0',
+                            fontSize: '0.875rem',
+                            height: '2.25rem',
+                            '&:focus': {
+                              borderColor: '#1a73e8',
+                              boxShadow: '0 0 0 1px #1a73e8',
+                            },
+                          },
+                          label: {
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            color: '#5f6368',
+                            marginBottom: 4,
+                          },
+                        }}
                       />
                     </Box>
                   </Stack>
                   <Box className="filterActions">
-                    <Button variant="subtle" size="sm" onClick={handleClearAll}>
+                    <Button
+                      variant="subtle"
+                      size="sm"
+                      onClick={() => {
+                        setCustomDateRange({});
+                        handleClearAll();
+                      }}
+                    >
                       Clear
                     </Button>
                     <Button

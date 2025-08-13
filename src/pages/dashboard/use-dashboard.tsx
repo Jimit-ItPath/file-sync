@@ -49,6 +49,7 @@ import {
   PREVIEW_FILE_TYPES,
   VIDEO_FILE_TYPES,
 } from '../../utils/constants';
+import dayjs from 'dayjs';
 
 type UseDashboardProps = {
   downloadFile?: (ids: string[]) => Promise<void>;
@@ -322,8 +323,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       setTypeFilter(type);
       await getCloudStorageFiles(1, {
         type: type || undefined,
-        after: modifiedFilter?.after?.toISOString(),
-        before: modifiedFilter?.before?.toISOString(),
+        after: modifiedFilter?.after
+          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+          : undefined,
+        before: modifiedFilter?.before
+          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+          : undefined,
       });
     },
     [modifiedFilter]
@@ -334,8 +339,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       setModifiedFilter(dateRange);
       await getCloudStorageFiles(1, {
         type: typeFilter || undefined,
-        after: dateRange?.after?.toISOString(),
-        before: dateRange?.before?.toISOString(),
+        after: dateRange?.after
+          ? dayjs(dateRange.after).format('MM/DD/YYYY')
+          : undefined,
+        before: dateRange?.before
+          ? dayjs(dateRange.before).format('MM/DD/YYYY')
+          : undefined,
       });
     },
     [typeFilter]
@@ -453,15 +462,23 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     if (checkLocation || accountId !== 'all') {
       getCloudStorageFiles(1, {
         type: typeFilter || undefined,
-        after: modifiedFilter?.after?.toISOString(),
-        before: modifiedFilter?.before?.toISOString(),
+        after: modifiedFilter?.after
+          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+          : undefined,
+        before: modifiedFilter?.before
+          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+          : undefined,
       });
     } else {
       // getCloudStorageFiles();
       getCloudStorageFiles(undefined, {
         type: typeFilter || undefined,
-        after: modifiedFilter?.after?.toISOString(),
-        before: modifiedFilter?.before?.toISOString(),
+        after: modifiedFilter?.after
+          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+          : undefined,
+        before: modifiedFilter?.before
+          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+          : undefined,
       });
     }
   }, [debouncedSearchTerm, accountId, checkLocation]);
@@ -803,8 +820,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
             type: typeFilter || undefined,
-            after: modifiedFilter?.after?.toISOString(),
-            before: modifiedFilter?.before?.toISOString(),
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
           });
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
@@ -913,8 +934,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         // await getCloudStorageFiles(1);
         await getCloudStorageFiles(1, {
           type: typeFilter || undefined,
-          after: modifiedFilter?.after?.toISOString(),
-          before: modifiedFilter?.before?.toISOString(),
+          after: modifiedFilter?.after
+            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            : undefined,
+          before: modifiedFilter?.before
+            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+            : undefined,
         });
       } catch (error: any) {
         notifications.show({
@@ -941,8 +966,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         // await getCloudStorageFiles(1);
         await getCloudStorageFiles(1, {
           type: typeFilter || undefined,
-          after: modifiedFilter?.after?.toISOString(),
-          before: modifiedFilter?.before?.toISOString(),
+          after: modifiedFilter?.after
+            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            : undefined,
+          before: modifiedFilter?.before
+            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+            : undefined,
         });
         notifications.show({
           message: 'Item renamed successfully',
@@ -977,8 +1006,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
             type: typeFilter || undefined,
-            after: modifiedFilter?.after?.toISOString(),
-            before: modifiedFilter?.before?.toISOString(),
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
           });
           notifications.show({
             message: res?.payload?.message || 'Item deleted successfully',
@@ -1240,8 +1273,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
             type: typeFilter || undefined,
-            after: modifiedFilter?.after?.toISOString(),
-            before: modifiedFilter?.before?.toISOString(),
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
           });
           notifications.show({
             message:
@@ -1361,8 +1398,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
             type: typeFilter || undefined,
-            after: modifiedFilter?.after?.toISOString(),
-            before: modifiedFilter?.before?.toISOString(),
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
           });
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
@@ -1411,8 +1452,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
             type: typeFilter || undefined,
-            after: modifiedFilter?.after?.toISOString(),
-            before: modifiedFilter?.before?.toISOString(),
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
           });
         } else {
           notifications.show({
@@ -1606,8 +1651,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
             type: typeFilter || undefined,
-            after: modifiedFilter?.after?.toISOString(),
-            before: modifiedFilter?.before?.toISOString(),
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
           });
 
           // Clear selections

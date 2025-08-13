@@ -41,7 +41,6 @@ import FileDetailsDrawer from './components/FileDetailsDrawer';
 import useFileDownloader from './components/use-file-downloader';
 import DownloadProgress from './components/DownloadProgress';
 import DashboardFilters from './components/DashboardFilters';
-import DriveFiltersBar from './components/DriveFiltersBar';
 
 const iconStyle = {
   borderRadius: 999,
@@ -181,7 +180,7 @@ const Dashboard = () => {
     connectAccountFormData,
     connectAccountLoading,
   } = useSidebar();
-  const { isSm, theme } = useResponsive();
+  const { isSm, theme, isXs } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
@@ -226,7 +225,7 @@ const Dashboard = () => {
         </Text>
       ) : null}
       <Box
-        px={32}
+        // px={32}
         pb={20}
         bg="#f8fafc"
         // ref={dragRef}
@@ -304,12 +303,12 @@ const Dashboard = () => {
             backgroundColor: '#f6faff',
             border: '1px solid #e5e7eb',
             borderRadius: 'var(--mantine-radius-default)',
-            padding: '10px 24px',
+            padding: '5px 24px',
             zIndex: 10,
             // boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             // borderBottom: '1px solid #e5e7eb',
           }}
-          mt={16}
+          // mt={16}
           className="stickey-box"
         >
           {/* <Box> */}
@@ -380,38 +379,6 @@ const Dashboard = () => {
                 }}
               />
             )}
-            {/* <TextInput
-                placeholder="Search files..."
-                value={searchTerm}
-                onChange={event => handleSearchChange(event.target.value)}
-                // style={{ width: '200px' }}
-                styles={{
-                  input: {
-                    height: '44px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #e5e7eb',
-                    backgroundColor: '#ffffff',
-                    fontSize: '14px',
-                    // paddingLeft: '44px',
-                    transition: 'all 0.2s ease',
-                    '&:focus': {
-                      borderColor: '#1e7ae8',
-                      boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
-                      backgroundColor: '#fefefe',
-                    },
-                    '&:hover': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&::placeholder': {
-                      color: '#9ca3af',
-                      fontSize: '14px',
-                    },
-                  },
-                  section: {
-                    paddingLeft: '16px',
-                  },
-                }}
-              /> */}
             <CustomToggle
               value={layout}
               onChange={(value: 'list' | 'grid') => switchLayout(value)}
@@ -441,26 +408,34 @@ const Dashboard = () => {
                   }
                 />
               </Box>
-            ) : (
-              <Box style={{ flexGrow: 1 }}>
-                {/* <DashboardFilters
+            ) : !isXs ? (
+              <Box
+                style={{
+                  zIndex: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '6px 14px',
+                  // background: 'rgba(255, 255, 255, 0.75)',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: 9999,
+                  margin: 'auto',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  border: '1px solid rgba(200, 200, 200, 0.4)',
+                  transition: 'opacity 0.25s ease, transform 0.25s ease',
+                }}
+                h={40}
+              >
+                <DashboardFilters
                   onTypeFilter={handleTypeFilter}
                   onModifiedFilter={handleModifiedFilter}
                   onClearFilters={handleClearFilters}
                   activeTypeFilter={typeFilter}
                   activeModifiedFilter={modifiedFilter}
                   isMobile={isSm}
-                /> */}
-                <DriveFiltersBar
-                  selectedCount={selectedIds.length}
-                  onTypeFilter={handleTypeFilter}
-                  onModifiedFilter={handleModifiedFilter}
-                  onClearFilters={handleClearFilters}
-                  activeTypeFilter={typeFilter}
-                  activeModifiedFilter={modifiedFilter}
                 />
               </Box>
-            )}
+            ) : null}
           </Box>
           {/* </Box> */}
 

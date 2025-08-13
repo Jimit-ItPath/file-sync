@@ -39,6 +39,7 @@ export const SelectionBar = ({
 
   return (
     <Box
+      h={40}
       style={{
         zIndex: 10,
         display: 'flex',

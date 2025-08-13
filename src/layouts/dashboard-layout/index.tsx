@@ -287,7 +287,7 @@ const DashboardLayout = () => {
         <AppShell.Navbar p="md" styles={{ navbar: { zIndex: 20 } }}>
           <NavBar />
         </AppShell.Navbar>
-        <AppShell.Main>
+        <AppShell.Main ml={-15} pe={0}>
           <Container size="var(--mantine-breakpoint-xxl)" px={0}>
             <Outlet />
           </Container>
