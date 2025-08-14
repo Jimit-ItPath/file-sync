@@ -57,6 +57,7 @@ const useRegister = () => {
   const [captchaToken, setCaptchaToken] = useState<string>('');
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [tempEmail, setTempEmail] = useState('');
   const navigate = useNavigate();
 
   const methods = useForm<RegisterFormData>({
@@ -119,6 +120,7 @@ const useRegister = () => {
       });
 
       if (response?.data?.success || response?.status === 201) {
+        setTempEmail(data.email);
         setRegistrationSuccess(true);
         notifications.show({
           message: response?.data?.message || 'Your account has been created!',
@@ -133,6 +135,7 @@ const useRegister = () => {
 
   const backToRegistrationForm = useCallback(() => {
     setRegistrationSuccess(false);
+    setTempEmail('');
     navigate(AUTH_ROUTES.LOGIN.url);
   }, []);
 
@@ -215,6 +218,7 @@ const useRegister = () => {
     registrationSuccess,
     backToRegistrationForm,
     navigate,
+    tempEmail,
   };
 };
 

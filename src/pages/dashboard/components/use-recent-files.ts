@@ -11,7 +11,7 @@ import {
 } from '../../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import getFileIcon from '../../../components/file-icon';
-import { formatDate, formatFileSize } from '../../../utils/helper';
+import { formatFileSize } from '../../../utils/helper';
 import { notifications } from '@mantine/notifications';
 import { z } from 'zod';
 import type { FileType } from '../use-dashboard';
@@ -99,9 +99,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: item.modified_at
-        ? formatDate(item.modified_at)
-        : formatDate(item.updatedAt),
+      lastModified: item.modified_at ? item.modified_at : item.updatedAt,
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,

@@ -261,6 +261,7 @@ const DashboardLayout = () => {
                         src={`${import.meta.env.VITE_REACT_APP_BASE_URL}/user-profile/${userProfile.profile}`}
                         alt={fullName}
                         radius="xl"
+                        color="#fff"
                         size="md"
                         style={{ objectFit: 'contain' }}
                       />
@@ -287,7 +288,7 @@ const DashboardLayout = () => {
         <AppShell.Navbar p="md" styles={{ navbar: { zIndex: 20 } }}>
           <NavBar />
         </AppShell.Navbar>
-        <AppShell.Main ml={-15} pe={0}>
+        <AppShell.Main ml={-15} pe={0} pt={60}>
           <Container size="var(--mantine-breakpoint-xxl)" px={0}>
             <Outlet />
           </Container>

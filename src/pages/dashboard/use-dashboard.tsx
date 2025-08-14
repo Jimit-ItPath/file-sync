@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import {
   downloadFilesEnhanced,
-  formatDate,
   formatFileSize,
   getLocalStorage,
   removeLocalStorage,
@@ -562,9 +561,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: item.modified_at
-        ? formatDate(item.modified_at)
-        : formatDate(item.updatedAt),
+      lastModified: item.modified_at ? item.modified_at : item.updatedAt,
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
@@ -589,9 +586,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: item.modified_at
-        ? formatDate(item.modified_at)
-        : formatDate(item.updatedAt),
+      lastModified: item.modified_at ? item.modified_at : item.updatedAt,
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,

@@ -410,13 +410,11 @@ const useAuditLogs = () => {
         render: (row: AuditLogType) => (
           <>
             {row.updatedAt ? (
-              <Tooltip label={formatDateAndTime(row.updatedAt)}>
+              <Tooltip label={formatDateAndTime(row.updatedAt)} fz={'xs'}>
                 <Text size="sm">{formatDate(row.updatedAt)}</Text>
               </Tooltip>
             ) : (
-              <Text size="sm">
-                {row.updatedAt ? formatDate(row.updatedAt) : '-'}
-              </Text>
+              '-'
             )}
           </>
         ),

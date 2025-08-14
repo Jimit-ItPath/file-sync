@@ -235,10 +235,10 @@ const Dashboard = () => {
         }}
         style={{
           position: 'relative',
-          height: 'calc(100vh - 120px)',
+          height: 'calc(100vh - 100px)',
           overflowY: 'auto',
           overflowX: 'hidden',
-          // minHeight: 'calc(100vh - 120px)',
+          minHeight: 'calc(100vh - 120px)',
           transition: 'all 0.2s ease-in-out',
           ...(isDragging && {
             backgroundColor: 'rgba(37, 99, 235, 0.05)',

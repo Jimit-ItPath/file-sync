@@ -582,6 +582,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                             border: '1px solid #dadce0',
                             fontSize: '0.875rem',
                             height: '2.25rem',
+                            userSelect: 'none',
                             '&:focus': {
                               borderColor: '#1a73e8',
                               boxShadow: '0 0 0 1px #1a73e8',
@@ -592,6 +593,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                             fontWeight: 500,
                             color: '#5f6368',
                             marginBottom: 4,
+                            userSelect: 'none',
                           },
                         }}
                       />
@@ -622,6 +624,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                             border: '1px solid #dadce0',
                             fontSize: '0.875rem',
                             height: '2.25rem',
+                            userSelect: 'none',
                             '&:focus': {
                               borderColor: '#1a73e8',
                               boxShadow: '0 0 0 1px #1a73e8',
@@ -631,6 +634,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                             fontSize: '0.75rem',
                             fontWeight: 500,
                             color: '#5f6368',
+                            userSelect: 'none',
                             marginBottom: 4,
                           },
                         }}

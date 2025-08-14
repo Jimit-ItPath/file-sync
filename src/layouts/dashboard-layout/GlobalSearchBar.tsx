@@ -6,7 +6,6 @@ import React, {
   useMemo,
 } from 'react';
 import {
-  TextInput,
   Box,
   Paper,
   Group,
@@ -46,6 +45,8 @@ import { useNavigate, useParams } from 'react-router';
 import FullScreenPreview from '../../pages/dashboard/components/FullScreenPreview';
 import useFileDownloader from '../../pages/dashboard/components/use-file-downloader';
 import DownloadProgress from '../../pages/dashboard/components/DownloadProgress';
+import TextInput from '../../components/inputs/text-input';
+import { PRIVATE_ROUTES } from '../../routing/routes';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -258,6 +259,9 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         },
       ]);
       dispatch(navigateToFolder(requestParams));
+      if (location.pathname === PRIVATE_ROUTES.RECENT_FILES.url) {
+        navigate(PRIVATE_ROUTES.DASHBOARD.url);
+      }
       if (
         (currentAccountId !== requestParams.account_id ||
           (accountId !== 'all' && accountId !== requestParams.account_id)) &&
@@ -572,6 +576,11 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         onFocus={handleInputFocus}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        field={{
+          value: searchValue,
+          onChange: handleInputChange,
+          ref: searchRef,
+        }}
         size="sm"
         w="100%"
         pl={36}
@@ -607,7 +616,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         }
         styles={{
           input: {
-            borderRadius: 24,
+            // borderRadius: 24,
             border: '1px solid #dadce0',
             backgroundColor: '#fff',
             fontSize: 14,
