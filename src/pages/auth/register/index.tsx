@@ -22,6 +22,7 @@ const Register = () => {
     registrationSuccess,
     backToRegistrationForm,
     navigate,
+    tempEmail,
   } = useRegister();
   const { isXs, isMd, isSm } = useResponsive();
 
@@ -100,9 +101,9 @@ const Register = () => {
                     c="dimmed"
                     className="success-text-animated"
                   >
-                    We've sent a verification email to your address. Please
-                    check your inbox and verify your email to complete
-                    registration.
+                    We've sent a verification email to{' '}
+                    {tempEmail ? tempEmail : 'your email address'}. Please check
+                    your inbox and verify your email to complete registration.
                   </Text>
                   <Button
                     onClick={backToRegistrationForm}

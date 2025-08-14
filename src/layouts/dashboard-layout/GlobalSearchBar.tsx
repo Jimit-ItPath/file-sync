@@ -6,7 +6,6 @@ import React, {
   useMemo,
 } from 'react';
 import {
-  TextInput,
   Box,
   Paper,
   Group,
@@ -30,6 +29,7 @@ import useAsyncOperation from '../../hooks/use-async-operation';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
 import {
+  downloadFilesEnhanced,
   formatDate,
   getLocalStorage,
   removeLocalStorage,
@@ -42,7 +42,11 @@ import {
 } from '../../utils/constants';
 import type { FileType } from '../../pages/dashboard/use-dashboard';
 import { useNavigate, useParams } from 'react-router';
-import FilePreviewModal from '../../pages/dashboard/components/FilePreviewModal';
+import FullScreenPreview from '../../pages/dashboard/components/FullScreenPreview';
+import useFileDownloader from '../../pages/dashboard/components/use-file-downloader';
+import DownloadProgress from '../../pages/dashboard/components/DownloadProgress';
+import TextInput from '../../components/inputs/text-input';
+import { PRIVATE_ROUTES } from '../../routing/routes';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -88,15 +92,20 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { accountId } = useAppSelector(state => state.cloudStorage);
+  const { downloadFile, cancelDownload, clearDownload, downloadProgress } =
+    useFileDownloader();
 
   const [previewFileLoading, setPreviewFileLoading] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<{
+    id?: string;
     url: string;
     type: string;
     name: string;
+    size?: number;
     isVideo?: boolean;
     isDocument?: boolean;
+    share?: string | null;
   } | null>(null);
 
   const checkLocation = useMemo(
@@ -250,6 +259,9 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         },
       ]);
       dispatch(navigateToFolder(requestParams));
+      if (location.pathname === PRIVATE_ROUTES.RECENT_FILES.url) {
+        navigate(PRIVATE_ROUTES.DASHBOARD.url);
+      }
       if (
         (currentAccountId !== requestParams.account_id ||
           (accountId !== 'all' && accountId !== requestParams.account_id)) &&
@@ -272,27 +284,65 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
     [dispatch, accountId, checkLocation, currentAccountId]
   );
 
+  const [downloadItems] = useAsyncOperation(async data => {
+    try {
+      const idsToDownload = Array.isArray(data) ? data : [];
+
+      // Use the enhanced download system
+      await downloadFilesEnhanced(idsToDownload, downloadFile);
+    } catch (error: any) {
+      notifications.show({
+        message: error || 'Failed to download Item',
+        color: 'red',
+      });
+    }
+  });
+
   const handleFilePreview = useCallback(
-    async (file: FileType) => {
+    async (row: FileType) => {
       try {
-        setPreviewModalOpen(true);
         setPreviewFileLoading(true);
-        const res = await dispatch(downloadFiles({ ids: [file.id] }));
+        setPreviewModalOpen(true);
+        setPreviewFile({
+          name: row.name,
+        } as any);
+
+        const ext = row.fileExtension
+          ? `${row.fileExtension.toLowerCase()}`
+          : '';
+        const isSupported = PREVIEW_FILE_TYPES.includes(ext);
+
+        if (!isSupported) {
+          setPreviewFile({
+            id: row.id,
+            url: '',
+            type: ext || row.mimeType || '',
+            name: row.name,
+            size: row.size
+              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+              : undefined,
+            share: row.web_view_url ?? null,
+          });
+          setPreviewFileLoading(false);
+          return;
+        }
+
+        const res = await dispatch(downloadFiles({ ids: [row.id] }));
         if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
           const url = URL.createObjectURL(res.payload?.data);
-          const isVideo = file.fileExtension
-            ? VIDEO_FILE_TYPES.includes(file.fileExtension.toLowerCase())
-            : false;
-          const isDocument = file.fileExtension
-            ? DOCUMENT_FILE_TYPES.includes(file.fileExtension.toLowerCase())
-            : false;
-
+          const isVideo = VIDEO_FILE_TYPES.includes(ext);
+          const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
           setPreviewFile({
+            id: row.id,
             url,
-            type: file.fileExtension || file.mimeType || '',
-            name: file.name,
+            type: row.fileExtension || row.mimeType || '',
+            name: row.name,
+            size: row.size
+              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+              : undefined,
             isVideo,
             isDocument,
+            share: row.web_view_url ?? null,
           });
         } else {
           notifications.show({
@@ -333,19 +383,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
           web_view_url: result.web_view_url!,
           UserConnectedAccount: result.UserConnectedAccount,
         };
-
-        // Check if file can be previewed
-        const canPreview =
-          result.fileExtension &&
-          PREVIEW_FILE_TYPES.includes(result.fileExtension.toLowerCase());
-
-        if (canPreview) {
-          // Use the preview functionality from use-dashboard
-          handleFilePreview(fileData);
-        } else if (result.web_view_url) {
-          // For non-previewable files, open in cloud provider
-          window.open(result.web_view_url, '_blank');
-        }
+        handleFilePreview(fileData);
       }
 
       // Close search dropdown
@@ -538,6 +576,11 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         onFocus={handleInputFocus}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        field={{
+          value: searchValue,
+          onChange: handleInputChange,
+          ref: searchRef,
+        }}
         size="sm"
         w="100%"
         pl={36}
@@ -573,7 +616,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         }
         styles={{
           input: {
-            borderRadius: 24,
+            // borderRadius: 24,
             border: '1px solid #dadce0',
             backgroundColor: '#fff',
             fontSize: 14,
@@ -622,15 +665,31 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         </Paper>
       )}
 
-      <FilePreviewModal
-        {...{
-          previewFile,
-          previewFileLoading,
-          previewModalOpen,
-          setPreviewFile,
-          setPreviewModalOpen,
+      <FullScreenPreview
+        previewFile={previewFile}
+        previewFileLoading={previewFileLoading}
+        previewModalOpen={previewModalOpen}
+        setPreviewModalOpen={setPreviewModalOpen}
+        setPreviewFile={setPreviewFile}
+        onDownload={() => {
+          if (previewFile && previewFile.id) {
+            downloadItems([previewFile.id]);
+          }
+        }}
+        onShare={() => {
+          if (previewFile && previewFile.share) {
+            window.open(previewFile.share, '_blank');
+          }
         }}
       />
+
+      {downloadProgress && (
+        <DownloadProgress
+          downloadProgress={downloadProgress}
+          onCancelDownload={cancelDownload}
+          onClose={clearDownload}
+        />
+      )}
     </Box>
   );
 };

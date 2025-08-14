@@ -115,6 +115,15 @@ import {
   IconCalendar,
   IconFileText,
   IconInfoCircle,
+  IconArrowsHorizontal,
+  IconArrowsVertical,
+  IconClearAll,
+  IconFileSpreadsheet,
+  IconPresentation,
+  IconPdf,
+  IconArchive,
+  IconMusic,
+  IconUserOff,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -234,4 +243,13 @@ export const ICONS = {
   IconCalendar,
   IconFileText,
   IconInfoCircle,
+  IconArrowsHorizontal,
+  IconArrowsVertical,
+  IconClearAll,
+  IconFileSpreadsheet,
+  IconPresentation,
+  IconPdf,
+  IconArchive,
+  IconMusic,
+  IconUserOff,
 };

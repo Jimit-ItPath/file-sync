@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { notifications } from '@mantine/notifications';
 import useDebounce from '../../../hooks/use-debounce';
-import { formatDate } from '../../../utils/helper';
+import { formatDate, formatDateAndTime } from '../../../utils/helper';
 import { ActionIcon, Group, Text, Tooltip } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 
@@ -281,18 +281,30 @@ const useUsers = () => {
         title: 'Last Modified',
         // width: '20%',
         render: (row: UserType) => (
-          <Text size="sm">
-            {row.updatedAt ? formatDate(row.updatedAt) : '-'}
-          </Text>
+          <>
+            {row.updatedAt ? (
+              <Tooltip label={formatDateAndTime(row.updatedAt)} fz={'xs'}>
+                <Text size="sm">{formatDate(row.updatedAt)}</Text>
+              </Tooltip>
+            ) : (
+              '-'
+            )}
+          </>
         ),
       },
       {
         accessor: 'lastLogin',
         title: 'Last Login',
         render: (row: UserType) => (
-          <Text size="sm">
-            {row.last_login ? formatDate(row.last_login) : '-'}
-          </Text>
+          <>
+            {row.last_login ? (
+              <Tooltip label={formatDateAndTime(row.last_login)} fz={'xs'}>
+                <Text size="sm">{formatDate(row.last_login)}</Text>
+              </Tooltip>
+            ) : (
+              '-'
+            )}
+          </>
         ),
       },
       {
@@ -319,7 +331,10 @@ const useUsers = () => {
         // width: '10%',
         render: (row: UserType) => (
           <>
-            <Tooltip label={row.is_blocked ? 'Unblock' : 'Block'} fz={'xs'}>
+            <Tooltip
+              label={row.is_blocked ? 'Unblock user' : 'Block user'}
+              fz={'xs'}
+            >
               <ActionIcon
                 variant="subtle"
                 color="gray"
@@ -329,9 +344,9 @@ const useUsers = () => {
                 }}
               >
                 {row.is_blocked ? (
-                  <ICONS.IconLockCheck size={20} color={'green'} />
+                  <ICONS.IconUserCheck size={20} color={'green'} />
                 ) : (
-                  <ICONS.IconForbid2 size={20} color={'red'} />
+                  <ICONS.IconUserOff size={20} color={'red'} />
                 )}
               </ActionIcon>
             </Tooltip>

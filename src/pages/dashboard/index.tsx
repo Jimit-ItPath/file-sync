@@ -38,6 +38,9 @@ import FullScreenPreview from './components/FullScreenPreview';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import FileDetailsDrawer from './components/FileDetailsDrawer';
+import useFileDownloader from './components/use-file-downloader';
+import DownloadProgress from './components/DownloadProgress';
+import DashboardFilters from './components/DashboardFilters';
 
 const iconStyle = {
   borderRadius: 999,
@@ -49,6 +52,8 @@ const iconStyle = {
 };
 
 const Dashboard = () => {
+  const { downloadProgress, cancelDownload, clearDownload, downloadFile } =
+    useFileDownloader();
   const {
     layout,
     switchLayout,
@@ -159,7 +164,12 @@ const Dashboard = () => {
     selectedItemForDetails,
     detailsFile,
     detailsFileLoading,
-  } = useDashboard();
+    handleClearFilters,
+    handleModifiedFilter,
+    handleTypeFilter,
+    typeFilter,
+    modifiedFilter,
+  } = useDashboard({ downloadFile });
 
   const {
     openAccountModal,
@@ -170,7 +180,7 @@ const Dashboard = () => {
     connectAccountFormData,
     connectAccountLoading,
   } = useSidebar();
-  const { isSm, theme } = useResponsive();
+  const { isSm, theme, isXs } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
@@ -215,7 +225,7 @@ const Dashboard = () => {
         </Text>
       ) : null}
       <Box
-        px={32}
+        // px={32}
         pb={20}
         bg="#f8fafc"
         // ref={dragRef}
@@ -225,10 +235,10 @@ const Dashboard = () => {
         }}
         style={{
           position: 'relative',
-          height: 'calc(100vh - 120px)',
+          height: 'calc(100vh - 100px)',
           overflowY: 'auto',
           overflowX: 'hidden',
-          // minHeight: 'calc(100vh - 120px)',
+          minHeight: 'calc(100vh - 120px)',
           transition: 'all 0.2s ease-in-out',
           ...(isDragging && {
             backgroundColor: 'rgba(37, 99, 235, 0.05)',
@@ -293,110 +303,43 @@ const Dashboard = () => {
             backgroundColor: '#f6faff',
             border: '1px solid #e5e7eb',
             borderRadius: 'var(--mantine-radius-default)',
-            padding: '10px 24px',
+            padding: '5px 24px',
+            zIndex: 10,
             // boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             // borderBottom: '1px solid #e5e7eb',
           }}
-          mt={16}
+          // mt={16}
           className="stickey-box"
         >
-          <Box>
-            <Group align="center" w={'100%'} mih={50}>
-              <Box style={{ flexGrow: 1 }}>
-                <Breadcrumbs
-                  items={currentPath}
-                  onNavigate={folderId => {
-                    if (!folderId || folderId === null) {
-                      navigateToFolderFn(null);
-                    } else {
-                      const folder = currentPath.find(f => f.id === folderId);
-                      if (folder) {
-                        navigateToFolderFn(folder);
-                      }
+          {/* <Box> */}
+          <Group align="center" w={'100%'} mih={50}>
+            <Box style={{ flexGrow: 1 }}>
+              <Breadcrumbs
+                items={currentPath}
+                onNavigate={folderId => {
+                  if (!folderId || folderId === null) {
+                    navigateToFolderFn(null);
+                  } else {
+                    const folder = currentPath.find(f => f.id === folderId);
+                    if (folder) {
+                      navigateToFolderFn(folder);
                     }
-                  }}
-                />
-              </Box>
-              <Box style={{ flexGrow: 1 }}>
-                {selectedIds.length > 0 ? (
-                  <SelectionBar
-                    count={selectedIds.length}
-                    onCancel={() => {
-                      handleUnselectAll();
-                      cancelMoveMode();
-                    }}
-                    onDelete={handleDeleteSelected}
-                    onDownload={handleDownloadSelected}
-                    onShare={handleShareSelected}
-                    // onMove={handleMoveSelected}
-                    onMove={handleModalMoveSelected}
-                    onPaste={handlePasteFiles}
-                    isMoveMode={isMoveMode}
-                    isPasteEnabled={isPasteEnabled()}
-                    displayMoveIcon={displayMoveIcon}
-                    displayDownloadIcon={displayDownloadIcon}
-                    displayShareIcon={
-                      selectedIds?.length === 1 && displayShareIcon
-                    }
-                  />
-                ) : null}
-              </Box>
-              <Tooltip label="Sync" fz={'xs'}>
-                <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
-                  <ICONS.IconRefresh size={18} />
-                </ActionIcon>
-              </Tooltip>
-              {!checkLocation && (
-                <Select
-                  data={accountOptions}
-                  value={accountId}
-                  onChange={handleAccountTypeChange}
-                  placeholder="Select account type"
-                  style={{ width: '150px' }}
-                  styles={{
-                    input: {
-                      height: '44px',
-                      borderRadius: '8px',
-                      border: '1.5px solid #e5e7eb',
-                      backgroundColor: '#ffffff',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: '#374151',
-                      transition: 'all 0.2s ease',
-                      '&:focus': {
-                        borderColor: '#1e7ae8',
-                        boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
-                      },
-                      '&:hover': {
-                        borderColor: '#d1d5db',
-                      },
-                    },
-                    dropdown: {
-                      borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                    },
-                    option: {
-                      padding: '6px',
-                      fontSize: '14px',
-                      borderRadius: '4px',
-                      margin: '2px',
-                      '&[data-selected]': {
-                        backgroundColor: '#1e7ae8',
-                        color: '#ffffff',
-                      },
-                      '&:hover': {
-                        backgroundColor: '#f1f5f9',
-                      },
-                    },
-                  }}
-                />
-              )}
-              {/* <TextInput
-                placeholder="Search files..."
-                value={searchTerm}
-                onChange={event => handleSearchChange(event.target.value)}
-                // style={{ width: '200px' }}
+                  }
+                }}
+              />
+            </Box>
+            <Tooltip label="Sync" fz={'xs'}>
+              <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
+                <ICONS.IconRefresh size={18} />
+              </ActionIcon>
+            </Tooltip>
+            {!checkLocation && (
+              <Select
+                data={accountOptions}
+                value={accountId}
+                onChange={handleAccountTypeChange}
+                placeholder="Select account type"
+                style={{ width: '150px' }}
                 styles={{
                   input: {
                     height: '44px',
@@ -404,32 +347,97 @@ const Dashboard = () => {
                     border: '1.5px solid #e5e7eb',
                     backgroundColor: '#ffffff',
                     fontSize: '14px',
-                    // paddingLeft: '44px',
+                    fontWeight: 500,
+                    color: '#374151',
                     transition: 'all 0.2s ease',
                     '&:focus': {
                       borderColor: '#1e7ae8',
                       boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
-                      backgroundColor: '#fefefe',
                     },
                     '&:hover': {
                       borderColor: '#d1d5db',
                     },
-                    '&::placeholder': {
-                      color: '#9ca3af',
-                      fontSize: '14px',
+                  },
+                  dropdown: {
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                  },
+                  option: {
+                    padding: '6px',
+                    fontSize: '14px',
+                    borderRadius: '4px',
+                    margin: '2px',
+                    '&[data-selected]': {
+                      backgroundColor: '#1e7ae8',
+                      color: '#ffffff',
+                    },
+                    '&:hover': {
+                      backgroundColor: '#f1f5f9',
                     },
                   },
-                  section: {
-                    paddingLeft: '16px',
-                  },
                 }}
-              /> */}
-              <CustomToggle
-                value={layout}
-                onChange={(value: 'list' | 'grid') => switchLayout(value)}
               />
-            </Group>
+            )}
+            <CustomToggle
+              value={layout}
+              onChange={(value: 'list' | 'grid') => switchLayout(value)}
+            />
+          </Group>
+          <Box mt={10}>
+            {selectedIds?.length > 0 ? (
+              <Box style={{ flexGrow: 1 }}>
+                <SelectionBar
+                  count={selectedIds.length}
+                  onCancel={() => {
+                    handleUnselectAll();
+                    cancelMoveMode();
+                  }}
+                  onDelete={handleDeleteSelected}
+                  onDownload={handleDownloadSelected}
+                  onShare={handleShareSelected}
+                  // onMove={handleMoveSelected}
+                  onMove={handleModalMoveSelected}
+                  onPaste={handlePasteFiles}
+                  isMoveMode={isMoveMode}
+                  isPasteEnabled={isPasteEnabled()}
+                  displayMoveIcon={displayMoveIcon}
+                  displayDownloadIcon={displayDownloadIcon}
+                  displayShareIcon={
+                    selectedIds?.length === 1 && displayShareIcon
+                  }
+                />
+              </Box>
+            ) : !isXs ? (
+              <Box
+                style={{
+                  zIndex: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '6px 14px',
+                  // background: 'rgba(255, 255, 255, 0.75)',
+                  // backdropFilter: 'blur(8px)',
+                  borderRadius: 9999,
+                  margin: 'auto',
+                  // boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  // border: '1px solid rgba(200, 200, 200, 0.4)',
+                  transition: 'opacity 0.25s ease, transform 0.25s ease',
+                }}
+                h={40}
+              >
+                <DashboardFilters
+                  onTypeFilter={handleTypeFilter}
+                  onModifiedFilter={handleModifiedFilter}
+                  onClearFilters={handleClearFilters}
+                  activeTypeFilter={typeFilter}
+                  activeModifiedFilter={modifiedFilter}
+                  isMobile={isSm}
+                />
+              </Box>
+            ) : null}
           </Box>
+          {/* </Box> */}
 
           <DragDropOverlay
             isDragging={isDragging}
@@ -894,6 +902,14 @@ const Dashboard = () => {
           // closeDetailsDrawer();
         }}
       />
+
+      {downloadProgress && (
+        <DownloadProgress
+          downloadProgress={downloadProgress}
+          onCancelDownload={cancelDownload}
+          onClose={clearDownload}
+        />
+      )}
     </Box>
   );
 };

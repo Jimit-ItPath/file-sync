@@ -4,6 +4,7 @@ import { Menu, Table, Tooltip } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
 import { PREVIEW_FILE_TYPES } from '../../../utils/constants';
+import { formatDate, formatDateAndTime } from '../../../utils/helper';
 
 const MENU_ITEMS: {
   id: string;
@@ -123,7 +124,17 @@ const FileTable: React.FC<FileTableProps> = ({
         key: 'lastModified',
         label: 'Last Modified',
         // width: '20%',
-        render: (row: FileType) => <Text size="sm">{row.lastModified}</Text>,
+        render: (row: FileType) => (
+          <>
+            {row.lastModified ? (
+              <Tooltip label={formatDateAndTime(row.lastModified)} fz={'xs'}>
+                <Text size="sm">{formatDate(row.lastModified)}</Text>
+              </Tooltip>
+            ) : (
+              '-'
+            )}
+          </>
+        ),
       },
       {
         key: 'size',

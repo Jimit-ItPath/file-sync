@@ -17,6 +17,7 @@ import { ICONS } from '../../../assets/icons';
 import type { FileType } from '../use-dashboard';
 import { Card, Menu, Tooltip } from '../../../components';
 import { useMediaQuery } from '@mantine/hooks';
+import { formatDate, formatDateAndTime } from '../../../utils/helper';
 
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
@@ -456,9 +457,16 @@ const FileGrid: React.FC<FileGridProps> = ({
                 )} */}
                 </Box>
                 <Group justify="space-between" mt={8}>
-                  <Text size="xs" c="gray.6">
-                    {file.lastModified}
-                  </Text>
+                  {file?.lastModified ? (
+                    <Tooltip
+                      label={formatDateAndTime(file.lastModified)}
+                      fz={'xs'}
+                    >
+                      <Text size="xs" c="gray.6">
+                        {formatDate(file.lastModified)}
+                      </Text>
+                    </Tooltip>
+                  ) : null}
                   <Text size="xs" c="gray.6">
                     {file.size}
                   </Text>

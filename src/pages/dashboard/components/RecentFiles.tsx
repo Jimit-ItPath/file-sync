@@ -17,6 +17,7 @@ import DownloadProgress from './DownloadProgress';
 import useFileDownloader from './use-file-downloader';
 import FileDetailsDrawer from './FileDetailsDrawer';
 import FullScreenPreview from './FullScreenPreview';
+import { formatDate, formatDateAndTime } from '../../../utils/helper';
 
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
@@ -220,6 +221,7 @@ const RecentFiles = () => {
           align={isXs ? 'flex-start' : 'center'}
           gap={isXs ? 8 : 16}
           mb={16}
+          px={24}
           style={{
             position: 'relative',
             minHeight: 50,
@@ -357,7 +359,16 @@ const RecentFiles = () => {
                   </Box>
                   <Group justify="space-between" mt={8}>
                     <Text size="xs" c="gray.6">
-                      {file.lastModified}
+                      {file.lastModified ? (
+                        <Tooltip
+                          label={formatDateAndTime(file.lastModified)}
+                          fz={'xs'}
+                        >
+                          <Text size="xs">{formatDate(file.lastModified)}</Text>
+                        </Tooltip>
+                      ) : (
+                        '-'
+                      )}
                     </Text>
                     <Text size="xs" c="gray.6">
                       {file.size}

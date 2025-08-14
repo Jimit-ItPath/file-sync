@@ -81,7 +81,6 @@ const useSidebar = () => {
 
   // Add ref to track if drag operation is in progress
   const isDragInProgress = useRef(false);
-  const pendingSequenceUpdate = useRef<any[]>([]);
 
   const methods = useForm<ConnectAccountFormData>({
     resolver: zodResolver(connectAccountSchema),
@@ -178,7 +177,7 @@ const useSidebar = () => {
         } else {
           // Revert optimistic update on failure
           isDragInProgress.current = false;
-          setLocalSortedAccounts(pendingSequenceUpdate.current);
+          setLocalSortedAccounts([...displayedAccounts]);
           notifications.show({
             message:
               res?.message ||
@@ -190,7 +189,7 @@ const useSidebar = () => {
       } catch (error: any) {
         // Revert optimistic update on error
         isDragInProgress.current = false;
-        setLocalSortedAccounts(pendingSequenceUpdate.current);
+        setLocalSortedAccounts([...displayedAccounts]);
         notifications.show({
           message: error || 'Failed to update account order',
           color: 'red',
@@ -223,12 +222,7 @@ const useSidebar = () => {
         sequence_number: index + 1,
       }));
 
-      try {
-        await updateAccountSequence(updateData);
-        setLocalSortedAccounts(null);
-      } catch {
-        setLocalSortedAccounts(null);
-      }
+      await updateAccountSequence(updateData);
     },
     [sortedCloudAccounts, updateAccountSequence]
   );

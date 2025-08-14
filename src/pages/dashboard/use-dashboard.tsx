@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import {
-  formatDate,
+  downloadFilesEnhanced,
   formatFileSize,
   getLocalStorage,
   removeLocalStorage,
@@ -39,7 +39,7 @@ import { notifications } from '@mantine/notifications';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
-import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
+// import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
 import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import { PRIVATE_ROUTES } from '../../routing/routes';
 import {
@@ -48,6 +48,11 @@ import {
   PREVIEW_FILE_TYPES,
   VIDEO_FILE_TYPES,
 } from '../../utils/constants';
+import dayjs from 'dayjs';
+
+type UseDashboardProps = {
+  downloadFile?: (ids: string[]) => Promise<void>;
+};
 
 export type FileType = {
   id: string;
@@ -90,7 +95,7 @@ type FolderFormData = z.infer<typeof folderSchema>;
 type UploadFormData = z.infer<typeof uploadSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
-const useDashboard = () => {
+const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
@@ -169,6 +174,12 @@ const useDashboard = () => {
   const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
   const [selectedItemForDetails, setSelectedItemForDetails] =
     useState<FileType | null>(null);
+
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [modifiedFilter, setModifiedFilter] = useState<{
+    after?: Date;
+    before?: Date;
+  } | null>(null);
 
   const {
     cloudStorage,
@@ -270,13 +281,19 @@ const useDashboard = () => {
   };
 
   const getCloudStorageFiles = useCallback(
-    async (page?: number) => {
+    async (
+      page?: number,
+      filters?: { type?: string; after?: string; before?: string }
+    ) => {
       const requestParams: any = {
         ...(folderId && { id: folderId }),
         limit: pagination?.page_limit || 20,
         // page: typeof page === 'number' ? page : pagination?.page_no || 1,
         page: typeof page === 'number' ? page : 1,
         searchTerm: debouncedSearchTerm || '',
+        ...(filters?.type && { type: filters.type }),
+        ...(filters?.after && { start_date: filters.after }),
+        ...(filters?.before && { end_date: filters.before }),
       };
 
       if (checkLocation && currentAccountId) {
@@ -294,8 +311,49 @@ const useDashboard = () => {
       pagination?.page_no,
       accountId,
       debouncedSearchTerm,
+      checkLocation,
+      currentAccountId,
     ]
   );
+
+  // Add filter handler functions:
+  const handleTypeFilter = useCallback(
+    async (type: string | null) => {
+      setTypeFilter(type);
+      await getCloudStorageFiles(1, {
+        type: type || undefined,
+        after: modifiedFilter?.after
+          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+          : undefined,
+        before: modifiedFilter?.before
+          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+          : undefined,
+      });
+    },
+    [modifiedFilter]
+  );
+
+  const handleModifiedFilter = useCallback(
+    async (dateRange: { after?: Date; before?: Date } | null) => {
+      setModifiedFilter(dateRange);
+      await getCloudStorageFiles(1, {
+        type: typeFilter || undefined,
+        after: dateRange?.after
+          ? dayjs(dateRange.after).format('MM/DD/YYYY')
+          : undefined,
+        before: dateRange?.before
+          ? dayjs(dateRange.before).format('MM/DD/YYYY')
+          : undefined,
+      });
+    },
+    [typeFilter]
+  );
+
+  const handleClearFilters = useCallback(async () => {
+    setTypeFilter(null);
+    setModifiedFilter(null);
+    await getCloudStorageFiles(1);
+  }, []);
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
@@ -401,9 +459,26 @@ const useDashboard = () => {
 
     dispatch(setSearchTerm(debouncedSearchTerm));
     if (checkLocation || accountId !== 'all') {
-      getCloudStorageFiles(1);
+      getCloudStorageFiles(1, {
+        type: typeFilter || undefined,
+        after: modifiedFilter?.after
+          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+          : undefined,
+        before: modifiedFilter?.before
+          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+          : undefined,
+      });
     } else {
-      getCloudStorageFiles();
+      // getCloudStorageFiles();
+      getCloudStorageFiles(undefined, {
+        type: typeFilter || undefined,
+        after: modifiedFilter?.after
+          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+          : undefined,
+        before: modifiedFilter?.before
+          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+          : undefined,
+      });
     }
   }, [debouncedSearchTerm, accountId, checkLocation]);
 
@@ -486,9 +561,7 @@ const useDashboard = () => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: item.modified_at
-        ? formatDate(item.modified_at)
-        : formatDate(item.updatedAt),
+      lastModified: item.modified_at ? item.modified_at : item.updatedAt,
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
@@ -513,9 +586,7 @@ const useDashboard = () => {
         name: item.name,
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
-      lastModified: item.modified_at
-        ? formatDate(item.modified_at)
-        : formatDate(item.updatedAt),
+      lastModified: item.modified_at ? item.modified_at : item.updatedAt,
       size: item.size ? formatFileSize(item.size.toString()) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
@@ -741,7 +812,16 @@ const useDashboard = () => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
+          });
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
             color: 'green',
@@ -846,7 +926,16 @@ const useDashboard = () => {
         // if (!folderId || folderId === null) {
         //   onGetRecentFiles({});
         // }
-        await getCloudStorageFiles(1);
+        // await getCloudStorageFiles(1);
+        await getCloudStorageFiles(1, {
+          type: typeFilter || undefined,
+          after: modifiedFilter?.after
+            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            : undefined,
+          before: modifiedFilter?.before
+            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+            : undefined,
+        });
       } catch (error: any) {
         notifications.show({
           message:
@@ -869,7 +958,16 @@ const useDashboard = () => {
         // if (!folderId || folderId === null) {
         //   onGetRecentFiles({});
         // }
-        await getCloudStorageFiles(1);
+        // await getCloudStorageFiles(1);
+        await getCloudStorageFiles(1, {
+          type: typeFilter || undefined,
+          after: modifiedFilter?.after
+            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            : undefined,
+          before: modifiedFilter?.before
+            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+            : undefined,
+        });
         notifications.show({
           message: 'Item renamed successfully',
           color: 'green',
@@ -900,7 +998,16 @@ const useDashboard = () => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
+          });
           notifications.show({
             message: res?.payload?.message || 'Item deleted successfully',
             color: 'green',
@@ -1158,7 +1265,16 @@ const useDashboard = () => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
+          });
           notifications.show({
             message:
               res?.payload?.message ||
@@ -1207,21 +1323,37 @@ const useDashboard = () => {
     setModalOpen(false);
   }, []);
 
+  // const [downloadItems] = useAsyncOperation(async data => {
+  //   try {
+  //     const res = await dispatch(
+  //       downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
+  //     );
+  //     if (res?.payload?.status !== 200) {
+  //       notifications.show({
+  //         message:
+  //           res?.payload?.message ||
+  //           `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
+  //         color: 'red',
+  //       });
+  //       return;
+  //     }
+  //     downloadFilesHelper(res.payload.data, res);
+  //   } catch (error: any) {
+  //     notifications.show({
+  //       message:
+  //         error ||
+  //         `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
+  //       color: 'red',
+  //     });
+  //   }
+  // });
+
   const [downloadItems] = useAsyncOperation(async data => {
     try {
-      const res = await dispatch(
-        downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
-      );
-      if (res?.payload?.status !== 200) {
-        notifications.show({
-          message:
-            res?.payload?.message ||
-            `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
-          color: 'red',
-        });
-        return;
-      }
-      downloadFilesHelper(res.payload.data, res);
+      const idsToDownload = Array.isArray(data) ? data : selectedIds;
+
+      // Use the enhanced download system
+      await downloadFilesEnhanced(idsToDownload, downloadFile!);
     } catch (error: any) {
       notifications.show({
         message:
@@ -1258,7 +1390,16 @@ const useDashboard = () => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
+          });
           notifications.show({
             message: res?.data?.message || 'Items synced successfully',
             color: 'green',
@@ -1303,7 +1444,16 @@ const useDashboard = () => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
+          });
         } else {
           notifications.show({
             message: res?.message || 'Failed to move items',
@@ -1493,7 +1643,16 @@ const useDashboard = () => {
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
-          await getCloudStorageFiles(1);
+          // await getCloudStorageFiles(1);
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
+          });
 
           // Clear selections
           setSelectedIds([]);
@@ -1675,6 +1834,13 @@ const useDashboard = () => {
     selectedItemForDetails,
     detailsFile,
     detailsFileLoading,
+
+    //filters
+    handleClearFilters,
+    handleModifiedFilter,
+    handleTypeFilter,
+    typeFilter,
+    modifiedFilter,
   };
 };
 
