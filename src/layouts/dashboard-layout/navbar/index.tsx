@@ -287,14 +287,14 @@ const NavBar = ({ mobileDrawerHandler, isSm }: any) => {
               <span style={{ fontSize: '14px', color: '#6b7280' }}>
                 CLOUD ACCOUNTS
               </span>
-              <ICONS.IconPlus
+              {/* <ICONS.IconPlus
                 size={18}
                 onClick={() => {
                   openAccountModal();
                   mobileDrawerHandler?.close();
                 }}
                 style={{ cursor: 'pointer' }}
-              />
+              /> */}
             </Stack>
 
             {/* Drag and Drop Context for Cloud Accounts - Constrained to this container */}
