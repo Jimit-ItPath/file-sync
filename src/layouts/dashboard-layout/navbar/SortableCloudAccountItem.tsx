@@ -114,7 +114,7 @@ const SortableCloudAccountItem = ({
           >
             {account.icon}
             <Tooltip label={account.title} fz={'xs'}>
-              <Text fz={'sm'} ml={10} c={'#000'} truncate maw={'50%'}>
+              <Text fz={'sm'} ml={10} c={'#000'} truncate maw={'70%'}>
                 {account.title}
               </Text>
             </Tooltip>
