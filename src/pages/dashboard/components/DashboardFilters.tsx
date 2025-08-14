@@ -243,7 +243,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     setModifiedDropdownOpen(false);
   };
 
-  const handleCustomApply = () => {
+  const handleCustomApply = (e: any) => {
+    e.stopPropagation();
     const range = {
       ...(customDateRange.after && {
         after: startOfDay(customDateRange.after),
@@ -257,7 +258,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     setShowCustomDate(false);
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = (e: any) => {
+    e.stopPropagation();
     setCustomDateRange({});
     setShowCustomDate(false);
     onClearFilters();
@@ -425,7 +427,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
           >
             {activeTypeFilter ? (
               <>
-                <Text fz={'sm'} ml={8}>
+                <Text fz={'sm'} ml={8} display={'contents'}>
                   {typeOptions.find(t => t.value === activeTypeFilter)?.label}
                 </Text>
                 <CloseButton
@@ -447,32 +449,64 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </Box>
 
         {/* Modified Filter */}
-        <Box style={{ position: 'relative' }} ref={modifiedRef}>
+        <Box
+          style={{
+            position: 'relative',
+            display: 'inline-flex',
+            borderRadius: '16px',
+            border: '1px solid #dadce0',
+            padding: '0 12px',
+            height: '32px',
+            alignItems: 'center',
+            cursor: 'pointer',
+            backgroundColor: activeModifiedFilter ? '#e8f0fe' : '#ffffff',
+          }}
+          className={`filterOption ${activeModifiedFilter ? 'filterOptionActive' : ''}`}
+          ref={modifiedRef}
+          onClick={() => setModifiedDropdownOpen(true)}
+        >
           {activeModifiedFilter ? (
-            <Button
-              className="filterButtonActive"
-              rightSection={
-                <CloseButton
-                  size={16}
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleClearModifiedFilter();
-                  }}
-                  style={{ marginLeft: 4 }}
-                />
-              }
-              onClick={() => setModifiedDropdownOpen(true)}
-            >
-              {getModifiedFilterLabel()}
-            </Button>
+            <>
+              <Text fz={'sm'} ml={8} display={'contents'}>
+                {getModifiedFilterLabel()}
+              </Text>
+              <CloseButton
+                size={16}
+                onClick={e => {
+                  e.stopPropagation();
+                  handleClearModifiedFilter();
+                }}
+                style={{ marginLeft: 4 }}
+              />
+            </>
           ) : (
-            <Button
-              className="filterButton"
-              rightSection={<ICONS.IconChevronDown size={14} />}
-              onClick={() => setModifiedDropdownOpen(true)}
-            >
-              Modified
-            </Button>
+            // <Button
+            //   className="filterButtonActive"
+            //   rightSection={
+            //     <CloseButton
+            //       size={16}
+            //       onClick={e => {
+            //         e.stopPropagation();
+            //         handleClearModifiedFilter();
+            //       }}
+            //       style={{ marginLeft: 4 }}
+            //     />
+            //   }
+            //   onClick={() => setModifiedDropdownOpen(true)}
+            // >
+            //   {getModifiedFilterLabel()}
+            // </Button>
+            // <Button
+            //   className="filterButton"
+            //   rightSection={<ICONS.IconChevronDown size={14} />}
+            //   onClick={() => setModifiedDropdownOpen(true)}
+            // >
+            //   Modified
+            // </Button>
+            <>
+              <Text fz={'sm'}>Modified</Text>
+              <ICONS.IconChevronDown size={14} style={{ marginLeft: 4 }} />
+            </>
           )}
           {modifiedDropdownOpen && (
             <Paper
@@ -495,7 +529,14 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                     <Box
                       key={option.value}
                       className={`filterOption ${isActive ? 'filterOptionActive' : ''}`}
-                      onClick={() => handleModifiedSelect(option.value)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleModifiedSelect(option.value);
+                      }}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                      }}
                     >
                       <Text fz={'sm'}>{option.label}</Text>
                       {isActive ? (
@@ -621,7 +662,11 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
           <Button
             className="clearButton"
             leftSection={<ICONS.IconX size={14} />}
-            onClick={onClearFilters}
+            onClick={() => {
+              setCustomDateRange({});
+              setShowCustomDate(false);
+              onClearFilters();
+            }}
           >
             Clear
           </Button>
