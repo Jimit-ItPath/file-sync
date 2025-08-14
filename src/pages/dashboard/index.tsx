@@ -415,7 +415,7 @@ const Dashboard = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '6px 14px',
+                  padding: '6px 0',
                   // background: 'rgba(255, 255, 255, 0.75)',
                   // backdropFilter: 'blur(8px)',
                   borderRadius: 9999,
