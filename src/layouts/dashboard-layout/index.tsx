@@ -10,6 +10,7 @@ import {
   Group,
   Stack,
   TextInput,
+  Menu as MantineMenu
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
 import { usePageData } from '../../hooks/use-page-data';
@@ -263,45 +264,54 @@ const DashboardLayout = () => {
                 ) : null}
               </Group>
 
-              {isXs ? (
-                <Menu
+              {isSm ? (
+                <MantineMenu
                   position="top-end"
+                  withArrow
+                  width={200}
                   shadow="lg"
-                  items={[
-                    {
-                      id: 'create-folder',
-                      label: 'Create folder',
-                      icon: ICONS.IconFolderPlus,
-                    },
-                    {
-                      id: 'upload-files',
-                      label: 'Upload files',
-                      icon: ICONS.IconUpload,
-                    },
-                  ]}
-                  onItemClick={id => {
-                    if (id === 'create-folder') {
-                      openModal('folder');
-                    }
-                    if (id === 'upload-files') {
-                      openModal('files');
-                    }
-                  }}
+                  offset={8}
                 >
-                  <ActionIcon
-                    radius="xl"
-                    size={40}
-                    variant="filled"
-                    color="blue"
-                    mr={20}
-                    style={{
-                      boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
-                    }}
-                    aria-label="New"
-                  >
-                    <ICONS.IconPlus size={26} />
-                  </ActionIcon>
-                </Menu>
+                  <MantineMenu.Target>
+                    <ActionIcon
+                      radius="xl"
+                      size={60}
+                      variant="filled"
+                      color="blue"
+                      style={{
+                        position: 'fixed',
+                        bottom: 20,
+                        left: 20,
+                        zIndex: 2000,
+                        boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
+                      }}
+                      aria-label="New"
+                    >
+                      <ICONS.IconPlus size={26} />
+                    </ActionIcon>
+                  </MantineMenu.Target>
+
+                  <MantineMenu.Dropdown>
+                    <MantineMenu.Item
+                      leftSection={<ICONS.IconFolderPlus size={16} />}
+                      onClick={() => {
+                        openModal('folder');
+                        mobileDrawerHandler?.close();
+                      }}
+                    >
+                      Create folder
+                    </MantineMenu.Item>
+                    <MantineMenu.Item
+                      leftSection={<ICONS.IconUpload size={16} />}
+                      onClick={() => {
+                        openModal('files');
+                        mobileDrawerHandler?.close();
+                      }}
+                    >
+                      Upload files
+                    </MantineMenu.Item>
+                  </MantineMenu.Dropdown>
+                </MantineMenu>
               ) : null}
 
               <Group gap={16} align="center">
@@ -351,7 +361,7 @@ const DashboardLayout = () => {
           </Container>
         </AppShell.Header>
         <AppShell.Navbar p="md" styles={{ navbar: { zIndex: 20 } }}>
-          <NavBar {...{ mobileDrawerHandler, isXs }} />
+          <NavBar {...{ mobileDrawerHandler, isSm }} />
         </AppShell.Navbar>
         <AppShell.Main ml={-15} pe={0} pt={60}>
           <Container size="var(--mantine-breakpoint-xxl)" px={0}>
