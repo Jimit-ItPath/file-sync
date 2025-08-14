@@ -361,6 +361,69 @@ export const fetchMoveModalFolders = createAsyncThunk(
   }
 );
 
+export const uploadCloudStorageFilesV2 = createAsyncThunk(
+  'cloudStorage/uploadCloudStorageFilesV2',
+  async (
+    {
+      files,
+      id,
+      account_id,
+    }: {
+      files: File[];
+      id?: string;
+      account_id?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const payload = {
+        files: files.map(file => ({
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+        })),
+        ...(id && { id }),
+        ...(account_id && { account_id }),
+      };
+
+      const response = await api.cloudStorage.uploadFilesV2({ data: payload });
+      return { response: response.data, originalFiles: files };
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to get upload URLs');
+    }
+  }
+);
+
+export const uploadFileChunk = createAsyncThunk(
+  'cloudStorage/uploadFileChunk',
+  async (
+    {
+      uploadUrl,
+      chunk,
+      headers,
+      onProgress,
+    }: {
+      uploadUrl: string;
+      chunk: Blob;
+      headers: Record<string, string>;
+      onProgress?: (progress: number) => void;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.cloudStorage.uploadChunk({
+        uploadUrl,
+        chunk,
+        headers,
+        onProgress,
+      });
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to upload chunk');
+    }
+  }
+);
+
 const cloudStorageSlice = createSlice({
   name: 'cloudStorage',
   initialState,
@@ -405,6 +468,14 @@ const cloudStorageSlice = createSlice({
     },
     resetRecentFiles: state => {
       state.recentFiles = [];
+    },
+    updateFileUploadProgress: (state, action) => {
+      const { fileId, progress } = action.payload;
+      // This will be handled in the component state
+    },
+    setFileUploadStatus: (state, action) => {
+      const { fileId, status } = action.payload;
+      // This will be handled in the component state
     },
   },
   extraReducers: builder => {
@@ -561,6 +632,8 @@ export const {
   resetMoveModalState,
   setMoveModalPath,
   resetRecentFiles,
+  setFileUploadStatus,
+  updateFileUploadProgress,
 } = cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

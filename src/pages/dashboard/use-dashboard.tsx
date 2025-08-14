@@ -49,6 +49,7 @@ import {
   VIDEO_FILE_TYPES,
 } from '../../utils/constants';
 import dayjs from 'dayjs';
+import useUploadManagerV2 from './file-upload-v2/use-upload-manager-v2';
 
 type UseDashboardProps = {
   downloadFile?: (ids: string[]) => Promise<void>;
@@ -96,6 +97,15 @@ type UploadFormData = z.infer<typeof uploadSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = ({ downloadFile }: UseDashboardProps) => {
+  const {
+    uploadingFiles: uploadingFilesV2,
+    showUploadProgress: showUploadProgressV2,
+    startUpload,
+    cancelUpload: cancelUploadV2,
+    removeUploadedFile,
+    closeUploadProgress: closeUploadProgressV2,
+    clearAllUploads,
+  } = useUploadManagerV2();
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
@@ -1138,9 +1148,107 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     uploadMethods.reset();
   }, [uploadMethods]);
 
+  const openModal = useCallback((type: 'folder' | 'files') => {
+    setModalType(type);
+    setModalOpen(true);
+    setUploadedFiles([]);
+    if (type === 'files') uploadMethods.reset({ accountId: '' });
+    resetFolderForm();
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setUploadedFiles([]);
+    setModalOpen(false);
+  }, []);
+
+  // Replace the handleFileUpload
+  const handleFileUploadV2 = uploadMethods.handleSubmit(async data => {
+    const filesToUpload = uploadedFiles.length > 0 ? uploadedFiles : [];
+    await uploadFilesHandlerV2(filesToUpload, data);
+  });
+
+  const uploadFilesHandlerV2 = useCallback(
+    async (files: File[], formData?: UploadFormData) => {
+      if (files.length === 0) return;
+
+      const uploadOptions: { id?: string; account_id?: string } = {};
+
+      if (currentFolderId) {
+        uploadOptions.id = currentFolderId;
+      }
+
+      if (checkLocation && currentAccountId) {
+        uploadOptions.account_id = String(currentAccountId);
+      } else if (!checkLocation && !isSFDEnabled && formData?.accountId) {
+        uploadOptions.account_id = formData.accountId;
+      }
+
+      try {
+        await startUpload(files, uploadOptions);
+        closeModal();
+        closeDragDropModal();
+        uploadMethods.reset();
+
+        // Refresh the file list after upload starts
+        // The actual refresh should happen when all uploads complete
+        // For now, we'll do a delayed refresh
+        setTimeout(async () => {
+          await getCloudStorageFiles(1, {
+            type: typeFilter || undefined,
+            after: modifiedFilter?.after
+              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+              : undefined,
+            before: modifiedFilter?.before
+              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+              : undefined,
+          });
+        }, 2000); // Delay to allow upload to start
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to start upload',
+          color: 'red',
+        });
+      }
+    },
+    [
+      currentFolderId,
+      checkLocation,
+      currentAccountId,
+      isSFDEnabled,
+      startUpload,
+      closeModal,
+      closeDragDropModal,
+      uploadMethods,
+      getCloudStorageFiles,
+      typeFilter,
+      modifiedFilter,
+    ]
+  );
+
+  // Replace the handleFileDrop
+  const handleFileDropV2 = useCallback(
+    async (files: File[]) => {
+      if (!isSFDEnabled) {
+        setDragDropFiles(files);
+        setDragDropModalOpen(true);
+        uploadMethods.reset({ accountId: '', files: files });
+      } else {
+        await uploadFilesHandlerV2(files);
+      }
+    },
+    [uploadFilesHandlerV2, isSFDEnabled, uploadMethods]
+  );
+
+  const handleDragDropUploadV2 = uploadMethods.handleSubmit(async data => {
+    await uploadFilesHandlerV2(dragDropFiles, data);
+    setDragDropModalOpen(false);
+    setDragDropFiles([]);
+  });
+
   // Drag and drop functionality
   const { dragRef, isDragging } = useDragDrop({
-    onFileDrop: handleFileDrop,
+    // onFileDrop: handleFileDrop,
+    onFileDrop: handleFileDropV2,
     acceptedFileTypes: ['*'],
   });
 
@@ -1309,19 +1417,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       window.open(checkFiles.web_view_url, '_blank');
     }
   }, [files, selectedIds]);
-
-  const openModal = useCallback((type: 'folder' | 'files') => {
-    setModalType(type);
-    setModalOpen(true);
-    setUploadedFiles([]);
-    if (type === 'files') uploadMethods.reset({ accountId: '' });
-    resetFolderForm();
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setUploadedFiles([]);
-    setModalOpen(false);
-  }, []);
 
   // const [downloadItems] = useAsyncOperation(async data => {
   //   try {
@@ -1841,6 +1936,19 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     handleTypeFilter,
     typeFilter,
     modifiedFilter,
+
+    // file upload v2
+    showUploadProgressV2,
+    uploadingFilesV2,
+    cancelUploadV2,
+    closeUploadProgressV2,
+    handleRemoveUploadedFile: removeUploadedFile,
+    clearAllUploads,
+
+    // Replace old upload handlers
+    handleFileUploadV2,
+    handleDragDropUploadV2,
+    uploadFilesHandler: uploadFilesHandlerV2,
   };
 };
 

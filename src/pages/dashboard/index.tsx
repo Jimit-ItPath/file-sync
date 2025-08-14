@@ -41,6 +41,7 @@ import FileDetailsDrawer from './components/FileDetailsDrawer';
 import useFileDownloader from './components/use-file-downloader';
 import DownloadProgress from './components/DownloadProgress';
 import DashboardFilters from './components/DashboardFilters';
+import UploadProgressV2 from './file-upload-v2/UploadProgressV2';
 
 const iconStyle = {
   borderRadius: 999,
@@ -169,6 +170,18 @@ const Dashboard = () => {
     handleTypeFilter,
     typeFilter,
     modifiedFilter,
+    // file upload v2
+    showUploadProgressV2,
+    uploadingFilesV2,
+    cancelUploadV2,
+    closeUploadProgressV2,
+    handleRemoveUploadedFile,
+    clearAllUploads,
+
+    // Replace old upload handlers
+    handleFileUploadV2,
+    handleDragDropUploadV2,
+    uploadFilesHandler,
   } = useDashboard({ downloadFile });
 
   const {
@@ -328,6 +341,7 @@ const Dashboard = () => {
                 }}
               />
             </Box>
+            {checkLocation ? <Button>File Upload</Button> : null}
             <Tooltip label="Sync" fz={'xs'}>
               <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
                 <ICONS.IconRefresh size={18} />
@@ -910,6 +924,15 @@ const Dashboard = () => {
           onClose={clearDownload}
         />
       )}
+
+      {showUploadProgressV2 ? (
+        <UploadProgressV2
+          uploadingFiles={uploadingFilesV2}
+          onCancelUpload={cancelUploadV2}
+          onRemoveFile={handleRemoveUploadedFile}
+          onClose={closeUploadProgressV2}
+        />
+      ) : null}
     </Box>
   );
 };

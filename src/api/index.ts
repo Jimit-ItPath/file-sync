@@ -610,6 +610,45 @@ export const api = {
         data,
         ...configs,
       }),
+    uploadFilesV2: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        account_id?: string | undefined;
+        id?: string | undefined;
+        files: {
+          fileName: string;
+          fileSize: number;
+          mimeType: string;
+        }[];
+      };
+      [key: string]: any;
+    }) =>
+      client({
+        url: '/cloud-storage/upload-file-v2',
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
+    uploadChunk: ({
+      uploadUrl,
+      chunk,
+      headers,
+      onProgress,
+    }: {
+      uploadUrl: string;
+      chunk: Blob;
+      headers: Record<string, string>;
+      onProgress?: (progress: number) => void;
+    }) =>
+      client({
+        url: uploadUrl,
+        method: METHODS.PUT,
+        data: chunk,
+        headers,
+        onProgress,
+      }),
   },
   adminUsers: {
     getUsers: (params: {
