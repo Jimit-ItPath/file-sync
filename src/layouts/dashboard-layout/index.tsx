@@ -160,7 +160,7 @@ const DashboardLayout = () => {
       >
         <AppShell.Header>
           <Container h="100%" size="var(--mantine-breakpoint-xxl)" px={0}>
-            <Group h="100%" px="md" justify="space-between" w="100%">
+            <Group h="100%" px="md" justify="space-between">
               {/* Left: Burger + Logo + Search */}
               <Group
                 gap={16}
@@ -168,7 +168,7 @@ const DashboardLayout = () => {
                 wrap="nowrap"
                 // justify="space-between"
                 // maw={600}
-                // w="100%"
+                w="90%"
               >
                 <Burger
                   opened={mobileDrawerOpened}
@@ -227,12 +227,14 @@ const DashboardLayout = () => {
                     />
                   </Group>
                 ) : null} */}
-                {!isSm ? (
+                {!isXs ? (
                   <Group
                     align="center"
                     gap={0}
+                    flex={1}
                     style={{ position: 'relative' }}
-                    ml={60}
+                    ml={isSm ? 0 : 60}
+                    w={'100%'}
                   >
                     <GlobalSearchBar placeholder="Search files and folders..." />
                   </Group>
@@ -286,7 +288,7 @@ const DashboardLayout = () => {
           </Container>
         </AppShell.Header>
         <AppShell.Navbar p="md" styles={{ navbar: { zIndex: 20 } }}>
-          <NavBar />
+          <NavBar {...{ mobileDrawerHandler }} />
         </AppShell.Navbar>
         <AppShell.Main ml={-15} pe={0} pt={60}>
           <Container size="var(--mantine-breakpoint-xxl)" px={0}>

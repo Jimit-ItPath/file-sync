@@ -173,14 +173,20 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               <Menu.Dropdown>
                 <Menu.Item
                   leftSection={<ICONS.IconFolderPlus size={16} />}
-                  onClick={() => openModal('folder')}
+                  onClick={() => {
+                    openModal('folder');
+                    mobileDrawerHandler?.close();
+                  }}
                   style={{ padding: '8px 16px', fontSize: '14px' }}
                 >
                   Create folder
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<ICONS.IconUpload size={16} />}
-                  onClick={() => openModal('files')}
+                  onClick={() => {
+                    openModal('files');
+                    mobileDrawerHandler?.close();
+                  }}
                   style={{ padding: '8px 16px', fontSize: '14px' }}
                 >
                   Upload files
@@ -283,7 +289,10 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               </span>
               <ICONS.IconPlus
                 size={18}
-                onClick={openAccountModal}
+                onClick={() => {
+                  openAccountModal();
+                  mobileDrawerHandler?.close();
+                }}
                 style={{ cursor: 'pointer' }}
               />
             </Stack>
@@ -477,7 +486,10 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
               mt={20}
               style={{ flexDirection: 'row', cursor: 'pointer' }}
               align="center"
-              onClick={openAccountModal}
+              onClick={() => {
+                openAccountModal();
+                mobileDrawerHandler?.close();
+              }}
             >
               <ICONS.IconPlus size={18} color="#0284C7" />
               <span

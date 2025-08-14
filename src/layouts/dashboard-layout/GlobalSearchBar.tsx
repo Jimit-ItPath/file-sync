@@ -50,7 +50,6 @@ import { PRIVATE_ROUTES } from '../../routing/routes';
 
 interface SearchBarProps {
   placeholder?: string;
-  width?: number | string;
 }
 
 interface SearchResult {
@@ -77,7 +76,6 @@ interface SearchResult {
 
 const GlobalSearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Search files and folders...',
-  width = 600,
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -568,7 +566,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <Box style={{ position: 'relative', width }}>
+    <Box style={{ position: 'relative', maxWidth: '600px', width: '100%' }}>
       <TextInput
         ref={searchRef}
         value={searchValue}
