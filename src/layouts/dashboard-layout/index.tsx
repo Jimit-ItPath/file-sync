@@ -2,11 +2,14 @@ import { useDisclosure } from '@mantine/hooks';
 import {
   ActionIcon,
   AppShell,
+  Autocomplete,
   Avatar,
   Box,
   Burger,
   Container,
   Group,
+  Stack,
+  TextInput,
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
 import { usePageData } from '../../hooks/use-page-data';
@@ -14,7 +17,7 @@ import useAuth from '../../auth/use-auth';
 import { ICONS } from '../../assets/icons';
 import { AUTH_ROUTES, PRIVATE_ROUTES } from '../../routing/routes';
 import NavBar from './navbar';
-import { Menu } from '../../components';
+import { Button, Dropzone, Form, Menu, Modal } from '../../components';
 import { ConfirmModal } from '../../components/confirm-modal';
 import Icon from '../../assets/icons/icon';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -32,12 +35,31 @@ import { ROLES } from '../../utils/constants';
 import { decodeToken, removeLocalStorage } from '../../utils/helper';
 import GlobalSearchBar from './GlobalSearchBar';
 import TawkToWidget from '../../widget/TawkToWidget';
+import useDashboard from '../../pages/dashboard/use-dashboard';
+import { Controller } from 'react-hook-form';
 
 const DashboardLayout = () => {
   usePageData();
   const [mobileDrawerOpened, mobileDrawerHandler] = useDisclosure();
   const [logoutConfirmOpened, logoutConfirmHandler] = useDisclosure();
   const { isSm, isXs } = useResponsive();
+  const {
+    openModal,
+    modalOpen,
+    closeModal,
+    modalType,
+    folderMethods,
+    handleCreateFolder,
+    isSFDEnabled,
+    accountOptionsForSFD,
+    createFolderLoading,
+    handleFileUpload,
+    uploadMethods,
+    setUploadedFiles,
+    getFileIcon,
+    uploadedFiles,
+    uploadFilesLoading,
+  } = useDashboard({});
 
   const { logout } = useAuth() as any;
   const dispatch = useAppDispatch();
@@ -168,7 +190,7 @@ const DashboardLayout = () => {
                 wrap="nowrap"
                 // justify="space-between"
                 // maw={600}
-                w="90%"
+                w={!isXs ? '90%' : 'max-content'}
               >
                 <Burger
                   opened={mobileDrawerOpened}
@@ -241,6 +263,47 @@ const DashboardLayout = () => {
                 ) : null}
               </Group>
 
+              {isXs ? (
+                <Menu
+                  position="top-end"
+                  shadow="lg"
+                  items={[
+                    {
+                      id: 'create-folder',
+                      label: 'Create folder',
+                      icon: ICONS.IconFolderPlus,
+                    },
+                    {
+                      id: 'upload-files',
+                      label: 'Upload files',
+                      icon: ICONS.IconUpload,
+                    },
+                  ]}
+                  onItemClick={id => {
+                    if (id === 'create-folder') {
+                      openModal('folder');
+                    }
+                    if (id === 'upload-files') {
+                      openModal('files');
+                    }
+                  }}
+                >
+                  <ActionIcon
+                    radius="xl"
+                    size={40}
+                    variant="filled"
+                    color="blue"
+                    mr={20}
+                    style={{
+                      boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
+                    }}
+                    aria-label="New"
+                  >
+                    <ICONS.IconPlus size={26} />
+                  </ActionIcon>
+                </Menu>
+              ) : null}
+
               <Group gap={16} align="center">
                 {/* <ICONS.IconBell size={isXs ? 20 : 24} /> */}
                 {/* <ICONS.IconSettings size={isXs ? 20 : 24} /> */}
@@ -288,7 +351,7 @@ const DashboardLayout = () => {
           </Container>
         </AppShell.Header>
         <AppShell.Navbar p="md" styles={{ navbar: { zIndex: 20 } }}>
-          <NavBar {...{ mobileDrawerHandler }} />
+          <NavBar {...{ mobileDrawerHandler, isXs }} />
         </AppShell.Navbar>
         <AppShell.Main ml={-15} pe={0} pt={60}>
           <Container size="var(--mantine-breakpoint-xxl)" px={0}>
@@ -309,6 +372,126 @@ const DashboardLayout = () => {
           onClick: onLogoutConfirm,
         }}
       />
+
+      {/* Create folder / upload file modal */}
+      <Modal
+        opened={modalOpen}
+        onClose={closeModal}
+        title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
+      >
+        {modalType === 'folder' ? (
+          <Form methods={folderMethods} onSubmit={handleCreateFolder}>
+            <Stack gap="md">
+              <TextInput
+                placeholder="Folder name"
+                label="Folder Name"
+                {...folderMethods.register('folderName')}
+                error={folderMethods.formState.errors.folderName?.message}
+                withAsterisk
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={folderMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          folderMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                type="submit"
+                loading={createFolderLoading}
+                disabled={
+                  !folderMethods.formState.isValid || createFolderLoading
+                }
+                maw={150}
+              >
+                Create Folder
+              </Button>
+            </Stack>
+          </Form>
+        ) : (
+          <Form onSubmit={handleFileUpload} methods={uploadMethods}>
+            <Stack gap={'md'}>
+              <Dropzone
+                onFilesSelected={files => {
+                  setUploadedFiles(files);
+                  uploadMethods.setValue('files', files);
+                }}
+                // maxSize={5 * 1024 ** 2}
+                multiple={true}
+                mb="md"
+                getFileIcon={getFileIcon}
+                files={uploadedFiles}
+              />
+              {!isSFDEnabled && (
+                <Controller
+                  control={uploadMethods.control}
+                  name="accountId"
+                  render={({ field }) => {
+                    const selectedOption = accountOptionsForSFD.find(
+                      option => option.value === field.value
+                    );
+
+                    return (
+                      <Autocomplete
+                        label="Select Account"
+                        placeholder="Choose an account"
+                        data={accountOptionsForSFD}
+                        value={selectedOption ? selectedOption.label : ''}
+                        onChange={value => {
+                          const matchedOption = accountOptionsForSFD.find(
+                            option =>
+                              option.label === value || option.value === value
+                          );
+                          field.onChange(
+                            matchedOption ? matchedOption.value : ''
+                          );
+                        }}
+                        error={
+                          uploadMethods.formState.errors.accountId?.message
+                        }
+                        required
+                      />
+                    );
+                  }}
+                />
+              )}
+              <Button
+                type="submit"
+                loading={uploadFilesLoading}
+                disabled={uploadedFiles.length === 0 || uploadFilesLoading}
+              >
+                Upload Files
+              </Button>
+            </Stack>
+          </Form>
+        )}
+      </Modal>
 
       <TawkToWidget />
     </>

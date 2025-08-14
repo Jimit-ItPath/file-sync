@@ -61,7 +61,7 @@ type AccessibleNavItemProps = NavItem & {
   url: string;
 };
 
-const NavBar = ({ mobileDrawerHandler }: any) => {
+const NavBar = ({ mobileDrawerHandler, isXs }: any) => {
   const location = useLocation();
   const {
     handleConnectAccount,
@@ -142,7 +142,7 @@ const NavBar = ({ mobileDrawerHandler }: any) => {
       {/* <LoaderOverlay visible={loading} opacity={1} /> */}
       {user?.user?.role !== ROLES.ADMIN ? (
         <>
-          {sortedCloudAccounts?.length ? (
+          {sortedCloudAccounts?.length && !isXs ? (
             <Menu
               position="bottom-start"
               opened={menuOpened}
