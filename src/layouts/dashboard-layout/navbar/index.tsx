@@ -773,7 +773,7 @@ const NavBar = ({
                   name="accountId"
                   render={({ field }) => {
                     const selectedOption = accountOptionsForSFD.find(
-                      option => option.value === field.value
+                      (option: any) => option.value === field.value
                     );
 
                     return (
@@ -784,7 +784,7 @@ const NavBar = ({
                         value={selectedOption ? selectedOption.label : ''}
                         onChange={value => {
                           const matchedOption = accountOptionsForSFD.find(
-                            option =>
+                            (option: any) =>
                               option.label === value || option.value === value
                           );
                           field.onChange(
@@ -833,7 +833,7 @@ const NavBar = ({
                   name="accountId"
                   render={({ field }) => {
                     const selectedOption = accountOptionsForSFD.find(
-                      option => option.value === field.value
+                      (option: any) => option.value === field.value
                     );
 
                     return (
@@ -844,7 +844,7 @@ const NavBar = ({
                         value={selectedOption ? selectedOption.label : ''}
                         onChange={value => {
                           const matchedOption = accountOptionsForSFD.find(
-                            option =>
+                            (option: any) =>
                               option.label === value || option.value === value
                           );
                           field.onChange(

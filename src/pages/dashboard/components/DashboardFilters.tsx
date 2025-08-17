@@ -8,7 +8,6 @@ import {
   Paper,
   ActionIcon,
   Menu,
-  rem,
   CloseButton,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';

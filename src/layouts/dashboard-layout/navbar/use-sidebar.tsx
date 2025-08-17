@@ -30,7 +30,6 @@ import { Image } from '@mantine/core';
 import { useViewportSize } from '@mantine/hooks';
 import { type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { ROLES } from '../../../utils/constants';
 
 const connectAccountSchema = z.object({
   accountName: z.string().trim().min(1, 'Account name is required'),
@@ -76,7 +75,7 @@ const useSidebar = () => {
   const [localSortedAccounts, setLocalSortedAccounts] = useState<any[] | null>(
     null
   );
-  const hasMountedOnce = useRef(false);
+  // const hasMountedOnce = useRef(false);
   const [menuOpened, setMenuOpened] = useState(false);
 
   // Add ref to track if drag operation is in progress

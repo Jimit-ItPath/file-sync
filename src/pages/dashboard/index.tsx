@@ -115,8 +115,8 @@ const Dashboard = () => {
     handleAccountTypeChange,
     allIds,
     lastSelectedIndex,
-    loadMoreFiles,
-    pagination,
+    // loadMoreFiles,
+    // pagination,
     accountOptions,
     navigateLoading,
     handleSyncStorage,
@@ -169,6 +169,7 @@ const Dashboard = () => {
     handleTypeFilter,
     typeFilter,
     modifiedFilter,
+    // isAutoLoading,
   } = useDashboard({ downloadFile });
 
   const {
@@ -180,7 +181,7 @@ const Dashboard = () => {
     connectAccountFormData,
     connectAccountLoading,
   } = useSidebar();
-  const { isSm, theme, isXs } = useResponsive();
+  const { isSm, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
@@ -312,7 +313,10 @@ const Dashboard = () => {
           className="stickey-box"
         >
           {/* <Box> */}
-          <Group align="center" w={'100%'} h={48} gap={16}>
+          <Group align="center" w={'100%'} 
+          // h={48}
+          h={isSm ? 48 : 'auto'} 
+          gap={16}>
             {/* Left Section - Breadcrumbs */}
             <Box style={{ flexGrow: 1, minWidth: 0 }}>
               <Breadcrumbs
@@ -583,11 +587,16 @@ const Dashboard = () => {
                 folderId,
               }}
             />
-            {pagination && pagination.page_no < pagination.total_pages ? (
-              <Button mt={20} onClick={loadMoreFiles}>
-                Load More
+            {/* {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button
+                mt={20}
+                onClick={loadMoreFiles}
+                loading={isAutoLoading}
+                disabled={isAutoLoading}
+              >
+                {isAutoLoading ? 'Auto Loading...' : 'Load More'}
               </Button>
-            ) : null}
+            ) : null} */}
           </>
         ) : (
           <>
@@ -614,11 +623,16 @@ const Dashboard = () => {
                 displayPreviewIcon,
               }}
             />
-            {pagination && pagination.page_no < pagination.total_pages ? (
-              <Button mt={20} onClick={loadMoreFiles}>
-                Load More
+            {/* {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button
+                mt={20}
+                onClick={loadMoreFiles}
+                loading={isAutoLoading}
+                disabled={isAutoLoading}
+              >
+                {isAutoLoading ? 'Auto Loading...' : 'Load More'}
               </Button>
-            ) : null}
+            ) : null} */}
           </>
         )}
       </Box>
