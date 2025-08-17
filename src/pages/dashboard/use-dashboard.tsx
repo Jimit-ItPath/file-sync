@@ -457,7 +457,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       return;
     }
 
-    dispatch(setSearchTerm(debouncedSearchTerm));
     if (checkLocation || accountId !== 'all') {
       getCloudStorageFiles(1, {
         type: typeFilter || undefined,
@@ -480,7 +479,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           : undefined,
       });
     }
-  }, [debouncedSearchTerm, accountId, checkLocation]);
+  }, [accountId, checkLocation]);
 
   const scrollBoxRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);

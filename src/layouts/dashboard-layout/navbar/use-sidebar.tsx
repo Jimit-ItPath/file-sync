@@ -111,13 +111,13 @@ const useSidebar = () => {
 
   const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
-  useEffect(() => {
-    if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
-      onInitialize({});
-      fetchStorageData({});
-      hasMountedOnce.current = true;
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user?.user?.role === ROLES.USER && !hasMountedOnce.current) {
+  //     onInitialize({});
+  //     fetchStorageData({});
+  //     hasMountedOnce.current = true;
+  //   }
+  // }, [user]);
 
   useEffect(() => {
     const isPostConnect = getLocalStorage('post_connect_redirect') === true;
