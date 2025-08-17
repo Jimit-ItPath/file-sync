@@ -283,400 +283,702 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   };
 
   if (isMobile) {
+    const hasActiveFilters = activeTypeFilter || activeModifiedFilter;
+
     return (
-      <Box className="filterContainer">
-        <Group justify="space-between">
-          <Menu
-            shadow="md"
-            width={280}
-            styles={{
-              dropdown: {
-                border: '1px solid #dadce0',
-                borderRadius: rem(8),
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.12)',
-                padding: '8px 0',
-              },
-              item: {
-                padding: '8px 16px',
-                fontSize: rem(14),
-                borderRadius: 0,
-                margin: 0,
-                '&:hover': {
-                  backgroundColor: '#f1f3f4',
-                },
-              },
-              label: {
-                padding: '8px 16px 4px',
-                fontSize: rem(11),
-                fontWeight: 500,
-                color: '#5f6368',
-                textTransform: 'uppercase',
-                letterSpacing: '0.8px',
-              },
-            }}
-          >
-            <Menu.Target>
-              <Button
-                className="mobileButton"
-                leftSection={<ICONS.IconFilter size={16} />}
-                rightSection={<ICONS.IconChevronDown size={16} />}
+      <Group gap={4} align="center" wrap="nowrap">
+        {/* Active filters display */}
+        {hasActiveFilters && (
+          <Group gap={4} wrap="nowrap">
+            {activeTypeFilter && (
+              <Box
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 8px',
+                  backgroundColor: '#e8f0fe',
+                  border: '1px solid #1e7ae8',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: '#1e7ae8',
+                  gap: '4px',
+                  maxWidth: '80px',
+                }}
               >
-                Filters
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>Type</Menu.Label>
-              {typeOptions.map(option => (
-                <Menu.Item
-                  key={option.value}
-                  leftSection={<option.icon size={16} />}
-                  rightSection={
-                    activeTypeFilter === option.value ? (
-                      <ICONS.IconCheck size={16} />
-                    ) : null
-                  }
-                  onClick={() => handleTypeSelect(option.value)}
-                  style={{
-                    backgroundColor:
-                      activeTypeFilter === option.value ? '#e8f0fe' : undefined,
-                  }}
-                >
-                  {option.label}
-                </Menu.Item>
-              ))}
-              <Menu.Divider />
-              <Menu.Label>Modified</Menu.Label>
-              {modifiedOptions.map(option => (
-                <Menu.Item
-                  key={option.value}
-                  rightSection={
-                    getActivePreset(activeModifiedFilter) === option.value ? (
-                      <ICONS.IconCheck size={16} />
-                    ) : option.value === 'custom' ? (
-                      <ICONS.IconChevronRight size={16} />
-                    ) : null
-                  }
-                  onClick={() => handleModifiedSelect(option.value)}
-                >
-                  {option.label}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Menu>
-
-          {(activeTypeFilter || activeModifiedFilter) && (
-            <ActionIcon
-              variant="subtle"
-              onClick={onClearFilters}
-              size={36}
-              style={{ borderRadius: rem(18) }}
-            >
-              <ICONS.IconClearAll size={16} />
-            </ActionIcon>
-          )}
-        </Group>
-      </Box>
-    );
-  }
-
-  return (
-    <Box className="filterContainer">
-      <Group gap={8} align="center">
-        {/* Type Filter */}
-        <Box style={{ position: 'relative' }} ref={typeRef}>
-          {typeDropdownOpen && (
-            <Paper
-              className="filterDropdown"
-              shadow="md"
-              style={{
-                width: 240,
-                top: '100%',
-                marginTop: 4,
-              }}
-            >
-              <Text className="filterDropdownLabel">Type</Text>
-              {typeOptions.map(option => (
-                <Box
-                  key={option.value}
-                  className={`filterOption ${activeTypeFilter === option.value ? 'filterOptionActive' : ''}`}
-                  onClick={() => handleTypeSelect(option.value)}
-                >
-                  <option.icon size={16} />
-                  <Text fz={'sm'}>{option.label}</Text>
-                  {activeTypeFilter === option.value && (
-                    <ICONS.IconCheck size={16} className="filterOptionCheck" />
-                  )}
-                </Box>
-              ))}
-            </Paper>
-          )}
-
-          <Box
-            className={`filterOption ${activeTypeFilter ? 'filterOptionActive' : ''}`}
-            style={{
-              display: 'inline-flex',
-              borderRadius: '16px',
-              border: '1px solid #dadce0',
-              padding: '0 12px',
-              height: '32px',
-              alignItems: 'center',
-              cursor: 'pointer',
-              backgroundColor: activeTypeFilter ? '#e8f0fe' : '#ffffff',
-            }}
-            onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-          >
-            {activeTypeFilter ? (
-              <>
-                <Text fz={'sm'} ml={8} display={'contents'}>
+                <Text truncate fz={11} fw={500}>
                   {typeOptions.find(t => t.value === activeTypeFilter)?.label}
                 </Text>
                 <CloseButton
-                  size={16}
+                  size={12}
                   onClick={e => {
                     e.stopPropagation();
                     handleClearTypeFilter();
                   }}
-                  style={{ marginLeft: 4 }}
+                  style={{
+                    minWidth: '12px',
+                    minHeight: '12px',
+                    color: '#1e7ae8',
+                  }}
                 />
-              </>
-            ) : (
-              <>
-                <Text fz={'sm'}>Type</Text>
-                <ICONS.IconChevronDown size={14} style={{ marginLeft: 4 }} />
-              </>
+              </Box>
             )}
-          </Box>
-        </Box>
 
-        {/* Modified Filter */}
-        <Box
-          style={{
-            position: 'relative',
-            display: 'inline-flex',
-            borderRadius: '16px',
-            border: '1px solid #dadce0',
-            padding: '0 12px',
-            height: '32px',
-            alignItems: 'center',
-            cursor: 'pointer',
-            backgroundColor: activeModifiedFilter ? '#e8f0fe' : '#ffffff',
-          }}
-          className={`filterOption ${activeModifiedFilter ? 'filterOptionActive' : ''}`}
-          ref={modifiedRef}
-          onClick={() => setModifiedDropdownOpen(true)}
-        >
-          {activeModifiedFilter ? (
-            <>
-              <Text fz={'sm'} ml={8} display={'contents'}>
-                {getModifiedFilterLabel()}
-              </Text>
-              <CloseButton
-                size={16}
-                onClick={e => {
-                  e.stopPropagation();
-                  handleClearModifiedFilter();
+            {activeModifiedFilter && (
+              <Box
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 8px',
+                  backgroundColor: '#e8f0fe',
+                  border: '1px solid #1e7ae8',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: '#1e7ae8',
+                  gap: '4px',
+                  maxWidth: '100px',
                 }}
-                style={{ marginLeft: 4 }}
-              />
-            </>
-          ) : (
-            // <Button
-            //   className="filterButtonActive"
-            //   rightSection={
-            //     <CloseButton
-            //       size={16}
-            //       onClick={e => {
-            //         e.stopPropagation();
-            //         handleClearModifiedFilter();
-            //       }}
-            //       style={{ marginLeft: 4 }}
-            //     />
-            //   }
-            //   onClick={() => setModifiedDropdownOpen(true)}
-            // >
-            //   {getModifiedFilterLabel()}
-            // </Button>
-            // <Button
-            //   className="filterButton"
-            //   rightSection={<ICONS.IconChevronDown size={14} />}
-            //   onClick={() => setModifiedDropdownOpen(true)}
-            // >
-            //   Modified
-            // </Button>
-            <>
-              <Text fz={'sm'}>Modified</Text>
-              <ICONS.IconChevronDown size={14} style={{ marginLeft: 4 }} />
-            </>
-          )}
-          {modifiedDropdownOpen && (
-            <Paper
-              className="filterDropdown"
-              shadow="md"
+              >
+                <Text truncate fz={11} fw={500}>
+                  {getModifiedFilterLabel()}
+                </Text>
+                <CloseButton
+                  size={12}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleClearModifiedFilter();
+                  }}
+                  style={{
+                    minWidth: '12px',
+                    minHeight: '12px',
+                    color: '#1e7ae8',
+                  }}
+                />
+              </Box>
+            )}
+          </Group>
+        )}
+
+        {/* Filter menu button */}
+        <Menu
+          shadow="lg"
+          width={300}
+          position="bottom-end"
+          offset={5}
+          styles={{
+            dropdown: {
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              padding: '8px 0',
+              height: '400px',
+              overflowY: 'auto',
+            },
+            item: {
+              padding: '10px 16px',
+              fontSize: '14px',
+              borderRadius: '6px',
+              margin: '2px 8px',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                backgroundColor: '#f1f3f4',
+              },
+              '&[data-selected]': {
+                backgroundColor: '#e8f0fe',
+                color: '#1e7ae8',
+                fontWeight: 500,
+              },
+            },
+            label: {
+              padding: '12px 16px 6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#5f6368',
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+              borderBottom: hasActiveFilters ? 'none' : '1px solid #e5e7eb',
+              marginBottom: hasActiveFilters ? '0' : '4px',
+            },
+            divider: {
+              margin: '8px 16px',
+              borderColor: '#e5e7eb',
+            },
+          }}
+        >
+          <Menu.Target>
+            <ActionIcon
+              size={36}
+              variant={hasActiveFilters ? 'filled' : 'outline'}
               style={{
-                width: showCustomDate ? 500 : 240,
-                display: 'flex',
-                overflow: 'hidden',
-                transition: 'width 0.2s ease',
+                borderRadius: '8px',
+                border: hasActiveFilters ? 'none' : '1.5px solid #dadce0',
+                backgroundColor: hasActiveFilters ? '#1e7ae8' : '#ffffff',
+                color: hasActiveFilters ? '#ffffff' : '#5f6368',
+                transition: 'all 0.2s ease',
+                boxShadow: hasActiveFilters
+                  ? '0 2px 8px rgba(30, 122, 232, 0.3)'
+                  : 'none',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  boxShadow: hasActiveFilters
+                    ? '0 4px 12px rgba(30, 122, 232, 0.4)'
+                    : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                },
               }}
             >
-              {/* Left column: options */}
-              <Box className="filterOptionsColumn">
-                <Text className="filterDropdownLabel">Modified</Text>
-                {modifiedOptions.map(option => {
-                  const isActive =
-                    getActivePreset(activeModifiedFilter) === option.value;
-                  return (
-                    <Box
-                      key={option.value}
-                      className={`filterOption ${isActive ? 'filterOptionActive' : ''}`}
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleModifiedSelect(option.value);
+              <ICONS.IconFilter size={16} />
+            </ActionIcon>
+          </Menu.Target>
+
+          <Menu.Dropdown>
+            {hasActiveFilters && (
+              <>
+                <Box style={{ padding: '8px 16px' }}>
+                  <Group justify="space-between" align="center">
+                    <Text fz="sm" fw={500} c="#374151">
+                      Active Filters
+                    </Text>
+                    <Button
+                      variant="subtle"
+                      size="xs"
+                      // compact
+                      leftSection={<ICONS.IconX size={12} />}
+                      onClick={() => {
+                        setCustomDateRange({});
+                        setShowCustomDate(false);
+                        onClearFilters();
                       }}
                       style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
+                        color: '#ef4444',
+                        fontSize: '11px',
+                        height: '24px',
+                        padding: '0 8px',
                       }}
                     >
-                      <Text fz={'sm'}>{option.label}</Text>
-                      {isActive ? (
-                        <ICONS.IconCheck
-                          size={16}
-                          className="filterOptionCheck"
-                        />
-                      ) : option.value === 'custom' ? (
-                        <ICONS.IconChevronRight size={16} />
-                      ) : null}
-                    </Box>
-                  );
-                })}
-              </Box>
-
-              {/* Right column: custom date range */}
-              {showCustomDate && (
-                <Box className="customDateColumn">
-                  <Stack gap="md" p="md">
-                    <Box>
-                      <DateInput
-                        label="After"
-                        placeholder="Pick date"
-                        value={customDateRange.after || null}
-                        onChange={(date: any) =>
-                          setCustomDateRange(prev => ({
-                            ...prev,
-                            after: date || undefined,
-                          }))
-                        }
-                        clearable
-                        // minDate={new Date(2000, 0, 1)} // Example min date
-                        maxDate={customDateRange.before || new Date()}
-                        popoverProps={{
-                          withinPortal: true,
-                          position: 'bottom-end',
-                          offset: 5,
-                          shadow: 'md',
-                        }}
-                        styles={{
-                          input: {
-                            borderRadius: 4,
-                            border: '1px solid #dadce0',
-                            fontSize: '0.875rem',
-                            height: '2.25rem',
-                            userSelect: 'none',
-                            '&:focus': {
-                              borderColor: '#1a73e8',
-                              boxShadow: '0 0 0 1px #1a73e8',
-                            },
-                          },
-                          label: {
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: '#5f6368',
-                            marginBottom: 4,
-                            userSelect: 'none',
-                          },
-                        }}
-                      />
-                    </Box>
-                    <Box>
-                      <DateInput
-                        label="Before"
-                        placeholder="Pick date"
-                        value={customDateRange.before || null}
-                        onChange={(date: any) =>
-                          setCustomDateRange(prev => ({
-                            ...prev,
-                            before: date || undefined,
-                          }))
-                        }
-                        clearable
-                        minDate={customDateRange.after} // Min date is either "After" date or Jan 1, 2000
-                        maxDate={new Date()}
-                        popoverProps={{
-                          withinPortal: true,
-                          position: 'bottom-end',
-                          offset: 5,
-                          shadow: 'md',
-                        }}
-                        styles={{
-                          input: {
-                            borderRadius: 4,
-                            border: '1px solid #dadce0',
-                            fontSize: '0.875rem',
-                            height: '2.25rem',
-                            userSelect: 'none',
-                            '&:focus': {
-                              borderColor: '#1a73e8',
-                              boxShadow: '0 0 0 1px #1a73e8',
-                            },
-                          },
-                          label: {
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: '#5f6368',
-                            userSelect: 'none',
-                            marginBottom: 4,
-                          },
-                        }}
-                      />
-                    </Box>
-                  </Stack>
-                  <Box className="filterActions">
-                    <Button variant="subtle" size="sm" onClick={handleClearAll}>
-                      Clear
+                      Clear All
                     </Button>
-                    <Button
-                      className="applyButton"
-                      size="sm"
-                      onClick={handleCustomApply}
-                      disabled={
-                        !customDateRange.after && !customDateRange.before
-                      }
-                    >
-                      Apply
-                    </Button>
-                  </Box>
+                  </Group>
                 </Box>
-              )}
-            </Paper>
-          )}
-        </Box>
+                <Menu.Divider />
+              </>
+            )}
 
-        {(activeTypeFilter || activeModifiedFilter) && (
-          <Button
-            className="clearButton"
-            leftSection={<ICONS.IconX size={14} />}
-            onClick={() => {
-              setCustomDateRange({});
-              setShowCustomDate(false);
-              onClearFilters();
+            <Menu.Label>File Type</Menu.Label>
+            {typeOptions.map(option => (
+              <Menu.Item
+                key={option.value}
+                leftSection={<option.icon size={18} />}
+                rightSection={
+                  activeTypeFilter === option.value ? (
+                    <ICONS.IconCheck size={16} color="#1e7ae8" />
+                  ) : null
+                }
+                onClick={() => handleTypeSelect(option.value)}
+                style={{
+                  backgroundColor:
+                    activeTypeFilter === option.value ? '#e8f0fe' : undefined,
+                  fontWeight: activeTypeFilter === option.value ? 500 : 400,
+                  color:
+                    activeTypeFilter === option.value ? '#1e7ae8' : '#374151',
+                }}
+              >
+                {option.label}
+              </Menu.Item>
+            ))}
+
+            <Menu.Divider />
+            <Menu.Label>Date Modified</Menu.Label>
+            {modifiedOptions.map(option => {
+              const isActive =
+                getActivePreset(activeModifiedFilter) === option.value;
+              const isCustom = option.value === 'custom';
+              const isCustomOpen = isCustom && showCustomDate;
+              return (
+                <Menu.Item
+                  key={option.value}
+                  // rightSection={
+                  //   isActive ? (
+                  //     <ICONS.IconCheck size={16} color="#1e7ae8" />
+                  //   ) : option.value === 'custom' ? (
+                  //     <ICONS.IconChevronRight size={16} />
+                  //   ) : null
+                  // }
+                  rightSection={
+                    isCustom ? (
+                      isCustomOpen ? (
+                        <ICONS.IconChevronDown size={16} />
+                      ) : (
+                        <ICONS.IconChevronRight size={16} />
+                      )
+                    ) : isActive ? (
+                      <ICONS.IconCheck size={16} color="#1e7ae8" />
+                    ) : null
+                  }
+                  closeMenuOnClick={option.value !== 'custom'}
+                  // onClick={() => handleModifiedSelect(option.value)}
+                  onClick={() => {
+                    handleModifiedSelect(option.value);
+
+                    // 👇 only scroll when custom is opened
+                    if (isCustom && !showCustomDate) {
+                      setTimeout(() => {
+                        const dropdown = document.querySelector(
+                          '.mantine-Menu-dropdown'
+                        );
+                        if (dropdown) {
+                          dropdown.scrollTo({
+                            top: dropdown.scrollHeight,
+                            behavior: 'smooth',
+                          });
+                        }
+                      }, 100);
+                    }
+                  }}
+                  style={{
+                    backgroundColor: isActive ? '#e8f0fe' : undefined,
+                    fontWeight: isActive ? 500 : 400,
+                    color: isActive ? '#1e7ae8' : '#374151',
+                  }}
+                >
+                  {option.label}
+                </Menu.Item>
+              );
+            })}
+
+            {/* Custom date picker for mobile - simplified */}
+            {showCustomDate && (
+              <>
+                <Menu.Divider />
+                <Box style={{ padding: '12px 16px' }}>
+                  <Stack gap="sm">
+                    <Text
+                      fz="xs"
+                      fw={500}
+                      c="#5f6368"
+                      tt="uppercase"
+                      lts="0.5px"
+                    >
+                      Custom Date Range
+                    </Text>
+                    <DateInput
+                      placeholder="After date"
+                      value={customDateRange.after || null}
+                      onChange={(date: any) =>
+                        setCustomDateRange(prev => ({
+                          ...prev,
+                          after: date || undefined,
+                        }))
+                      }
+                      clearable
+                      maxDate={customDateRange.before || new Date()}
+                      size="sm"
+                      styles={{
+                        input: {
+                          borderRadius: '6px',
+                          border: '1px solid #d1d5db',
+                          fontSize: '13px',
+                          height: '32px',
+                          '&:focus': {
+                            borderColor: '#1e7ae8',
+                            boxShadow: '0 0 0 2px rgba(30, 122, 232, 0.1)',
+                          },
+                        },
+                      }}
+                    />
+                    <DateInput
+                      placeholder="Before date"
+                      value={customDateRange.before || null}
+                      onChange={(date: any) =>
+                        setCustomDateRange(prev => ({
+                          ...prev,
+                          before: date || undefined,
+                        }))
+                      }
+                      clearable
+                      minDate={customDateRange.after}
+                      maxDate={new Date()}
+                      size="sm"
+                      styles={{
+                        input: {
+                          borderRadius: '6px',
+                          border: '1px solid #d1d5db',
+                          fontSize: '13px',
+                          height: '32px',
+                          '&:focus': {
+                            borderColor: '#1e7ae8',
+                            boxShadow: '0 0 0 2px rgba(30, 122, 232, 0.1)',
+                          },
+                        },
+                      }}
+                    />
+                    <Group justify="flex-end" gap="xs">
+                      <Button
+                        variant="subtle"
+                        size="xs"
+                        onClick={() => setShowCustomDate(false)}
+                        style={{ height: '28px' }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="xs"
+                        onClick={handleCustomApply}
+                        disabled={
+                          !customDateRange.after && !customDateRange.before
+                        }
+                        style={{
+                          backgroundColor: '#1e7ae8',
+                          color: 'white',
+                          height: '28px',
+                        }}
+                      >
+                        Apply
+                      </Button>
+                    </Group>
+                  </Stack>
+                </Box>
+              </>
+            )}
+          </Menu.Dropdown>
+        </Menu>
+      </Group>
+    );
+  }
+
+  return (
+    <Group gap={4} align="center" wrap="nowrap">
+      {/* Compact Type Filter */}
+      <Box style={{ position: 'relative' }} ref={typeRef}>
+        {typeDropdownOpen && (
+          <Paper
+            shadow="md"
+            style={{
+              width: 220,
+              top: '100%',
+              marginTop: 4,
+              position: 'absolute',
+              right: 0,
+              zIndex: 1000,
+              borderRadius: '8px',
+              border: '1px solid #dadce0',
+              padding: '8px 0',
             }}
           >
-            Clear
-          </Button>
+            <Text
+              style={{
+                padding: '8px 16px 4px',
+                fontSize: '11px',
+                fontWeight: 500,
+                color: '#5f6368',
+                textTransform: 'uppercase',
+                letterSpacing: '0.8px',
+              }}
+            >
+              Type
+            </Text>
+            {typeOptions.map(option => (
+              <Box
+                key={option.value}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  backgroundColor:
+                    activeTypeFilter === option.value
+                      ? '#e8f0fe'
+                      : 'transparent',
+                  '&:hover': {
+                    backgroundColor: '#f1f3f4',
+                  },
+                }}
+                className={`filterOption ${activeTypeFilter === option.value ? 'filterOptionActive' : ''}`}
+                onClick={() => handleTypeSelect(option.value)}
+              >
+                <option.icon size={16} />
+                <Text fz={'sm'}>{option.label}</Text>
+                {activeTypeFilter === option.value && (
+                  <ICONS.IconCheck
+                    size={16}
+                    style={{ marginLeft: 'auto', color: '#1e7ae8' }}
+                  />
+                )}
+              </Box>
+            ))}
+          </Paper>
         )}
-      </Group>
-    </Box>
+
+        <Box
+          style={{
+            display: 'inline-flex',
+            borderRadius: '8px',
+            border: '1px solid #dadce0',
+            padding: '0 8px',
+            height: '36px',
+            alignItems: 'center',
+            cursor: 'pointer',
+            backgroundColor: activeTypeFilter ? '#e8f0fe' : '#ffffff',
+            minWidth: activeTypeFilter ? 'auto' : '60px',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
+        >
+          {activeTypeFilter ? (
+            <Group gap={4} wrap="nowrap">
+              <Text fz={12} fw={500}>
+                {typeOptions.find(t => t.value === activeTypeFilter)?.label}
+              </Text>
+              <CloseButton
+                size={14}
+                onClick={e => {
+                  e.stopPropagation();
+                  handleClearTypeFilter();
+                }}
+              />
+            </Group>
+          ) : (
+            <Group gap={4} wrap="nowrap">
+              <ICONS.IconFile size={14} />
+              <ICONS.IconChevronDown size={12} />
+            </Group>
+          )}
+        </Box>
+      </Box>
+
+      {/* Compact Modified Filter */}
+      <Box
+        style={{
+          position: 'relative',
+          display: 'inline-flex',
+          borderRadius: '8px',
+          border: '1px solid #dadce0',
+          padding: '0 8px',
+          height: '36px',
+          alignItems: 'center',
+          cursor: 'pointer',
+          backgroundColor: activeModifiedFilter ? '#e8f0fe' : '#ffffff',
+          minWidth: activeModifiedFilter ? 'auto' : '60px',
+          transition: 'all 0.2s ease',
+        }}
+        ref={modifiedRef}
+        onClick={() => setModifiedDropdownOpen(true)}
+      >
+        {activeModifiedFilter ? (
+          <Group gap={4} wrap="nowrap">
+            <Text fz={12} fw={500} truncate maw={80}>
+              {getModifiedFilterLabel()}
+            </Text>
+            <CloseButton
+              size={14}
+              onClick={e => {
+                e.stopPropagation();
+                handleClearModifiedFilter();
+              }}
+            />
+          </Group>
+        ) : (
+          <Group gap={4} wrap="nowrap">
+            <ICONS.IconCalendar size={14} />
+            <ICONS.IconChevronDown size={12} />
+          </Group>
+        )}
+
+        {modifiedDropdownOpen && (
+          <Paper
+            shadow="md"
+            style={{
+              width: showCustomDate ? 480 : 220,
+              display: 'flex',
+              overflow: 'hidden',
+              transition: 'width 0.2s ease',
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: 4,
+              zIndex: 1000,
+              borderRadius: '8px',
+              border: '1px solid #dadce0',
+            }}
+          >
+            {/* Left column: options */}
+            <Box
+              style={{
+                width: showCustomDate ? '240px' : '100%',
+                borderRight: showCustomDate ? '1px solid #e5e7eb' : 'none',
+              }}
+            >
+              <Text
+                style={{
+                  padding: '8px 16px 4px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: '#5f6368',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.8px',
+                }}
+              >
+                Modified
+              </Text>
+              {modifiedOptions.map(option => {
+                const isActive =
+                  getActivePreset(activeModifiedFilter) === option.value;
+                return (
+                  <Box
+                    key={option.value}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      backgroundColor: isActive ? '#e8f0fe' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: '#f1f3f4',
+                      },
+                    }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleModifiedSelect(option.value);
+                    }}
+                    className={`filterOption ${activeTypeFilter === option.value ? 'filterOptionActive' : ''}`}
+                  >
+                    <Text fz={'sm'}>{option.label}</Text>
+                    {isActive ? (
+                      <ICONS.IconCheck size={16} style={{ color: '#1e7ae8' }} />
+                    ) : option.value === 'custom' ? (
+                      <ICONS.IconChevronRight size={16} />
+                    ) : null}
+                  </Box>
+                );
+              })}
+            </Box>
+
+            {/* Right column: custom date range */}
+            {showCustomDate && (
+              <Box style={{ width: '240px' }}>
+                <Stack gap="md" p="md">
+                  <Box>
+                    <DateInput
+                      label="After"
+                      placeholder="Pick date"
+                      value={customDateRange.after || null}
+                      onChange={(date: any) =>
+                        setCustomDateRange(prev => ({
+                          ...prev,
+                          after: date || undefined,
+                        }))
+                      }
+                      clearable
+                      maxDate={customDateRange.before || new Date()}
+                      styles={{
+                        input: {
+                          borderRadius: 4,
+                          border: '1px solid #dadce0',
+                          fontSize: '0.875rem',
+                          height: '2.25rem',
+                          '&:focus': {
+                            borderColor: '#1a73e8',
+                            boxShadow: '0 0 0 1px #1a73e8',
+                          },
+                        },
+                        label: {
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          color: '#5f6368',
+                          marginBottom: 4,
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Box>
+                    <DateInput
+                      label="Before"
+                      placeholder="Pick date"
+                      value={customDateRange.before || null}
+                      onChange={(date: any) =>
+                        setCustomDateRange(prev => ({
+                          ...prev,
+                          before: date || undefined,
+                        }))
+                      }
+                      clearable
+                      minDate={customDateRange.after}
+                      maxDate={new Date()}
+                      styles={{
+                        input: {
+                          borderRadius: 4,
+                          border: '1px solid #dadce0',
+                          fontSize: '0.875rem',
+                          height: '2.25rem',
+                          '&:focus': {
+                            borderColor: '#1a73e8',
+                            boxShadow: '0 0 0 1px #1a73e8',
+                          },
+                        },
+                        label: {
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          color: '#5f6368',
+                          marginBottom: 4,
+                        },
+                      }}
+                    />
+                  </Box>
+                </Stack>
+                <Box
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0 16px 16px',
+                    borderTop: '1px solid #e5e7eb',
+                    marginTop: '8px',
+                    paddingTop: '12px',
+                  }}
+                >
+                  <Button variant="subtle" size="sm" onClick={handleClearAll}>
+                    Clear
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleCustomApply}
+                    disabled={!customDateRange.after && !customDateRange.before}
+                    style={{
+                      backgroundColor: '#1e7ae8',
+                      color: 'white',
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Paper>
+        )}
+      </Box>
+
+      {/* Clear All - Compact */}
+      {(activeTypeFilter || activeModifiedFilter) && (
+        <ActionIcon
+          size={36}
+          variant="subtle"
+          onClick={() => {
+            setCustomDateRange({});
+            setShowCustomDate(false);
+            onClearFilters();
+          }}
+          style={{
+            color: '#5f6368',
+            borderRadius: '8px',
+          }}
+        >
+          <ICONS.IconX size={14} />
+        </ActionIcon>
+      )}
+    </Group>
   );
 };
 

@@ -241,7 +241,7 @@ const FileGrid: React.FC<FileGridProps> = ({
       style={{ outline: 'none' }}
       onClick={handleStackClick}
       ref={stackRef}
-      mt={10}
+      // mt={10}
     >
       <Card>
         {!folders?.length && !files?.length && (

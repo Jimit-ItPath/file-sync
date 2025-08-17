@@ -83,7 +83,7 @@
 }
 
 .filterOption:hover {
-  background-color: #f1f3f4;
+  background-color: #f1f3f4 !important;
 }
 
 .filterOptionActive {
