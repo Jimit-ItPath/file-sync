@@ -10,7 +10,7 @@ import {
   Group,
   Stack,
   TextInput,
-  Menu as MantineMenu
+  Menu as MantineMenu,
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
 import { usePageData } from '../../hooks/use-page-data';

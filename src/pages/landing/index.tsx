@@ -10,9 +10,7 @@ import {
   Box,
   ThemeIcon,
   SimpleGrid,
-  Anchor,
   AppShell,
-  Burger,
   Divider,
   Image,
 } from '@mantine/core';
@@ -25,6 +23,9 @@ import OneDriveIcon from '../../assets/svgs/OneDrive.svg';
 import LandingPagwSvg from '../../assets/svgs/LandingPage.svg';
 import useResponsive from '../../hooks/use-responsive';
 import { ICONS } from '../../assets/icons';
+import NavigationItems from './NavigationItems';
+import LandingHeader from './LandingHeader';
+import LandingFooter from './LandingFooter';
 
 export default function UnifidriveLanding() {
   const [opened, { open, close }] = useDisclosure(false);
@@ -152,43 +153,6 @@ export default function UnifidriveLanding() {
     },
   ];
 
-  const NavigationItems = () => (
-    <>
-      <Anchor
-        href="#features"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        Features
-      </Anchor>
-      <Anchor
-        href="#pricing"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        Pricing
-      </Anchor>
-      <Anchor
-        href="#security"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        Security
-      </Anchor>
-      <Anchor
-        href="#faq"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        FAQ
-      </Anchor>
-    </>
-  );
-
   return (
     <AppShell
       header={{ height: 70 }}
@@ -199,51 +163,7 @@ export default function UnifidriveLanding() {
       }}
       padding="md"
     >
-      <AppShell.Header>
-        <Container
-          size="var(--mantine-breakpoint-xxl)"
-          px={isSm ? 20 : isMd ? 40 : 120}
-          h="100%"
-        >
-          <Group justify="space-between" h="100%">
-            <Group>
-              <ThemeIcon
-                size="lg"
-                variant="gradient"
-                gradient={{ from: 'blue', to: 'cyan' }}
-              >
-                <ICONS.IconCloud size={20} />
-              </ThemeIcon>
-              <Title order={3} c="blue">
-                AllCloudHub
-              </Title>
-            </Group>
-
-            {!isMobile ? (
-              <Group>
-                <NavigationItems />
-                <Group gap="xs">
-                  <Button
-                    variant="subtle"
-                    onClick={() => navigate(AUTH_ROUTES.LOGIN.url)}
-                  >
-                    Sign In
-                  </Button>
-                  <Button onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}>
-                    Get Started
-                  </Button>
-                </Group>
-              </Group>
-            ) : (
-              <Burger
-                opened={opened}
-                onClick={opened ? close : open}
-                size="sm"
-              />
-            )}
-          </Group>
-        </Container>
-      </AppShell.Header>
+      <LandingHeader {...{ close, navigate, open, opened }} />
 
       <AppShell.Navbar p="md">
         <Stack>
@@ -649,80 +569,7 @@ export default function UnifidriveLanding() {
         </Box>
 
         {/* Footer */}
-        <Box bg="dark" py={40}>
-          <Container size="var(--mantine-breakpoint-xxl)" px={120}>
-            <Grid>
-              <Grid.Col span={{ base: 12, md: 3 }}>
-                <Stack gap="sm">
-                  <Group>
-                    <ThemeIcon
-                      size="sm"
-                      variant="gradient"
-                      gradient={{ from: 'blue', to: 'cyan' }}
-                    >
-                      <ICONS.IconCloud size={16} />
-                    </ThemeIcon>
-                    <Title order={4} c="white">
-                      AllCloudHub
-                    </Title>
-                  </Group>
-                  <Text size="sm" c="dimmed">
-                    Simply your cloud storage management for everyone.
-                  </Text>
-                </Stack>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 12, md: 9 }}>
-                <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="xl">
-                  <Stack gap="sm">
-                    <Title order={6} c="white">
-                      Product
-                    </Title>
-                    <Anchor size="sm" c="dimmed">
-                      Features
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Pricing
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Security
-                    </Anchor>
-                  </Stack>
-                  <Stack gap="sm">
-                    <Title order={6} c="white">
-                      Support
-                    </Title>
-                    <Anchor size="sm" c="dimmed">
-                      FAQ
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Contact
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Help Center
-                    </Anchor>
-                  </Stack>
-                  <Stack gap="sm">
-                    <Title order={6} c="white">
-                      Legal
-                    </Title>
-                    <Anchor size="sm" c="dimmed">
-                      Privacy Policy
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Terms of Service
-                    </Anchor>
-                  </Stack>
-                </SimpleGrid>
-              </Grid.Col>
-            </Grid>
-
-            <Divider my="xl" color="dark.4" />
-            <Text ta="center" size="sm" c="dimmed">
-              © 2025 AllCloudHub. All rights reserved.
-            </Text>
-          </Container>
-        </Box>
+        <LandingFooter />
       </AppShell.Main>
 
       <style>{`
