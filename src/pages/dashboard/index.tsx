@@ -144,7 +144,6 @@ const Dashboard = () => {
     displayDownloadIcon,
     location,
     displayShareIcon,
-    connectedAccounts,
     previewFile,
     previewModalOpen,
     setPreviewFile,
@@ -180,12 +179,14 @@ const Dashboard = () => {
     methods,
     connectAccountFormData,
     connectAccountLoading,
+    connectedAccounts,
+    loading: connectedAccountLoading,
   } = useSidebar();
   const { isSm, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
-  if (!connectedAccounts?.length) {
+  if (!connectedAccounts?.length && !loading && !files?.length) {
     return (
       <>
         <LoaderOverlay visible={loading} opacity={1} />
@@ -204,6 +205,8 @@ const Dashboard = () => {
       </>
     );
   }
+
+  if (connectedAccountLoading) return null;
 
   return (
     <Box>
