@@ -313,10 +313,13 @@ const Dashboard = () => {
           className="stickey-box"
         >
           {/* <Box> */}
-          <Group align="center" w={'100%'} 
-          // h={48}
-          h={isSm ? 48 : 'auto'} 
-          gap={16}>
+          <Group
+            align="center"
+            w={'100%'}
+            // h={48}
+            h={isSm ? 48 : 'auto'}
+            gap={16}
+          >
             {/* Left Section - Breadcrumbs */}
             <Box style={{ flexGrow: 1, minWidth: 0 }}>
               <Breadcrumbs

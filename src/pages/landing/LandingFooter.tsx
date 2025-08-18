@@ -13,10 +13,18 @@ import {
 } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
 
-const LandingFooter = () => {
+interface FooterProps {
+  isSm: boolean;
+  isMd: boolean;
+}
+
+const LandingFooter: React.FC<FooterProps> = ({ isSm, isMd }) => {
   return (
     <Box bg="dark" py={40}>
-      <Container size="var(--mantine-breakpoint-xxl)" px={120}>
+      <Container
+        size="var(--mantine-breakpoint-xxl)"
+        px={isSm ? 20 : isMd ? 40 : 120}
+      >
         <Grid>
           <Grid.Col span={{ base: 12, md: 3 }}>
             <Stack gap="sm">
@@ -39,7 +47,7 @@ const LandingFooter = () => {
           </Grid.Col>
 
           <Grid.Col span={{ base: 12, md: 9 }}>
-            <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="xl">
+            <SimpleGrid cols={{ base: 2, sm: 3 }} spacing={isSm ? 'md' : 'xl'}>
               <Stack gap="sm">
                 <Title order={6} c="white">
                   Product
