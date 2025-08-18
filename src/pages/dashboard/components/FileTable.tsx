@@ -93,11 +93,14 @@ const FileTable: React.FC<FileTableProps> = ({
             // maw={'70%'}
             style={{ overflow: 'hidden' }}
           >
-            <div style={{ flexShrink: 0 }}>
-            {row.icon(iconSize)}
-            </div>
+            <div style={{ flexShrink: 0 }}>{row.icon(iconSize)}</div>
             <Tooltip label={row.name} fz={'xs'}>
-              <Text fw={600} fz={'sm'} truncate style={{ maxWidth: '100%', whiteSpace: 'nowrap' }}>
+              <Text
+                fw={600}
+                fz={'sm'}
+                truncate
+                style={{ maxWidth: '100%', whiteSpace: 'nowrap' }}
+              >
                 {row.name}
               </Text>
             </Tooltip>

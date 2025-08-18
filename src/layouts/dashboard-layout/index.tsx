@@ -11,6 +11,7 @@ import {
   Stack,
   TextInput,
   Menu as MantineMenu,
+  Text,
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
 import { usePageData } from '../../hooks/use-page-data';
@@ -217,19 +218,30 @@ const DashboardLayout = () => {
                     }}
                   />
                 ) : (
-                  <Box
-                    fw={700}
-                    fz={22}
-                    c="blue.7"
-                    style={{ letterSpacing: -0.5, cursor: 'pointer' }}
-                    onClick={() => {
-                      removeLocalStorage('folderId');
-                      removeLocalStorage('cloudStoragePath');
-                      navigate(PRIVATE_ROUTES.DASHBOARD.url);
-                    }}
-                  >
-                    AllCloudHub
-                  </Box>
+                  <>
+                    <ICONS.IconCloud
+                      size={32}
+                      color={'#0ea5e9'}
+                      onClick={() => {
+                        removeLocalStorage('folderId');
+                        removeLocalStorage('cloudStoragePath');
+                        navigate(PRIVATE_ROUTES.DASHBOARD.url);
+                      }}
+                    />
+                    <Box
+                      fw={700}
+                      fz={22}
+                      c="blue.7"
+                      style={{ letterSpacing: -0.5, cursor: 'pointer' }}
+                      onClick={() => {
+                        removeLocalStorage('folderId');
+                        removeLocalStorage('cloudStoragePath');
+                        navigate(PRIVATE_ROUTES.DASHBOARD.url);
+                      }}
+                    >
+                      AllCloudHub
+                    </Box>
+                  </>
                 )}
                 {/* {!isSm ? (
                   <Group
@@ -275,47 +287,231 @@ const DashboardLayout = () => {
                 <MantineMenu
                   position="top-end"
                   withArrow
-                  width={200}
-                  shadow="lg"
+                  width={260}
+                  shadow="xl"
                   offset={8}
+                  transitionProps={{
+                    transition: 'slide-up',
+                    duration: 300,
+                    timingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  styles={{
+                    dropdown: {
+                      background: '#ffffff',
+                      border: '1px solid rgba(0, 86, 179, 0.1)',
+                      backdropFilter: 'blur(20px)',
+                      boxShadow:
+                        '0 20px 40px rgba(0, 86, 179, 0.15), 0 0 0 1px rgba(0, 86, 179, 0.05)',
+                      padding: '8px',
+                      marginLeft: '10px',
+                      borderRadius: '12px',
+                      transformOrigin: 'bottom center',
+                    },
+                    arrow: {
+                      background: '#ffffff',
+                      borderColor: 'rgba(0, 86, 179, 0.1)',
+                    },
+                  }}
                 >
                   <MantineMenu.Target>
-                    <ActionIcon
-                      radius="xl"
-                      size={60}
-                      variant="filled"
-                      color="blue"
+                    <Box
                       style={{
                         position: 'fixed',
                         bottom: 20,
                         left: 20,
                         zIndex: 2000,
-                        boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
                       }}
-                      aria-label="New"
                     >
-                      <ICONS.IconPlus size={26} />
-                    </ActionIcon>
+                      <ActionIcon
+                        radius="xl"
+                        size={60}
+                        variant="filled"
+                        style={{
+                          background:
+                            'linear-gradient(135deg, #1c7ed6 0%, #0070f3 100%)',
+                          // boxShadow:
+                          //   '0 8px 32px rgba(0, 86, 179, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.8)',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          border: '2px solid #ffffff',
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                          // e.currentTarget.style.boxShadow =
+                          //   '0 12px 40px rgba(0, 86, 179, 0.5), 0 0 0 4px rgba(255, 255, 255, 0.9)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          // e.currentTarget.style.boxShadow =
+                          //   '0 8px 32px rgba(0, 86, 179, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.8)';
+                        }}
+                        aria-label="New"
+                      >
+                        {/* Pulsing Background */}
+                        <Box
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background:
+                              'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                            animation: 'pulse 2s ease-in-out infinite',
+                            pointerEvents: 'none',
+                          }}
+                        />
+
+                        <ICONS.IconPlus
+                          size={28}
+                          color="#ffffff"
+                          style={{
+                            position: 'relative',
+                            zIndex: 1,
+                          }}
+                        />
+
+                        <style>{`
+                          @keyframes pulse {
+                            0%,
+                            100% {
+                              opacity: 0.8;
+                              transform: scale(1);
+                            }
+                            50% {
+                              opacity: 1;
+                              transform: scale(1.1);
+                            }
+                          }
+                        `}</style>
+                      </ActionIcon>
+                    </Box>
                   </MantineMenu.Target>
 
                   <MantineMenu.Dropdown>
                     <MantineMenu.Item
-                      leftSection={<ICONS.IconFolderPlus size={16} />}
+                      leftSection={
+                        <Box
+                          style={{
+                            background:
+                              'linear-gradient(135deg, #0056b3 0%, #0070f3 100%)',
+                            borderRadius: '8px',
+                            padding: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '32px',
+                            minHeight: '32px',
+                          }}
+                        >
+                          <ICONS.IconFolderPlus size={16} color="#ffffff" />
+                        </Box>
+                      }
                       onClick={() => {
                         openModal('folder');
                         mobileDrawerHandler?.close();
                       }}
+                      style={{
+                        padding: '12px 16px',
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        // margin: '4px',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        background: 'rgba(0, 86, 179, 0.02)',
+                        color: '#1f2937',
+                        border: '1px solid rgba(0, 86, 179, 0.08)',
+                        minHeight: 'auto',
+                        animation:
+                          'slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background =
+                          'rgba(0, 86, 179, 0.08)';
+                        e.currentTarget.style.transform =
+                          'translateX(4px) scale(1.02)';
+                        e.currentTarget.style.borderColor =
+                          'rgba(0, 86, 179, 0.2)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background =
+                          'rgba(0, 86, 179, 0.02)';
+                        e.currentTarget.style.transform =
+                          'translateX(0px) scale(1)';
+                        e.currentTarget.style.borderColor =
+                          'rgba(0, 86, 179, 0.08)';
+                      }}
                     >
-                      Create folder
+                      <Box>
+                        <Text fw={500} size="sm" c="#1f2937">
+                          Create folder
+                        </Text>
+                        <Text size="xs" c="#6b7280" mt={2}>
+                          Organize your files
+                        </Text>
+                      </Box>
                     </MantineMenu.Item>
+
                     <MantineMenu.Item
-                      leftSection={<ICONS.IconUpload size={16} />}
+                      leftSection={
+                        <Box
+                          style={{
+                            background:
+                              'linear-gradient(135deg, #0056b3 0%, #0070f3 100%)',
+                            borderRadius: '8px',
+                            padding: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '32px',
+                            minHeight: '32px',
+                          }}
+                        >
+                          <ICONS.IconUpload size={16} color="#ffffff" />
+                        </Box>
+                      }
                       onClick={() => {
                         openModal('files');
                         mobileDrawerHandler?.close();
                       }}
+                      style={{
+                        padding: '12px 16px',
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        marginTop: '4px',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        background: 'rgba(0, 86, 179, 0.02)',
+                        color: '#1f2937',
+                        border: '1px solid rgba(0, 86, 179, 0.08)',
+                        minHeight: 'auto',
+                        animation:
+                          'slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background =
+                          'rgba(0, 86, 179, 0.08)';
+                        e.currentTarget.style.transform =
+                          'translateX(4px) scale(1.02)';
+                        e.currentTarget.style.borderColor =
+                          'rgba(0, 86, 179, 0.2)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background =
+                          'rgba(0, 86, 179, 0.02)';
+                        e.currentTarget.style.transform =
+                          'translateX(0px) scale(1)';
+                        e.currentTarget.style.borderColor =
+                          'rgba(0, 86, 179, 0.08)';
+                      }}
                     >
-                      Upload files
+                      <Box>
+                        <Text fw={500} size="sm" c="#1f2937">
+                          Upload files
+                        </Text>
+                        <Text size="xs" c="#6b7280" mt={2}>
+                          Add documents, images & more
+                        </Text>
+                      </Box>
                     </MantineMenu.Item>
                   </MantineMenu.Dropdown>
                 </MantineMenu>
@@ -534,6 +730,31 @@ const DashboardLayout = () => {
           </Form>
         )}
       </Modal>
+
+      <style>{`
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 0.8;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.1);
+          }
+        }
+      `}</style>
 
       <TawkToWidget />
     </>

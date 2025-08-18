@@ -122,7 +122,7 @@ const SortableCloudAccountItem = ({
 
           {/* Remove Access Button */}
           {hoveredAccountId === account.id && (
-            <Tooltip label="Remove Access" position="right" withArrow>
+            <Tooltip label="Remove Access" position="right" withArrow fz={'xs'}>
               <Box
                 style={{
                   position: 'absolute',
