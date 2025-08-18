@@ -24,7 +24,6 @@ import {
   renameCloudStorageFile,
   resetCloudStorageFolder,
   setAccountId,
-  setSearchTerm,
   uploadCloudStorageFiles,
   moveCloudStorageFiles,
   syncCloudStorage,
@@ -201,6 +200,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const folderId = getLocalStorage(folderIdKey);
   const globalSearchState = getLocalStorage('globalSearchState');
 
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const autoLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasTriggeredAutoLoad = useRef(false);
+  const isInitialLoadComplete = useRef(false);
+  const lastAutoLoadCheck = useRef<string>('');
+
   const checkLocation = useMemo(
     () =>
       location.pathname.startsWith('/google-drive') ||
@@ -369,156 +374,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
   // const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
 
-  useEffect(() => {
-    if (moveModalOpen) {
-      dispatch(setMoveModalPath(currentPath));
-    }
-  }, [moveModalOpen, currentPath, dispatch]);
-
-  useEffect(() => {
-    if (checkLocation && !connectedAccounts?.length) {
-      navigate(PRIVATE_ROUTES.DASHBOARD.url);
-    }
-  }, [checkLocation, navigate, connectedAccounts]);
-
-  // useEffect(() => {
-  //   if (
-  //     (!folderId || folderId === null) &&
-  //     connectedAccounts?.length &&
-  //     !hasCalledRecentFilesAPI.current
-  //   ) {
-  //     onGetRecentFiles({});
-  //     hasCalledRecentFilesAPI.current = true;
-  //   }
-  // }, [folderId]);
-
-  useEffect(() => {
-    const currentLength = connectedAccounts?.length || 0;
-    if (
-      currentLength > 0 &&
-      currentLength > prevConnectedAccountsLength.current &&
-      !hasCalledPostConnectAPIs.current &&
-      !hasCalledInitializeAPI.current
-    ) {
-      // if (
-      //   !hasCalledRecentFilesAPI.current &&
-      //   (!folderId || folderId === null)
-      // ) {
-      //   onGetRecentFiles({});
-      //   hasCalledRecentFilesAPI.current = true;
-      // }
-      onInitialize({});
-      hasCalledPostConnectAPIs.current = true;
-      hasCalledInitializeAPI.current = true;
-    }
-
-    prevConnectedAccountsLength.current = currentLength;
-
-    if (currentLength === 0) {
-      hasCalledPostConnectAPIs.current = false;
-      hasCalledInitializeAPI.current = false;
-      hasCalledRecentFilesAPI.current = false;
-    }
-  }, [
-    connectedAccounts?.length,
-    onInitialize,
-    // onGetRecentFiles
-  ]);
-
-  useEffect(() => {
-    if (
-      !initializedRef.current &&
-      connectedAccounts?.length &&
-      !hasCalledInitializeAPI.current
-    ) {
-      onInitialize({});
-      initializedRef.current = true;
-      hasCalledInitializeAPI.current = true;
-    }
-
-    return () => {
-      dispatch(resetPagination());
-      dispatch(resetCloudStorageFolder());
-      if (!globalSearchState) {
-        removeLocalStorage(pathKey);
-        removeLocalStorage(folderIdKey);
-      }
-      removeLocalStorage(layoutKey);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (
-      !hasMountedOnce.current ||
-      // !checkLocation ||
-      !connectedAccounts?.length
-    ) {
-      hasMountedOnce.current = true;
-      return;
-    }
-
-    dispatch(setSearchTerm(debouncedSearchTerm));
-    if (checkLocation || accountId !== 'all') {
-      getCloudStorageFiles(1, {
-        type: typeFilter || undefined,
-        after: modifiedFilter?.after
-          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-          : undefined,
-        before: modifiedFilter?.before
-          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-          : undefined,
-      });
-    } else {
-      // getCloudStorageFiles();
-      getCloudStorageFiles(undefined, {
-        type: typeFilter || undefined,
-        after: modifiedFilter?.after
-          ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-          : undefined,
-        before: modifiedFilter?.before
-          ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-          : undefined,
-      });
-    }
-  }, [debouncedSearchTerm, accountId, checkLocation]);
-
-  const scrollBoxRef = useRef<HTMLDivElement>(null);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    lastScrollTop.current = e.currentTarget.scrollTop;
-    const target = e.currentTarget;
-    if (
-      target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
-      pagination &&
-      pagination.page_no < pagination.total_pages &&
-      !loading
-    ) {
-      loadMoreFiles();
-    }
-  };
-
-  useEffect(() => {
-    if (scrollBoxRef.current && lastScrollTop.current > 0) {
-      setTimeout(() => {
-        scrollBoxRef.current!.scrollTop = lastScrollTop.current;
-      }, 0);
-    }
-  }, [cloudStorage.length]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMoveMode) {
-        setIsMoveMode(false);
-        setFilesToMove([]);
-        selectParentId(null);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isMoveMode]);
-
   const loadMoreFiles = useCallback(async () => {
     if (pagination && pagination.page_no < pagination.total_pages && !loading) {
       const requestParams: any = {
@@ -573,6 +428,219 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }));
   }, [cloudStorage]);
 
+  const checkScrollbarAndAutoLoad = useCallback(async () => {
+    if (
+      !scrollBoxRef.current ||
+      loading ||
+      isAutoLoading ||
+      hasTriggeredAutoLoad.current
+    ) {
+      return;
+    }
+
+    // Create a unique identifier for this check to prevent duplicates
+    const checkId = `${files.length}-${pagination?.page_no}-${pagination?.total_pages}`;
+    if (lastAutoLoadCheck.current === checkId) {
+      return;
+    }
+    lastAutoLoadCheck.current = checkId;
+
+    const container = scrollBoxRef.current;
+    const hasVerticalScrollbar =
+      container.scrollHeight > container.clientHeight;
+
+    // Only auto-load if no scrollbar, more pages available, and initial load is complete
+    if (
+      !hasVerticalScrollbar &&
+      pagination &&
+      pagination.page_no < pagination.total_pages &&
+      isInitialLoadComplete.current
+    ) {
+      setIsAutoLoading(true);
+      hasTriggeredAutoLoad.current = true;
+
+      try {
+        await loadMoreFiles();
+      } catch (error) {
+        console.error('Auto-load failed:', error);
+      } finally {
+        // Reset flags after a delay to allow DOM to update
+        setTimeout(() => {
+          hasTriggeredAutoLoad.current = false;
+          setIsAutoLoading(false);
+          // Schedule next check
+          setTimeout(() => {
+            checkScrollbarAndAutoLoad();
+          }, 100);
+        }, 200);
+      }
+    }
+  }, [loading, isAutoLoading, pagination, loadMoreFiles, files.length]);
+
+  useEffect(() => {
+    if (moveModalOpen) {
+      dispatch(setMoveModalPath(currentPath));
+    }
+  }, [moveModalOpen, currentPath, dispatch]);
+
+  useEffect(() => {
+    if (checkLocation && !connectedAccounts?.length) {
+      navigate(PRIVATE_ROUTES.DASHBOARD.url);
+    }
+  }, [checkLocation, navigate, connectedAccounts]);
+
+  // useEffect(() => {
+  //   if (
+  //     (!folderId || folderId === null) &&
+  //     connectedAccounts?.length &&
+  //     !hasCalledRecentFilesAPI.current
+  //   ) {
+  //     onGetRecentFiles({});
+  //     hasCalledRecentFilesAPI.current = true;
+  //   }
+  // }, [folderId]);
+
+  useEffect(() => {
+    const currentLength = connectedAccounts?.length || 0;
+    if (
+      currentLength > 0 &&
+      currentLength > prevConnectedAccountsLength.current &&
+      !hasCalledPostConnectAPIs.current &&
+      !hasCalledInitializeAPI.current
+    ) {
+      // if (
+      //   !hasCalledRecentFilesAPI.current &&
+      //   (!folderId || folderId === null)
+      // ) {
+      //   onGetRecentFiles({});
+      //   hasCalledRecentFilesAPI.current = true;
+      // }
+      onInitialize({});
+      hasCalledPostConnectAPIs.current = true;
+      hasCalledInitializeAPI.current = true;
+    }
+
+    prevConnectedAccountsLength.current = currentLength;
+
+    if (currentLength === 0) {
+      hasCalledPostConnectAPIs.current = false;
+      hasCalledInitializeAPI.current = false;
+      hasCalledRecentFilesAPI.current = false;
+      isInitialLoadComplete.current = false;
+    }
+  }, [
+    connectedAccounts?.length,
+    onInitialize,
+    // onGetRecentFiles
+  ]);
+
+  useEffect(() => {
+    if (
+      !initializedRef.current &&
+      connectedAccounts?.length &&
+      !hasCalledInitializeAPI.current
+    ) {
+      onInitialize({});
+      initializedRef.current = true;
+      hasCalledInitializeAPI.current = true;
+    }
+
+    return () => {
+      dispatch(resetPagination());
+      dispatch(resetCloudStorageFolder());
+      if (!globalSearchState) {
+        removeLocalStorage(pathKey);
+        removeLocalStorage(folderIdKey);
+      }
+      removeLocalStorage(layoutKey);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !hasMountedOnce.current ||
+      // !checkLocation ||
+      !connectedAccounts?.length
+    ) {
+      hasMountedOnce.current = true;
+      return;
+    }
+    if (isInitialLoadComplete.current) {
+      getCloudStorageFiles(
+        checkLocation || accountId !== 'all' ? 1 : undefined,
+        {
+          type: typeFilter || undefined,
+          after: modifiedFilter?.after
+            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            : undefined,
+          before: modifiedFilter?.before
+            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+            : undefined,
+        }
+      );
+    }
+
+    // if (checkLocation || accountId !== 'all') {
+    //   getCloudStorageFiles(1, {
+    //     type: typeFilter || undefined,
+    //     after: modifiedFilter?.after
+    //       ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+    //       : undefined,
+    //     before: modifiedFilter?.before
+    //       ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+    //       : undefined,
+    //   });
+    // } else {
+    //   // getCloudStorageFiles();
+    //   getCloudStorageFiles(undefined, {
+    //     type: typeFilter || undefined,
+    //     after: modifiedFilter?.after
+    //       ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+    //       : undefined,
+    //     before: modifiedFilter?.before
+    //       ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+    //       : undefined,
+    //   });
+    // }
+  }, [accountId, checkLocation, typeFilter, modifiedFilter]);
+
+  const scrollBoxRef = useRef<HTMLDivElement>(null);
+  const lastScrollTop = useRef(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    lastScrollTop.current = e.currentTarget.scrollTop;
+    const target = e.currentTarget;
+    if (
+      target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
+      pagination &&
+      pagination.page_no < pagination.total_pages &&
+      !loading
+    ) {
+      loadMoreFiles();
+    }
+  };
+
+  useEffect(() => {
+    if (scrollBoxRef.current && lastScrollTop.current > 0) {
+      setTimeout(() => {
+        scrollBoxRef.current!.scrollTop = lastScrollTop.current;
+      }, 0);
+    }
+  }, [cloudStorage.length]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMoveMode) {
+        setIsMoveMode(false);
+        setFilesToMove([]);
+        selectParentId(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMoveMode]);
+
   const recentFilesData = useMemo(() => {
     return recentFiles.map(item => ({
       id: item.id,
@@ -597,6 +665,45 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       UserConnectedAccount: item.UserConnectedAccount,
     }));
   }, [recentFiles]);
+
+  useEffect(() => {
+    // Clear any existing timeout
+    if (autoLoadTimeoutRef.current) {
+      clearTimeout(autoLoadTimeoutRef.current);
+    }
+
+    if (!isInitialLoadComplete.current && files.length > 0) {
+      isInitialLoadComplete.current = true;
+    }
+
+    // Check for scrollbar after DOM updates
+    if (isInitialLoadComplete.current && files.length > 0) {
+      autoLoadTimeoutRef.current = setTimeout(() => {
+        checkScrollbarAndAutoLoad();
+      }, 300); // Increased delay to prevent rapid calls
+    }
+
+    return () => {
+      if (autoLoadTimeoutRef.current) {
+        clearTimeout(autoLoadTimeoutRef.current);
+      }
+    };
+  }, [files.length, isInitialLoadComplete.current]);
+
+  useEffect(() => {
+    hasTriggeredAutoLoad.current = false;
+    lastAutoLoadCheck.current = '';
+    isInitialLoadComplete.current = false;
+  }, [currentFolderId, accountId]);
+
+  // Reset auto-load flag when filters change or navigation occurs
+  useEffect(() => {
+    return () => {
+      if (autoLoadTimeoutRef.current) {
+        clearTimeout(autoLoadTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
@@ -1841,6 +1948,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     handleTypeFilter,
     typeFilter,
     modifiedFilter,
+
+    isAutoLoading,
   };
 };
 
