@@ -116,8 +116,8 @@ const Dashboard = () => {
     handleAccountTypeChange,
     allIds,
     lastSelectedIndex,
-    loadMoreFiles,
-    pagination,
+    // loadMoreFiles,
+    // pagination,
     accountOptions,
     navigateLoading,
     handleSyncStorage,
@@ -145,7 +145,6 @@ const Dashboard = () => {
     displayDownloadIcon,
     location,
     displayShareIcon,
-    connectedAccounts,
     previewFile,
     previewModalOpen,
     setPreviewFile,
@@ -182,6 +181,7 @@ const Dashboard = () => {
     handleFileUploadV2,
     handleDragDropUploadV2,
     uploadFilesHandler,
+    // isAutoLoading,
   } = useDashboard({ downloadFile });
 
   const {
@@ -192,12 +192,14 @@ const Dashboard = () => {
     methods,
     connectAccountFormData,
     connectAccountLoading,
+    connectedAccounts,
+    loading: connectedAccountLoading,
   } = useSidebar();
-  const { isSm, theme, isXs } = useResponsive();
+  const { isSm, theme } = useResponsive();
 
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
-  if (!connectedAccounts?.length) {
+  if (!connectedAccounts?.length && !loading && !files?.length) {
     return (
       <>
         <LoaderOverlay visible={loading} opacity={1} />
@@ -216,6 +218,8 @@ const Dashboard = () => {
       </>
     );
   }
+
+  if (connectedAccountLoading) return null;
 
   return (
     <Box>
@@ -316,7 +320,7 @@ const Dashboard = () => {
             backgroundColor: '#f6faff',
             border: '1px solid #e5e7eb',
             borderRadius: 'var(--mantine-radius-default)',
-            padding: '5px 24px',
+            padding: '8px 24px',
             zIndex: 10,
             // boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             // borderBottom: '1px solid #e5e7eb',
@@ -325,8 +329,15 @@ const Dashboard = () => {
           className="stickey-box"
         >
           {/* <Box> */}
-          <Group align="center" w={'100%'} mih={50}>
-            <Box style={{ flexGrow: 1 }}>
+          <Group
+            align="center"
+            w={'100%'}
+            // h={48}
+            h={isSm ? 48 : 'auto'}
+            gap={16}
+          >
+            {/* Left Section - Breadcrumbs */}
+            <Box style={{ flexGrow: 1, minWidth: 0 }}>
               <Breadcrumbs
                 items={currentPath}
                 onNavigate={folderId => {
@@ -341,63 +352,180 @@ const Dashboard = () => {
                 }}
               />
             </Box>
-            <Tooltip label="Sync" fz={'xs'}>
-              <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
-                <ICONS.IconRefresh size={18} />
-              </ActionIcon>
-            </Tooltip>
-            {!checkLocation && (
-              <Select
-                data={accountOptions}
-                value={accountId}
-                onChange={handleAccountTypeChange}
-                placeholder="Select account type"
-                style={{ width: '150px' }}
-                styles={{
-                  input: {
-                    height: '44px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #e5e7eb',
-                    backgroundColor: '#ffffff',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: '#374151',
-                    transition: 'all 0.2s ease',
-                    '&:focus': {
-                      borderColor: '#1e7ae8',
-                      boxShadow: '0 0 0 3px rgba(30, 122, 232, 0.1)',
-                    },
-                    '&:hover': {
-                      borderColor: '#d1d5db',
-                    },
-                  },
-                  dropdown: {
-                    borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
-                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                  },
-                  option: {
-                    padding: '6px',
-                    fontSize: '14px',
-                    borderRadius: '4px',
-                    margin: '2px',
-                    '&[data-selected]': {
-                      backgroundColor: '#1e7ae8',
-                      color: '#ffffff',
-                    },
-                    '&:hover': {
-                      backgroundColor: '#f1f5f9',
-                    },
-                  },
-                }}
-              />
-            )}
-            <CustomToggle
-              value={layout}
-              onChange={(value: 'list' | 'grid') => switchLayout(value)}
-            />
+
+            {/* Center/Right Section - Selection Bar or Controls */}
+            {selectedIds?.length > 0 ? (
+              <Box style={{ flexShrink: 0 }}>
+                <SelectionBar
+                  count={selectedIds.length}
+                  onCancel={() => {
+                    handleUnselectAll();
+                    cancelMoveMode();
+                  }}
+                  onDelete={handleDeleteSelected}
+                  onDownload={handleDownloadSelected}
+                  onShare={handleShareSelected}
+                  onMove={handleModalMoveSelected}
+                  onPaste={handlePasteFiles}
+                  isMoveMode={isMoveMode}
+                  isPasteEnabled={isPasteEnabled()}
+                  displayMoveIcon={displayMoveIcon}
+                  displayDownloadIcon={displayDownloadIcon}
+                  displayShareIcon={
+                    selectedIds?.length === 1 && displayShareIcon
+                  }
+                />
+              </Box>
+            ) : null}
+            {/* ( */}
+            {!isSm ? (
+              <Group gap={8} wrap="nowrap" style={{ flexShrink: 0 }}>
+                {/* Filters - Compact Version */}
+                {/* {!isXs && ( */}
+                <DashboardFilters
+                  onTypeFilter={handleTypeFilter}
+                  onModifiedFilter={handleModifiedFilter}
+                  onClearFilters={handleClearFilters}
+                  activeTypeFilter={typeFilter}
+                  activeModifiedFilter={modifiedFilter}
+                  isMobile={isSm}
+                />
+                {/* )} */}
+
+                {/* Account Select - Compact */}
+                {!checkLocation && (
+                  <Select
+                    data={accountOptions}
+                    value={accountId}
+                    onChange={handleAccountTypeChange}
+                    placeholder="Account"
+                    w={140}
+                    size="sm"
+                    styles={{
+                      input: {
+                        height: '36px',
+                        borderRadius: '8px',
+                        border: '1.5px solid #e5e7eb',
+                        backgroundColor: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        color: '#374151',
+                        transition: 'all 0.2s ease',
+                        '&:focus': {
+                          borderColor: '#1e7ae8',
+                          boxShadow: '0 0 0 2px rgba(30, 122, 232, 0.1)',
+                        },
+                        '&:hover': {
+                          borderColor: '#d1d5db',
+                        },
+                      },
+                      dropdown: {
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                      },
+                    }}
+                  />
+                )}
+
+                {/* Toggle and Sync */}
+                <Group gap={6} wrap="nowrap">
+                  <Tooltip label="Sync" fz={'xs'}>
+                    <ActionIcon
+                      style={{
+                        ...iconStyle,
+                        width: 36,
+                        height: 36,
+                      }}
+                      onClick={handleSyncStorage}
+                    >
+                      <ICONS.IconRefresh size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+
+                  <CustomToggle
+                    value={layout}
+                    onChange={(value: 'list' | 'grid') => switchLayout(value)}
+                  />
+                </Group>
+              </Group>
+            ) : null}
+            {/* )} */}
           </Group>
-          <Box mt={10}>
+
+          {isSm ? (
+            <Group gap={8} wrap="nowrap" mt={10} style={{ flexShrink: 0 }}>
+              {/* Filters - Compact Version */}
+              {/* {!isXs && ( */}
+              <DashboardFilters
+                onTypeFilter={handleTypeFilter}
+                onModifiedFilter={handleModifiedFilter}
+                onClearFilters={handleClearFilters}
+                activeTypeFilter={typeFilter}
+                activeModifiedFilter={modifiedFilter}
+                isMobile={isSm}
+              />
+              {/* )} */}
+
+              {/* Account Select - Compact */}
+              {!checkLocation && (
+                <Select
+                  data={accountOptions}
+                  value={accountId}
+                  onChange={handleAccountTypeChange}
+                  placeholder="Account"
+                  w={140}
+                  size="sm"
+                  styles={{
+                    input: {
+                      height: '36px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #e5e7eb',
+                      backgroundColor: '#ffffff',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: '#374151',
+                      transition: 'all 0.2s ease',
+                      '&:focus': {
+                        borderColor: '#1e7ae8',
+                        boxShadow: '0 0 0 2px rgba(30, 122, 232, 0.1)',
+                      },
+                      '&:hover': {
+                        borderColor: '#d1d5db',
+                      },
+                    },
+                    dropdown: {
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                    },
+                  }}
+                />
+              )}
+
+              {/* Toggle and Sync */}
+              <Group gap={6} wrap="nowrap">
+                <Tooltip label="Sync" fz={'xs'}>
+                  <ActionIcon
+                    style={{
+                      ...iconStyle,
+                      width: 36,
+                      height: 36,
+                    }}
+                    onClick={handleSyncStorage}
+                  >
+                    <ICONS.IconRefresh size={16} />
+                  </ActionIcon>
+                </Tooltip>
+
+                <CustomToggle
+                  value={layout}
+                  onChange={(value: 'list' | 'grid') => switchLayout(value)}
+                />
+              </Group>
+            </Group>
+          ) : null}
+          {/* <Box mt={10}>
             {selectedIds?.length > 0 ? (
               <Box style={{ flexGrow: 1 }}>
                 <SelectionBar
@@ -449,7 +577,7 @@ const Dashboard = () => {
                 />
               </Box>
             ) : null}
-          </Box>
+          </Box> */}
           {/* </Box> */}
 
           <DragDropOverlay
@@ -478,11 +606,16 @@ const Dashboard = () => {
                 folderId,
               }}
             />
-            {pagination && pagination.page_no < pagination.total_pages ? (
-              <Button mt={20} onClick={loadMoreFiles}>
-                Load More
+            {/* {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button
+                mt={20}
+                onClick={loadMoreFiles}
+                loading={isAutoLoading}
+                disabled={isAutoLoading}
+              >
+                {isAutoLoading ? 'Auto Loading...' : 'Load More'}
               </Button>
-            ) : null}
+            ) : null} */}
           </>
         ) : (
           <>
@@ -509,11 +642,16 @@ const Dashboard = () => {
                 displayPreviewIcon,
               }}
             />
-            {pagination && pagination.page_no < pagination.total_pages ? (
-              <Button mt={20} onClick={loadMoreFiles}>
-                Load More
+            {/* {pagination && pagination.page_no < pagination.total_pages ? (
+              <Button
+                mt={20}
+                onClick={loadMoreFiles}
+                loading={isAutoLoading}
+                disabled={isAutoLoading}
+              >
+                {isAutoLoading ? 'Auto Loading...' : 'Load More'}
               </Button>
-            ) : null}
+            ) : null} */}
           </>
         )}
       </Box>

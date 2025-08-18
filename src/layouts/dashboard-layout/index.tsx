@@ -10,7 +10,7 @@ import {
   Group,
   Stack,
   TextInput,
-  Menu as MantineMenu
+  Menu as MantineMenu,
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
 import { usePageData } from '../../hooks/use-page-data';
@@ -26,6 +26,8 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import {
+  fetchStorageDetails,
+  getConnectedAccount,
   // fetchStorageDetails,
   // getConnectedAccount,
   resetUser,
@@ -60,6 +62,11 @@ const DashboardLayout = () => {
     getFileIcon,
     uploadedFiles,
     uploadFilesLoading,
+    showUploadProgress,
+    uploadProgress,
+    uploadingFiles,
+    handleCancelUpload,
+    handleCloseUploadProgress,
   } = useDashboard({});
 
   const { logout } = useAuth() as any;
@@ -70,17 +77,17 @@ const DashboardLayout = () => {
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
 
-  // const getAccounts = useCallback(async () => {
-  //   await dispatch(getConnectedAccount());
-  // }, [dispatch]);
+  const getAccounts = useCallback(async () => {
+    await dispatch(getConnectedAccount());
+  }, [dispatch]);
 
-  // const [onInitialize] = useAsyncOperation(getAccounts);
+  const [onInitialize] = useAsyncOperation(getAccounts);
 
-  // const getStorageDetails = useCallback(async () => {
-  //   await dispatch(fetchStorageDetails());
-  // }, [dispatch]);
+  const getStorageDetails = useCallback(async () => {
+    await dispatch(fetchStorageDetails());
+  }, [dispatch]);
 
-  // const [fetchStorageData] = useAsyncOperation(getStorageDetails);
+  const [fetchStorageData] = useAsyncOperation(getStorageDetails);
 
   const getUserProfile = useCallback(async () => {
     const res = await dispatch(fetchProfile());
@@ -127,12 +134,12 @@ const DashboardLayout = () => {
     // };
   }, []);
 
-  // useEffect(() => {
-  //   if (userProfile?.role === ROLES.USER) {
-  //     onInitialize({});
-  //     fetchStorageData({});
-  //   }
-  // }, [userProfile]);
+  useEffect(() => {
+    if (userProfile?.role === ROLES.USER) {
+      onInitialize({});
+      fetchStorageData({});
+    }
+  }, [userProfile]);
 
   const fullName = useMemo(
     () =>
@@ -361,7 +368,32 @@ const DashboardLayout = () => {
           </Container>
         </AppShell.Header>
         <AppShell.Navbar p="md" styles={{ navbar: { zIndex: 20 } }}>
-          <NavBar {...{ mobileDrawerHandler, isSm }} />
+          <NavBar
+            {...{
+              mobileDrawerHandler,
+              isSm,
+              openModal,
+              modalOpen,
+              closeModal,
+              modalType,
+              folderMethods,
+              handleCreateFolder,
+              isSFDEnabled,
+              accountOptionsForSFD,
+              createFolderLoading,
+              handleFileUpload,
+              uploadMethods,
+              setUploadedFiles,
+              getFileIcon,
+              uploadedFiles,
+              uploadFilesLoading,
+              showUploadProgress,
+              uploadProgress,
+              uploadingFiles,
+              handleCancelUpload,
+              handleCloseUploadProgress,
+            }}
+          />
         </AppShell.Navbar>
         <AppShell.Main ml={-15} pe={0} pt={60}>
           <Container size="var(--mantine-breakpoint-xxl)" px={0}>

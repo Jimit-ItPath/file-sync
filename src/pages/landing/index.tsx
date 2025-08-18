@@ -1,3 +1,4 @@
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Container,
   Title,
@@ -10,12 +11,11 @@ import {
   Box,
   ThemeIcon,
   SimpleGrid,
-  Anchor,
   AppShell,
-  Burger,
   Divider,
   Image,
 } from '@mantine/core';
+import { Carousel } from '@mantine/carousel';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useNavigate } from 'react-router';
 import { AUTH_ROUTES } from '../../routing/routes';
@@ -25,6 +25,172 @@ import OneDriveIcon from '../../assets/svgs/OneDrive.svg';
 import LandingPagwSvg from '../../assets/svgs/LandingPage.svg';
 import useResponsive from '../../hooks/use-responsive';
 import { ICONS } from '../../assets/icons';
+import NavigationItems from './NavigationItems';
+import LandingHeader from './LandingHeader';
+import LandingFooter from './LandingFooter';
+
+// Types
+interface FeatureItem {
+  icon: React.ComponentType<{ size: number }>;
+  title: string;
+  description: string;
+  color: string;
+}
+
+interface AnimatedSectionProps {
+  children: React.ReactNode;
+  delay?: number;
+  duration?: number;
+  className?: string;
+}
+
+interface StaggerContainerProps {
+  children: React.ReactNode;
+  staggerDelay?: number;
+}
+
+interface MobileCarouselProps {
+  items: FeatureItem[];
+  isMobile: boolean;
+}
+
+// Animation hook for intersection observer
+const useAnimateOnScroll = (
+  threshold: number = 0.1
+): [React.RefObject<HTMLDivElement>, boolean] => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref: any = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return [ref, isVisible];
+};
+
+// Animated Section Component
+const AnimatedSection: React.FC<AnimatedSectionProps> = ({
+  children,
+  delay = 0,
+  duration = 0.6,
+  className = '',
+}) => {
+  const [ref, isVisible] = useAnimateOnScroll(0.1);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(50px)',
+        transition: `all ${duration}s ease-out ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+// Stagger Animation Container
+const StaggerContainer: React.FC<StaggerContainerProps> = ({
+  children,
+  staggerDelay = 0.1,
+}) => {
+  const [ref, isVisible] = useAnimateOnScroll(0.1);
+
+  return (
+    <div ref={ref}>
+      {React.Children.map(children, (child, index) => (
+        <div
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
+            transition: `all 0.6s ease-out ${index * staggerDelay}s`,
+          }}
+        >
+          {child}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Mobile Carousel Component
+const MobileCarousel: React.FC<MobileCarouselProps> = ({ items, isMobile }) => {
+  if (!isMobile) return null;
+
+  return (
+    <AnimatedSection>
+      <Carousel
+        slideSize="100%"
+        slideGap="md"
+        emblaOptions={{ loop: true, align: 'center', dragFree: true }}
+        // slidesToScroll={1}
+        withIndicators
+        styles={{
+          indicator: {
+            width: 8,
+            height: 8,
+            backgroundColor: '#e9ecef',
+            transition: 'all 0.3s ease',
+            '&[data-active]': {
+              backgroundColor: '#339af0',
+            },
+          },
+        }}
+      >
+        {items.map((item, index) => (
+          <Carousel.Slide key={index}>
+            <Card
+              shadow="sm"
+              padding="xl"
+              radius="md"
+              style={{
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-5px)',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                },
+              }}
+            >
+              <Stack align="center" gap="md">
+                <ThemeIcon
+                  size={40}
+                  radius="xl"
+                  color={item.color}
+                  variant="light"
+                >
+                  <item.icon size={24} />
+                </ThemeIcon>
+                <Title order={4} ta="center" fz={14}>
+                  {item.title}
+                </Title>
+                <Text ta="center" c="dimmed" size="xs">
+                  {item.description}
+                </Text>
+              </Stack>
+            </Card>
+          </Carousel.Slide>
+        ))}
+      </Carousel>
+    </AnimatedSection>
+  );
+};
 
 export default function UnifidriveLanding() {
   const [opened, { open, close }] = useDisclosure(false);
@@ -32,7 +198,7 @@ export default function UnifidriveLanding() {
   const { isMd, isSm } = useResponsive();
   const navigate = useNavigate();
 
-  const features = [
+  const features: FeatureItem[] = [
     {
       icon: ICONS.IconCloud,
       title: 'Connect Your Cloud Drives',
@@ -56,7 +222,7 @@ export default function UnifidriveLanding() {
     },
   ];
 
-  const powerfulFeatures = [
+  const powerfulFeatures: FeatureItem[] = [
     {
       icon: ICONS.IconDashboard,
       title: 'Unified Dashboard',
@@ -101,7 +267,7 @@ export default function UnifidriveLanding() {
     },
   ];
 
-  const benefits = [
+  const benefits: FeatureItem[] = [
     {
       icon: ICONS.IconDownload,
       title: 'Save Storage Costs',
@@ -128,7 +294,7 @@ export default function UnifidriveLanding() {
     },
   ];
 
-  const security = [
+  const security: FeatureItem[] = [
     {
       icon: ICONS.IconShieldHalfFilled,
       title: 'OAuth 2.0 Security',
@@ -152,43 +318,6 @@ export default function UnifidriveLanding() {
     },
   ];
 
-  const NavigationItems = () => (
-    <>
-      <Anchor
-        href="#features"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        Features
-      </Anchor>
-      <Anchor
-        href="#pricing"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        Pricing
-      </Anchor>
-      <Anchor
-        href="#security"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        Security
-      </Anchor>
-      <Anchor
-        href="#faq"
-        c="dimmed"
-        size="sm"
-        style={{ textDecoration: 'none' }}
-      >
-        FAQ
-      </Anchor>
-    </>
-  );
-
   return (
     <AppShell
       header={{ height: 70 }}
@@ -199,51 +328,7 @@ export default function UnifidriveLanding() {
       }}
       padding="md"
     >
-      <AppShell.Header>
-        <Container
-          size="var(--mantine-breakpoint-xxl)"
-          px={isSm ? 20 : isMd ? 40 : 120}
-          h="100%"
-        >
-          <Group justify="space-between" h="100%">
-            <Group>
-              <ThemeIcon
-                size="lg"
-                variant="gradient"
-                gradient={{ from: 'blue', to: 'cyan' }}
-              >
-                <ICONS.IconCloud size={20} />
-              </ThemeIcon>
-              <Title order={3} c="blue">
-                AllCloudHub
-              </Title>
-            </Group>
-
-            {!isMobile ? (
-              <Group>
-                <NavigationItems />
-                <Group gap="xs">
-                  <Button
-                    variant="subtle"
-                    onClick={() => navigate(AUTH_ROUTES.LOGIN.url)}
-                  >
-                    Sign In
-                  </Button>
-                  <Button onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}>
-                    Get Started
-                  </Button>
-                </Group>
-              </Group>
-            ) : (
-              <Burger
-                opened={opened}
-                onClick={opened ? close : open}
-                size="sm"
-              />
-            )}
-          </Group>
-        </Container>
-      </AppShell.Header>
+      <LandingHeader {...{ close, navigate, open, opened }} />
 
       <AppShell.Navbar p="md">
         <Stack>
@@ -269,61 +354,69 @@ export default function UnifidriveLanding() {
           px={isSm ? 20 : isMd ? 40 : 120}
           py={20}
           bg={'linear-gradient(120deg, #f8fafc 0%, #f0f9ff 100%)'}
+          style={{ overflow: 'hidden' }}
         >
           <Grid>
             <Grid.Col span={{ base: 12, md: 6 }}>
-              <Stack gap={isMobile ? 'md' : 'xl'}>
-                <Title order={1} fw={700} fz={isMobile ? 36 : 60}>
-                  One Platform.{' '}
-                </Title>
-                <Title c="blue" fw={700} fz={isMobile ? 36 : 60} maw={600}>
-                  All Your Cloud Drives.
-                </Title>
+              <AnimatedSection delay={0.2}>
+                <Stack gap={isMobile ? 'md' : 'xl'}>
+                  <Title order={1} fw={700} fz={isMobile ? 36 : 60}>
+                    One Platform.{' '}
+                  </Title>
+                  <Title c="blue" fw={700} fz={isMobile ? 36 : 60} maw={600}>
+                    All Your Cloud Drives.
+                  </Title>
 
-                <Text size="lg" c="dimmed" maw={600} fz={isMobile ? 16 : 18}>
-                  AllCloudHub lets you connect Google Drive, OneDrive, and
-                  Dropbox in one place and smartly manage your storage.
-                </Text>
+                  <Text size="lg" c="dimmed" maw={600} fz={isMobile ? 16 : 18}>
+                    AllCloudHub lets you connect Google Drive, OneDrive, and
+                    Dropbox in one place and smartly manage your storage.
+                  </Text>
 
-                <Group>
-                  <Button
-                    size="lg"
-                    rightSection={<ICONS.IconArrowRight size={18} />}
-                    style={{
-                      transition: 'transform 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
-                    fz={isMobile ? 14 : 16}
-                    onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
-                  >
-                    Get Started For Free
-                  </Button>
-                  <Button variant="outline" size="lg" fz={isMobile ? 14 : 16}>
-                    See How It Works
-                  </Button>
-                </Group>
-
-                <Group gap="xl">
-                  <Group gap="xs">
-                    <ThemeIcon size="sm" variant="light">
-                      <ICONS.IconShieldHalfFilled size={14} />
-                    </ThemeIcon>
-                    <Text size={isMobile ? 'xs' : 'sm'} c="dimmed">
-                      OAuth 2.0 Secured
-                    </Text>
+                  <Group>
+                    <Button
+                      size={isMobile ? 'md' : 'lg'}
+                      rightSection={<ICONS.IconArrowRight size={18} />}
+                      style={{
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 25px rgba(37, 99, 235, 0.3)',
+                        },
+                      }}
+                      fz={isMobile ? 14 : 16}
+                      onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
+                    >
+                      Get Started For Free
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size={isMobile ? 'md' : 'lg'}
+                      fz={isMobile ? 14 : 16}
+                    >
+                      See How It Works
+                    </Button>
                   </Group>
-                  <Group gap="xs">
-                    <ThemeIcon size={'sm'} variant="light">
-                      <ICONS.IconLock size={14} />
-                    </ThemeIcon>
-                    <Text size={isMobile ? 'xs' : 'sm'} c="dimmed">
-                      No Data Stored
-                    </Text>
+
+                  <Group gap={isMobile ? 'md' : 'xl'}>
+                    <Group gap="xs">
+                      <ThemeIcon size="sm" variant="light">
+                        <ICONS.IconShieldHalfFilled size={14} />
+                      </ThemeIcon>
+                      <Text size={isMobile ? 'xs' : 'sm'} c="dimmed">
+                        OAuth 2.0 Secured
+                      </Text>
+                    </Group>
+                    <Group gap="xs">
+                      <ThemeIcon size={'sm'} variant="light">
+                        <ICONS.IconLock size={14} />
+                      </ThemeIcon>
+                      <Text size={isMobile ? 'xs' : 'sm'} c="dimmed">
+                        No Data Stored
+                      </Text>
+                    </Group>
                   </Group>
-                </Group>
-              </Stack>
+                </Stack>
+              </AnimatedSection>
             </Grid.Col>
 
             <Grid.Col
@@ -334,54 +427,19 @@ export default function UnifidriveLanding() {
                 alignItems: 'center',
               }}
             >
-              <Image
-                src={LandingPagwSvg}
-                w={{ base: 300, sm: 400, md: 500, lg: 600 }}
-                h={{ base: 200, sm: 300, md: 350, lg: 400 }}
-                my={{ base: 20, md: 50 }}
-                style={{ maxWidth: '100%', height: 'auto' }}
-              />
-              {/* <Center h="100%">
-                <Paper
-                  shadow="xl"
-                  p="xl"
-                  radius="lg"
+              <AnimatedSection delay={0.4}>
+                <Image
+                  src={LandingPagwSvg}
+                  w={{ base: 300, sm: 400, md: 500, lg: 600 }}
+                  h={{ base: 200, sm: 300, md: 350, lg: 400 }}
+                  my={{ base: 20, md: 50 }}
                   style={{
-                    background:
-                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    transform: 'perspective(1000px) rotateY(-5deg)',
+                    maxWidth: '100%',
+                    height: 'auto',
+                    transition: 'transform 0.6s ease',
                   }}
-                  w="100%"
-                  maw={400}
-                >
-                  <Stack gap="md" align="center">
-                    <Group justify="center" gap="lg">
-                      <ThemeIcon size={40} variant="white" color="gray">
-                        <IconCloud size={24} />
-                      </ThemeIcon>
-                      <ThemeIcon size={40} variant="white" color="gray">
-                        <IconCloud size={24} />
-                      </ThemeIcon>
-                    </Group>
-
-                    <SimpleGrid cols={6} spacing="sm">
-                      {Array.from({ length: 12 }).map((_, i) => (
-                        <Paper
-                          key={i}
-                          h={40}
-                          w={40}
-                          bg="white"
-                          radius="md"
-                          style={{
-                            animation: `float ${2 + (i % 3)}s ease-in-out infinite`,
-                            animationDelay: `${i * 0.2}s`,
-                          }}
-                        />
-                      ))}
-                    </SimpleGrid>
-                  </Stack>
-                </Paper>
-              </Center> */}
+                />
+              </AnimatedSection>
             </Grid.Col>
           </Grid>
         </Container>
@@ -391,58 +449,70 @@ export default function UnifidriveLanding() {
           <Container
             size="var(--mantine-breakpoint-xxl)"
             px={isSm ? 20 : isMd ? 40 : 120}
+            style={{ overflow: 'hidden' }}
           >
-            <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
-              <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
-                How It Works
-              </Title>
-              <Text ta="center" c="dimmed" fz={isMobile ? 14 : 16}>
-                Get started in just 3 simple steps
-              </Text>
+            <AnimatedSection>
+              <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
+                <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
+                  How It Works
+                </Title>
+                <Text ta="center" c="dimmed" fz={isMobile ? 14 : 16}>
+                  Get started in just 3 simple steps
+                </Text>
+              </Stack>
+            </AnimatedSection>
 
-              <SimpleGrid
-                cols={{ base: 1, sm: 2, md: 3 }}
-                spacing="xl"
-                w="100%"
-              >
-                {features.map((feature, index) => (
-                  <Card
-                    key={index}
-                    shadow="sm"
-                    padding="xl"
-                    radius="md"
-                    style={{
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-5px)',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                      },
-                    }}
-                  >
-                    <Stack align="center" gap="md">
-                      <ThemeIcon
-                        size={isMobile ? 40 : 60}
-                        radius="xl"
-                        color={feature.color}
-                        variant="light"
-                      >
-                        <feature.icon size={isMobile ? 24 : 30} />
-                      </ThemeIcon>
-                      <Title order={4} ta="center" fz={isMobile ? 14 : 16}>
-                        {feature.title}
-                      </Title>
-                      <Text
-                        ta="center"
-                        c="dimmed"
-                        size={isMobile ? 'xs' : 'sm'}
-                      >
-                        {feature.description}
-                      </Text>
-                    </Stack>
-                  </Card>
-                ))}
-              </SimpleGrid>
-            </Stack>
+            {isMobile ? (
+              <Box mt="xl">
+                <MobileCarousel items={features} isMobile={isMobile} />
+              </Box>
+            ) : (
+              <StaggerContainer staggerDelay={0.15}>
+                <SimpleGrid
+                  cols={{ base: 1, sm: 2, md: 3 }}
+                  spacing="xl"
+                  mt="xl"
+                >
+                  {features.map((feature, index) => (
+                    <Card
+                      key={index}
+                      shadow="sm"
+                      padding="xl"
+                      radius="md"
+                      style={{
+                        transition: 'all 0.4s ease',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                        },
+                      }}
+                    >
+                      <Stack align="center" gap="md">
+                        <ThemeIcon
+                          size={isMobile ? 40 : 60}
+                          radius="xl"
+                          color={feature.color}
+                          variant="light"
+                        >
+                          <feature.icon size={isMobile ? 24 : 30} />
+                        </ThemeIcon>
+                        <Title order={4} ta="center" fz={isMobile ? 14 : 16}>
+                          {feature.title}
+                        </Title>
+                        <Text
+                          ta="center"
+                          c="dimmed"
+                          size={isMobile ? 'xs' : 'sm'}
+                        >
+                          {feature.description}
+                        </Text>
+                      </Stack>
+                    </Card>
+                  ))}
+                </SimpleGrid>
+              </StaggerContainer>
+            )}
           </Container>
         </Box>
 
@@ -453,49 +523,60 @@ export default function UnifidriveLanding() {
           py={isMobile ? 40 : 60}
           bg={'linear-gradient(120deg, #f8fafc 0%, #f0f9ff 100%)'}
         >
-          <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
-            <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
-              Powerful Features
-            </Title>
-            <Text ta="center" c="dimmed" maw={600} fz={isMobile ? 14 : 16}>
-              Everything you need to manage your cloud storage efficiently
-            </Text>
+          <AnimatedSection>
+            <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
+              <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
+                Powerful Features
+              </Title>
+              <Text ta="center" c="dimmed" maw={600} fz={isMobile ? 14 : 16}>
+                Everything you need to manage your cloud storage efficiently
+              </Text>
+            </Stack>
+          </AnimatedSection>
 
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="xl" w="100%">
-              {powerfulFeatures.map((feature, index) => (
-                <Card
-                  key={index}
-                  shadow="sm"
-                  padding="xl"
-                  radius="md"
-                  style={{
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                    },
-                  }}
-                >
-                  <Stack gap="md">
-                    <ThemeIcon
-                      size={isMobile ? 40 : 50}
-                      radius="md"
-                      color={feature.color}
-                      variant="light"
-                    >
-                      <feature.icon size={isMobile ? 20 : 24} />
-                    </ThemeIcon>
-                    <Title order={5} fz={isMobile ? 14 : 16}>
-                      {feature.title}
-                    </Title>
-                    <Text c="dimmed" size={isMobile ? 'xs' : 'sm'}>
-                      {feature.description}
-                    </Text>
-                  </Stack>
-                </Card>
-              ))}
-            </SimpleGrid>
-          </Stack>
+          {isMobile ? (
+            <Box mt="xl">
+              <MobileCarousel items={powerfulFeatures} isMobile={isMobile} />
+            </Box>
+          ) : (
+            <StaggerContainer staggerDelay={0.1}>
+              <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="xl" mt="xl">
+                {powerfulFeatures.map((feature, index) => (
+                  <Card
+                    key={index}
+                    shadow="sm"
+                    padding="xl"
+                    radius="md"
+                    style={{
+                      transition: 'all 0.4s ease',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        transform: 'translateY(-8px)',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                      },
+                    }}
+                  >
+                    <Stack gap="md">
+                      <ThemeIcon
+                        size={isMobile ? 40 : 50}
+                        radius="md"
+                        color={feature.color}
+                        variant="light"
+                      >
+                        <feature.icon size={isMobile ? 20 : 24} />
+                      </ThemeIcon>
+                      <Title order={5} fz={isMobile ? 14 : 16}>
+                        {feature.title}
+                      </Title>
+                      <Text c="dimmed" size={isMobile ? 'xs' : 'sm'}>
+                        {feature.description}
+                      </Text>
+                    </Stack>
+                  </Card>
+                ))}
+              </SimpleGrid>
+            </StaggerContainer>
+          )}
         </Container>
 
         {/* Why Choose Section */}
@@ -503,44 +584,55 @@ export default function UnifidriveLanding() {
           <Container
             size="var(--mantine-breakpoint-xxl)"
             px={isSm ? 20 : isMd ? 40 : 120}
+            style={{ overflow: 'hidden' }}
           >
-            <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
-              <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
-                Why Choose AllCloudHub?
-              </Title>
+            <AnimatedSection>
+              <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
+                <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
+                  Why Choose AllCloudHub?
+                </Title>
+              </Stack>
+            </AnimatedSection>
 
-              <SimpleGrid
-                cols={{ base: 2, md: 4 }}
-                mt={20}
-                spacing="xl"
-                w="100%"
-              >
-                {benefits.map((benefit, index) => (
-                  <Stack key={index} align="center" gap="md">
-                    <ThemeIcon
-                      size={isMobile ? 40 : 60}
-                      radius="xl"
-                      color={benefit.color}
-                      variant="light"
-                      style={{
-                        transition: 'transform 0.3s ease',
-                        '&:hover': {
-                          transform: 'scale(1.1)',
-                        },
-                      }}
-                    >
-                      <benefit.icon size={isMobile ? 20 : 30} />
-                    </ThemeIcon>
-                    <Title order={5} ta="center" fz={isMobile ? 14 : 16}>
-                      {benefit.title}
-                    </Title>
-                    <Text ta="center" c="dimmed" size={isMobile ? 'xs' : 'sm'}>
-                      {benefit.description}
-                    </Text>
-                  </Stack>
-                ))}
-              </SimpleGrid>
-            </Stack>
+            {isMobile ? (
+              <Box mt="xl">
+                <MobileCarousel items={benefits} isMobile={isMobile} />
+              </Box>
+            ) : (
+              <StaggerContainer staggerDelay={0.1}>
+                <SimpleGrid cols={{ base: 2, md: 4 }} mt={20} spacing="xl">
+                  {benefits.map((benefit, index) => (
+                    <Stack key={index} align="center" gap="md">
+                      <ThemeIcon
+                        size={isMobile ? 40 : 60}
+                        radius="xl"
+                        color={benefit.color}
+                        variant="light"
+                        style={{
+                          transition: 'all 0.3s ease',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            transform: 'scale(1.15) rotate(5deg)',
+                          },
+                        }}
+                      >
+                        <benefit.icon size={isMobile ? 20 : 30} />
+                      </ThemeIcon>
+                      <Title order={5} ta="center" fz={isMobile ? 14 : 16}>
+                        {benefit.title}
+                      </Title>
+                      <Text
+                        ta="center"
+                        c="dimmed"
+                        size={isMobile ? 'xs' : 'sm'}
+                      >
+                        {benefit.description}
+                      </Text>
+                    </Stack>
+                  ))}
+                </SimpleGrid>
+              </StaggerContainer>
+            )}
           </Container>
         </Box>
 
@@ -551,178 +643,125 @@ export default function UnifidriveLanding() {
           py={isMobile ? 40 : 60}
           bg={'linear-gradient(120deg, #f8fafc 0%, #f0f9ff 100%)'}
         >
-          <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
-            <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
-              Your Data is Secure
-            </Title>
-            <Text ta="center" c="dimmed" maw={600} fz={isMobile ? 14 : 16}>
-              We prioritize your privacy and security above everything else
-            </Text>
+          <AnimatedSection>
+            <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
+              <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
+                Your Data is Secure
+              </Title>
+              <Text ta="center" c="dimmed" maw={600} fz={isMobile ? 14 : 16}>
+                We prioritize your privacy and security above everything else
+              </Text>
+            </Stack>
+          </AnimatedSection>
 
-            <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="xl" w="100%">
-              {security.map((item, index) => (
-                <Card
-                  key={index}
-                  shadow="sm"
-                  padding="xl"
-                  radius="md"
+          {isMobile ? (
+            <Box mt="xl">
+              <MobileCarousel items={security} isMobile={isMobile} />
+            </Box>
+          ) : (
+            <StaggerContainer staggerDelay={0.15}>
+              <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="xl" mt="xl">
+                {security.map((item, index) => (
+                  <Card
+                    key={index}
+                    shadow="sm"
+                    padding="xl"
+                    radius="md"
+                    style={{
+                      transition: 'all 0.4s ease',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        transform: 'translateY(-8px)',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                      },
+                    }}
+                  >
+                    <Stack align="center" gap="md">
+                      <ThemeIcon
+                        size={60}
+                        radius="xl"
+                        color={item.color}
+                        variant="light"
+                      >
+                        <item.icon size={30} />
+                      </ThemeIcon>
+                      <Title order={4} ta="center" fz={isMobile ? 16 : 18}>
+                        {item.title}
+                      </Title>
+                      <Text
+                        ta="center"
+                        c="dimmed"
+                        size={isMobile ? 'xs' : 'sm'}
+                      >
+                        {item.description}
+                      </Text>
+                    </Stack>
+                  </Card>
+                ))}
+              </SimpleGrid>
+            </StaggerContainer>
+          )}
+
+          <AnimatedSection delay={0.4}>
+            <Box mt="xl">
+              <Text ta="center" c="dimmed" size="sm">
+                Trusted by cloud storage providers
+              </Text>
+              <Group justify="center" gap="lg" mt="md">
+                <Image src={GooggleDriveIcon} w={30} />
+                <Image src={DropboxIcon} w={30} />
+                <Image src={OneDriveIcon} w={30} />
+              </Group>
+            </Box>
+          </AnimatedSection>
+        </Container>
+
+        {/* CTA Section */}
+        <AnimatedSection>
+          <Box
+            py={isMobile ? 40 : 60}
+            style={{
+              backgroundColor: '#0284c7',
+            }}
+          >
+            <Container size="var(--mantine-breakpoint-xxxl)">
+              <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
+                <Title order={2} ta="center" c="white" fz={isMobile ? 24 : 30}>
+                  Start Managing Your Cloud Storage Smarter
+                </Title>
+                <Text
+                  ta="center"
+                  c="white"
+                  opacity={0.9}
+                  fz={isMobile ? 14 : 16}
+                  maw={600}
+                >
+                  Join thousands of users who have simplified their cloud
+                  storage management
+                </Text>
+                <Button
+                  size={isMobile ? 'md' : 'lg'}
+                  variant="white"
+                  c={'#0284c7'}
                   style={{
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       transform: 'translateY(-3px)',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                      boxShadow: '0 12px 30px rgba(0,0,0,0.2)',
                     },
                   }}
+                  fz={isMobile ? 14 : 16}
+                  onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
                 >
-                  <Stack align="center" gap="md">
-                    <ThemeIcon
-                      size={60}
-                      radius="xl"
-                      color={item.color}
-                      variant="light"
-                    >
-                      <item.icon size={30} />
-                    </ThemeIcon>
-                    <Title order={4} ta="center" fz={isMobile ? 16 : 18}>
-                      {item.title}
-                    </Title>
-                    <Text ta="center" c="dimmed" size={isMobile ? 'xs' : 'sm'}>
-                      {item.description}
-                    </Text>
-                  </Stack>
-                </Card>
-              ))}
-            </SimpleGrid>
-
-            <Text ta="center" c="dimmed" size="sm" mt="xl">
-              Trusted by cloud storage providers
-            </Text>
-            <Group justify="center" gap="lg">
-              <Image src={GooggleDriveIcon} w={30} />
-              <Image src={DropboxIcon} w={30} />
-              <Image src={OneDriveIcon} w={30} />
-            </Group>
-          </Stack>
-        </Container>
-
-        {/* CTA Section */}
-        <Box
-          py={isMobile ? 40 : 60}
-          style={{
-            // background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            backgroundColor: '#0284c7',
-          }}
-        >
-          <Container size="var(--mantine-breakpoint-xxxl)">
-            <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
-              <Title order={2} ta="center" c="white" fz={isMobile ? 24 : 30}>
-                Start Managing Your Cloud Storage Smarter
-              </Title>
-              <Text
-                ta="center"
-                c="white"
-                opacity={0.9}
-                fz={isMobile ? 14 : 16}
-                maw={600}
-              >
-                Join thousands of users who have simplified their cloud storage
-                management
-              </Text>
-              <Button
-                size={isMobile ? 'md' : 'xl'}
-                variant="white"
-                c={'#0284c7'}
-                style={{
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
-                  },
-                }}
-                fz={isMobile ? 14 : 16}
-                onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
-              >
-                Get Started For Free
-              </Button>
-            </Stack>
-          </Container>
-        </Box>
+                  Get Started For Free
+                </Button>
+              </Stack>
+            </Container>
+          </Box>
+        </AnimatedSection>
 
         {/* Footer */}
-        <Box bg="dark" py={40}>
-          <Container size="var(--mantine-breakpoint-xxl)" px={120}>
-            <Grid>
-              <Grid.Col span={{ base: 12, md: 3 }}>
-                <Stack gap="sm">
-                  <Group>
-                    <ThemeIcon
-                      size="sm"
-                      variant="gradient"
-                      gradient={{ from: 'blue', to: 'cyan' }}
-                    >
-                      <ICONS.IconCloud size={16} />
-                    </ThemeIcon>
-                    <Title order={4} c="white">
-                      AllCloudHub
-                    </Title>
-                  </Group>
-                  <Text size="sm" c="dimmed">
-                    Simply your cloud storage management for everyone.
-                  </Text>
-                </Stack>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 12, md: 9 }}>
-                <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="xl">
-                  <Stack gap="sm">
-                    <Title order={6} c="white">
-                      Product
-                    </Title>
-                    <Anchor size="sm" c="dimmed">
-                      Features
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Pricing
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Security
-                    </Anchor>
-                  </Stack>
-                  <Stack gap="sm">
-                    <Title order={6} c="white">
-                      Support
-                    </Title>
-                    <Anchor size="sm" c="dimmed">
-                      FAQ
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Contact
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Help Center
-                    </Anchor>
-                  </Stack>
-                  <Stack gap="sm">
-                    <Title order={6} c="white">
-                      Legal
-                    </Title>
-                    <Anchor size="sm" c="dimmed">
-                      Privacy Policy
-                    </Anchor>
-                    <Anchor size="sm" c="dimmed">
-                      Terms of Service
-                    </Anchor>
-                  </Stack>
-                </SimpleGrid>
-              </Grid.Col>
-            </Grid>
-
-            <Divider my="xl" color="dark.4" />
-            <Text ta="center" size="sm" c="dimmed">
-              © 2025 AllCloudHub. All rights reserved.
-            </Text>
-          </Container>
-        </Box>
+        <LandingFooter {...{ isMd, isSm }} />
       </AppShell.Main>
 
       <style>{`
@@ -731,11 +770,42 @@ export default function UnifidriveLanding() {
           50% { transform: translateY(-10px); }
         }
         
-        .mantine-Card-root:hover {
+        .mantine-Card-root {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mantine-Button-root {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mantine-ThemeIcon-root {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mantine-Carousel-indicator {
+          transition: all 0.3s ease;
+        }
+
+         .mantine-Card-root:hover {
           transform: translateY(-5px);
           transition: all 0.3s ease;
         }
         
+        .mantine-Carousel-slide {
+          transition: all 0.3s ease;
+          padding: 0 4px;
+        }
+        
+        /* Ensure no horizontal overflow */
+        * {
+          box-sizing: border-box;
+        }
+        
+        .mantine-Container-root {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
         .mantine-Button-root:hover {
           transform: translateY(-1px);
           transition: all 0.2s ease;

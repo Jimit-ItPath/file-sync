@@ -207,7 +207,10 @@ const FileTable: React.FC<FileTableProps> = ({
       tabIndex={0}
       ref={tableRef}
       // onKeyDown={handleKeyDown}
-      style={{ outline: 'none', marginTop: '10px' }}
+      style={{
+        outline: 'none',
+        // marginTop: '10px'
+      }}
     >
       <Table
         // title={

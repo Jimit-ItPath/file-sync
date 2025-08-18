@@ -35,24 +35,27 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
   }
 
   return (
-    <Group align="center" style={{ userSelect: 'none' }}>
+    <Group align="center" style={{ userSelect: 'none', minWidth: 0 }}>
       <MantineBreadcrumbs
-        separator={<ICONS.IconChevronRight size={16} color="#868e96" />}
+        separator={<ICONS.IconChevronRight size={14} color="#868e96" />}
         styles={{
           root: {
-            // padding: '6px 12px',
-            // backgroundColor: '#f8f9fa',
-            // borderRadius: 8,
             padding: 0,
+            minWidth: 0,
           },
           breadcrumb: {
             color: '#6b7280',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 500,
             textDecoration: 'none',
-            // padding: '6px 12px',
+            padding: '4px 8px',
             borderRadius: '6px',
             transition: 'all 0.15s ease',
+            minWidth: 0,
+            maxWidth: '120px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
             '&:hover': {
               backgroundColor: '#e2e8f0',
               color: '#374151',
@@ -63,13 +66,17 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
               fontWeight: 600,
             },
           },
-          separator: { color: '#d1d5db', margin: '0 4px', fontSize: '14px' },
+          separator: {
+            color: '#d1d5db',
+            margin: '0 2px',
+            fontSize: '12px',
+            flexShrink: 0,
+          },
         }}
       >
         {displayItems.map((item, index) => {
           const isEllipsis = item.name === '...';
-          const isLast =
-            index === displayItems.length - 1 || index === displayItems.length;
+          const isLast = index === displayItems.length - 1;
 
           if (isEllipsis) {
             return (
@@ -77,10 +84,11 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
                 key="ellipsis"
                 style={{
                   color: '#6b7280',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   userSelect: 'none',
                   cursor: 'default',
-                  padding: '0 8px',
+                  padding: '0 4px',
+                  flexShrink: 0,
                 }}
               >
                 ...
@@ -97,28 +105,36 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
               }}
               key={index}
               style={{
-                cursor: isLast ? 'not-allowed' : 'pointer',
-                fontWeight: isLast ? 700 : 500,
+                cursor: isLast ? 'default' : 'pointer',
+                fontWeight: isLast ? 600 : 500,
                 color: isLast ? '#212529' : '#495057',
-                whiteSpace: 'nowrap',
-                maxWidth: 150,
+                minWidth: 0,
+                maxWidth: isLast ? '140px' : '100px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
                 transition: 'color 0.2s ease',
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#1c7ed6')}
+              onMouseEnter={e =>
+                !isLast && (e.currentTarget.style.color = '#1c7ed6')
+              }
               onMouseLeave={e =>
                 (e.currentTarget.style.color = isLast ? '#212529' : '#495057')
               }
             >
-              <Tooltip label={item.name} fz={'xs'}>
+              <Tooltip
+                label={item.name}
+                fz={'xs'}
+                disabled={item.name.length < 15}
+              >
                 <Text
                   size="sm"
-                  fw={isLast ? 700 : 500}
-                  lineClamp={1}
+                  fw={isLast ? 600 : 500}
                   truncate
-                  miw={0}
-                  maw={150}
+                  style={{
+                    fontSize: '13px',
+                    lineHeight: 1.4,
+                  }}
                 >
                   {item.name}
                 </Text>

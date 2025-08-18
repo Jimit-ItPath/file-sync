@@ -36,7 +36,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import SortableCloudAccountItem from './SortableCloudAccountItem';
-import useDashboard from '../../../pages/dashboard/use-dashboard';
 import { Controller } from 'react-hook-form';
 import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
 
@@ -61,7 +60,30 @@ type AccessibleNavItemProps = NavItem & {
   url: string;
 };
 
-const NavBar = ({ mobileDrawerHandler, isSm }: any) => {
+const NavBar = ({
+  mobileDrawerHandler,
+  isSm,
+  openModal,
+  modalOpen,
+  closeModal,
+  modalType,
+  folderMethods,
+  handleCreateFolder,
+  isSFDEnabled,
+  accountOptionsForSFD,
+  createFolderLoading,
+  handleFileUpload,
+  uploadMethods,
+  setUploadedFiles,
+  getFileIcon,
+  uploadedFiles,
+  uploadFilesLoading,
+  showUploadProgress,
+  uploadProgress,
+  uploadingFiles,
+  handleCancelUpload,
+  handleCloseUploadProgress,
+}: any) => {
   const location = useLocation();
   const {
     handleConnectAccount,
@@ -95,29 +117,6 @@ const NavBar = ({ mobileDrawerHandler, isSm }: any) => {
     setMenuOpened,
   } = useSidebar();
 
-  const {
-    openModal,
-    // handleSyncStorage,
-    modalOpen,
-    closeModal,
-    modalType,
-    folderMethods,
-    handleCreateFolder,
-    isSFDEnabled,
-    accountOptionsForSFD,
-    createFolderLoading,
-    handleFileUpload,
-    uploadMethods,
-    setUploadedFiles,
-    uploadedFiles,
-    uploadFilesLoading,
-    getFileIcon,
-    showUploadProgress,
-    uploadProgress,
-    uploadingFiles,
-    handleCancelUpload,
-    handleCloseUploadProgress,
-  } = useDashboard({});
   const isActiveRoute = useMemo(
     () => (routeUrl: string) => location.pathname.startsWith(routeUrl),
     [location.pathname]
@@ -774,7 +773,7 @@ const NavBar = ({ mobileDrawerHandler, isSm }: any) => {
                   name="accountId"
                   render={({ field }) => {
                     const selectedOption = accountOptionsForSFD.find(
-                      option => option.value === field.value
+                      (option: any) => option.value === field.value
                     );
 
                     return (
@@ -785,7 +784,7 @@ const NavBar = ({ mobileDrawerHandler, isSm }: any) => {
                         value={selectedOption ? selectedOption.label : ''}
                         onChange={value => {
                           const matchedOption = accountOptionsForSFD.find(
-                            option =>
+                            (option: any) =>
                               option.label === value || option.value === value
                           );
                           field.onChange(
@@ -834,7 +833,7 @@ const NavBar = ({ mobileDrawerHandler, isSm }: any) => {
                   name="accountId"
                   render={({ field }) => {
                     const selectedOption = accountOptionsForSFD.find(
-                      option => option.value === field.value
+                      (option: any) => option.value === field.value
                     );
 
                     return (
@@ -845,7 +844,7 @@ const NavBar = ({ mobileDrawerHandler, isSm }: any) => {
                         value={selectedOption ? selectedOption.label : ''}
                         onChange={value => {
                           const matchedOption = accountOptionsForSFD.find(
-                            option =>
+                            (option: any) =>
                               option.label === value || option.value === value
                           );
                           field.onChange(
