@@ -163,19 +163,31 @@ const useSidebar = () => {
       try {
         const res = await dispatch(updateSequence(data)).unwrap();
         if (res?.success) {
+          const updatedAccounts = displayedAccounts
+            .map(account => {
+              const updatedAccount = data.find(item => item.id === account.id);
+              return updatedAccount
+                ? {
+                    ...account,
+                    sequence_number: updatedAccount.sequence_number,
+                  }
+                : account;
+            })
+            .sort((a, b) => a.sequence_number - b.sequence_number);
+
+          setLocalSortedAccounts(updatedAccounts);
           // notifications.show({
           //   message: res?.message || 'Account order updated successfully',
           //   color: 'green',
           // });
-
           // Set a timeout before allowing account refresh to prevent UI glitch
           // setTimeout(() => {
           // isDragInProgress.current = false;
-          onInitialize({});
+          // onInitialize({});
           // }, 500);
         } else {
           // Revert optimistic update on failure
-          isDragInProgress.current = false;
+          // isDragInProgress.current = false;
           setLocalSortedAccounts([...displayedAccounts]);
           notifications.show({
             message:
@@ -187,12 +199,14 @@ const useSidebar = () => {
         }
       } catch (error: any) {
         // Revert optimistic update on error
-        isDragInProgress.current = false;
+        // isDragInProgress.current = false;
         setLocalSortedAccounts([...displayedAccounts]);
         notifications.show({
           message: error || 'Failed to update account order',
           color: 'red',
         });
+      } finally {
+        isDragInProgress.current = false;
       }
     }
   );
@@ -204,16 +218,19 @@ const useSidebar = () => {
 
       if (!over || active.id === over.id) return;
 
-      const oldIndex = sortedCloudAccounts.findIndex(
+      isDragInProgress.current = true;
+
+      const oldIndex = displayedAccounts.findIndex(
         account => account.id === active.id
       );
-      const newIndex = sortedCloudAccounts.findIndex(
+      const newIndex = displayedAccounts.findIndex(
         account => account.id === over.id
       );
 
       if (oldIndex === -1 || newIndex === -1) return;
 
-      const newOrder = arrayMove(sortedCloudAccounts, oldIndex, newIndex);
+      // const newOrder = arrayMove(sortedCloudAccounts, oldIndex, newIndex);
+      const newOrder = arrayMove(displayedAccounts, oldIndex, newIndex);
       setLocalSortedAccounts(newOrder);
 
       const updateData = newOrder.map((account, index) => ({
@@ -223,7 +240,7 @@ const useSidebar = () => {
 
       await updateAccountSequence(updateData);
     },
-    [sortedCloudAccounts, updateAccountSequence]
+    [displayedAccounts, updateAccountSequence]
   );
 
   const [connectAccount, connectAccountLoading] = useAsyncOperation(
