@@ -341,7 +341,6 @@ const Dashboard = () => {
                 }}
               />
             </Box>
-            {checkLocation ? <Button>File Upload</Button> : null}
             <Tooltip label="Sync" fz={'xs'}>
               <ActionIcon style={iconStyle} onClick={handleSyncStorage}>
                 <ICONS.IconRefresh size={18} />
