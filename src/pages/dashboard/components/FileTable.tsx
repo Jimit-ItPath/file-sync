@@ -83,18 +83,21 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'name',
         label: 'Name',
-        width: '550px',
+        grow: true,
+        // width: '550px',
         // maxWidth: '20%',
         render: (row: FileType) => (
           <Group
             gap={8}
-            // wrap="nowrap"
+            wrap="nowrap"
             // maw={'70%'}
             style={{ overflow: 'hidden' }}
           >
+            <div style={{ flexShrink: 0 }}>
             {row.icon(iconSize)}
+            </div>
             <Tooltip label={row.name} fz={'xs'}>
-              <Text fw={600} fz={'sm'} truncate style={{ maxWidth: '90%' }}>
+              <Text fw={600} fz={'sm'} truncate style={{ maxWidth: '100%', whiteSpace: 'nowrap' }}>
                 {row.name}
               </Text>
             </Tooltip>
@@ -104,6 +107,7 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'owner',
         label: 'Owner',
+        width: 100,
         // width: '15%',
         render: (row: FileType) => (
           <Group
@@ -123,6 +127,7 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'lastModified',
         label: 'Last Modified',
+        width: 140,
         // width: '20%',
         render: (row: FileType) => (
           <>
@@ -139,12 +144,14 @@ const FileTable: React.FC<FileTableProps> = ({
       {
         key: 'size',
         label: 'Size',
+        width: 100,
         // width: '10%',
         render: (row: FileType) => <Text size="sm">{row.size || '-'}</Text>,
       },
       {
         key: 'actions',
         label: '',
+        width: 60,
         // width: '10%',
         render: (row: FileType) => {
           const menuItems = [...MENU_ITEMS];
