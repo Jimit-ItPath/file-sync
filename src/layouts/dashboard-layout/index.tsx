@@ -36,11 +36,19 @@ import {
 } from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
 import { ROLES } from '../../utils/constants';
-import { decodeToken, removeLocalStorage } from '../../utils/helper';
+import {
+  decodeToken,
+  getLocalStorage,
+  removeLocalStorage,
+} from '../../utils/helper';
 import GlobalSearchBar from './GlobalSearchBar';
 import TawkToWidget from '../../widget/TawkToWidget';
 import useDashboard from '../../pages/dashboard/use-dashboard';
 import { Controller } from 'react-hook-form';
+import {
+  fetchCloudStorageFiles,
+  resetCloudStorageFolder,
+} from '../../store/slices/cloudStorage.slice';
 
 const DashboardLayout = () => {
   usePageData();
@@ -178,6 +186,24 @@ const DashboardLayout = () => {
     logoutConfirmHandler.close();
   };
 
+  const redirectToDashboard = useCallback(() => {
+    if (
+      location.pathname === PRIVATE_ROUTES.DASHBOARD.url &&
+      (!!getLocalStorage('folderId') || !!getLocalStorage('cloudStoragePath'))
+    ) {
+      dispatch(
+        fetchCloudStorageFiles({
+          limit: 20,
+          page: 1,
+        })
+      );
+      dispatch(resetCloudStorageFolder());
+    }
+    removeLocalStorage('folderId');
+    removeLocalStorage('cloudStoragePath');
+    navigate(PRIVATE_ROUTES.DASHBOARD.url);
+  }, [location]);
+
   return (
     <>
       <AppShell
@@ -211,37 +237,23 @@ const DashboardLayout = () => {
                   <ICONS.IconCloud
                     size={32}
                     color={'#0ea5e9'}
-                    onClick={() => {
-                      removeLocalStorage('folderId');
-                      removeLocalStorage('cloudStoragePath');
-                      navigate(PRIVATE_ROUTES.DASHBOARD.url);
-                    }}
+                    onClick={redirectToDashboard}
                   />
                 ) : (
-                  <>
-                    <ICONS.IconCloud
-                      size={32}
-                      color={'#0ea5e9'}
-                      onClick={() => {
-                        removeLocalStorage('folderId');
-                        removeLocalStorage('cloudStoragePath');
-                        navigate(PRIVATE_ROUTES.DASHBOARD.url);
-                      }}
-                    />
+                  <Group
+                    onClick={redirectToDashboard}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <ICONS.IconCloud size={32} color={'#0ea5e9'} />
                     <Box
                       fw={700}
                       fz={22}
                       c="blue.7"
-                      style={{ letterSpacing: -0.5, cursor: 'pointer' }}
-                      onClick={() => {
-                        removeLocalStorage('folderId');
-                        removeLocalStorage('cloudStoragePath');
-                        navigate(PRIVATE_ROUTES.DASHBOARD.url);
-                      }}
+                      style={{ letterSpacing: -0.5 }}
                     >
                       AllCloudHub
                     </Box>
-                  </>
+                  </Group>
                 )}
                 {/* {!isSm ? (
                   <Group
