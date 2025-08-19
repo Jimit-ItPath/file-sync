@@ -45,7 +45,7 @@ export const Modal = ({
           color: 'white',
           paddingLeft: 'var(--mantine-spacing-lg)',
           paddingRight: 'var(--mantine-spacing-sm)',
-          borderRadius: 0,
+          // borderRadius: 0,
         },
         body: {
           paddingTop: 'var(--mantine-spacing-lg)',
@@ -59,17 +59,27 @@ export const Modal = ({
       {children}
       <style>
         {`
-          .m_1b7284a3 {
+          .mantine-Modal-inner .m_1b7284a3 {
             --paper-radius: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: transparent;
+          }
+          .mantine-Modal-body,
+          .mantine-Modal-footer {
+            background: white;
           }
           .modal-close-button{
-            background-color: #ffffff !important;
+            background-color: #ffffff;
             color: gray;
+            transition: transform 0.15s ease, opacity 0.15s ease;
           }
           .modal-close-button:hover {
-            // background-color: #000000 !important;
+            background-color: #e9e9e9;
             // color: #ffffff;
-            opacity: 0.8;
+            // opacity: 0.9;
+            transform: scale(1.02);
+            // color: #1e293b;
           }
             /* Tooltip using ::after */
           .modal-close-button::after {
