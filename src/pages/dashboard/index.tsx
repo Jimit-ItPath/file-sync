@@ -42,6 +42,8 @@ import useFileDownloader from './components/use-file-downloader';
 import DownloadProgress from './components/DownloadProgress';
 import DashboardFilters from './components/DashboardFilters';
 import UploadProgressV2 from './file-upload-v2/UploadProgressV2';
+import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
+import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 
 const iconStyle = {
   borderRadius: 999,
@@ -143,7 +145,6 @@ const Dashboard = () => {
     folderId,
     displayMoveIcon,
     displayDownloadIcon,
-    location,
     displayShareIcon,
     previewFile,
     previewModalOpen,
@@ -181,7 +182,10 @@ const Dashboard = () => {
     handleFileUploadV2,
     handleDragDropUploadV2,
     uploadFilesHandler,
+    connectedAccounts,
+    checkConnectedAccDetails,
     // isAutoLoading,
+    hasPaginationData,
   } = useDashboard({ downloadFile });
 
   const {
@@ -192,17 +196,22 @@ const Dashboard = () => {
     methods,
     connectAccountFormData,
     connectAccountLoading,
-    connectedAccounts,
     loading: connectedAccountLoading,
   } = useSidebar();
   const { isSm, theme } = useResponsive();
 
+  const isInitialLoading =
+    loading ||
+    connectedAccountLoading ||
+    navigateLoading ||
+    syncCloudStorageLoading;
+
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
-  if (!connectedAccounts?.length && !loading && !files?.length) {
+  if ((connectAccountLoading || !connectedAccounts?.length) && !files?.length) {
     return (
       <>
-        <LoaderOverlay visible={loading} opacity={1} />
+        {/* <LoaderOverlay visible={loading} opacity={1} /> */}
         <NoConnectedAccount
           {...{
             closeAccountModal,
@@ -219,16 +228,15 @@ const Dashboard = () => {
     );
   }
 
-  if (connectedAccountLoading) return null;
-
   return (
     <Box>
       <LoaderOverlay
-        visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
+        // visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
+        visible={moveFilesLoading}
         opacity={1}
       />
       {/* <ScrollArea> */}
-      {location.pathname?.startsWith('/dropbox') ? (
+      {/* {location.pathname?.startsWith('/dropbox') ? (
         <Text fz={'sm'} fw={500}>
           You are in dropbox account
         </Text>
@@ -240,7 +248,7 @@ const Dashboard = () => {
         <Text fz={'sm'} fw={500}>
           You are in onedrive account
         </Text>
-      ) : null}
+      ) : null} */}
       <Box
         // px={32}
         pb={20}
@@ -333,7 +341,7 @@ const Dashboard = () => {
             align="center"
             w={'100%'}
             // h={48}
-            h={isSm ? 48 : 'auto'}
+            // h={isSm ? 48 : 'auto'}
             gap={16}
           >
             {/* Left Section - Breadcrumbs */}
@@ -350,6 +358,7 @@ const Dashboard = () => {
                     }
                   }
                 }}
+                checkConnectedAccDetails={checkConnectedAccDetails}
               />
             </Box>
 
@@ -436,10 +445,22 @@ const Dashboard = () => {
                         ...iconStyle,
                         width: 36,
                         height: 36,
+                        transition: 'transform 0.5s ease',
+                        animation: syncCloudStorageLoading
+                          ? 'spin 1s linear infinite'
+                          : 'none',
                       }}
                       onClick={handleSyncStorage}
                     >
                       <ICONS.IconRefresh size={16} />
+                      <style>
+                        {`
+                        @keyframes spin {
+                          from { transform: rotate(0deg); }
+                          to { transform: rotate(180deg); }
+                        }
+                      `}
+                      </style>
                     </ActionIcon>
                   </Tooltip>
 
@@ -586,7 +607,13 @@ const Dashboard = () => {
             subMessage="Support for PDF, DOC, XLS, PPT, images and more"
           />
         </Box>
-        {layout === 'list' ? (
+        {isInitialLoading && hasPaginationData ? (
+          layout === 'list' ? (
+            <FileTableSkeleton />
+          ) : (
+            <FileGridSkeleton />
+          )
+        ) : layout === 'list' ? (
           <>
             <FileTable
               {...{

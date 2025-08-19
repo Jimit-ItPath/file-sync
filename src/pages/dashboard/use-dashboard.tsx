@@ -39,7 +39,6 @@ import { useLocation, useNavigate, useParams } from 'react-router';
 import useDebounce from '../../hooks/use-debounce';
 import getFileIcon from '../../components/file-icon';
 // import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
-import useSidebar from '../../layouts/dashboard-layout/navbar/use-sidebar';
 import { PRIVATE_ROUTES } from '../../routing/routes';
 import {
   DOCUMENT_FILE_TYPES,
@@ -201,10 +200,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     searchTerm,
     navigateLoading,
     recentFiles,
+    hasPaginationData,
   } = useAppSelector(state => state.cloudStorage);
   const { userProfile } = useAppSelector(state => state.user);
-  const { checkStorageDetails } = useAppSelector(state => state.auth);
-  const { connectedAccounts } = useSidebar();
+  const { checkStorageDetails, connectedAccounts } = useAppSelector(
+    state => state.auth
+  );
   const dispatch = useAppDispatch();
 
   const folderId = getLocalStorage(folderIdKey);
@@ -391,6 +392,15 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         limit: pagination.page_limit || 20,
         ...(currentFolderId && { id: currentFolderId }),
         searchTerm: debouncedSearchTerm || '',
+        ...(typeFilter && {
+          type: typeFilter,
+        }),
+        ...(modifiedFilter?.after && {
+          start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
+        }),
+        ...(modifiedFilter?.before && {
+          end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
+        }),
       };
 
       if (checkLocation && currentAccountId) {
@@ -1909,6 +1919,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     setPreviewFile(null);
   }, []);
 
+  const checkConnectedAccDetails = useMemo(() => {
+    if (checkLocation) {
+      return connectedAccounts.find(
+        account => account.id?.toString() === currentAccountId
+      );
+    }
+  }, [connectedAccounts, currentAccountId, checkLocation]);
+
   return {
     layout,
     switchLayout,
@@ -2057,6 +2075,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     handleDragDropUploadV2,
     uploadFilesHandler: uploadFilesHandlerV2,
     isAutoLoading,
+    checkConnectedAccDetails,
+    hasPaginationData,
   };
 };
 

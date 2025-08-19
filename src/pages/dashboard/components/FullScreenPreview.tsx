@@ -228,7 +228,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   }, []);
 
   const isTextFile = useCallback(() => {
-    return ['txt', 'json', 'csv'].some(ext =>
+    return ['txt', 'json'].some(ext =>
       previewFile?.name?.toLowerCase().endsWith(ext)
     );
   }, [previewFile]);

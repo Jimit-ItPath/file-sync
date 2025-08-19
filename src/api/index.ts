@@ -507,6 +507,7 @@ export const api = {
       type?: string;
       start_date?: string;
       end_date?: string;
+      is_breadcrumb?: boolean;
     }) =>
       client({
         url: '/cloud-storage',

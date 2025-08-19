@@ -25,12 +25,12 @@ import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 import ConnectAccountDescription from '../../dashboard/ConnectAccountDescription';
+import useResponsive from '../../../hooks/use-responsive';
 
 const Profile = () => {
   const {
     methods,
     handleProfileSubmit,
-    isLoading,
     profileFormData,
     submitLoading,
     handleAvatarChange,
@@ -43,7 +43,6 @@ const Profile = () => {
     openRemoveProfilePicModal,
     openRemoveProfileImageModal,
     connectedAccounts,
-    loading,
     closeRemoveAccessModal,
     openRemoveAccessModal,
     removeAccessModalOpen,
@@ -62,6 +61,8 @@ const Profile = () => {
     user,
   } = useSidebar();
 
+  const { isMd } = useResponsive();
+
   const {
     formState: { errors },
   } = methods;
@@ -70,10 +71,7 @@ const Profile = () => {
   return (
     <>
       <Box py="xl" px="xl">
-        <LoaderOverlay
-          visible={isLoading || removeAccessLoading || loading}
-          opacity={1}
-        />
+        <LoaderOverlay visible={removeAccessLoading} opacity={1} />
 
         <Grid gutter="xl">
           {/* ===== PROFILE SECTION ===== */}
@@ -346,7 +344,7 @@ const Profile = () => {
                               <Card
                                 withBorder
                                 radius="md"
-                                p="lg"
+                                p={isMd ? 'sm' : 'lg'}
                                 // bg={cfg.bg}
                                 style={{
                                   height: '100%',
@@ -368,9 +366,18 @@ const Profile = () => {
                                         {cfg.icon}
                                       </Avatar>
                                       <Stack gap={2}>
-                                        <Text fw={600}>
-                                          {account.account_name}
-                                        </Text>
+                                        <Tooltip
+                                          label={account.account_name}
+                                          fz={'xs'}
+                                        >
+                                          <Text
+                                            fw={600}
+                                            truncate
+                                            maw={!isMd ? 300 : 150}
+                                          >
+                                            {account.account_name}
+                                          </Text>
+                                        </Tooltip>
                                         <Text size="sm" c="dimmed">
                                           {cfg.label}
                                         </Text>
@@ -512,7 +519,8 @@ const Profile = () => {
                 style={{
                   fontWeight: 500,
                   fontSize: 16,
-                  background: '#0284c7',
+                  // background: '#0284c7',
+                  background: 'var(--mantine-primary-color-6)',
                   color: '#fff',
                   marginTop: 8,
                 }}

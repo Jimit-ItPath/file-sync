@@ -83,7 +83,7 @@ const AccountTypeSelector = ({
                 border: '1px solid #DEE2E6',
                 // border: `1px solid ${selected ? '#2C2E33' : '#DEE2E6'}`,
                 // backgroundColor: selected ? '#2C2E33' : 'white',
-                backgroundColor: selected ? 'rgba(55,151,228,0.8)' : 'white',
+                backgroundColor: selected ? '#123b65' : 'white',
                 color: selected ? 'white' : '#495057',
                 transition: 'all 0.2s ease',
                 userSelect: 'none',

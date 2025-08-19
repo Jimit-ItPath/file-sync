@@ -501,7 +501,8 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
                 style={{
                   fontWeight: 500,
                   fontSize: 16,
-                  background: '#0284c7',
+                  // background: '#0284c7',
+                  background: 'var(--mantine-primary-color-6)',
                   color: '#fff',
                   marginTop: 8,
                 }}

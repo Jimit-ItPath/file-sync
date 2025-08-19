@@ -11,7 +11,7 @@ import {
   TableTbody,
   TableTd,
 } from '@mantine/core';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../card';
 
 type Column<T> = {
@@ -64,6 +64,18 @@ export function Table<T extends Record<string, any>>({
     onSelectAll?.(checked);
   };
 
+  const minTableWidth = useMemo(() => {
+    return columns.reduce(
+      (acc, col: any) => {
+        if (col.grow) {
+          return acc + 200; // min 200px for name
+        }
+        return acc + (Number(col.width) || 100); // fallback
+      },
+      onSelectRow ? 60 : 0
+    );
+  }, [columns, onSelectRow]);
+
   return (
     <Box>
       {title ? (
@@ -75,14 +87,18 @@ export function Table<T extends Record<string, any>>({
         </Group>
       ) : null}
       <Card>
-        <ScrollArea>
-          <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
+        <ScrollArea offsetScrollbars type="auto">
+          <Box
+            // style={{ minWidth: '100%', overflowX: 'auto' }}
+            style={{ minWidth: minTableWidth }}
+          >
             {data?.length ? (
               <MantineTable
                 verticalSpacing="sm"
                 highlightOnHover
                 withColumnBorders={false}
                 striped
+                style={{ tableLayout: 'fixed', width: '100%' }}
                 styles={{
                   th: { padding: '12px 16px', whiteSpace: 'nowrap' },
                   td: { padding: '12px 16px', whiteSpace: 'nowrap' },
@@ -91,7 +107,7 @@ export function Table<T extends Record<string, any>>({
                 <TableThead>
                   <TableTr>
                     {onSelectRow && (
-                      <TableTh w={'3%'}>
+                      <TableTh style={{ width: 48, minWidth: 48 }}>
                         <Checkbox
                           checked={allChecked}
                           onChange={e =>
@@ -101,8 +117,15 @@ export function Table<T extends Record<string, any>>({
                         />
                       </TableTh>
                     )}
-                    {columns.map(({ label, width }, idx) => (
-                      <TableTh key={idx} style={{ width }}>
+                    {columns.map(({ label, width, grow }: any, idx) => (
+                      <TableTh
+                        key={idx}
+                        // style={{ width }}
+                        style={{
+                          width: grow ? 'auto' : width,
+                          minWidth: grow ? '200px' : width,
+                        }}
+                      >
                         {typeof label === 'string' ? (
                           <Group gap={4}>
                             {label}
@@ -133,7 +156,7 @@ export function Table<T extends Record<string, any>>({
                       }}
                     >
                       {onSelectRow && (
-                        <TableTd w={'3%'}>
+                        <TableTd style={{ width: 48, minWidth: 48 }}>
                           <Checkbox
                             checked={selectedRows.includes(
                               row[idKey] as string
@@ -162,12 +185,14 @@ export function Table<T extends Record<string, any>>({
                           />
                         </TableTd>
                       )}
-                      {columns.map(({ key, render, width }, idx) => (
+                      {columns.map(({ key, render, width, grow }: any, idx) => (
                         <TableTd
                           key={idx}
                           style={{
-                            width,
-                            maxWidth: width,
+                            // width,
+                            // maxWidth: width,
+                            width: grow ? 'auto' : width,
+                            maxWidth: grow ? '100%' : width,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                           }}

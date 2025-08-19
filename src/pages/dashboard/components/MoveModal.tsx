@@ -141,6 +141,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
         const requestParams: any = {
           limit: 20,
           page,
+          type: 'folder',
         };
 
         if (folderId) {
