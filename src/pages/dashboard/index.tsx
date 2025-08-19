@@ -41,6 +41,8 @@ import FileDetailsDrawer from './components/FileDetailsDrawer';
 import useFileDownloader from './components/use-file-downloader';
 import DownloadProgress from './components/DownloadProgress';
 import DashboardFilters from './components/DashboardFilters';
+import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
+import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 
 const iconStyle = {
   borderRadius: 999,
@@ -170,6 +172,7 @@ const Dashboard = () => {
     connectedAccounts,
     checkConnectedAccDetails,
     // isAutoLoading,
+    hasPaginationData,
   } = useDashboard({ downloadFile });
 
   const {
@@ -184,12 +187,18 @@ const Dashboard = () => {
   } = useSidebar();
   const { isSm, theme } = useResponsive();
 
+  const isInitialLoading =
+    loading ||
+    connectedAccountLoading ||
+    navigateLoading ||
+    syncCloudStorageLoading;
+
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
-  if (!connectedAccounts?.length && !loading && !files?.length) {
+  if ((connectAccountLoading || !connectedAccounts?.length) && !files?.length) {
     return (
       <>
-        <LoaderOverlay visible={loading} opacity={1} />
+        {/* <LoaderOverlay visible={loading} opacity={1} /> */}
         <NoConnectedAccount
           {...{
             closeAccountModal,
@@ -206,12 +215,11 @@ const Dashboard = () => {
     );
   }
 
-  if (connectedAccountLoading) return null;
-
   return (
     <Box>
       <LoaderOverlay
-        visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
+        // visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
+        visible={moveFilesLoading}
         opacity={1}
       />
       {/* <ScrollArea> */}
@@ -574,7 +582,13 @@ const Dashboard = () => {
             subMessage="Support for PDF, DOC, XLS, PPT, images and more"
           />
         </Box>
-        {layout === 'list' ? (
+        {isInitialLoading && hasPaginationData ? (
+          layout === 'list' ? (
+            <FileTableSkeleton />
+          ) : (
+            <FileGridSkeleton />
+          )
+        ) : layout === 'list' ? (
           <>
             <FileTable
               {...{

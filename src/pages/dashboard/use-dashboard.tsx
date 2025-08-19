@@ -190,6 +190,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     searchTerm,
     navigateLoading,
     recentFiles,
+    hasPaginationData,
   } = useAppSelector(state => state.cloudStorage);
   const { userProfile } = useAppSelector(state => state.user);
   const { checkStorageDetails, connectedAccounts } = useAppSelector(
@@ -381,6 +382,15 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         limit: pagination.page_limit || 20,
         ...(currentFolderId && { id: currentFolderId }),
         searchTerm: debouncedSearchTerm || '',
+        ...(typeFilter && {
+          type: typeFilter,
+        }),
+        ...(modifiedFilter?.after && {
+          start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
+        }),
+        ...(modifiedFilter?.before && {
+          end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
+        }),
       };
 
       if (checkLocation && currentAccountId) {
@@ -1959,6 +1969,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
     isAutoLoading,
     checkConnectedAccDetails,
+    hasPaginationData,
   };
 };
 

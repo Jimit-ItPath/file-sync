@@ -12,12 +12,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ICONS } from '../../../assets/icons';
 import useResponsive from '../../../hooks/use-responsive';
 import useRecentFiles from './use-recent-files';
-import { LoaderOverlay } from '../../../components/loader';
 import DownloadProgress from './DownloadProgress';
 import useFileDownloader from './use-file-downloader';
 import FileDetailsDrawer from './FileDetailsDrawer';
 import FullScreenPreview from './FullScreenPreview';
 import { formatDate, formatDateAndTime } from '../../../utils/helper';
+import FileGridSkeleton from '../../../components/skeleton/FileGridSkeleton';
 
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
@@ -214,7 +214,7 @@ const RecentFiles = () => {
       onClick={handleStackClick}
       ref={stackRef}
     >
-      <LoaderOverlay visible={loading} opacity={1} />
+      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
       <Box mb={32}>
         <Group
           justify={isXs ? 'flex-start' : 'space-between'}
@@ -253,7 +253,10 @@ const RecentFiles = () => {
           </Box>
         </Group>
         <Card>
-          {recentFiles.length > 0 ? (
+          {loading ? (
+            <FileGridSkeleton />
+          ) : // {
+          recentFiles.length > 0 ? (
             <Box
               style={{
                 display: 'grid',

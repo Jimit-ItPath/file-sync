@@ -44,6 +44,7 @@ type CloudStorageState = {
     page_length: number;
     page_limit: number;
   } | null;
+  hasPaginationData: boolean;
   loading: boolean;
   error: string | null;
   currentFolderId: string | null;
@@ -70,6 +71,7 @@ const initialState: CloudStorageState = {
   cloudStorage: [],
   recentFiles: [],
   pagination: null,
+  hasPaginationData: false,
   loading: false,
   error: null,
   currentFolderId: null,
@@ -419,13 +421,17 @@ const cloudStorageSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(fetchCloudStorageFiles.pending, state => {
+      .addCase(fetchCloudStorageFiles.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        if (action?.meta?.arg?.page === 1) {
+          state.hasPaginationData = true;
+        }
       })
       .addCase(fetchCloudStorageFiles.fulfilled, (state, action) => {
         const { data = [], paging = null } = action.payload?.data;
         state.loading = false;
+        state.hasPaginationData = false;
 
         // Get the folder id from the action
         const newFolderId = action.meta.arg?.id ?? null;
@@ -449,6 +455,7 @@ const cloudStorageSlice = createSlice({
         state.error = action.payload as string;
         state.cloudStorage = [];
         state.pagination = null;
+        state.hasPaginationData = false;
       })
       .addCase(fetchRecentFiles.pending, state => {
         state.loading = true;
