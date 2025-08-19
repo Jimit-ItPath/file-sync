@@ -432,10 +432,22 @@ const Dashboard = () => {
                         ...iconStyle,
                         width: 36,
                         height: 36,
+                        transition: 'transform 0.5s ease',
+                        animation: syncCloudStorageLoading
+                          ? 'spin 1s linear infinite'
+                          : 'none',
                       }}
                       onClick={handleSyncStorage}
                     >
                       <ICONS.IconRefresh size={16} />
+                      <style>
+                        {`
+                        @keyframes spin {
+                          from { transform: rotate(0deg); }
+                          to { transform: rotate(180deg); }
+                        }
+                      `}
+                      </style>
                     </ActionIcon>
                   </Tooltip>
 
