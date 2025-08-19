@@ -142,7 +142,6 @@ const Dashboard = () => {
     folderId,
     displayMoveIcon,
     displayDownloadIcon,
-    location,
     displayShareIcon,
     previewFile,
     previewModalOpen,
@@ -168,6 +167,8 @@ const Dashboard = () => {
     handleTypeFilter,
     typeFilter,
     modifiedFilter,
+    connectedAccounts,
+    checkConnectedAccDetails,
     // isAutoLoading,
   } = useDashboard({ downloadFile });
 
@@ -179,7 +180,6 @@ const Dashboard = () => {
     methods,
     connectAccountFormData,
     connectAccountLoading,
-    connectedAccounts,
     loading: connectedAccountLoading,
   } = useSidebar();
   const { isSm, theme } = useResponsive();
@@ -215,7 +215,7 @@ const Dashboard = () => {
         opacity={1}
       />
       {/* <ScrollArea> */}
-      {location.pathname?.startsWith('/dropbox') ? (
+      {/* {location.pathname?.startsWith('/dropbox') ? (
         <Text fz={'sm'} fw={500}>
           You are in dropbox account
         </Text>
@@ -227,7 +227,7 @@ const Dashboard = () => {
         <Text fz={'sm'} fw={500}>
           You are in onedrive account
         </Text>
-      ) : null}
+      ) : null} */}
       <Box
         // px={32}
         pb={20}
@@ -320,7 +320,7 @@ const Dashboard = () => {
             align="center"
             w={'100%'}
             // h={48}
-            h={isSm ? 48 : 'auto'}
+            // h={isSm ? 48 : 'auto'}
             gap={16}
           >
             {/* Left Section - Breadcrumbs */}
@@ -337,6 +337,7 @@ const Dashboard = () => {
                     }
                   }
                 }}
+                checkConnectedAccDetails={checkConnectedAccDetails}
               />
             </Box>
 

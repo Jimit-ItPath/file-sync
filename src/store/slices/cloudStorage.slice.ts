@@ -102,6 +102,7 @@ export const fetchCloudStorageFiles = createAsyncThunk(
       type?: string;
       start_date?: string;
       end_date?: string;
+      is_breadcrumb?: boolean;
     },
     { rejectWithValue }
   ) => {
@@ -145,6 +146,7 @@ export const navigateToFolder = createAsyncThunk(
       type?: string;
       start_date?: string;
       end_date?: string;
+      is_breadcrumb?: boolean;
     } | null,
     { dispatch }
   ) => {
@@ -158,9 +160,14 @@ export const navigateToFolder = createAsyncThunk(
           limit: defaultLimit,
         })
       );
-      return { folderId: null, folderName: 'All Files', isRoot: true };
+      return {
+        folderId: null,
+        folderName: 'All Files',
+        isRoot: true,
+        breadcrumb: [],
+      };
     } else {
-      await dispatch(
+      const res = await dispatch(
         fetchCloudStorageFiles({
           id: data.id,
           account_type: data.account_type,
@@ -171,13 +178,16 @@ export const navigateToFolder = createAsyncThunk(
           type: data.type,
           start_date: data.start_date,
           end_date: data.end_date,
+          is_breadcrumb: data.is_breadcrumb,
         })
       );
+      const breadcrumb = res?.payload?.data?.breadcrumb || [];
       return {
         folderId: data.id,
         accountType: data.account_type,
         folderName: data.name,
         isRoot: false,
+        breadcrumb,
       };
     }
   }
@@ -458,7 +468,7 @@ const cloudStorageSlice = createSlice({
         state.error = null;
       })
       .addCase(navigateToFolder.fulfilled, (state, action) => {
-        const { folderId, folderName, isRoot } = action.payload;
+        const { folderId, folderName, isRoot, breadcrumb } = action.payload;
         state.currentFolderId = folderId;
 
         if (isRoot || !folderId) {
@@ -481,6 +491,14 @@ const cloudStorageSlice = createSlice({
               },
             ];
           }
+        }
+        if (Array.isArray(breadcrumb) && breadcrumb.length > 0) {
+          const normalized = [...breadcrumb].reverse();
+          state.currentPath = [
+            ...state.currentPath.slice(0, -1),
+            ...normalized,
+            state.currentPath[state.currentPath.length - 1],
+          ];
         }
         state.navigateLoading = false;
         setLocalStorage('cloudStoragePath', state.currentPath);

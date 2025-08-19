@@ -275,10 +275,13 @@ const DashboardLayout = () => {
                     gap={0}
                     flex={1}
                     style={{ position: 'relative' }}
-                    ml={isSm ? 0 : 60}
+                    ml={isSm ? 0 : 20}
                     w={'100%'}
                   >
-                    <GlobalSearchBar placeholder="Search files and folders..." />
+                    <GlobalSearchBar
+                      placeholder="Search files and folders..."
+                      isSm={isSm}
+                    />
                   </Group>
                 ) : null}
               </Group>

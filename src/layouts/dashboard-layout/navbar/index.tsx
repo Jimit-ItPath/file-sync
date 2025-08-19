@@ -232,7 +232,7 @@ const NavBar = ({
                           background: '#1c7ed6',
                           transition: 'all 0.3s ease',
                           // boxShadow: '0 2px 8px rgba(0, 86, 179, 0.3)',
-                          boxShadow: '0 2px 8px #1c7ed6',
+                          // boxShadow: '0 2px 8px #1c7ed6',
                         }}
                       >
                         <ICONS.IconPlus
