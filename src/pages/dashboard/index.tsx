@@ -14,6 +14,7 @@ import useDashboard from './use-dashboard';
 import {
   Breadcrumbs,
   Button,
+  Card,
   Dropzone,
   Form,
   Image,
@@ -613,7 +614,9 @@ const Dashboard = () => {
           layout === 'list' ? (
             <FileTableSkeleton />
           ) : (
-            <FileGridSkeleton />
+            <Card>
+              <FileGridSkeleton />
+            </Card>
           )
         ) : layout === 'list' ? (
           <>

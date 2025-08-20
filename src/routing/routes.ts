@@ -69,6 +69,21 @@ export const AUTH_ROUTES = {
     path: '/',
     url: '/',
   },
+  CONTACT: {
+    title: 'Contact',
+    path: '/contact',
+    url: '/contact',
+  },
+  PRICING: {
+    title: 'Pricing',
+    path: '/pricing',
+    url: '/pricing',
+  },
+  FAQ: {
+    title: 'FAQ',
+    path: '/faq',
+    url: '/faq',
+  },
 };
 
 const DASHBOARD_PATH = '/dashboard';

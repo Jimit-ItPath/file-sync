@@ -36,7 +36,10 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({
         h="100%"
       >
         <Group justify="space-between" h="100%">
-          <Group>
+          <Group
+            onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
+            style={{ cursor: 'pointer' }}
+          >
             <ThemeIcon
               size="lg"
               variant="gradient"
@@ -51,7 +54,7 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({
 
           {!isSm ? (
             <Group>
-              <NavigationItems />
+              <NavigationItems {...{ navigate }} />
               <Group gap="xs">
                 <Button
                   variant="subtle"

@@ -24,15 +24,16 @@ type ModifiedFilter =
   | null;
 
 interface DashboardFiltersProps {
-  onTypeFilter: (type: string | null) => void;
+  onTypeFilter: (type: string[] | null) => void;
   onModifiedFilter: (dateRange: { after?: Date; before?: Date } | null) => void;
   onClearFilters: () => void;
-  activeTypeFilter: string | null;
+  activeTypeFilter: string[] | null;
   activeModifiedFilter: { after?: Date; before?: Date } | null;
   isMobile?: boolean;
 }
 
 const typeOptions = [
+  { value: 'folder', label: 'Folders', icon: ICONS.IconFolder },
   { value: 'documents', label: 'Documents', icon: ICONS.IconFile },
   { value: 'sheets', label: 'Sheets', icon: ICONS.IconFileSpreadsheet },
   {
@@ -183,6 +184,9 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     before?: Date;
   }>({});
   const [showCustomDate, setShowCustomDate] = useState(false);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    activeTypeFilter || []
+  );
 
   // Close dropdowns when clicking outside
   const typeRef = useRef<HTMLDivElement>(null);
@@ -211,6 +215,21 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  React.useEffect(() => {
+    setSelectedTypes(activeTypeFilter || []);
+  }, [activeTypeFilter]);
+
+  const handleTypeApply = () => {
+    onTypeFilter(selectedTypes.length > 0 ? selectedTypes : null);
+    setTypeDropdownOpen(false);
+  };
+
+  const handleTypeClear = () => {
+    setSelectedTypes([]);
+    onTypeFilter(null);
+    setTypeDropdownOpen(false);
+  };
 
   const getModifiedFilterLabel = () => {
     const preset = getActivePreset(activeModifiedFilter);
@@ -265,8 +284,9 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   };
 
   const handleTypeSelect = (value: string) => {
-    onTypeFilter(value === activeTypeFilter ? null : value);
-    setTypeDropdownOpen(false);
+    setSelectedTypes(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
   };
 
   const handleClearTypeFilter = () => {
@@ -282,14 +302,15 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   };
 
   if (isMobile) {
-    const hasActiveFilters = activeTypeFilter || activeModifiedFilter;
+    const hasActiveFilters =
+      (activeTypeFilter && activeTypeFilter?.length) || activeModifiedFilter;
 
     return (
       <Group gap={4} align="center" wrap="nowrap">
         {/* Active filters display */}
         {hasActiveFilters && (
           <Group gap={4} wrap="nowrap">
-            {activeTypeFilter && (
+            {activeTypeFilter && activeTypeFilter?.length && (
               <Box
                 style={{
                   display: 'inline-flex',
@@ -306,7 +327,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                 }}
               >
                 <Text truncate fz={11} fw={500}>
-                  {typeOptions.find(t => t.value === activeTypeFilter)?.label}
+                  {activeTypeFilter.length} type
+                  {activeTypeFilter.length > 1 ? 's' : ''}
                 </Text>
                 <CloseButton
                   size={12}
@@ -447,6 +469,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                         setCustomDateRange({});
                         setShowCustomDate(false);
                         onClearFilters();
+                        setSelectedTypes([]);
                       }}
                       style={{
                         color: '#ef4444',
@@ -469,22 +492,51 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                 key={option.value}
                 leftSection={<option.icon size={18} />}
                 rightSection={
-                  activeTypeFilter === option.value ? (
+                  selectedTypes.includes(option.value) ? (
                     <ICONS.IconCheck size={16} color="#1e7ae8" />
                   ) : null
                 }
                 onClick={() => handleTypeSelect(option.value)}
                 style={{
-                  backgroundColor:
-                    activeTypeFilter === option.value ? '#e8f0fe' : undefined,
-                  fontWeight: activeTypeFilter === option.value ? 500 : 400,
-                  color:
-                    activeTypeFilter === option.value ? '#1e7ae8' : '#374151',
+                  backgroundColor: selectedTypes.includes(option.value)
+                    ? '#e8f0fe'
+                    : undefined,
+                  fontWeight: selectedTypes.includes(option.value) ? 500 : 400,
+                  color: selectedTypes.includes(option.value)
+                    ? '#1e7ae8'
+                    : '#374151',
                 }}
               >
                 {option.label}
               </Menu.Item>
             ))}
+
+            {/* Apply/Clear buttons for type filter */}
+            <Box style={{ padding: '8px 16px' }}>
+              <Group justify="space-between">
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  onClick={handleTypeClear}
+                  disabled={selectedTypes.length === 0}
+                  style={{ height: '28px' }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  size="xs"
+                  onClick={handleTypeApply}
+                  disabled={selectedTypes.length === 0}
+                  style={{
+                    backgroundColor: '#1e7ae8',
+                    color: 'white',
+                    height: '28px',
+                  }}
+                >
+                  Apply
+                </Button>
+              </Group>
+            </Box>
 
             <Menu.Divider />
             <Menu.Label>Date Modified</Menu.Label>
@@ -686,27 +738,57 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                   alignItems: 'center',
                   gap: '8px',
                   cursor: 'pointer',
-                  backgroundColor:
-                    activeTypeFilter === option.value
-                      ? '#e8f0fe'
-                      : 'transparent',
+                  backgroundColor: selectedTypes.includes(option.value)
+                    ? '#e8f0fe'
+                    : 'transparent',
                   '&:hover': {
                     backgroundColor: '#f1f3f4',
                   },
                 }}
-                className={`filterOption ${activeTypeFilter === option.value ? 'filterOptionActive' : ''}`}
+                className={`filterOption ${selectedTypes.includes(option.value) ? 'filterOptionActive' : ''}`}
                 onClick={() => handleTypeSelect(option.value)}
               >
                 <option.icon size={16} />
                 <Text fz={'sm'}>{option.label}</Text>
-                {activeTypeFilter === option.value && (
+                {selectedTypes.includes(option.value) ? (
                   <ICONS.IconCheck
                     size={16}
                     style={{ marginLeft: 'auto', color: '#1e7ae8' }}
                   />
-                )}
+                ) : null}
               </Box>
             ))}
+
+            {/* Apply/Clear buttons */}
+            <Box
+              style={{
+                padding: '8px 16px',
+                borderTop: '1px solid #e5e7eb',
+                marginTop: '8px',
+              }}
+            >
+              <Group justify="space-between">
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  onClick={handleTypeClear}
+                  disabled={selectedTypes.length === 0}
+                >
+                  Clear
+                </Button>
+                <Button
+                  size="xs"
+                  onClick={handleTypeApply}
+                  disabled={selectedTypes.length === 0}
+                  style={{
+                    backgroundColor: '#1e7ae8',
+                    color: 'white',
+                  }}
+                >
+                  Apply
+                </Button>
+              </Group>
+            </Box>
           </Paper>
         )}
 
@@ -719,16 +801,16 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
             height: '36px',
             alignItems: 'center',
             cursor: 'pointer',
-            backgroundColor: activeTypeFilter ? '#e8f0fe' : '#ffffff',
-            minWidth: activeTypeFilter ? 'auto' : '60px',
+            backgroundColor: selectedTypes?.length ? '#e8f0fe' : '#ffffff',
+            minWidth: selectedTypes?.length ? 'auto' : '60px',
             transition: 'all 0.2s ease',
           }}
           onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
         >
-          {activeTypeFilter ? (
+          {selectedTypes?.length ? (
             <Group gap={4} wrap="nowrap">
               <Text fz={12} fw={500}>
-                {typeOptions.find(t => t.value === activeTypeFilter)?.label}
+                {selectedTypes.length} type{selectedTypes.length > 1 ? 's' : ''}
               </Text>
               <CloseButton
                 size={14}
@@ -843,7 +925,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       e.stopPropagation();
                       handleModifiedSelect(option.value);
                     }}
-                    className={`filterOption ${activeTypeFilter === option.value ? 'filterOptionActive' : ''}`}
+                    className={`filterOption ${selectedTypes.includes(option.value) ? 'filterOptionActive' : ''}`}
                   >
                     <Text fz={'sm'}>{option.label}</Text>
                     {isActive ? (
@@ -960,7 +1042,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
       </Box>
 
       {/* Clear All - Compact */}
-      {(activeTypeFilter || activeModifiedFilter) && (
+      {((activeTypeFilter && activeTypeFilter?.length) ||
+        activeModifiedFilter) && (
         <ActionIcon
           size={36}
           variant="subtle"

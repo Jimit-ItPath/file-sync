@@ -18,6 +18,7 @@ import FileDetailsDrawer from './FileDetailsDrawer';
 import FullScreenPreview from './FullScreenPreview';
 import { formatDate, formatDateAndTime } from '../../../utils/helper';
 import FileGridSkeleton from '../../../components/skeleton/FileGridSkeleton';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 const FILE_CARD_HEIGHT = 220;
 const MIN_CARD_WIDTH = 240;
@@ -91,6 +92,10 @@ const RecentFiles = () => {
     detailsFile,
     detailsFileLoading,
     downloadItems,
+    scrollBoxRef,
+    // infinite scroll
+    loadMoreFiles,
+    hasMore,
   } = useRecentFiles({ downloadFile });
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
@@ -207,187 +212,211 @@ const RecentFiles = () => {
   }, [displayDownloadIcon, displayShareIcon, displayPreviewIcon]);
 
   return (
-    <Stack
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      style={{ outline: 'none' }}
-      onClick={handleStackClick}
-      ref={stackRef}
-    >
-      {/* <LoaderOverlay visible={loading} opacity={1} /> */}
-      <Box mb={32}>
-        <Group
-          justify={isXs ? 'flex-start' : 'space-between'}
-          align={isXs ? 'flex-start' : 'center'}
-          gap={isXs ? 8 : 16}
-          mb={16}
-          px={24}
+    <Box>
+      <Box
+        pb={20}
+        bg="#f8fafc"
+        ref={scrollBoxRef}
+        style={{
+          position: 'relative',
+          height: 'calc(100vh - 100px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minHeight: 'calc(100vh - 120px)',
+          transition: 'all 0.2s ease-in-out',
+        }}
+      >
+        {/* Sticky Section */}
+        <Box
           style={{
-            position: 'relative',
-            minHeight: 50,
-            flexDirection: isXs ? 'column' : 'row',
+            position: 'sticky',
+            top: 0,
+            ...(recentFiles?.length ? { zIndex: 10 } : {}),
+            backgroundColor: '#f6faff',
+            border: '1px solid #e5e7eb',
+            borderRadius: 'var(--mantine-radius-default)',
+            padding: '8px 24px',
+            zIndex: 10,
           }}
+          // mt={16}
+          className="stickey-box"
         >
-          <Text fw={700} fz="md" c="gray.9">
-            Recent Files
-          </Text>
-          <Box flex={isXs ? 1 : 2} w={isXs ? '100%' : 'max-content'}>
-            {selectedIds.length > 0 ? (
-              <SelectionBar
-                count={selectedIds.length}
-                onCancel={() => {
-                  handleUnselectAll();
-                }}
-                onDelete={handleDeleteSelected}
-                onDownload={handleDownloadSelected}
-                onShare={handleShareSelected}
-                onMove={() => {}}
-                onPaste={() => {}}
-                isMoveMode={false}
-                isPasteEnabled={false}
-                displayMoveIcon={false}
-                displayDownloadIcon={displayDownloadIcon}
-                displayShareIcon={selectedIds?.length === 1 && displayShareIcon}
-              />
-            ) : null}
-          </Box>
-        </Group>
-        <Card>
-          {loading ? (
-            <FileGridSkeleton />
-          ) : // {
-          recentFiles.length > 0 ? (
-            <Box
-              style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-                gap: '20px',
-              }}
-              mt={20}
-            >
-              {recentFiles.map(file => (
-                <Card
-                  key={file.id}
-                  radius="md"
-                  shadow="sm"
-                  p="md"
+          <Group align="center" w={'100%'} h={48} gap={16}>
+            <Text fw={700} fz="md" c="gray.9">
+              Recent Files
+            </Text>
+            <Box flex={isXs ? 1 : 2} w={isXs ? '100%' : 'max-content'}>
+              {selectedIds.length > 0 ? (
+                <SelectionBar
+                  count={selectedIds.length}
+                  onCancel={() => {
+                    handleUnselectAll();
+                  }}
+                  onDelete={handleDeleteSelected}
+                  onDownload={handleDownloadSelected}
+                  onShare={handleShareSelected}
+                  onMove={() => {}}
+                  onPaste={() => {}}
+                  isMoveMode={false}
+                  isPasteEnabled={false}
+                  displayMoveIcon={false}
+                  displayDownloadIcon={displayDownloadIcon}
+                  displayShareIcon={
+                    selectedIds?.length === 1 && displayShareIcon
+                  }
+                />
+              ) : null}
+            </Box>
+          </Group>
+        </Box>
+        <Stack
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          style={{ outline: 'none' }}
+          onClick={handleStackClick}
+          ref={stackRef}
+        >
+          <Card>
+            {loading && !recentFiles?.length ? (
+              <FileGridSkeleton includeFolders={false} />
+            ) : recentFiles.length > 0 ? (
+              <InfiniteScroll
+                dataLength={recentFiles.length}
+                next={loadMoreFiles}
+                hasMore={hasMore}
+                loader={null}
+                // loader={
+                //   <FileGridSkeleton includeFolders={false} />
+                //   // <Box style={{ textAlign: 'center', padding: '20px' }}>
+                //   //   <Text size="sm" c="dimmed">
+                //   //     Loading more files...
+                //   //   </Text>
+                //   // </Box>
+                // }
+                scrollableTarget={scrollBoxRef.current as any}
+                scrollThreshold={0.8}
+                style={{ overflow: 'hidden' }}
+              >
+                <Box
                   style={{
-                    // flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    background: '#f6faff',
-                    border: '1px solid #e5e7eb',
-                    height: FILE_CARD_HEIGHT,
-                    ...(selectedIds.includes(file.id) ? selectedCardStyle : {}),
-                    cursor: 'pointer',
-                    transition: 'box-shadow 0.2s ease',
-                    userSelect: 'none',
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+                    gap: '20px',
                   }}
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    handleSelect(file.id, e);
-                  }}
-                  onDoubleClick={(e: any) => {
-                    e.stopPropagation();
-                    handleMenuItemClick('preview', file);
-                  }}
+                  mt={20}
                 >
-                  <Group
-                    justify="space-between"
-                    align="center"
-                    mb={8}
-                    style={{ flexWrap: 'nowrap' }}
-                  >
-                    <Group gap={8} flex={1} miw={0} align="center">
-                      {file.icon(responsiveIconSize)}
-                      <Tooltip label={file.name} withArrow={false} fz={'xs'}>
-                        <Text
-                          fw={600}
-                          fz={responsiveFontSize}
-                          flex={1}
-                          truncate
-                          miw={0}
-                        >
-                          {file.name}
-                        </Text>
-                      </Tooltip>
-                    </Group>
-                    <Menu
-                      items={filteredMenuItems}
-                      onItemClick={actionId =>
-                        handleMenuItemClick(actionId, file)
-                      }
+                  {recentFiles.map(file => (
+                    <Card
+                      key={file.id}
+                      radius="md"
+                      shadow="sm"
+                      p="md"
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        background: '#f6faff',
+                        border: '1px solid #e5e7eb',
+                        height: FILE_CARD_HEIGHT,
+                        ...(selectedIds.includes(file.id)
+                          ? selectedCardStyle
+                          : {}),
+                        cursor: 'pointer',
+                        transition: 'box-shadow 0.2s ease',
+                        userSelect: 'none',
+                      }}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        handleSelect(file.id, e);
+                      }}
+                      onDoubleClick={(e: any) => {
+                        e.stopPropagation();
+                        handleMenuItemClick('preview', file);
+                      }}
                     >
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        style={{ flexShrink: 0 }}
+                      <Group
+                        justify="space-between"
+                        align="center"
+                        mb={8}
+                        style={{ flexWrap: 'nowrap' }}
                       >
-                        <ICONS.IconDotsVertical size={18} />
-                      </ActionIcon>
-                    </Menu>
-                  </Group>
-                  <Box
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 8,
-                      marginTop: 8,
-                    }}
-                  >
-                    {file.icon(isXs ? 50 : 60)}
-                    {/* {file.preview ? (
-                              <Image
-                                src={file.preview}
-                                alt={file.name}
-                                radius="md"
-                                fit="cover"
-                                h={180}
-                                w="100%"
-                                style={{ objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <Box
-                                style={{
-                                  width: '100%',
-                                  height: 120,
-                                  background: '#e5e7eb',
-                                  borderRadius: 8,
-                                }}
-                              />
-                            )} */}
-                  </Box>
-                  <Group justify="space-between" mt={8}>
-                    <Text size="xs" c="gray.6">
-                      {file.lastModified ? (
-                        <Tooltip
-                          label={formatDateAndTime(file.lastModified)}
-                          fz={'xs'}
+                        <Group gap={8} flex={1} miw={0} align="center">
+                          {file.icon(responsiveIconSize)}
+                          <Tooltip
+                            label={file.name}
+                            withArrow={false}
+                            fz={'xs'}
+                          >
+                            <Text
+                              fw={600}
+                              fz={responsiveFontSize}
+                              flex={1}
+                              truncate
+                              miw={0}
+                            >
+                              {file.name}
+                            </Text>
+                          </Tooltip>
+                        </Group>
+                        <Menu
+                          items={filteredMenuItems}
+                          onItemClick={actionId =>
+                            handleMenuItemClick(actionId, file)
+                          }
                         >
-                          <Text size="xs">{formatDate(file.lastModified)}</Text>
-                        </Tooltip>
-                      ) : (
-                        '-'
-                      )}
-                    </Text>
-                    <Text size="xs" c="gray.6">
-                      {file.size}
-                    </Text>
-                  </Group>
-                </Card>
-              ))}
-            </Box>
-          ) : (
-            <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
-              <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
-                No files available.
-              </Text>
-            </Box>
-          )}
-        </Card>
+                          <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            style={{ flexShrink: 0 }}
+                          >
+                            <ICONS.IconDotsVertical size={18} />
+                          </ActionIcon>
+                        </Menu>
+                      </Group>
+                      <Box
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: 8,
+                          marginTop: 8,
+                        }}
+                      >
+                        {file.icon(isXs ? 50 : 60)}
+                      </Box>
+                      <Group justify="space-between" mt={8}>
+                        <Text size="xs" c="gray.6">
+                          {file.lastModified ? (
+                            <Tooltip
+                              label={formatDateAndTime(file.lastModified)}
+                              fz={'xs'}
+                            >
+                              <Text size="xs">
+                                {formatDate(file.lastModified)}
+                              </Text>
+                            </Tooltip>
+                          ) : (
+                            '-'
+                          )}
+                        </Text>
+                        <Text size="xs" c="gray.6">
+                          {file.size}
+                        </Text>
+                      </Group>
+                    </Card>
+                  ))}
+                </Box>
+              </InfiniteScroll>
+            ) : (
+              <Box style={{ minWidth: '100%', overflowX: 'auto' }}>
+                <Text py="xl" c="dimmed" style={{ textAlign: 'center' }}>
+                  No files available.
+                </Text>
+              </Box>
+            )}
+          </Card>
+        </Stack>
       </Box>
 
       {/* delete file/folder modal */}
@@ -536,7 +565,7 @@ const RecentFiles = () => {
         detailsFile={detailsFile}
         detailsFileLoading={detailsFileLoading}
       />
-    </Stack>
+    </Box>
   );
 };
 

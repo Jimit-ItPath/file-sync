@@ -1,5 +1,5 @@
 import { downloadFilesEnhanced } from './../../../utils/helper/index';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   downloadFiles,
@@ -35,7 +35,11 @@ type UseRecentFilesProps = {
 };
 
 const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
-  const { loading, recentFiles } = useAppSelector(state => state.cloudStorage);
+  const {
+    loading,
+    recentFiles,
+    recentFilesPagination: pagination,
+  } = useAppSelector(state => state.cloudStorage);
   const dispatch = useAppDispatch();
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -72,6 +76,13 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
   const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
   const [selectedItemForDetails, setSelectedItemForDetails] =
     useState<FileType | null>(null);
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const scrollBoxRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredAutoLoad = useRef(false);
+  const isInitialLoadComplete = useRef(false);
+  const lastAutoLoadCheck = useRef<string>('');
+  const autoLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const renameMethods = useForm<RenameFormData>({
     resolver: zodResolver(renameSchema),
@@ -80,9 +91,24 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
 
   const { reset: resetRenameForm } = renameMethods;
 
-  const getRecentFiles = useCallback(async () => {
-    await dispatch(fetchRecentFiles({}));
-  }, [dispatch]);
+  const getRecentFiles = useCallback(
+    async (page: number = 1, _: boolean = false) => {
+      const result = await dispatch(
+        fetchRecentFiles({
+          page: typeof page === 'number' ? page : 1,
+          limit: pagination?.page_limit || 20,
+        })
+      );
+
+      if (result.payload?.data && result.payload?.data?.paging) {
+        const { page_no, total_pages } = result.payload?.data?.paging;
+        setHasMore(page_no < total_pages);
+      }
+
+      // return result;
+    },
+    [dispatch, pagination?.page_limit]
+  );
 
   const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
 
@@ -114,9 +140,114 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
 
   useEffect(() => {
     onGetRecentFiles({});
+    setHasMore(true);
 
     return () => {
       dispatch(resetRecentFiles());
+    };
+  }, []);
+
+  const loadMoreFiles = useCallback(async () => {
+    if (
+      pagination &&
+      pagination.page_no < pagination.total_pages &&
+      !loading &&
+      !isAutoLoading
+    ) {
+      setIsAutoLoading(true);
+      try {
+        await getRecentFiles(pagination.page_no + 1, true);
+      } finally {
+        setIsAutoLoading(false);
+      }
+    }
+  }, [pagination, loading, isAutoLoading, getRecentFiles]);
+
+  const checkScrollbarAndAutoLoad = useCallback(async () => {
+    if (
+      !scrollBoxRef.current ||
+      loading ||
+      isAutoLoading ||
+      hasTriggeredAutoLoad.current
+    ) {
+      return;
+    }
+
+    // Create a unique identifier for this check to prevent duplicates
+    const checkId = `${recentFiles.length}-${pagination?.page_no}-${pagination?.total_pages}`;
+    if (lastAutoLoadCheck.current === checkId) {
+      return;
+    }
+    lastAutoLoadCheck.current = checkId;
+
+    const container = scrollBoxRef.current;
+    const hasVerticalScrollbar =
+      container.scrollHeight > container.clientHeight;
+
+    // Only auto-load if no scrollbar, more pages available, and initial load is complete
+    if (
+      !hasVerticalScrollbar &&
+      pagination &&
+      pagination.page_no < pagination.total_pages &&
+      isInitialLoadComplete.current
+    ) {
+      setIsAutoLoading(true);
+      hasTriggeredAutoLoad.current = true;
+
+      try {
+        await loadMoreFiles();
+      } catch (error) {
+        console.error('Auto-load failed:', error);
+      } finally {
+        // Reset flags after a delay to allow DOM to update
+        setTimeout(() => {
+          hasTriggeredAutoLoad.current = false;
+          setIsAutoLoading(false);
+          // Schedule next check
+          setTimeout(() => {
+            checkScrollbarAndAutoLoad();
+          }, 100);
+        }, 200);
+      }
+    }
+  }, [loading, isAutoLoading, pagination, loadMoreFiles, recentFiles.length]);
+
+  useEffect(() => {
+    // Clear any existing timeout
+    if (autoLoadTimeoutRef.current) {
+      clearTimeout(autoLoadTimeoutRef.current);
+    }
+
+    if (!isInitialLoadComplete.current && recentFiles.length > 0) {
+      isInitialLoadComplete.current = true;
+    }
+
+    // Check for scrollbar after DOM updates
+    if (isInitialLoadComplete.current && recentFiles.length > 0) {
+      autoLoadTimeoutRef.current = setTimeout(() => {
+        checkScrollbarAndAutoLoad();
+      }, 300); // Increased delay to prevent rapid calls
+    }
+
+    return () => {
+      if (autoLoadTimeoutRef.current) {
+        clearTimeout(autoLoadTimeoutRef.current);
+      }
+    };
+  }, [recentFiles.length, isInitialLoadComplete.current]);
+
+  useEffect(() => {
+    hasTriggeredAutoLoad.current = false;
+    lastAutoLoadCheck.current = '';
+    isInitialLoadComplete.current = false;
+  }, []);
+
+  // Reset auto-load flag when filters change or navigation occurs
+  useEffect(() => {
+    return () => {
+      if (autoLoadTimeoutRef.current) {
+        clearTimeout(autoLoadTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -152,7 +283,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
         await dispatch(
           renameCloudStorageFile({ id: fileId, name: newName })
         ).unwrap();
-        onGetRecentFiles({});
+        getRecentFiles(1);
         notifications.show({
           message: 'Item renamed successfully',
           color: 'green',
@@ -180,7 +311,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
         const res = await dispatch(removeCloudStorageFiles({ ids: [fileId] }));
 
         if (res?.payload?.status === 200 || res?.payload?.success !== false) {
-          onGetRecentFiles({});
+          getRecentFiles(1);
           notifications.show({
             message: res?.payload?.message || 'Item deleted successfully',
             color: 'green',
@@ -295,7 +426,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
         );
 
         if (res?.payload?.status === 200 || res?.payload?.success) {
-          onGetRecentFiles({});
+          getRecentFiles(1);
           notifications.show({
             message:
               res?.payload?.message ||
@@ -459,7 +590,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
       const res = await dispatch(syncCloudStorage({})).unwrap();
 
       if (res?.status === 200) {
-        onGetRecentFiles({});
+        getRecentFiles(1);
         notifications.show({
           message: res?.data?.message || 'Items synced successfully',
           color: 'green',
@@ -574,6 +705,11 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     detailsFile,
     detailsFileLoading,
     downloadItems,
+
+    loadMoreFiles,
+    hasMore,
+    scrollBoxRef,
+    pagination,
   };
 };
 
