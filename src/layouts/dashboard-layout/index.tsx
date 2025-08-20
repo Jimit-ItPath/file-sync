@@ -49,6 +49,7 @@ import {
   fetchCloudStorageFiles,
   resetCloudStorageFolder,
 } from '../../store/slices/cloudStorage.slice';
+import { notifications } from '@mantine/notifications';
 
 const DashboardLayout = () => {
   usePageData();
@@ -76,6 +77,7 @@ const DashboardLayout = () => {
     uploadingFiles,
     handleCancelUpload,
     handleCloseUploadProgress,
+    handleRemoveUploadedFile,
   } = useDashboard({});
 
   const { logout } = useAuth() as any;
@@ -603,6 +605,7 @@ const DashboardLayout = () => {
               uploadingFiles,
               handleCancelUpload,
               handleCloseUploadProgress,
+              handleRemoveUploadedFile,
             }}
           />
         </AppShell.Navbar>
@@ -692,14 +695,26 @@ const DashboardLayout = () => {
             <Stack gap={'md'}>
               <Dropzone
                 onFilesSelected={files => {
-                  setUploadedFiles(files);
-                  uploadMethods.setValue('files', files);
+                  if (files.length > 5) {
+                    notifications.show({
+                      message: 'You can upload a maximum of 5 files at a time.',
+                      color: 'red',
+                    });
+                    // Only take the first 5 files
+                    const limitedFiles = files.slice(0, 5);
+                    setUploadedFiles(limitedFiles);
+                    uploadMethods.setValue('files', limitedFiles);
+                  } else {
+                    setUploadedFiles(files);
+                    uploadMethods.setValue('files', files);
+                  }
                 }}
                 // maxSize={5 * 1024 ** 2}
                 multiple={true}
                 mb="md"
                 getFileIcon={getFileIcon}
                 files={uploadedFiles}
+                handleRemoveUploadedFile={handleRemoveUploadedFile}
               />
               {!isSFDEnabled && (
                 <Controller

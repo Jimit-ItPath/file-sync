@@ -43,6 +43,7 @@ import DownloadProgress from './components/DownloadProgress';
 import DashboardFilters from './components/DashboardFilters';
 import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
 import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
+import { notifications } from '@mantine/notifications';
 
 const iconStyle = {
   borderRadius: 999,
@@ -173,6 +174,7 @@ const Dashboard = () => {
     checkConnectedAccDetails,
     // isAutoLoading,
     hasPaginationData,
+    handleRemoveUploadedFile,
   } = useDashboard({ downloadFile });
 
   const {
@@ -746,14 +748,26 @@ const Dashboard = () => {
               <Dropzone
                 // onFilesSelected={setUploadedFiles}
                 onFilesSelected={files => {
-                  setUploadedFiles(files);
-                  uploadMethods.setValue('files', files);
+                  if (files.length > 5) {
+                    notifications.show({
+                      message: 'You can upload a maximum of 5 files at a time.',
+                      color: 'red',
+                    });
+                    // Only take the first 5 files
+                    const limitedFiles = files.slice(0, 5);
+                    setUploadedFiles(limitedFiles);
+                    uploadMethods.setValue('files', limitedFiles);
+                  } else {
+                    setUploadedFiles(files);
+                    uploadMethods.setValue('files', files);
+                  }
                 }}
                 // maxSize={5 * 1024 ** 2}
                 multiple={true}
                 mb="md"
                 getFileIcon={getFileIcon}
                 files={uploadedFiles}
+                handleRemoveUploadedFile={handleRemoveUploadedFile}
               />
               {!isSFDEnabled && (
                 <Controller
@@ -907,7 +921,7 @@ const Dashboard = () => {
           <Stack gap={'md'}>
             <Text size="sm" c="dimmed" mb="xs">
               {dragDropFiles.length} file{dragDropFiles.length > 1 ? 's' : ''}{' '}
-              selected for upload:
+              selected for upload (max 5 files) :
             </Text>
             <Box
               style={{
@@ -919,7 +933,7 @@ const Dashboard = () => {
                 border: '1px solid #e9ecef',
               }}
             >
-              {dragDropFiles.map((file, index) => {
+              {dragDropFiles?.slice(0, 5).map((file, index) => {
                 const isImage = file.type.startsWith('image/');
                 return (
                   <Group key={index} gap={'md'} mt={index > 0 ? 15 : 0}>
@@ -962,6 +976,11 @@ const Dashboard = () => {
                   </Group>
                 );
               })}
+              {dragDropFiles.length > 5 ? (
+                <Text size="sm" c="red" mt="md">
+                  Only the first 5 files will be uploaded.
+                </Text>
+              ) : null}
             </Box>
 
             <Controller

@@ -38,6 +38,7 @@ import {
 import SortableCloudAccountItem from './SortableCloudAccountItem';
 import { Controller } from 'react-hook-form';
 import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
+import { notifications } from '@mantine/notifications';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -83,6 +84,7 @@ const NavBar = ({
   uploadingFiles,
   handleCancelUpload,
   handleCloseUploadProgress,
+  handleRemoveUploadedFile,
 }: any) => {
   const location = useLocation();
   const {
@@ -1032,14 +1034,26 @@ const NavBar = ({
               <Dropzone
                 // onFilesSelected={setUploadedFiles}
                 onFilesSelected={files => {
-                  setUploadedFiles(files);
-                  uploadMethods.setValue('files', files);
+                  if (files.length > 5) {
+                    notifications.show({
+                      message: 'You can upload a maximum of 5 files at a time.',
+                      color: 'red',
+                    });
+                    // Only take the first 5 files
+                    const limitedFiles = files.slice(0, 5);
+                    setUploadedFiles(limitedFiles);
+                    uploadMethods.setValue('files', limitedFiles);
+                  } else {
+                    setUploadedFiles(files);
+                    uploadMethods.setValue('files', files);
+                  }
                 }}
                 // maxSize={5 * 1024 ** 2}
                 multiple={true}
                 mb="md"
                 getFileIcon={getFileIcon}
                 files={uploadedFiles}
+                handleRemoveUploadedFile={handleRemoveUploadedFile}
               />
               {!isSFDEnabled && (
                 <Controller
