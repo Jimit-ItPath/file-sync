@@ -1301,7 +1301,11 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       }
 
       try {
-        await startUpload(files, uploadOptions);
+        await startUpload(
+          files,
+          uploadOptions,
+          checkConnectedAccDetails?.account_type
+        );
         closeModal();
         closeDragDropModal();
         uploadMethods.reset();

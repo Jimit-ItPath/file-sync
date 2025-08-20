@@ -481,14 +481,6 @@ const cloudStorageSlice = createSlice({
     resetRecentFiles: state => {
       state.recentFiles = [];
     },
-    updateFileUploadProgress: (state, action) => {
-      const { fileId, progress } = action.payload;
-      // This will be handled in the component state
-    },
-    setFileUploadStatus: (state, action) => {
-      const { fileId, status } = action.payload;
-      // This will be handled in the component state
-    },
   },
   extraReducers: builder => {
     builder
@@ -657,8 +649,6 @@ export const {
   resetMoveModalState,
   setMoveModalPath,
   resetRecentFiles,
-  setFileUploadStatus,
-  updateFileUploadProgress,
 } = cloudStorageSlice.actions;
 
 export default cloudStorageSlice.reducer;

@@ -1,8 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useAppDispatch } from '../../../store';
-import {
-  uploadCloudStorageFilesV2,
-} from '../../../store/slices/cloudStorage.slice';
+import { uploadCloudStorageFilesV2 } from '../../../store/slices/cloudStorage.slice';
 import { notifications } from '@mantine/notifications';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -712,7 +710,6 @@ const useUploadManagerV2 = () => {
                 status: 'completed',
               },
             }));
-            console.log("in 200")
             return { success: true, fileData };
           }
           // --- Error case ---
@@ -745,7 +742,6 @@ const useUploadManagerV2 = () => {
             status: 'completed',
           },
         }));
-        console.log("check")
         return { success: true, fileData: null };
       } catch (error: any) {
         console.error('Upload error:', error);
@@ -766,7 +762,8 @@ const useUploadManagerV2 = () => {
   const startUpload = useCallback(
     async (
       files: File[],
-      options: { id?: string; account_id?: string } = {}
+      options: { id?: string; account_id?: string } = {},
+      accountType?: string
     ) => {
       if (files.length === 0) return;
 
@@ -897,7 +894,6 @@ const useUploadManagerV2 = () => {
             color: 'red',
           });
         }
-        console.log("res-", uploadResults)
         return uploadResults;
       } catch (error: any) {
         console.error('Upload initialization error:', error);
