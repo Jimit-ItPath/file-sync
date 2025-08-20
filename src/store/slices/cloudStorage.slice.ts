@@ -44,6 +44,13 @@ type CloudStorageState = {
     page_length: number;
     page_limit: number;
   } | null;
+  recentFilesPagination: {
+    total: number;
+    total_pages: number;
+    page_no: number;
+    page_length: number;
+    page_limit: number;
+  } | null;
   hasPaginationData: boolean;
   loading: boolean;
   error: string | null;
@@ -71,6 +78,7 @@ const initialState: CloudStorageState = {
   cloudStorage: [],
   recentFiles: [],
   pagination: null,
+  recentFilesPagination: null,
   hasPaginationData: false,
   loading: false,
   error: null,
@@ -122,6 +130,8 @@ export const fetchRecentFiles = createAsyncThunk(
   async (
     params: {
       account_id?: number | string;
+      page?: number;
+      limit?: number;
     },
     { rejectWithValue }
   ) => {
@@ -397,6 +407,7 @@ const cloudStorageSlice = createSlice({
         pagination: null,
       };
       state.recentFiles = [];
+      state.recentFilesPagination = null;
       state.accountId = 'all';
     },
     resetPagination: state => {
@@ -417,6 +428,7 @@ const cloudStorageSlice = createSlice({
     },
     resetRecentFiles: state => {
       state.recentFiles = [];
+      state.recentFilesPagination = null;
     },
   },
   extraReducers: builder => {
@@ -462,13 +474,20 @@ const cloudStorageSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchRecentFiles.fulfilled, (state, action) => {
+        const { data = [], paging = null } = action.payload?.data;
         state.loading = false;
-        state.recentFiles = action.payload?.data?.rows || [];
+        if (action.meta.arg.page && action.meta.arg.page > 1) {
+          state.recentFiles = [...state.recentFiles, ...data];
+        } else {
+          state.recentFiles = data;
+        }
+        state.recentFilesPagination = paging || null;
       })
       .addCase(fetchRecentFiles.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.recentFiles = [];
+        state.recentFilesPagination = null;
       })
       .addCase(navigateToFolder.pending, state => {
         state.navigateLoading = true;
