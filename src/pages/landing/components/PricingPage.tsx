@@ -16,11 +16,16 @@ import StaggerContainer from './StaggerContainer';
 import { AUTH_ROUTES } from '../../../routing/routes';
 import LandingFooter from '../LandingFooter';
 import useResponsive from '../../../hooks/use-responsive';
+import { useEffect } from 'react';
 
 const PricingPage = () => {
   const { isMd, isSm } = useResponsive();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const plans = [
     {

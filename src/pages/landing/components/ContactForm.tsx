@@ -7,12 +7,18 @@ import AnimatedSection from './AnimatedSection';
 import LandingFooter from '../LandingFooter';
 import useContact from './use-contact';
 import { Button, Form, Input } from '../../../components';
+import { useEffect } from 'react';
 
 const ContactForm = () => {
   const { isMd, isSm } = useResponsive();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
   const { contactFormData, handleContactSubmit, methods } = useContact();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   return (
     <AppShell
       header={{ height: 70 }}

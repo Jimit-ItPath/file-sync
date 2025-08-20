@@ -23,7 +23,10 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({
         } else {
           const element = document.getElementById('powerful-features');
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+            const yOffset = -70;
+            const y =
+              element.getBoundingClientRect().top + window.scrollY + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
           }
         }
       }}
@@ -50,7 +53,10 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({
         } else {
           const element = document.getElementById('security-features');
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+            const yOffset = -70;
+            const y =
+              element.getBoundingClientRect().top + window.scrollY + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
           }
         }
       }}

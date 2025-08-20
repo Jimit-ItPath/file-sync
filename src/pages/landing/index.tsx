@@ -169,7 +169,10 @@ export default function UnifidriveLanding() {
       const element = document.getElementById(location.state.scrollTo);
       if (element) {
         setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth' });
+          const yOffset = -70;
+          const y =
+            element.getBoundingClientRect().top + window.scrollY + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
         }, 100);
       }
     }

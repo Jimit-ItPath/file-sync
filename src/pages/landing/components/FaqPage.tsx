@@ -14,11 +14,16 @@ import LandingFooter from '../LandingFooter';
 import { useNavigate } from 'react-router';
 import { useDisclosure } from '@mantine/hooks';
 import { Card } from '../../../components';
+import { useEffect } from 'react';
 
 const FaqPage = () => {
   const { isMd, isSm } = useResponsive();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const faqs = [
     {
