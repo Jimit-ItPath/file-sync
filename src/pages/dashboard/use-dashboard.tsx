@@ -173,7 +173,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const [selectedItemForDetails, setSelectedItemForDetails] =
     useState<FileType | null>(null);
 
-  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string[] | null>(null);
   const [modifiedFilter, setModifiedFilter] = useState<{
     after?: Date;
     before?: Date;
@@ -324,10 +324,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
   // Add filter handler functions:
   const handleTypeFilter = useCallback(
-    async (type: string | null) => {
-      setTypeFilter(type);
+    async (types: string[] | null) => {
+      setTypeFilter(types);
       await getCloudStorageFiles(1, {
-        type: type || undefined,
+        type: types && types?.length ? types?.join(',') : undefined,
         after: modifiedFilter?.after
           ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
           : undefined,
@@ -343,7 +343,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     async (dateRange: { after?: Date; before?: Date } | null) => {
       setModifiedFilter(dateRange);
       await getCloudStorageFiles(1, {
-        type: typeFilter || undefined,
+        type:
+          typeFilter && typeFilter?.length ? typeFilter?.join(',') : undefined,
         after: dateRange?.after
           ? dayjs(dateRange.after).format('MM/DD/YYYY')
           : undefined,
@@ -383,7 +384,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         ...(currentFolderId && { id: currentFolderId }),
         searchTerm: debouncedSearchTerm || '',
         ...(typeFilter && {
-          type: typeFilter,
+          type:
+            typeFilter && typeFilter?.length
+              ? typeFilter?.join(',')
+              : undefined,
         }),
         ...(modifiedFilter?.after && {
           start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
@@ -579,7 +583,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       getCloudStorageFiles(
         checkLocation || accountId !== 'all' ? 1 : undefined,
         {
-          type: typeFilter || undefined,
+          type:
+            typeFilter && typeFilter?.length
+              ? typeFilter?.join(',')
+              : undefined,
           after: modifiedFilter?.after
             ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
             : undefined,
@@ -931,7 +938,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // }
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
-            type: typeFilter || undefined,
+            type:
+              typeFilter && typeFilter?.length
+                ? typeFilter?.join(',')
+                : undefined,
             after: modifiedFilter?.after
               ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
               : undefined,
@@ -1055,7 +1065,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         // }
         // await getCloudStorageFiles(1);
         await getCloudStorageFiles(1, {
-          type: typeFilter || undefined,
+          type:
+            typeFilter && typeFilter?.length
+              ? typeFilter?.join(',')
+              : undefined,
           after: modifiedFilter?.after
             ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
             : undefined,
@@ -1087,7 +1100,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         // }
         // await getCloudStorageFiles(1);
         await getCloudStorageFiles(1, {
-          type: typeFilter || undefined,
+          type:
+            typeFilter && typeFilter?.length
+              ? typeFilter?.join(',')
+              : undefined,
           after: modifiedFilter?.after
             ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
             : undefined,
@@ -1127,7 +1143,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // }
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
-            type: typeFilter || undefined,
+            type:
+              typeFilter && typeFilter?.length
+                ? typeFilter?.join(',')
+                : undefined,
             after: modifiedFilter?.after
               ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
               : undefined,
@@ -1402,7 +1421,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // }
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
-            type: typeFilter || undefined,
+            type:
+              typeFilter && typeFilter?.length
+                ? typeFilter?.join(',')
+                : undefined,
             after: modifiedFilter?.after
               ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
               : undefined,
@@ -1527,7 +1549,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // }
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
-            type: typeFilter || undefined,
+            type:
+              typeFilter && typeFilter?.length
+                ? typeFilter?.join(',')
+                : undefined,
             after: modifiedFilter?.after
               ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
               : undefined,
@@ -1581,7 +1606,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // }
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
-            type: typeFilter || undefined,
+            type:
+              typeFilter && typeFilter?.length
+                ? typeFilter?.join(',')
+                : undefined,
             after: modifiedFilter?.after
               ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
               : undefined,
@@ -1780,7 +1808,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           // }
           // await getCloudStorageFiles(1);
           await getCloudStorageFiles(1, {
-            type: typeFilter || undefined,
+            type:
+              typeFilter && typeFilter?.length
+                ? typeFilter?.join(',')
+                : undefined,
             after: modifiedFilter?.after
               ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
               : undefined,
