@@ -38,6 +38,7 @@ import {
 import SortableCloudAccountItem from './SortableCloudAccountItem';
 import { Controller } from 'react-hook-form';
 import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
+import { notifications } from '@mantine/notifications';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -83,6 +84,7 @@ const NavBar = ({
   uploadingFiles,
   handleCancelUpload,
   handleCloseUploadProgress,
+  handleRemoveUploadedFile,
 }: any) => {
   const location = useLocation();
   const {
@@ -146,49 +148,262 @@ const NavBar = ({
               position="bottom-start"
               opened={menuOpened}
               onClose={() => setMenuOpened(false)}
-              width={240}
-              shadow="lg"
+              width={260}
+              shadow="xl"
+              radius="lg"
+              offset={8}
+              styles={{
+                dropdown: {
+                  background: '#ffffff',
+                  border: '1px solid rgba(0, 86, 179, 0.1)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow:
+                    '0 20px 40px rgba(0, 86, 179, 0.15), 0 0 0 1px rgba(0, 86, 179, 0.05)',
+                  padding: '8px',
+                },
+              }}
             >
               <Menu.Target>
-                <Button
-                  leftSection={<ICONS.IconPlus size={16} />}
+                <Box
                   onClick={() => setMenuOpened(true)}
                   style={{
-                    backgroundColor: '#fff',
-                    color: '#5f6368',
-                    border: '1px solid #dadce0',
-                    boxShadow:
-                      '0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149)',
-                    fontWeight: 500,
+                    position: 'relative',
+                    cursor: 'pointer',
                     marginRight: '1rem',
+                    width: 'fit-content',
                   }}
-                  size="sm"
-                  w={'fit-content'}
                 >
-                  New
-                </Button>
+                  {/* Main Button */}
+                  <Box
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '12px',
+                      padding: '12px 20px',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: menuOpened ? 'scale(0.95)' : 'scale(1)',
+                      // border: '2px solid #0056b3',
+                      border: '2px solid #1c7ed6',
+                      // boxShadow: menuOpened
+                      //   ? '0 8px 32px rgba(0, 86, 179, 0.25)'
+                      //   : '0 4px 20px rgba(0, 86, 179, 0.15)',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform =
+                        'scale(1.02) translateY(-1px)';
+                      // e.currentTarget.style.boxShadow =
+                      //   '0 12px 40px rgba(0, 86, 179, 0.3)';
+                      e.currentTarget.style.background = '#f8fafc';
+                    }}
+                    onMouseLeave={e => {
+                      if (!menuOpened) {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        // e.currentTarget.style.boxShadow =
+                        //   '0 4px 20px rgba(0, 86, 179, 0.15)';
+                        e.currentTarget.style.background = '#ffffff';
+                      }
+                    }}
+                  >
+                    {/* Animated Background Pattern */}
+                    <Box
+                      style={{
+                        position: 'absolute',
+                        top: '-50%',
+                        left: '-50%',
+                        width: '200%',
+                        height: '200%',
+                        background:
+                          'conic-gradient(from 0deg, transparent, rgba(0, 86, 179, 0.03), transparent)',
+                        animation: 'rotate 10s linear infinite',
+                        pointerEvents: 'none',
+                      }}
+                    />
+
+                    {/* Button Content */}
+                    <Group gap={8} style={{ position: 'relative', zIndex: 1 }}>
+                      <Box
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '8px',
+                          // background: '#0056b3',
+                          background: '#1c7ed6',
+                          transition: 'all 0.3s ease',
+                          // boxShadow: '0 2px 8px rgba(0, 86, 179, 0.3)',
+                          // boxShadow: '0 2px 8px #1c7ed6',
+                        }}
+                      >
+                        <ICONS.IconPlus
+                          size={14}
+                          color="#ffffff"
+                          style={{
+                            transition: 'transform 0.3s ease',
+                            transform: menuOpened
+                              ? 'rotate(45deg)'
+                              : 'rotate(0deg)',
+                          }}
+                        />
+                      </Box>
+                      <Text
+                        style={{
+                          // color: '#0056b3',
+                          color: '#1c7ed6',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          letterSpacing: '0.3px',
+                        }}
+                      >
+                        New
+                      </Text>
+                    </Group>
+
+                    {/* Subtle Shimmer Effect */}
+                    <Box
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: '-100%',
+                        width: '100%',
+                        height: '100%',
+                        background:
+                          'linear-gradient(90deg, transparent, rgba(0, 86, 179, 0.1), transparent)',
+                        animation: 'shimmer 4s ease-in-out infinite',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </Box>
+
+                  <style>{`
+                    @keyframes rotate {
+                      from {
+                        transform: rotate(0deg);
+                      }
+                      to {
+                        transform: rotate(360deg);
+                      }
+                    }
+
+                    @keyframes shimmer {
+                      0%,
+                      100% {
+                        left: -100%;
+                      }
+                      50% {
+                        left: 100%;
+                      }
+                    }
+                  `}</style>
+                </Box>
               </Menu.Target>
 
               <Menu.Dropdown>
+                {/* Enhanced Menu Items */}
                 <Menu.Item
-                  leftSection={<ICONS.IconFolderPlus size={16} />}
+                  leftSection={
+                    <Box
+                      style={{
+                        background:
+                          'linear-gradient(135deg, #0056b3 0%, #0070f3 100%)',
+                        borderRadius: '8px',
+                        padding: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ICONS.IconFolderPlus size={16} color="#ffffff" />
+                    </Box>
+                  }
                   onClick={() => {
                     openModal('folder');
                     mobileDrawerHandler?.close();
                   }}
-                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                  style={{
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    borderRadius: '8px',
+                    // margin: '4px',
+                    transition: 'all 0.2s ease',
+                    background: 'rgba(0, 86, 179, 0.02)',
+                    color: '#1f2937',
+                    border: '1px solid rgba(0, 86, 179, 0.08)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(0, 86, 179, 0.08)';
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                    e.currentTarget.style.borderColor = 'rgba(0, 86, 179, 0.2)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(0, 86, 179, 0.02)';
+                    e.currentTarget.style.transform = 'translateX(0px)';
+                    e.currentTarget.style.borderColor =
+                      'rgba(0, 86, 179, 0.08)';
+                  }}
                 >
-                  Create folder
+                  <Box>
+                    <Text fw={500} size="sm" c="#1f2937">
+                      Create folder
+                    </Text>
+                    <Text size="xs" c="#6b7280" mt={2}>
+                      Organize your files
+                    </Text>
+                  </Box>
                 </Menu.Item>
+
                 <Menu.Item
-                  leftSection={<ICONS.IconUpload size={16} />}
+                  leftSection={
+                    <Box
+                      style={{
+                        background:
+                          'linear-gradient(135deg, #0056b3 0%, #0070f3 100%)',
+                        borderRadius: '8px',
+                        padding: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ICONS.IconUpload size={16} color="#ffffff" />
+                    </Box>
+                  }
                   onClick={() => {
                     openModal('files');
                     mobileDrawerHandler?.close();
                   }}
-                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                  style={{
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    borderRadius: '8px',
+                    marginTop: '4px',
+                    transition: 'all 0.2s ease',
+                    background: 'rgba(0, 86, 179, 0.02)',
+                    color: '#1f2937',
+                    border: '1px solid rgba(0, 86, 179, 0.08)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(0, 86, 179, 0.08)';
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                    e.currentTarget.style.borderColor = 'rgba(0, 86, 179, 0.2)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(0, 86, 179, 0.02)';
+                    e.currentTarget.style.transform = 'translateX(0px)';
+                    e.currentTarget.style.borderColor =
+                      'rgba(0, 86, 179, 0.08)';
+                  }}
                 >
-                  Upload files
+                  <Box>
+                    <Text fw={500} size="sm" c="#1f2937">
+                      Upload files
+                    </Text>
+                    <Text size="xs" c="#6b7280" mt={2}>
+                      Add documents, images & more
+                    </Text>
+                  </Box>
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -819,14 +1034,26 @@ const NavBar = ({
               <Dropzone
                 // onFilesSelected={setUploadedFiles}
                 onFilesSelected={files => {
-                  setUploadedFiles(files);
-                  uploadMethods.setValue('files', files);
+                  if (files.length > 5) {
+                    notifications.show({
+                      message: 'You can upload a maximum of 5 files at a time.',
+                      color: 'red',
+                    });
+                    // Only take the first 5 files
+                    const limitedFiles = files.slice(0, 5);
+                    setUploadedFiles(limitedFiles);
+                    uploadMethods.setValue('files', limitedFiles);
+                  } else {
+                    setUploadedFiles(files);
+                    uploadMethods.setValue('files', files);
+                  }
                 }}
                 // maxSize={5 * 1024 ** 2}
                 multiple={true}
                 mb="md"
                 getFileIcon={getFileIcon}
                 files={uploadedFiles}
+                handleRemoveUploadedFile={handleRemoveUploadedFile}
               />
               {!isSFDEnabled && (
                 <Controller

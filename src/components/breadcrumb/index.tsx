@@ -6,23 +6,36 @@ import {
 } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
 import { Tooltip } from '../tooltip';
+import type { ConnectedAccountType } from '../../store/slices/auth.slice';
 
 interface BreadcrumbItem {
   id?: string | null;
   name: string;
+  accountName?: string;
 }
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
   onNavigate: (folderId?: string | null) => void;
+  checkConnectedAccDetails?: ConnectedAccountType | undefined;
 }
 
-export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
-  let displayItems: (BreadcrumbItem | { name: string; id?: string | null })[] =
-    [];
+export const Breadcrumbs = ({
+  items,
+  onNavigate,
+  checkConnectedAccDetails,
+}: BreadcrumbsProps) => {
+  let displayItems: (
+    | BreadcrumbItem
+    | { name: string; id?: string | null; accountName?: string }
+  )[] = [];
   if (items?.length + 1 > 3) {
     // +1 because we prepend {id:null, name:'All Files'}
-    const allFilesItem = { id: null, name: 'All Files' };
+    const allFilesItem = {
+      id: null,
+      name: 'All Files',
+      accountName: checkConnectedAccDetails?.account_name || '',
+    };
     const allItems = [allFilesItem, ...items];
     displayItems = [
       allItems[0], // first
@@ -31,7 +44,14 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
       allItems[allItems.length - 1], // last
     ];
   } else {
-    displayItems = [{ id: null, name: 'All Files' }, ...items];
+    displayItems = [
+      {
+        id: null,
+        name: 'All Files',
+        accountName: checkConnectedAccDetails?.account_name || '',
+      },
+      ...items,
+    ];
   }
 
   return (
@@ -52,7 +72,9 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
             borderRadius: '6px',
             transition: 'all 0.15s ease',
             minWidth: 0,
-            maxWidth: '120px',
+            maxWidth: checkConnectedAccDetails?.account_name
+              ? '200px'
+              : '120px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -77,6 +99,7 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
         {displayItems.map((item, index) => {
           const isEllipsis = item.name === '...';
           const isLast = index === displayItems.length - 1;
+          const isFirst = index === 0;
 
           if (isEllipsis) {
             return (
@@ -96,6 +119,8 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
             );
           }
 
+          const isAllFiles = item.id === null && !!item?.accountName;
+
           return (
             <Anchor
               onClick={() => {
@@ -109,7 +134,11 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
                 fontWeight: isLast ? 600 : 500,
                 color: isLast ? '#212529' : '#495057',
                 minWidth: 0,
-                maxWidth: isLast ? '140px' : '100px',
+                maxWidth: isLast
+                  ? '140px'
+                  : isFirst && item?.accountName
+                    ? '200px'
+                    : '100px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -122,23 +151,55 @@ export const Breadcrumbs = ({ items, onNavigate }: BreadcrumbsProps) => {
                 (e.currentTarget.style.color = isLast ? '#212529' : '#495057')
               }
             >
-              <Tooltip
-                label={item.name}
-                fz={'xs'}
-                disabled={item.name.length < 15}
-              >
-                <Text
-                  size="sm"
-                  fw={isLast ? 600 : 500}
-                  truncate
-                  style={{
-                    fontSize: '13px',
-                    lineHeight: 1.4,
-                  }}
+              {isAllFiles ? (
+                <Tooltip
+                  label={`All Files (${item?.accountName})`}
+                  fz={'xs'}
+                  disabled={item?.accountName!?.length < 15}
                 >
-                  {item.name}
-                </Text>
-              </Tooltip>
+                  <Text
+                    size="sm"
+                    fw={isLast ? 600 : 500}
+                    style={{
+                      fontSize: '13px',
+                      lineHeight: 1.4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      minWidth: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        minWidth: 0,
+                      }}
+                    >
+                      All Files ({checkConnectedAccDetails?.account_name}
+                    </span>
+                    <span>)</span>
+                  </Text>
+                </Tooltip>
+              ) : (
+                <Tooltip
+                  label={item.name}
+                  fz={'xs'}
+                  disabled={item.name.length < 15}
+                >
+                  <Text
+                    size="sm"
+                    fw={isLast ? 600 : 500}
+                    truncate
+                    style={{
+                      fontSize: '13px',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {item.name}
+                  </Text>
+                </Tooltip>
+              )}
             </Anchor>
           );
         })}

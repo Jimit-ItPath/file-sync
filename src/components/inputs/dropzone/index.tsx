@@ -1,4 +1,11 @@
-import { Group, Text, useMantineTheme, rem, Box } from '@mantine/core';
+import {
+  Group,
+  Text,
+  useMantineTheme,
+  rem,
+  Box,
+  ActionIcon,
+} from '@mantine/core';
 import {
   Dropzone as MantineDropzone,
   type DropzoneProps,
@@ -18,17 +25,19 @@ interface CustomDropzoneProps extends Partial<DropzoneProps> {
     name?: string;
   }) => (size: number) => React.ReactNode;
   files: File[];
+  handleRemoveUploadedFile?: (idx: number) => void;
 }
 
 export function Dropzone({
   onFilesSelected,
   getFileIcon,
   files = [],
+  handleRemoveUploadedFile = () => {},
   ...props
 }: CustomDropzoneProps) {
   const theme = useMantineTheme();
 
-  const previews = files?.map((file: FileWithPath) => {
+  const previews = files?.map((file: FileWithPath, idx) => {
     const isImage = file.type.startsWith('image/');
     return (
       <Group
@@ -41,12 +50,11 @@ export function Dropzone({
           backgroundColor: theme.white,
           cursor: 'default',
           display: 'flex',
-          width: files?.length > 1 ? rem(250) : '100%',
-          ...(files?.length > 1 && {
-            flex: 1,
-          }),
+          width: '100%',
+          pointerEvents: 'auto',
         }}
         onClick={e => e.stopPropagation()}
+        onMouseDown={e => e.stopPropagation()}
       >
         <Box
           style={{
@@ -97,6 +105,24 @@ export function Dropzone({
           </Text>
         </Tooltip>
         <Text size="sm">({formatFileSize(file.size.toString())})</Text>
+        {/* Delete Icon */}
+        <Tooltip label="Remove File" fz="xs">
+          <ActionIcon
+            variant="subtle"
+            radius="xl"
+            size="lg"
+            color="red"
+            onClick={e => {
+              e.stopPropagation();
+              handleRemoveUploadedFile?.(idx);
+            }}
+            style={{ transition: 'transform 0.15s ease' }}
+            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            <ICONS.IconTrash size={18} />
+          </ActionIcon>
+        </Tooltip>
       </Group>
     );
   });
@@ -106,6 +132,7 @@ export function Dropzone({
       onDrop={files => onFilesSelected(files)}
       multiple={props.multiple}
       {...props}
+      style={{ pointerEvents: 'auto' }}
     >
       <Group
         align="center"
@@ -139,7 +166,21 @@ export function Dropzone({
           </Text>
         </div>
       </Group>
-      {previews && previews?.length ? <Group mt="md">{previews}</Group> : null}
+      {previews && previews?.length ? (
+        <Box
+          mt="md"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: rem(16),
+            maxWidth: '100%',
+            pointerEvents: 'auto',
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          {previews}
+        </Box>
+      ) : null}
     </MantineDropzone>
   );
 }

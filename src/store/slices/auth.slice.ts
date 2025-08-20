@@ -3,7 +3,7 @@ import { api } from '../../api';
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
-type ConnectedAccountType = {
+export type ConnectedAccountType = {
   id: number;
   user_id: string;
   account_name: string;

@@ -50,6 +50,7 @@ import { PRIVATE_ROUTES } from '../../routing/routes';
 
 interface SearchBarProps {
   placeholder?: string;
+  isSm?: boolean;
 }
 
 interface SearchResult {
@@ -76,6 +77,7 @@ interface SearchResult {
 
 const GlobalSearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Search files and folders...',
+  isSm = false,
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -244,6 +246,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         id: result.id,
         name: result.name,
         account_id: result?.UserConnectedAccount?.id!,
+        is_breadcrumb: true,
       };
 
       // Store folder info in localStorage and navigate
@@ -645,7 +648,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
             overflowY: 'auto',
             border: '1px solid #e0e0e0',
             borderRadius: 8,
-            width: '94%',
+            width: isSm ? '90%' : '94%',
           }}
         >
           {searchLoading && (

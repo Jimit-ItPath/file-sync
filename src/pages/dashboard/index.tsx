@@ -41,6 +41,9 @@ import FileDetailsDrawer from './components/FileDetailsDrawer';
 import useFileDownloader from './components/use-file-downloader';
 import DownloadProgress from './components/DownloadProgress';
 import DashboardFilters from './components/DashboardFilters';
+import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
+import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
+import { notifications } from '@mantine/notifications';
 
 const iconStyle = {
   borderRadius: 999,
@@ -142,7 +145,6 @@ const Dashboard = () => {
     folderId,
     displayMoveIcon,
     displayDownloadIcon,
-    location,
     displayShareIcon,
     previewFile,
     previewModalOpen,
@@ -168,7 +170,11 @@ const Dashboard = () => {
     handleTypeFilter,
     typeFilter,
     modifiedFilter,
+    connectedAccounts,
+    checkConnectedAccDetails,
     // isAutoLoading,
+    hasPaginationData,
+    handleRemoveUploadedFile,
   } = useDashboard({ downloadFile });
 
   const {
@@ -179,17 +185,22 @@ const Dashboard = () => {
     methods,
     connectAccountFormData,
     connectAccountLoading,
-    connectedAccounts,
     loading: connectedAccountLoading,
   } = useSidebar();
   const { isSm, theme } = useResponsive();
 
+  const isInitialLoading =
+    loading ||
+    connectedAccountLoading ||
+    navigateLoading ||
+    syncCloudStorageLoading;
+
   // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
 
-  if (!connectedAccounts?.length && !loading && !files?.length) {
+  if ((connectAccountLoading || !connectedAccounts?.length) && !files?.length) {
     return (
       <>
-        <LoaderOverlay visible={loading} opacity={1} />
+        {/* <LoaderOverlay visible={loading} opacity={1} /> */}
         <NoConnectedAccount
           {...{
             closeAccountModal,
@@ -206,16 +217,15 @@ const Dashboard = () => {
     );
   }
 
-  if (connectedAccountLoading) return null;
-
   return (
     <Box>
       <LoaderOverlay
-        visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
+        // visible={navigateLoading || moveFilesLoading || syncCloudStorageLoading}
+        visible={moveFilesLoading}
         opacity={1}
       />
       {/* <ScrollArea> */}
-      {location.pathname?.startsWith('/dropbox') ? (
+      {/* {location.pathname?.startsWith('/dropbox') ? (
         <Text fz={'sm'} fw={500}>
           You are in dropbox account
         </Text>
@@ -227,7 +237,7 @@ const Dashboard = () => {
         <Text fz={'sm'} fw={500}>
           You are in onedrive account
         </Text>
-      ) : null}
+      ) : null} */}
       <Box
         // px={32}
         pb={20}
@@ -320,7 +330,7 @@ const Dashboard = () => {
             align="center"
             w={'100%'}
             // h={48}
-            h={isSm ? 48 : 'auto'}
+            // h={isSm ? 48 : 'auto'}
             gap={16}
           >
             {/* Left Section - Breadcrumbs */}
@@ -337,6 +347,7 @@ const Dashboard = () => {
                     }
                   }
                 }}
+                checkConnectedAccDetails={checkConnectedAccDetails}
               />
             </Box>
 
@@ -423,10 +434,22 @@ const Dashboard = () => {
                         ...iconStyle,
                         width: 36,
                         height: 36,
+                        transition: 'transform 0.5s ease',
+                        animation: syncCloudStorageLoading
+                          ? 'spin 1s linear infinite'
+                          : 'none',
                       }}
                       onClick={handleSyncStorage}
                     >
                       <ICONS.IconRefresh size={16} />
+                      <style>
+                        {`
+                        @keyframes spin {
+                          from { transform: rotate(0deg); }
+                          to { transform: rotate(180deg); }
+                        }
+                      `}
+                      </style>
                     </ActionIcon>
                   </Tooltip>
 
@@ -573,7 +596,13 @@ const Dashboard = () => {
             subMessage="Support for PDF, DOC, XLS, PPT, images and more"
           />
         </Box>
-        {layout === 'list' ? (
+        {isInitialLoading && hasPaginationData ? (
+          layout === 'list' ? (
+            <FileTableSkeleton />
+          ) : (
+            <FileGridSkeleton />
+          )
+        ) : layout === 'list' ? (
           <>
             <FileTable
               {...{
@@ -719,14 +748,26 @@ const Dashboard = () => {
               <Dropzone
                 // onFilesSelected={setUploadedFiles}
                 onFilesSelected={files => {
-                  setUploadedFiles(files);
-                  uploadMethods.setValue('files', files);
+                  if (files.length > 5) {
+                    notifications.show({
+                      message: 'You can upload a maximum of 5 files at a time.',
+                      color: 'red',
+                    });
+                    // Only take the first 5 files
+                    const limitedFiles = files.slice(0, 5);
+                    setUploadedFiles(limitedFiles);
+                    uploadMethods.setValue('files', limitedFiles);
+                  } else {
+                    setUploadedFiles(files);
+                    uploadMethods.setValue('files', files);
+                  }
                 }}
                 // maxSize={5 * 1024 ** 2}
                 multiple={true}
                 mb="md"
                 getFileIcon={getFileIcon}
                 files={uploadedFiles}
+                handleRemoveUploadedFile={handleRemoveUploadedFile}
               />
               {!isSFDEnabled && (
                 <Controller
@@ -880,7 +921,7 @@ const Dashboard = () => {
           <Stack gap={'md'}>
             <Text size="sm" c="dimmed" mb="xs">
               {dragDropFiles.length} file{dragDropFiles.length > 1 ? 's' : ''}{' '}
-              selected for upload:
+              selected for upload (max 5 files) :
             </Text>
             <Box
               style={{
@@ -892,7 +933,7 @@ const Dashboard = () => {
                 border: '1px solid #e9ecef',
               }}
             >
-              {dragDropFiles.map((file, index) => {
+              {dragDropFiles?.slice(0, 5).map((file, index) => {
                 const isImage = file.type.startsWith('image/');
                 return (
                   <Group key={index} gap={'md'} mt={index > 0 ? 15 : 0}>
@@ -935,6 +976,11 @@ const Dashboard = () => {
                   </Group>
                 );
               })}
+              {dragDropFiles.length > 5 ? (
+                <Text size="sm" c="red" mt="md">
+                  Only the first 5 files will be uploaded.
+                </Text>
+              ) : null}
             </Box>
 
             <Controller
