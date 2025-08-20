@@ -179,6 +179,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     before?: Date;
   } | null>(null);
 
+  // **NEW: Improved infinite scroll state management**
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const scrollBoxRef = useRef<HTMLDivElement>(null);
+  const autoLoadInProgressRef = useRef(false);
+  const autoLoadRequestIdRef = useRef<string>('');
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const mutationObserverRef = useRef<MutationObserver | null>(null);
+
   const {
     cloudStorage,
     loading,
@@ -201,11 +209,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const folderId = getLocalStorage(folderIdKey);
   const globalSearchState = getLocalStorage('globalSearchState');
 
-  const [isAutoLoading, setIsAutoLoading] = useState(false);
-  const autoLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasTriggeredAutoLoad = useRef(false);
-  const isInitialLoadComplete = useRef(false);
-  const lastAutoLoadCheck = useRef<string>('');
+  const lastScrollTop = useRef(0);
 
   const checkLocation = useMemo(
     () =>
@@ -294,7 +298,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       const requestParams: any = {
         ...(folderId && { id: folderId }),
         limit: pagination?.page_limit || 20,
-        // page: typeof page === 'number' ? page : pagination?.page_no || 1,
         page: typeof page === 'number' ? page : 1,
         searchTerm: debouncedSearchTerm || '',
         ...(filters?.type && { type: filters.type }),
@@ -314,7 +317,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       dispatch,
       folderId,
       pagination?.page_limit,
-      pagination?.page_no,
       accountId,
       debouncedSearchTerm,
       checkLocation,
@@ -322,9 +324,165 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     ]
   );
 
+  // **NEW: Improved auto-load logic with better state management**
+  const checkAndAutoLoad = useCallback(async () => {
+    if (
+      !scrollBoxRef.current ||
+      loading ||
+      isAutoLoading ||
+      autoLoadInProgressRef.current ||
+      !pagination ||
+      pagination.page_no >= pagination.total_pages ||
+      !connectedAccounts?.length
+    ) {
+      return;
+    }
+
+    const container = scrollBoxRef.current;
+    const hasVerticalScrollbar =
+      container.scrollHeight > container.clientHeight;
+
+    if (!hasVerticalScrollbar) {
+      // Generate unique request ID to prevent duplicate requests
+      const requestId = `${Date.now()}-${Math.random()}`;
+      autoLoadRequestIdRef.current = requestId;
+      autoLoadInProgressRef.current = true;
+      setIsAutoLoading(true);
+
+      try {
+        // Double-check conditions before making the request
+        if (
+          autoLoadRequestIdRef.current === requestId &&
+          pagination &&
+          pagination.page_no < pagination.total_pages
+        ) {
+          const requestParams: any = {
+            page: pagination.page_no + 1,
+            limit: pagination.page_limit || 20,
+            ...(currentFolderId && { id: currentFolderId }),
+            searchTerm: debouncedSearchTerm || '',
+            ...(typeFilter &&
+              typeFilter.length && {
+                type: typeFilter.join(','),
+              }),
+            ...(modifiedFilter?.after && {
+              start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
+            }),
+            ...(modifiedFilter?.before && {
+              end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
+            }),
+          };
+
+          if (checkLocation && currentAccountId) {
+            requestParams.account_id = Number(currentAccountId);
+          } else if (!checkLocation && accountId !== 'all') {
+            requestParams.account_id = accountId;
+          }
+
+          await dispatch(initializeCloudStorageFromStorage(requestParams));
+
+          // Wait a bit for DOM to update, then check again
+          setTimeout(() => {
+            if (autoLoadRequestIdRef.current === requestId) {
+              checkAndAutoLoad();
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.error('Auto-load failed:', error);
+      } finally {
+        if (autoLoadRequestIdRef.current === requestId) {
+          autoLoadInProgressRef.current = false;
+          setIsAutoLoading(false);
+        }
+      }
+    }
+  }, [
+    loading,
+    isAutoLoading,
+    pagination,
+    connectedAccounts,
+    currentFolderId,
+    debouncedSearchTerm,
+    typeFilter,
+    modifiedFilter,
+    checkLocation,
+    currentAccountId,
+    accountId,
+    dispatch,
+  ]);
+
+  // **NEW: Setup observers for better DOM change detection**
+  useEffect(() => {
+    if (!scrollBoxRef.current) return;
+
+    const container = scrollBoxRef.current;
+
+    // ResizeObserver to detect container size changes
+    if (resizeObserverRef.current) {
+      resizeObserverRef.current.disconnect();
+    }
+
+    resizeObserverRef.current = new ResizeObserver(() => {
+      if (!loading && !isAutoLoading && connectedAccounts?.length) {
+        setTimeout(checkAndAutoLoad, 50);
+      }
+    });
+
+    resizeObserverRef.current.observe(container);
+
+    // MutationObserver to detect content changes
+    if (mutationObserverRef.current) {
+      mutationObserverRef.current.disconnect();
+    }
+
+    mutationObserverRef.current = new MutationObserver(() => {
+      if (!loading && !isAutoLoading && connectedAccounts?.length) {
+        setTimeout(checkAndAutoLoad, 50);
+      }
+    });
+
+    mutationObserverRef.current.observe(container, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect();
+      }
+    };
+  }, [checkAndAutoLoad, loading, isAutoLoading, connectedAccounts]);
+
+  // **NEW: Trigger auto-load when data changes**
+  useEffect(() => {
+    if (
+      !loading &&
+      !isAutoLoading &&
+      cloudStorage.length > 0 &&
+      connectedAccounts?.length
+    ) {
+      // Use RAF to ensure DOM has updated
+      requestAnimationFrame(() => {
+        setTimeout(checkAndAutoLoad, 100);
+      });
+    }
+  }, [cloudStorage.length, loading, checkAndAutoLoad, connectedAccounts]);
+
+  // **NEW: Reset auto-load state on context changes**
+  const resetAutoLoadState = useCallback(() => {
+    autoLoadInProgressRef.current = false;
+    autoLoadRequestIdRef.current = '';
+    setIsAutoLoading(false);
+  }, []);
+
   // Add filter handler functions:
   const handleTypeFilter = useCallback(
     async (types: string[] | null) => {
+      resetAutoLoadState();
       setTypeFilter(types);
       await getCloudStorageFiles(1, {
         type: types && types?.length ? types?.join(',') : undefined,
@@ -336,11 +494,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           : undefined,
       });
     },
-    [modifiedFilter]
+    [modifiedFilter, resetAutoLoadState, getCloudStorageFiles]
   );
 
   const handleModifiedFilter = useCallback(
     async (dateRange: { after?: Date; before?: Date } | null) => {
+      resetAutoLoadState();
       setModifiedFilter(dateRange);
       await getCloudStorageFiles(1, {
         type:
@@ -353,28 +512,17 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           : undefined,
       });
     },
-    [typeFilter]
+    [typeFilter, resetAutoLoadState, getCloudStorageFiles]
   );
 
   const handleClearFilters = useCallback(async () => {
+    resetAutoLoadState();
     setTypeFilter(null);
     setModifiedFilter(null);
     await getCloudStorageFiles(1);
-  }, []);
+  }, [resetAutoLoadState, getCloudStorageFiles]);
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
-
-  // const getRecentFiles = useCallback(async () => {
-  //   const requestParams = {
-  //     ...(currentAccountId !== 'all' &&
-  //       currentAccountId && {
-  //         account_id: currentAccountId,
-  //       }),
-  //   };
-  //   await dispatch(fetchRecentFiles(requestParams));
-  // }, [dispatch, currentAccountId]);
-
-  // const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
 
   const loadMoreFiles = useCallback(async () => {
     if (pagination && pagination.page_no < pagination.total_pages && !loading) {
@@ -414,6 +562,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     currentAccountId,
     debouncedSearchTerm,
     checkLocation,
+    typeFilter,
+    modifiedFilter,
   ]);
 
   // Convert cloud storage data to FileType format
@@ -442,55 +592,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }));
   }, [cloudStorage]);
 
-  const checkScrollbarAndAutoLoad = useCallback(async () => {
-    if (
-      !scrollBoxRef.current ||
-      loading ||
-      isAutoLoading ||
-      hasTriggeredAutoLoad.current
-    ) {
-      return;
-    }
-
-    // Create a unique identifier for this check to prevent duplicates
-    const checkId = `${files.length}-${pagination?.page_no}-${pagination?.total_pages}`;
-    if (lastAutoLoadCheck.current === checkId) {
-      return;
-    }
-    lastAutoLoadCheck.current = checkId;
-
-    const container = scrollBoxRef.current;
-    const hasVerticalScrollbar =
-      container.scrollHeight > container.clientHeight;
-
-    // Only auto-load if no scrollbar, more pages available, and initial load is complete
-    if (
-      !hasVerticalScrollbar &&
-      pagination &&
-      pagination.page_no < pagination.total_pages &&
-      isInitialLoadComplete.current
-    ) {
-      setIsAutoLoading(true);
-      hasTriggeredAutoLoad.current = true;
-
-      try {
-        await loadMoreFiles();
-      } catch (error) {
-        console.error('Auto-load failed:', error);
-      } finally {
-        // Reset flags after a delay to allow DOM to update
-        setTimeout(() => {
-          hasTriggeredAutoLoad.current = false;
-          setIsAutoLoading(false);
-          // Schedule next check
-          setTimeout(() => {
-            checkScrollbarAndAutoLoad();
-          }, 100);
-        }, 200);
-      }
-    }
-  }, [loading, isAutoLoading, pagination, loadMoreFiles, files.length]);
-
   useEffect(() => {
     if (moveModalOpen) {
       dispatch(setMoveModalPath(currentPath));
@@ -503,17 +604,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
   }, [checkLocation, navigate, connectedAccounts]);
 
-  // useEffect(() => {
-  //   if (
-  //     (!folderId || folderId === null) &&
-  //     connectedAccounts?.length &&
-  //     !hasCalledRecentFilesAPI.current
-  //   ) {
-  //     onGetRecentFiles({});
-  //     hasCalledRecentFilesAPI.current = true;
-  //   }
-  // }, [folderId]);
-
   useEffect(() => {
     const currentLength = connectedAccounts?.length || 0;
     if (
@@ -522,13 +612,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       !hasCalledPostConnectAPIs.current &&
       !hasCalledInitializeAPI.current
     ) {
-      // if (
-      //   !hasCalledRecentFilesAPI.current &&
-      //   (!folderId || folderId === null)
-      // ) {
-      //   onGetRecentFiles({});
-      //   hasCalledRecentFilesAPI.current = true;
-      // }
       onInitialize({});
       hasCalledPostConnectAPIs.current = true;
       hasCalledInitializeAPI.current = true;
@@ -540,13 +623,9 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       hasCalledPostConnectAPIs.current = false;
       hasCalledInitializeAPI.current = false;
       hasCalledRecentFilesAPI.current = false;
-      isInitialLoadComplete.current = false;
+      resetAutoLoadState();
     }
-  }, [
-    connectedAccounts?.length,
-    onInitialize,
-    // onGetRecentFiles
-  ]);
+  }, [connectedAccounts?.length, onInitialize, resetAutoLoadState]);
 
   useEffect(() => {
     if (
@@ -571,58 +650,23 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   }, []);
 
   useEffect(() => {
-    if (
-      !hasMountedOnce.current ||
-      // !checkLocation ||
-      !connectedAccounts?.length
-    ) {
+    if (!hasMountedOnce.current || !connectedAccounts?.length) {
       hasMountedOnce.current = true;
       return;
     }
-    if (isInitialLoadComplete.current) {
-      getCloudStorageFiles(
-        checkLocation || accountId !== 'all' ? 1 : undefined,
-        {
-          type:
-            typeFilter && typeFilter?.length
-              ? typeFilter?.join(',')
-              : undefined,
-          after: modifiedFilter?.after
-            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-            : undefined,
-          before: modifiedFilter?.before
-            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-            : undefined,
-        }
-      );
-    }
 
-    // if (checkLocation || accountId !== 'all') {
-    //   getCloudStorageFiles(1, {
-    //     type: typeFilter || undefined,
-    //     after: modifiedFilter?.after
-    //       ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-    //       : undefined,
-    //     before: modifiedFilter?.before
-    //       ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-    //       : undefined,
-    //   });
-    // } else {
-    //   // getCloudStorageFiles();
-    //   getCloudStorageFiles(undefined, {
-    //     type: typeFilter || undefined,
-    //     after: modifiedFilter?.after
-    //       ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-    //       : undefined,
-    //     before: modifiedFilter?.before
-    //       ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-    //       : undefined,
-    //   });
-    // }
+    resetAutoLoadState();
+    getCloudStorageFiles(checkLocation || accountId !== 'all' ? 1 : undefined, {
+      type:
+        typeFilter && typeFilter?.length ? typeFilter?.join(',') : undefined,
+      after: modifiedFilter?.after
+        ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+        : undefined,
+      before: modifiedFilter?.before
+        ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+        : undefined,
+    });
   }, [accountId, checkLocation, typeFilter, modifiedFilter]);
-
-  const scrollBoxRef = useRef<HTMLDivElement>(null);
-  const lastScrollTop = useRef(0);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     lastScrollTop.current = e.currentTarget.scrollTop;
@@ -631,7 +675,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       target.scrollHeight - target.scrollTop - target.clientHeight < 100 &&
       pagination &&
       pagination.page_no < pagination.total_pages &&
-      !loading
+      !loading &&
+      !isAutoLoading
     ) {
       loadMoreFiles();
     }
@@ -683,47 +728,15 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }));
   }, [recentFiles]);
 
+  // **NEW: Reset auto-load state when context changes**
   useEffect(() => {
-    // Clear any existing timeout
-    if (autoLoadTimeoutRef.current) {
-      clearTimeout(autoLoadTimeoutRef.current);
-    }
-
-    if (!isInitialLoadComplete.current && files.length > 0) {
-      isInitialLoadComplete.current = true;
-    }
-
-    // Check for scrollbar after DOM updates
-    if (isInitialLoadComplete.current && files.length > 0) {
-      autoLoadTimeoutRef.current = setTimeout(() => {
-        checkScrollbarAndAutoLoad();
-      }, 300); // Increased delay to prevent rapid calls
-    }
-
-    return () => {
-      if (autoLoadTimeoutRef.current) {
-        clearTimeout(autoLoadTimeoutRef.current);
-      }
-    };
-  }, [files.length, isInitialLoadComplete.current]);
-
-  useEffect(() => {
-    hasTriggeredAutoLoad.current = false;
-    lastAutoLoadCheck.current = '';
-    isInitialLoadComplete.current = false;
-  }, [currentFolderId, accountId]);
-
-  // Reset auto-load flag when filters change or navigation occurs
-  useEffect(() => {
-    return () => {
-      if (autoLoadTimeoutRef.current) {
-        clearTimeout(autoLoadTimeoutRef.current);
-      }
-    };
-  }, []);
+    resetAutoLoadState();
+  }, [currentFolderId, accountId, resetAutoLoadState]);
 
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
+      resetAutoLoadState();
+
       const requestParams: any = {};
 
       if (folder?.id) {
@@ -754,7 +767,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         )
       );
     },
-    [dispatch, currentPath, isMoveMode, checkLocation, currentAccountId]
+    [dispatch, isMoveMode, checkLocation, currentAccountId, resetAutoLoadState]
   );
 
   const handleRowDoubleClick = useCallback(
@@ -763,10 +776,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         row.mimeType === 'application/vnd.google-apps.folder' ||
         row.type === 'folder'
       ) {
-        // if (!isMoveMode) {
-        //   setSelectedIds([]);
-        //   setLastSelectedIndex(null);
-        // }
         navigateToFolderFn({ id: row.id, name: row.name });
       } else if (row.type === 'file') {
         handleMenuItemClick('preview', row);
@@ -782,15 +791,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         row.mimeType !== 'application/vnd.google-apps.folder')
     ) {
       downloadItems([row.id]);
-    }
-    // else if (actionId === 'view') {
-    //   if (row.mimeType === 'application/vnd.google-apps.folder') {
-    //     navigateToFolderFn({ id: row.id, name: row.name });
-    //   } else if (row.webViewLink) {
-    //     window.open(row.webViewLink, '_blank');
-    //   }
-    // }
-    else if (actionId === 'rename') {
+    } else if (actionId === 'rename') {
       setItemToRename(row);
       setRenameModalOpen(true);
       resetRenameForm({ newName: row.name });
@@ -799,11 +800,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       setDeleteModalOpen(true);
     } else if (actionId === 'share' && row.web_view_url) {
       window.open(row.web_view_url, '_blank');
-    }
-    // else if (actionId === 'move') {
-    //   handleMoveSelected([row?.id]);
-    // }
-    else if (actionId === 'move') {
+    } else if (actionId === 'move') {
       handleModalMoveSelected([row?.id]);
     } else if (actionId === 'details') {
       handleFilePreview(row, false);
@@ -933,10 +930,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         const res = await dispatch(createCloudStorageFolder(requestParams));
 
         if (res?.payload?.success) {
-          // if (!folderId || folderId === null) {
-          //   onGetRecentFiles({});
-          // }
-          // await getCloudStorageFiles(1);
+          resetAutoLoadState();
           await getCloudStorageFiles(1, {
             type:
               typeFilter && typeFilter?.length
@@ -1039,7 +1033,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         ).unwrap();
 
         uploadMethods.reset();
-        // closeModal();
 
         // Wait for `uploadLoading` to become false and set progress to 100%
         const waitForUploadCompletion = () => {
@@ -1060,10 +1053,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         waitForUploadCompletion();
 
         // Refresh the file list after upload
-        // if (!folderId || folderId === null) {
-        //   onGetRecentFiles({});
-        // }
-        // await getCloudStorageFiles(1);
+        resetAutoLoadState();
         await getCloudStorageFiles(1, {
           type:
             typeFilter && typeFilter?.length
@@ -1095,10 +1085,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         await dispatch(
           renameCloudStorageFile({ id: fileId, name: newName })
         ).unwrap();
-        // if (!folderId || folderId === null) {
-        //   onGetRecentFiles({});
-        // }
-        // await getCloudStorageFiles(1);
+
+        resetAutoLoadState();
         await getCloudStorageFiles(1, {
           type:
             typeFilter && typeFilter?.length
@@ -1138,10 +1126,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         const res = await dispatch(removeCloudStorageFiles({ ids: [fileId] }));
 
         if (res?.payload?.status === 200 || res?.payload?.success !== false) {
-          // if (!folderId || folderId === null) {
-          //   onGetRecentFiles({});
-          // }
-          // await getCloudStorageFiles(1);
+          resetAutoLoadState();
           await getCloudStorageFiles(1, {
             type:
               typeFilter && typeFilter?.length
@@ -1266,7 +1251,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           message: 'You can upload a maximum of 5 files at a time.',
           color: 'red',
         });
-        // Only take the first 5 files
         files = files.slice(0, 5);
       }
       if (!isSFDEnabled) {
@@ -1416,10 +1400,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         );
 
         if (res?.payload?.status === 200 || res?.payload?.success) {
-          // if (!folderId || folderId === null) {
-          //   onGetRecentFiles({});
-          // }
-          // await getCloudStorageFiles(1);
+          resetAutoLoadState();
           await getCloudStorageFiles(1, {
             type:
               typeFilter && typeFilter?.length
@@ -1480,36 +1461,9 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     setModalOpen(false);
   }, []);
 
-  // const [downloadItems] = useAsyncOperation(async data => {
-  //   try {
-  //     const res = await dispatch(
-  //       downloadFiles({ ids: Array.isArray(data) ? data : selectedIds })
-  //     );
-  //     if (res?.payload?.status !== 200) {
-  //       notifications.show({
-  //         message:
-  //           res?.payload?.message ||
-  //           `Failed to download ${selectedIds.length > 1 ? 'items' : 'item'}`,
-  //         color: 'red',
-  //       });
-  //       return;
-  //     }
-  //     downloadFilesHelper(res.payload.data, res);
-  //   } catch (error: any) {
-  //     notifications.show({
-  //       message:
-  //         error ||
-  //         `Failed to download ${selectedIds?.length > 1 ? 'Items' : 'Item'}`,
-  //       color: 'red',
-  //     });
-  //   }
-  // });
-
   const [downloadItems] = useAsyncOperation(async data => {
     try {
       const idsToDownload = Array.isArray(data) ? data : selectedIds;
-
-      // Use the enhanced download system
       await downloadFilesEnhanced(idsToDownload, downloadFile!);
     } catch (error: any) {
       notifications.show({
@@ -1544,10 +1498,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         const res = await dispatch(syncCloudStorage(requestParams)).unwrap();
 
         if (res?.status === 200) {
-          // if (!folderId || folderId === null) {
-          //   onGetRecentFiles({});
-          // }
-          // await getCloudStorageFiles(1);
+          resetAutoLoadState();
           await getCloudStorageFiles(1, {
             type:
               typeFilter && typeFilter?.length
@@ -1601,10 +1552,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
             message: 'Items moved successfully',
             color: 'green',
           });
-          // if (!folderId || folderId === null) {
-          //   onGetRecentFiles({});
-          // }
-          // await getCloudStorageFiles(1);
+          resetAutoLoadState();
           await getCloudStorageFiles(1, {
             type:
               typeFilter && typeFilter?.length
@@ -1696,7 +1644,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const isPasteEnabled = useCallback(() => {
     if (!isMoveMode || filesToMove.length === 0) return false;
 
-    // Disable paste if currentFolderId is same as sourceFolderId and selected folder is among filesToMove
     if (
       currentFolderId === sourceFolderId &&
       selectedIds.length === 1 &&
@@ -1711,7 +1658,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const handlePasteFiles = useCallback(() => {
     if (filesToMove.length === 0) return;
 
-    // Get the destination folder ID (currentFolderId could be null for root)
     let destId: string | null = null;
 
     if (currentFolderId) {
@@ -1726,7 +1672,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       destId = checkId ? checkId.id : destinationId;
     }
 
-    // Check if any of the files being moved is the destination folder itself
     const isMovingFolderIntoItself = cloudStorage.some(
       file =>
         filesToMove.includes(file.id) &&
@@ -1742,7 +1687,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       return;
     }
 
-    // Check if trying to move items into one of the selected folders
     const selectedFolders = cloudStorage.filter(
       file => filesToMove.includes(file.id) && file.entry_type === 'folder'
     );
@@ -1803,6 +1747,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
             message: `Items moved to ${destinationName} successfully`,
             color: 'green',
           });
+          resetAutoLoadState();
           // if (!folderId || folderId === null) {
           //   onGetRecentFiles({});
           // }
