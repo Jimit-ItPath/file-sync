@@ -969,6 +969,16 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     createFolder(data);
   });
 
+  const handleRemoveUploadedFile = useCallback(
+    (idx: number) => {
+      const updated = [...uploadedFiles];
+      updated.splice(idx, 1);
+      setUploadedFiles(updated);
+      uploadMethods.setValue('files', updated);
+    },
+    [uploadedFiles, uploadMethods]
+  );
+
   const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
     async ({
       files,
@@ -1242,6 +1252,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
   const handleFileDrop = useCallback(
     async (files: File[]) => {
+      if (files.length > 5) {
+        notifications.show({
+          message: 'You can upload a maximum of 5 files at a time.',
+          color: 'red',
+        });
+        // Only take the first 5 files
+        files = files.slice(0, 5);
+      }
       if (!isSFDEnabled) {
         setDragDropFiles(files);
         setDragDropModalOpen(true);
@@ -1957,6 +1975,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     handleCancelUpload,
     handleCloseUploadProgress,
     showUploadProgress,
+    handleRemoveUploadedFile,
 
     // create file / folder
     createFolderLoading,
