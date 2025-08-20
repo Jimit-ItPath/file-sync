@@ -1,32 +1,68 @@
 import { Anchor } from '@mantine/core';
+import type React from 'react';
+import type { NavigateFunction } from 'react-router';
+import { AUTH_ROUTES } from '../../routing/routes';
 
-const NavigationItems = () => (
+interface NavigationItemsProps {
+  navigate: NavigateFunction;
+}
+
+const NavigationItems: React.FC<NavigationItemsProps> = ({
+  navigate = () => {},
+}) => (
   <>
     <Anchor
-      href="#features"
       c="dimmed"
       size="sm"
       style={{ textDecoration: 'none' }}
+      onClick={() => {
+        if (location.pathname !== AUTH_ROUTES.LANDING.url) {
+          navigate(AUTH_ROUTES.LANDING.url, {
+            state: { scrollTo: 'powerful-features' },
+          });
+        } else {
+          const element = document.getElementById('powerful-features');
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }}
     >
       Features
     </Anchor>
     <Anchor
-      href="#pricing"
       c="dimmed"
       size="sm"
       style={{ textDecoration: 'none' }}
+      onClick={() => navigate(AUTH_ROUTES.PRICING.url)}
     >
       Pricing
     </Anchor>
     <Anchor
-      href="#security"
       c="dimmed"
       size="sm"
       style={{ textDecoration: 'none' }}
+      onClick={() => {
+        if (location.pathname !== AUTH_ROUTES.LANDING.url) {
+          navigate(AUTH_ROUTES.LANDING.url, {
+            state: { scrollTo: 'security-features' },
+          });
+        } else {
+          const element = document.getElementById('security-features');
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }}
     >
       Security
     </Anchor>
-    <Anchor href="#faq" c="dimmed" size="sm" style={{ textDecoration: 'none' }}>
+    <Anchor
+      c="dimmed"
+      size="sm"
+      style={{ textDecoration: 'none' }}
+      onClick={() => navigate(AUTH_ROUTES.FAQ.url)}
+    >
       FAQ
     </Anchor>
   </>
