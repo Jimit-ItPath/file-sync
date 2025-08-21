@@ -626,7 +626,7 @@ const useUploadManagerV2 = () => {
                 'Content-Range': `bytes ${uploadedBytes}-${end}/${totalSize}`,
                 'Content-Type': 'application/octet-stream',
                 'Content-Length': `${chunk.size}`,
-                'X-Session-Id': backendSessionId, // custom header to identify file
+                'X-Upload-Session-Id': backendSessionId,
               },
             })
           );
