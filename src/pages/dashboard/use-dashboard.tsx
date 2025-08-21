@@ -1365,20 +1365,17 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       }
 
       try {
-        const res = await startUpload(
-          files,
-          uploadOptions,
-          checkConnectedAccDetails?.account_type
-        );
+        const res = await startUpload(files, uploadOptions);
         closeModal();
         closeDragDropModal();
         uploadMethods.reset();
+        console.log('upload result-', res);
 
         // Refresh the file list after upload starts
         // The actual refresh should happen when all uploads complete
         // For now, we'll do a delayed refresh
 
-        if (res?.length) {
+        if (res?.response?.success === 1) {
           setTimeout(async () => {
             await getCloudStorageFiles(1, {
               type:
