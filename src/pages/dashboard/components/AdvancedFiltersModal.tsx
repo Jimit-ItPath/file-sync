@@ -258,7 +258,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
   };
 
   const isCustomRange = selectedModified === 'custom';
-  const hasFilters = selectedTypes.length > 0 || selectedModified !== '';
+  // const hasFilters = selectedTypes.length > 0 || selectedModified !== '';
 
   return (
     <Modal
@@ -474,7 +474,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
           <Button
             variant="subtle"
             onClick={handleReset}
-            disabled={!hasFilters}
+            // disabled={!hasFilters}
             styles={{
               root: {
                 color: '#1a73e8',
