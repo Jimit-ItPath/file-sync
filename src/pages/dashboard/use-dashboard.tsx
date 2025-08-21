@@ -178,7 +178,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     after?: Date;
     before?: Date;
   } | null>(null);
-  const [advancedSearchModalOpen, setAdvancedSearchModalOpen] = useState(false);
+  const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false);
 
   // **NEW: Improved infinite scroll state management**
   const [isAutoLoading, setIsAutoLoading] = useState(false);
@@ -291,12 +291,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     setLocalSearchTerm(value);
   };
 
-  const openAdvancedSearchModal = useCallback(() => {
-    setAdvancedSearchModalOpen(true);
+  const openAdvancedFilterModal = useCallback(() => {
+    setAdvancedFilterModalOpen(true);
   }, []);
 
-  const closeAdvancedSearchModal = useCallback(() => {
-    setAdvancedSearchModalOpen(false);
+  const closeAdvancedFilterModal = useCallback(() => {
+    setAdvancedFilterModalOpen(false);
   }, []);
 
   const getCloudStorageFiles = useCallback(
@@ -488,7 +488,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     setIsAutoLoading(false);
   }, []);
 
-  const handleAdvancedSearch = useCallback(
+  const handleAdvancedFilter = useCallback(
     async (filters: {
       types: string[] | null;
       modified: { after?: Date; before?: Date } | null;
@@ -513,10 +513,11 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     [resetAutoLoadState, getCloudStorageFiles]
   );
 
-  const handleAdvancedSearchReset = useCallback(async () => {
+  const handleAdvancedFilterReset = useCallback(async () => {
     resetAutoLoadState();
     setTypeFilter(null);
     setModifiedFilter(null);
+    closeAdvancedFilterModal();
     await getCloudStorageFiles(1);
   }, [resetAutoLoadState, getCloudStorageFiles]);
 
@@ -1867,6 +1868,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
   }, [connectedAccounts, currentAccountId, checkLocation]);
 
+  const hasFilters = useMemo(() => {
+    return typeFilter?.length || modifiedFilter ? true : false;
+  }, [typeFilter, modifiedFilter]);
+
   return {
     layout,
     switchLayout,
@@ -2008,11 +2013,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     hasPaginationData,
 
     // advance search filters
-    advancedSearchModalOpen,
-    openAdvancedSearchModal,
-    closeAdvancedSearchModal,
-    handleAdvancedSearch,
-    handleAdvancedSearchReset,
+    advancedFilterModalOpen,
+    openAdvancedFilterModal,
+    closeAdvancedFilterModal,
+    handleAdvancedFilter,
+    handleAdvancedFilterReset,
+    hasFilters,
   };
 };
 

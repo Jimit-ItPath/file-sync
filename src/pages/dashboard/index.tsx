@@ -178,12 +178,13 @@ const Dashboard = () => {
     hasPaginationData,
     handleRemoveUploadedFile,
 
-    // advance search
-    advancedSearchModalOpen,
-    openAdvancedSearchModal,
-    closeAdvancedSearchModal,
-    handleAdvancedSearch,
-    handleAdvancedSearchReset,
+    // advance filter
+    advancedFilterModalOpen,
+    openAdvancedFilterModal,
+    closeAdvancedFilterModal,
+    handleAdvancedFilter,
+    handleAdvancedFilterReset,
+    hasFilters,
   } = useDashboard({ downloadFile });
 
   const {
@@ -389,32 +390,39 @@ const Dashboard = () => {
               <Group gap={8} wrap="nowrap" style={{ flexShrink: 0 }}>
                 {/* Filters - Compact Version */}
                 {/* {!isXs && ( */}
-                <DashboardFilters
+                {/* <DashboardFilters
                   onTypeFilter={handleTypeFilter}
                   onModifiedFilter={handleModifiedFilter}
                   onClearFilters={handleClearFilters}
                   activeTypeFilter={typeFilter}
                   activeModifiedFilter={modifiedFilter}
                   isMobile={isSm}
-                />
-                <ActionIcon
-                  size={36}
-                  variant="outline"
-                  onClick={openAdvancedSearchModal}
-                  style={{
-                    borderRadius: '8px',
-                    border: '1.5px solid #dadce0',
-                    backgroundColor: '#ffffff',
-                    color: '#5f6368',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                    },
-                  }}
+                /> */}
+                <Tooltip
+                  fz={'xs'}
+                  label={hasFilters ? 'Filters are active' : 'Open filters'}
                 >
-                  <ICONS.IconFilter size={16} />
-                </ActionIcon>
+                  <ActionIcon
+                    size={36}
+                    variant={hasFilters ? 'filled' : 'outline'}
+                    onClick={openAdvancedFilterModal}
+                    style={{
+                      borderRadius: '8px',
+                      border: hasFilters ? 'none' : '1.5px solid #dadce0',
+                      backgroundColor: hasFilters ? '#1c7ed6' : '#ffffff',
+                      color: hasFilters ? '#ffffff' : '#5f6368',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        boxShadow: hasFilters
+                          ? '0 4px 12px rgba(30, 122, 232, 0.4)'
+                          : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      },
+                    }}
+                  >
+                    <ICONS.IconFilter size={16} />
+                  </ActionIcon>
+                </Tooltip>
                 {/* )} */}
 
                 {/* Account Select - Compact */}
@@ -1125,10 +1133,10 @@ const Dashboard = () => {
       )}
 
       <AdvancedFiltersModal
-        opened={advancedSearchModalOpen}
-        onClose={closeAdvancedSearchModal}
-        onSearch={handleAdvancedSearch}
-        onReset={handleAdvancedSearchReset}
+        opened={advancedFilterModalOpen}
+        onClose={closeAdvancedFilterModal}
+        onFilter={handleAdvancedFilter}
+        onReset={handleAdvancedFilterReset}
         activeTypeFilter={typeFilter}
         activeModifiedFilter={modifiedFilter}
       />
