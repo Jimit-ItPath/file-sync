@@ -199,6 +199,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const mutationObserverRef = useRef<MutationObserver | null>(null);
   const isNavigatingRef = useRef(false);
   const isRouteSwitchingRef = useRef(false);
+  const prevLocationRef = useRef<string | null>(null);
 
   const {
     cloudStorage,
@@ -696,15 +697,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
   useEffect(() => {
     const currentLength = connectedAccounts?.length || 0;
+
+    // Only handle account connection state changes, don't trigger API calls here
     if (
       currentLength > 0 &&
       currentLength > prevConnectedAccountsLength.current &&
-      !hasCalledPostConnectAPIs.current &&
-      !hasCalledInitializeAPI.current
+      !hasCalledPostConnectAPIs.current
     ) {
-      onInitialize({});
       hasCalledPostConnectAPIs.current = true;
-      hasCalledInitializeAPI.current = true;
     }
 
     prevConnectedAccountsLength.current = currentLength;
@@ -713,21 +713,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       hasCalledPostConnectAPIs.current = false;
       hasCalledInitializeAPI.current = false;
       hasCalledRecentFilesAPI.current = false;
+      initializedRef.current = false;
+      hasMountedOnce.current = false;
       resetAutoLoadState();
     }
-  }, [connectedAccounts?.length, onInitialize, resetAutoLoadState]);
+  }, [connectedAccounts?.length, resetAutoLoadState]);
 
   useEffect(() => {
-    if (
-      !initializedRef.current &&
-      connectedAccounts?.length &&
-      !hasCalledInitializeAPI.current
-    ) {
-      onInitialize({});
-      initializedRef.current = true;
-      hasCalledInitializeAPI.current = true;
-    }
-
     return () => {
       dispatch(resetPagination());
       dispatch(resetCloudStorageFolder());
@@ -740,23 +732,60 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   }, []);
 
   useEffect(() => {
-    if (!hasMountedOnce.current || !connectedAccounts?.length) {
-      hasMountedOnce.current = true;
+    // Skip if no accounts
+    if (!connectedAccounts?.length) {
       return;
     }
 
-    resetAutoLoadState();
-    getCloudStorageFiles(checkLocation || accountId !== 'all' ? 1 : undefined, {
-      type:
-        typeFilter && typeFilter?.length ? typeFilter?.join(',') : undefined,
-      after: modifiedFilter?.after
-        ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-        : undefined,
-      before: modifiedFilter?.before
-        ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-        : undefined,
-    });
-  }, [accountId, checkLocation]);
+    // Handle initial mount
+    if (!hasMountedOnce.current) {
+      hasMountedOnce.current = true;
+
+      // Only initialize on first mount if we have accounts and haven't initialized
+      if (!initializedRef.current && !hasCalledInitializeAPI.current) {
+        onInitialize({});
+        initializedRef.current = true;
+        hasCalledInitializeAPI.current = true;
+      }
+      return;
+    }
+
+    // Handle subsequent route/account changes
+    // Only trigger API if this is a real change and we're already initialized
+    if (initializedRef.current && hasCalledInitializeAPI.current) {
+      resetAutoLoadState();
+      getCloudStorageFiles(
+        checkLocation || accountId !== 'all' ? 1 : undefined,
+        {
+          type:
+            typeFilter && typeFilter?.length
+              ? typeFilter?.join(',')
+              : undefined,
+          after: modifiedFilter?.after
+            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            : undefined,
+          before: modifiedFilter?.before
+            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+            : undefined,
+        }
+      );
+    }
+  }, [accountId, checkLocation, connectedAccounts?.length]);
+
+  useEffect(() => {
+    // Reset mounted flag when location type changes to prevent double calls
+    const prevCheckLocation =
+      prevLocationRef.current?.includes('/google-drive') ||
+      prevLocationRef.current?.includes('/dropbox') ||
+      prevLocationRef.current?.includes('/onedrive');
+
+    if (prevCheckLocation !== checkLocation) {
+      // Route type changed, reset to allow proper initialization
+      hasMountedOnce.current = false;
+    }
+
+    prevLocationRef.current = location.pathname;
+  }, [location.pathname, checkLocation]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     lastScrollTop.current = e.currentTarget.scrollTop;
