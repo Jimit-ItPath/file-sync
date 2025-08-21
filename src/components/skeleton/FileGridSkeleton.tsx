@@ -3,8 +3,8 @@ import { Box, Group, Skeleton, Stack } from '@mantine/core';
 import { Card } from '../card';
 import useResponsive from '../../hooks/use-responsive';
 
-const FILE_CARD_HEIGHT = 220;
-const MIN_CARD_WIDTH = 240;
+const FILE_CARD_HEIGHT = 200;
+const MIN_CARD_WIDTH = 220;
 
 interface FileGridSkeletonProps {
   includeFolders?: boolean;
@@ -163,11 +163,7 @@ const FileGridSkeleton: React.FC<FileGridSkeletonProps> = ({
                 marginTop: 8,
               }}
             >
-              <Skeleton
-                height={isXs ? 50 : 60}
-                width={isXs ? 50 : 60}
-                radius="sm"
-              />
+              <Skeleton height={50} width={50} radius="sm" />
             </Box>
 
             {/* Footer */}
