@@ -178,6 +178,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     after?: Date;
     before?: Date;
   } | null>(null);
+  const [advancedSearchModalOpen, setAdvancedSearchModalOpen] = useState(false);
 
   // **NEW: Improved infinite scroll state management**
   const [isAutoLoading, setIsAutoLoading] = useState(false);
@@ -289,6 +290,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);
   };
+
+  const openAdvancedSearchModal = useCallback(() => {
+    setAdvancedSearchModalOpen(true);
+  }, []);
+
+  const closeAdvancedSearchModal = useCallback(() => {
+    setAdvancedSearchModalOpen(false);
+  }, []);
 
   const getCloudStorageFiles = useCallback(
     async (
@@ -478,6 +487,38 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     autoLoadRequestIdRef.current = '';
     setIsAutoLoading(false);
   }, []);
+
+  const handleAdvancedSearch = useCallback(
+    async (filters: {
+      types: string[] | null;
+      modified: { after?: Date; before?: Date } | null;
+    }) => {
+      resetAutoLoadState();
+      setTypeFilter(filters.types);
+      setModifiedFilter(filters.modified);
+
+      await getCloudStorageFiles(1, {
+        type:
+          filters.types && filters.types?.length
+            ? filters.types?.join(',')
+            : undefined,
+        after: filters.modified?.after
+          ? dayjs(filters.modified.after).format('MM/DD/YYYY')
+          : undefined,
+        before: filters.modified?.before
+          ? dayjs(filters.modified.before).format('MM/DD/YYYY')
+          : undefined,
+      });
+    },
+    [resetAutoLoadState, getCloudStorageFiles]
+  );
+
+  const handleAdvancedSearchReset = useCallback(async () => {
+    resetAutoLoadState();
+    setTypeFilter(null);
+    setModifiedFilter(null);
+    await getCloudStorageFiles(1);
+  }, [resetAutoLoadState, getCloudStorageFiles]);
 
   // Add filter handler functions:
   const handleTypeFilter = useCallback(
@@ -1965,6 +2006,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     isAutoLoading,
     checkConnectedAccDetails,
     hasPaginationData,
+
+    // advance search filters
+    advancedSearchModalOpen,
+    openAdvancedSearchModal,
+    closeAdvancedSearchModal,
+    handleAdvancedSearch,
+    handleAdvancedSearchReset,
   };
 };
 

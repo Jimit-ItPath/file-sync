@@ -45,6 +45,7 @@ import DashboardFilters from './components/DashboardFilters';
 import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
 import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 import { notifications } from '@mantine/notifications';
+import AdvancedSearchModal from './components/AdvancedSearchModal';
 
 const iconStyle = {
   borderRadius: 999,
@@ -176,6 +177,13 @@ const Dashboard = () => {
     // isAutoLoading,
     hasPaginationData,
     handleRemoveUploadedFile,
+
+    // advance search
+    advancedSearchModalOpen,
+    openAdvancedSearchModal,
+    closeAdvancedSearchModal,
+    handleAdvancedSearch,
+    handleAdvancedSearchReset,
   } = useDashboard({ downloadFile });
 
   const {
@@ -389,6 +397,24 @@ const Dashboard = () => {
                   activeModifiedFilter={modifiedFilter}
                   isMobile={isSm}
                 />
+                <ActionIcon
+                  size={36}
+                  variant="outline"
+                  onClick={openAdvancedSearchModal}
+                  style={{
+                    borderRadius: '8px',
+                    border: '1.5px solid #dadce0',
+                    backgroundColor: '#ffffff',
+                    color: '#5f6368',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    },
+                  }}
+                >
+                  <ICONS.IconFilter size={16} />
+                </ActionIcon>
                 {/* )} */}
 
                 {/* Account Select - Compact */}
@@ -1097,6 +1123,15 @@ const Dashboard = () => {
           onClose={clearDownload}
         />
       )}
+
+      <AdvancedSearchModal
+        opened={advancedSearchModalOpen}
+        onClose={closeAdvancedSearchModal}
+        onSearch={handleAdvancedSearch}
+        onReset={handleAdvancedSearchReset}
+        activeTypeFilter={typeFilter}
+        activeModifiedFilter={modifiedFilter}
+      />
     </Box>
   );
 };
