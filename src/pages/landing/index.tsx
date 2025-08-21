@@ -12,7 +12,6 @@ import {
   ThemeIcon,
   SimpleGrid,
   AppShell,
-  Divider,
   Image,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
@@ -24,7 +23,6 @@ import OneDriveIcon from '../../assets/svgs/OneDrive.svg';
 import LandingPagwSvg from '../../assets/svgs/LandingPage.svg';
 import useResponsive from '../../hooks/use-responsive';
 import { ICONS } from '../../assets/icons';
-import NavigationItems from './NavigationItems';
 import LandingHeader from './LandingHeader';
 import LandingFooter from './LandingFooter';
 import AnimatedSection from './components/AnimatedSection';
@@ -160,9 +158,15 @@ const security: FeatureItem[] = [
 export default function UnifidriveLanding() {
   const [opened, { open, close }] = useDisclosure(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const { isMd, isSm } = useResponsive();
+  const { isMd, isSm, isXs } = useResponsive();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === AUTH_ROUTES.LANDING.url) {
+      document.title = 'AllCloudHub';
+    }
+  }, [location]);
 
   useEffect(() => {
     if (location.state?.scrollTo) {
@@ -189,23 +193,6 @@ export default function UnifidriveLanding() {
       padding="md"
     >
       <LandingHeader {...{ close, navigate, open, opened }} />
-
-      <AppShell.Navbar p="md">
-        <Stack>
-          <NavigationItems {...{ navigate }} />
-          <Divider />
-          <Button
-            variant="subtle"
-            fullWidth
-            onClick={() => navigate(AUTH_ROUTES.LOGIN.url)}
-          >
-            Sign In
-          </Button>
-          <Button fullWidth onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}>
-            Get Started
-          </Button>
-        </Stack>
-      </AppShell.Navbar>
 
       <AppShell.Main px={0} pt={70} pb={0}>
         {/* Hero Section */}
@@ -234,8 +221,10 @@ export default function UnifidriveLanding() {
 
                   <Group>
                     <Button
-                      size={isMobile ? 'md' : 'lg'}
-                      rightSection={<ICONS.IconArrowRight size={18} />}
+                      size={isXs ? 'sm' : isMobile ? 'md' : 'lg'}
+                      rightSection={
+                        isXs ? null : <ICONS.IconArrowRight size={18} />
+                      }
                       style={{
                         transition: 'all 0.3s ease',
                         '&:hover': {
@@ -243,15 +232,15 @@ export default function UnifidriveLanding() {
                           boxShadow: '0 8px 25px rgba(37, 99, 235, 0.3)',
                         },
                       }}
-                      fz={isMobile ? 14 : 16}
+                      fz={isXs ? 13 : isMobile ? 14 : 16}
                       onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
                     >
                       Get Started For Free
                     </Button>
                     <Button
                       variant="outline"
-                      size={isMobile ? 'md' : 'lg'}
-                      fz={isMobile ? 14 : 16}
+                      size={isXs ? 'sm' : isMobile ? 'md' : 'lg'}
+                      fz={isXs ? 13 : isMobile ? 14 : 16}
                     >
                       See How It Works
                     </Button>
@@ -602,7 +591,7 @@ export default function UnifidriveLanding() {
                   storage management
                 </Text>
                 <Button
-                  size={isMobile ? 'md' : 'lg'}
+                  size={isXs ? 'sm' : isMobile ? 'md' : 'lg'}
                   variant="white"
                   c={'#0284c7'}
                   style={{
@@ -612,7 +601,7 @@ export default function UnifidriveLanding() {
                       boxShadow: '0 12px 30px rgba(0,0,0,0.2)',
                     },
                   }}
-                  fz={isMobile ? 14 : 16}
+                  fz={isXs ? 13 : isMobile ? 14 : 16}
                   onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
                 >
                   Get Started For Free
