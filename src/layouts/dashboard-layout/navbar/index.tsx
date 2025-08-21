@@ -37,8 +37,9 @@ import {
 } from '@dnd-kit/sortable';
 import SortableCloudAccountItem from './SortableCloudAccountItem';
 import { Controller } from 'react-hook-form';
-import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
+// import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
 import { notifications } from '@mantine/notifications';
+import UploadProgressV2 from '../../../pages/dashboard/file-upload-v2/UploadProgressV2';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -73,18 +74,23 @@ const NavBar = ({
   isSFDEnabled,
   accountOptionsForSFD,
   createFolderLoading,
-  handleFileUpload,
+  // handleFileUpload,
   uploadMethods,
   setUploadedFiles,
   getFileIcon,
   uploadedFiles,
-  uploadFilesLoading,
-  showUploadProgress,
-  uploadProgress,
-  uploadingFiles,
-  handleCancelUpload,
-  handleCloseUploadProgress,
+  // uploadFilesLoading,
+  // showUploadProgress,
+  // uploadProgress,
+  // uploadingFiles,
+  // handleCancelUpload,
+  // handleCloseUploadProgress,
   handleRemoveUploadedFile,
+  handleFileUploadV2,
+  uploadingFilesV2,
+  cancelUploadV2,
+  closeUploadProgressV2,
+  showUploadProgressV2,
 }: any) => {
   const location = useLocation();
   const {
@@ -1029,7 +1035,7 @@ const NavBar = ({
             </Stack>
           </Form>
         ) : (
-          <Form onSubmit={handleFileUpload} methods={uploadMethods}>
+          <Form onSubmit={handleFileUploadV2} methods={uploadMethods}>
             <Stack gap={'md'}>
               <Dropzone
                 // onFilesSelected={setUploadedFiles}
@@ -1091,9 +1097,10 @@ const NavBar = ({
               <Button
                 // onClick={handleFileUpload}
                 type="submit"
-                loading={uploadFilesLoading}
+                // loading={uploadFilesLoading}
                 disabled={
-                  uploadedFiles.length === 0 || uploadFilesLoading
+                  uploadedFiles.length === 0
+                  // || uploadFilesLoading
                   // ||
                   // (!isSFDEnabled && !uploadMethods.formState.isValid)
                 }
@@ -1105,12 +1112,20 @@ const NavBar = ({
         )}
       </Modal>
 
-      {showUploadProgress ? (
+      {/* {showUploadProgress ? (
         <UploadProgress
           uploadProgress={uploadProgress}
           uploadingFiles={uploadingFiles}
           onCancelUpload={handleCancelUpload}
           onClose={handleCloseUploadProgress}
+        />
+      ) : null} */}
+      {showUploadProgressV2 ? (
+        <UploadProgressV2
+          uploadingFiles={uploadingFilesV2}
+          onCancelUpload={cancelUploadV2}
+          onRemoveFile={handleRemoveUploadedFile}
+          onClose={closeUploadProgressV2}
         />
       ) : null}
     </Box>

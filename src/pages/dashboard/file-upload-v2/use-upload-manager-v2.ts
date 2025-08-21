@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAppDispatch } from '../../../store';
 import {
   uploadCloudStorageFilesV2,
@@ -37,44 +37,71 @@ const useUploadManagerV2 = () => {
   >({});
   const [showUploadProgress, setShowUploadProgress] = useState(false);
   const uploadControllersRef = useRef<Record<string, AbortController>>({});
+  const uploadingFilesRef = useRef<Record<string, UploadingFile>>({});
+
+  useEffect(() => {
+    uploadingFilesRef.current = uploadingFiles;
+  }, [uploadingFiles]);
 
   const uploadFileInChunks = useCallback(
     async (fileId: string, file: File, backendSessionId: string) => {
       const chunkSize = 5242880; // 5MB
-      // const chunkSize = 2621440; // 2.5MB
       const totalSize = file.size;
       let uploadedBytes = 0;
 
       try {
         while (uploadedBytes < totalSize) {
-          const currentFile = uploadingFiles[fileId];
-          if (currentFile?.status === 'cancelled') {
+          const controller = uploadControllersRef.current[fileId];
+          const currentFile = uploadingFilesRef.current[fileId];
+
+          // Check if the upload has been canceled
+          if (
+            !controller ||
+            controller.signal.aborted ||
+            currentFile?.status === 'cancelled'
+          ) {
             return { success: false, fileData: null };
           }
 
           const end = Math.min(uploadedBytes + chunkSize, totalSize) - 1;
           const chunk = file.slice(uploadedBytes, end + 1);
 
-          const res: any = await dispatch(
-            uploadFileChunk({
-              chunk,
-              headers: {
-                'Content-Range': `bytes ${uploadedBytes}-${end}/${totalSize}`,
-                'Content-Type': 'application/octet-stream',
-                'Content-Length': `${chunk.size}`,
-                'X-Upload-Session-Id': backendSessionId,
-              },
-            })
-          );
-
-          if (res.payload?.status === 200 || res.payload?.status === 201) {
-            uploadedBytes = end + 1;
-          } else if (res.payload?.status >= 400) {
-            throw new Error(
-              `Upload failed with status ${res.payload?.status}: ${res.payload?.statusText}`
+          try {
+            const res: any = await dispatch(
+              uploadFileChunk({
+                chunk,
+                headers: {
+                  'Content-Range': `bytes ${uploadedBytes}-${end}/${totalSize}`,
+                  'Content-Type': 'application/octet-stream',
+                  'Content-Length': `${chunk.size}`,
+                  'X-Upload-Session-Id': backendSessionId,
+                },
+                signal: controller.signal,
+              })
             );
-          } else {
-            uploadedBytes = end + 1;
+
+            if (res.payload?.status === 200 || res.payload?.status === 201) {
+              uploadedBytes = end + 1;
+            } else if (res.payload?.status >= 400) {
+              throw new Error(
+                `Upload failed with status ${res.payload?.status}: ${res.payload?.statusText}`
+              );
+            }
+          } catch (error: any) {
+            if (controller.signal.aborted) {
+              return { success: false, fileData: null };
+            }
+            throw error;
+          }
+
+          // Check again before updating progress
+          const currentFileAfterChunk = uploadingFilesRef.current[fileId];
+          if (
+            !controller ||
+            controller.signal.aborted ||
+            currentFileAfterChunk?.status === 'cancelled'
+          ) {
+            return { success: false, fileData: null };
           }
 
           const progress = Math.round((uploadedBytes / totalSize) * 100);
@@ -85,6 +112,17 @@ const useUploadManagerV2 = () => {
               progress: Math.min(progress, 99),
             },
           }));
+        }
+
+        // Final check before marking as completed
+        const controller = uploadControllersRef.current[fileId];
+        const finalFile = uploadingFilesRef.current[fileId];
+        if (
+          !controller ||
+          controller.signal.aborted ||
+          finalFile?.status === 'cancelled'
+        ) {
+          return { success: false, fileData: null };
         }
 
         setUploadingFiles(prev => ({
@@ -108,7 +146,7 @@ const useUploadManagerV2 = () => {
         return { success: false };
       }
     },
-    [uploadingFiles, setUploadingFiles]
+    [dispatch]
   );
 
   const startUpload = useCallback(

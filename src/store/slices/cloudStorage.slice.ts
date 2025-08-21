@@ -424,9 +424,11 @@ export const uploadFileChunk = createAsyncThunk(
     {
       chunk,
       headers,
+      signal,
     }: {
       chunk: Blob;
       headers: Record<string, string>;
+      signal?: AbortSignal;
     },
     { rejectWithValue }
   ) => {
@@ -434,9 +436,13 @@ export const uploadFileChunk = createAsyncThunk(
       const response = await api.cloudStorage.uploadFileInChunksFn({
         chunk,
         headers,
+        signal,
       });
       return response;
     } catch (error: any) {
+      if (signal?.aborted) {
+        return rejectWithValue('Upload canceled by user');
+      }
       return rejectWithValue(error?.message || 'Failed to upload chunk');
     }
   }

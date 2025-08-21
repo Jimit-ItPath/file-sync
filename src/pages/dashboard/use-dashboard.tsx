@@ -13,7 +13,7 @@ import {
   setLocalStorage,
 } from '../../utils/helper';
 import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
   createCloudStorageFolder,
@@ -24,7 +24,7 @@ import {
   renameCloudStorageFile,
   resetCloudStorageFolder,
   setAccountId,
-  uploadCloudStorageFiles,
+  // uploadCloudStorageFiles,
   moveCloudStorageFiles,
   syncCloudStorage,
   resetPagination,
@@ -206,7 +206,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     pagination,
     currentFolderId,
     currentPath,
-    uploadLoading,
+    // uploadLoading,
     accountId,
     searchTerm,
     navigateLoading,
@@ -1069,110 +1069,110 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     [uploadedFiles, uploadMethods]
   );
 
-  const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
-    async ({
-      files,
-      formData,
-    }: {
-      files: File[];
-      formData: UploadFormData;
-    }) => {
-      try {
-        setShowUploadProgress(true);
-        const fileIds = files.map(() => uuidv4());
+  // const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
+  //   async ({
+  //     files,
+  //     formData,
+  //   }: {
+  //     files: File[];
+  //     formData: UploadFormData;
+  //   }) => {
+  //     try {
+  //       setShowUploadProgress(true);
+  //       const fileIds = files.map(() => uuidv4());
 
-        // Initialize progress and uploading files state
-        files.forEach((file, index) => {
-          const fileId = fileIds[index];
-          setUploadingFiles(prev => ({
-            ...prev,
-            [fileId]: {
-              name: file.name,
-              size: formatFileSize(file.size.toString()),
-            },
-          }));
-          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-        });
+  //       // Initialize progress and uploading files state
+  //       files.forEach((file, index) => {
+  //         const fileId = fileIds[index];
+  //         setUploadingFiles(prev => ({
+  //           ...prev,
+  //           [fileId]: {
+  //             name: file.name,
+  //             size: formatFileSize(file.size.toString()),
+  //           },
+  //         }));
+  //         setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+  //       });
 
-        const formDataToUpload = new FormData();
-        files.forEach(file => formDataToUpload.append('file', file));
-        if (currentFolderId) {
-          formDataToUpload.append('id', currentFolderId);
-        }
+  //       const formDataToUpload = new FormData();
+  //       files.forEach(file => formDataToUpload.append('file', file));
+  //       if (currentFolderId) {
+  //         formDataToUpload.append('id', currentFolderId);
+  //       }
 
-        if (checkLocation && currentAccountId) {
-          formDataToUpload.append('account_id', String(currentAccountId));
-        } else if (!checkLocation && !isSFDEnabled && formData.accountId) {
-          formDataToUpload.append('account_id', formData.accountId);
-        }
+  //       if (checkLocation && currentAccountId) {
+  //         formDataToUpload.append('account_id', String(currentAccountId));
+  //       } else if (!checkLocation && !isSFDEnabled && formData.accountId) {
+  //         formDataToUpload.append('account_id', formData.accountId);
+  //       }
 
-        closeModal();
-        closeDragDropModal();
+  //       closeModal();
+  //       closeDragDropModal();
 
-        // Call the API and track progress
-        await dispatch(
-          uploadCloudStorageFiles({
-            data: formDataToUpload,
-            onUploadProgress: (progressEvent: ProgressEvent) => {
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / progressEvent.total
-              );
-              files.forEach((_, index) => {
-                const fileId = fileIds[index];
-                setUploadProgress(prev => ({
-                  ...prev,
-                  [fileId]: percentCompleted,
-                }));
-              });
-            },
-          })
-        ).unwrap();
+  //       // Call the API and track progress
+  //       await dispatch(
+  //         uploadCloudStorageFiles({
+  //           data: formDataToUpload,
+  //           onUploadProgress: (progressEvent: ProgressEvent) => {
+  //             const percentCompleted = Math.round(
+  //               (progressEvent.loaded * 100) / progressEvent.total
+  //             );
+  //             files.forEach((_, index) => {
+  //               const fileId = fileIds[index];
+  //               setUploadProgress(prev => ({
+  //                 ...prev,
+  //                 [fileId]: percentCompleted,
+  //               }));
+  //             });
+  //           },
+  //         })
+  //       ).unwrap();
 
-        uploadMethods.reset();
+  //       uploadMethods.reset();
 
-        // Wait for `uploadLoading` to become false and set progress to 100%
-        const waitForUploadCompletion = () => {
-          const interval = setInterval(() => {
-            if (!uploadLoading) {
-              files.forEach((_, index) => {
-                const fileId = fileIds[index];
-                setUploadProgress(prev => ({
-                  ...prev,
-                  [fileId]: 100,
-                }));
-              });
-              clearInterval(interval);
-            }
-          }, 100);
-        };
+  //       // Wait for `uploadLoading` to become false and set progress to 100%
+  //       const waitForUploadCompletion = () => {
+  //         const interval = setInterval(() => {
+  //           if (!uploadLoading) {
+  //             files.forEach((_, index) => {
+  //               const fileId = fileIds[index];
+  //               setUploadProgress(prev => ({
+  //                 ...prev,
+  //                 [fileId]: 100,
+  //               }));
+  //             });
+  //             clearInterval(interval);
+  //           }
+  //         }, 100);
+  //       };
 
-        waitForUploadCompletion();
+  //       waitForUploadCompletion();
 
-        // Refresh the file list after upload
-        resetAutoLoadState();
-        await getCloudStorageFiles(1, {
-          type:
-            typeFilter && typeFilter?.length
-              ? typeFilter?.join(',')
-              : undefined,
-          after: modifiedFilter?.after
-            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-            : undefined,
-          before: modifiedFilter?.before
-            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-            : undefined,
-        });
-      } catch (error: any) {
-        notifications.show({
-          message:
-            typeof error === 'string'
-              ? error
-              : error?.message || 'Failed to upload files',
-          color: 'red',
-        });
-      }
-    }
-  );
+  //       // Refresh the file list after upload
+  //       resetAutoLoadState();
+  //       await getCloudStorageFiles(1, {
+  //         type:
+  //           typeFilter && typeFilter?.length
+  //             ? typeFilter?.join(',')
+  //             : undefined,
+  //         after: modifiedFilter?.after
+  //           ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+  //           : undefined,
+  //         before: modifiedFilter?.before
+  //           ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+  //           : undefined,
+  //       });
+  //     } catch (error: any) {
+  //       notifications.show({
+  //         message:
+  //           typeof error === 'string'
+  //             ? error
+  //             : error?.message || 'Failed to upload files',
+  //         color: 'red',
+  //       });
+  //     }
+  //   }
+  // );
 
   // File rename functionality
   const [renameFile, renameFileLoading] = useAsyncOperation(
@@ -1264,39 +1264,39 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
   }, [itemToDelete, removeFile]);
 
-  const uploadFilesHandler = useCallback(
-    async (files: File[], formData?: UploadFormData) => {
-      if (files.length === 0) return;
+  // const uploadFilesHandler = useCallback(
+  //   async (files: File[], formData?: UploadFormData) => {
+  //     if (files.length === 0) return;
 
-      uploadsInProgressRef.current = true;
-      setShowUploadProgress(true);
+  //     uploadsInProgressRef.current = true;
+  //     setShowUploadProgress(true);
 
-      setUploadProgress({});
-      setUploadingFiles({});
+  //     setUploadProgress({});
+  //     setUploadingFiles({});
 
-      files.forEach(file => {
-        const fileId = uuidv4();
-        const controller = new AbortController();
-        uploadControllers.current[fileId] = controller;
+  //     files.forEach(file => {
+  //       const fileId = uuidv4();
+  //       const controller = new AbortController();
+  //       uploadControllers.current[fileId] = controller;
 
-        setUploadingFiles(prev => ({
-          ...prev,
-          [fileId]: {
-            name: file.name,
-            size: formatFileSize(file.size.toString()),
-            fileObject: file,
-          },
-        }));
-      });
+  //       setUploadingFiles(prev => ({
+  //         ...prev,
+  //         [fileId]: {
+  //           name: file.name,
+  //           size: formatFileSize(file.size.toString()),
+  //           fileObject: file,
+  //         },
+  //       }));
+  //     });
 
-      await uploadFiles({ files, formData: formData || { accountId: '' } });
-    },
-    [uploadFiles]
-  );
+  //     await uploadFiles({ files, formData: formData || { accountId: '' } });
+  //   },
+  //   [uploadFiles]
+  // );
 
   const handleFileUpload = uploadMethods.handleSubmit(async data => {
     const filesToUpload = uploadedFiles.length > 0 ? uploadedFiles : [];
-    await uploadFilesHandler(filesToUpload, data);
+    await uploadFilesHandlerV2(filesToUpload, data);
   });
 
   const cleanupUpload = (fileId: string) => {
@@ -1340,28 +1340,28 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     };
   }, []);
 
-  const handleFileDrop = useCallback(
-    async (files: File[]) => {
-      if (files.length > 5) {
-        notifications.show({
-          message: 'You can upload a maximum of 5 files at a time.',
-          color: 'red',
-        });
-        files = files.slice(0, 5);
-      }
-      if (!isSFDEnabled) {
-        setDragDropFiles(files);
-        setDragDropModalOpen(true);
-        uploadMethods.reset({ accountId: '', files: files });
-      } else {
-        await uploadFilesHandler(files);
-      }
-    },
-    [uploadFilesHandler, isSFDEnabled, uploadMethods]
-  );
+  // const handleFileDrop = useCallback(
+  //   async (files: File[]) => {
+  //     if (files.length > 5) {
+  //       notifications.show({
+  //         message: 'You can upload a maximum of 5 files at a time.',
+  //         color: 'red',
+  //       });
+  //       files = files.slice(0, 5);
+  //     }
+  //     if (!isSFDEnabled) {
+  //       setDragDropFiles(files);
+  //       setDragDropModalOpen(true);
+  //       uploadMethods.reset({ accountId: '', files: files });
+  //     } else {
+  //       await uploadFilesHandler(files);
+  //     }
+  //   },
+  //   [uploadFilesHandler, isSFDEnabled, uploadMethods]
+  // );
 
   const handleDragDropUpload = uploadMethods.handleSubmit(async data => {
-    await uploadFilesHandler(dragDropFiles, data);
+    await uploadFilesHandlerV2(dragDropFiles, data);
     setDragDropModalOpen(false);
     setDragDropFiles([]);
   });
@@ -1406,13 +1406,12 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       } else if (!checkLocation && !isSFDEnabled && formData?.accountId) {
         uploadOptions.account_id = formData.accountId;
       }
+      closeModal();
+      closeDragDropModal();
 
       try {
         const res = await startUpload(files, uploadOptions);
-        closeModal();
-        closeDragDropModal();
         uploadMethods.reset();
-        console.log('upload result-', res);
 
         // Refresh the file list after upload starts
         // The actual refresh should happen when all uploads complete
@@ -2049,7 +2048,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     // create file / folder
     createFolderLoading,
     handleCreateFolder,
-    uploadFilesLoading,
+    // uploadFilesLoading,
     openModal,
     closeModal,
     currentPath,

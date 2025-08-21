@@ -639,15 +639,18 @@ export const api = {
     uploadFileInChunksFn: ({
       chunk,
       headers,
+      signal,
     }: {
       chunk: Blob;
       headers: Record<string, string>;
+      signal?: AbortSignal;
     }) =>
       client({
         url: '/cloud-storage/upload-file-chunk',
         method: METHODS.PUT,
         data: chunk,
         headers,
+        signal,
       }),
   },
   adminUsers: {
