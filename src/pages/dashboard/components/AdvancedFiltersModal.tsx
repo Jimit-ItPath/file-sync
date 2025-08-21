@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Stack, Group, Text, Select, Box, Checkbox } from '@mantine/core';
+import { Stack, Group, Text, Select, Box, MultiSelect } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { Button, Modal } from '../../../components';
 import useResponsive from '../../../hooks/use-responsive';
+import { ICONS } from '../../../assets/icons';
 
 interface AdvancedFiltersModalProps {
   opened: boolean;
   onClose: () => void;
-  onSearch: (filters: {
+  onFilter: (filters: {
     types: string[] | null;
     modified: { after?: Date; before?: Date } | null;
   }) => void;
@@ -17,15 +18,40 @@ interface AdvancedFiltersModalProps {
 }
 
 const typeOptions = [
-  { value: 'folder', label: 'Folders' },
-  { value: 'documents', label: 'Documents' },
-  { value: 'sheets', label: 'Sheets' },
-  { value: 'presentations', label: 'Presentations' },
-  { value: 'photos', label: 'Photos' },
-  { value: 'pdfs', label: 'PDFs' },
-  { value: 'videos', label: 'Videos' },
-  { value: 'archives', label: 'Archives' },
-  { value: 'audio', label: 'Audio' },
+  {
+    value: 'folder',
+    label: 'Folders',
+    icon: ICONS.IconFolder,
+    color: '#4285F4',
+  },
+  {
+    value: 'documents',
+    label: 'Documents',
+    icon: ICONS.IconFile,
+    color: '#34A853',
+  },
+  {
+    value: 'sheets',
+    label: 'Sheets',
+    icon: ICONS.IconFileSpreadsheet,
+    color: '#FBBC05',
+  },
+  {
+    value: 'presentations',
+    label: 'Presentations',
+    icon: ICONS.IconPresentation,
+    color: '#EA4335',
+  },
+  { value: 'photos', label: 'Photos', icon: ICONS.IconPhoto, color: '#4285F4' },
+  { value: 'pdfs', label: 'PDFs', icon: ICONS.IconPdf, color: '#EA4335' },
+  { value: 'videos', label: 'Videos', icon: ICONS.IconVideo, color: '#34A853' },
+  {
+    value: 'archives',
+    label: 'Archives',
+    icon: ICONS.IconArchive,
+    color: '#673AB7',
+  },
+  { value: 'audio', label: 'Audio', icon: ICONS.IconMusic, color: '#FF5722' },
 ];
 
 const modifiedOptions = [
@@ -86,7 +112,6 @@ const getModifiedRange = (
         after: startOfDay(lastYearJanFirst),
         before: endOfDay(lastYearDecEnd),
       };
-    case 'any':
     default:
       return null;
   }
@@ -100,7 +125,7 @@ const getActivePreset = (
     if (activeModifiedFilter?.after || activeModifiedFilter?.before) {
       return 'custom';
     }
-    return 'any';
+    return '';
   }
 
   const { after, before } = activeModifiedFilter;
@@ -153,7 +178,7 @@ const getActivePreset = (
 const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
   opened,
   onClose,
-  onSearch,
+  onFilter,
   onReset,
   activeTypeFilter,
   activeModifiedFilter,
@@ -162,8 +187,8 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
   const [selectedTypes, setSelectedTypes] = useState<string[]>(
     activeTypeFilter || []
   );
-  const [selectedModified, setSelectedModified] = useState<string>(
-    getActivePreset(activeModifiedFilter)
+  const [selectedModified, setSelectedModified] = useState<string | null>(
+    getActivePreset(activeModifiedFilter) || null
   );
   const [customDateRange, setCustomDateRange] = useState<{
     after?: Date;
@@ -183,11 +208,11 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
     });
   }, [activeTypeFilter, activeModifiedFilter]);
 
-  const handleTypeToggle = (type: string) => {
-    setSelectedTypes(prev =>
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
-  };
+  // const handleTypeToggle = (type: string) => {
+  //   setSelectedTypes(prev =>
+  //     prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+  //   );
+  // };
 
   const handleModifiedChange = (value: string | null) => {
     if (!value) return;
@@ -199,7 +224,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
     }
   };
 
-  const handleSearch = () => {
+  const handleFilter = () => {
     let modifiedFilter: { after?: Date; before?: Date } | null = null;
 
     if (selectedModified === 'custom') {
@@ -214,10 +239,10 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
         };
       }
     } else {
-      modifiedFilter = getModifiedRange(selectedModified);
+      modifiedFilter = getModifiedRange(selectedModified!);
     }
 
-    onSearch({
+    onFilter({
       types: selectedTypes.length > 0 ? selectedTypes : null,
       modified: modifiedFilter,
     });
@@ -226,13 +251,14 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
 
   const handleReset = () => {
     setSelectedTypes([]);
-    setSelectedModified('any');
+    // setSelectedModified('');
+    setSelectedModified(null);
     setCustomDateRange({});
     onReset();
   };
 
   const isCustomRange = selectedModified === 'custom';
-  const hasFilters = selectedTypes.length > 0 || selectedModified !== 'any';
+  const hasFilters = selectedTypes.length > 0 || selectedModified !== '';
 
   return (
     <Modal
@@ -240,7 +266,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
       onClose={onClose}
       title="Filters"
       size="lg"
-      centered
+      // centered
       // styles={{
       //   title: {
       //     fontSize: '18px',
@@ -265,7 +291,30 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
           <Text size="sm" fw={500} mb="xs" c="#202124">
             Type
           </Text>
-          <Box
+          <MultiSelect
+            data={typeOptions}
+            value={selectedTypes}
+            onChange={setSelectedTypes}
+            placeholder="Select file types"
+            clearable
+            styles={{
+              input: {
+                border: '1px solid #dadce0',
+                borderRadius: '4px',
+                fontSize: '14px',
+                '&:focus': {
+                  borderColor: '#1a73e8',
+                  boxShadow: '0 0 0 1px #1a73e8',
+                },
+              },
+              dropdown: {
+                border: '1px solid #dadce0',
+                borderRadius: '4px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              },
+            }}
+          />
+          {/* <Box
             style={{
               border: '1px solid #dadce0',
               borderRadius: '4px',
@@ -296,7 +345,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                 />
               ))}
             </Stack>
-          </Box>
+          </Box> */}
         </Box>
 
         {/* Modified Filter */}
@@ -308,6 +357,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
             data={modifiedOptions}
             value={selectedModified}
             onChange={handleModifiedChange}
+            placeholder="Select date modified"
             styles={{
               input: {
                 border: '1px solid #dadce0',
@@ -420,7 +470,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <Group justify="space-between" align="center">
+        <Group justify="flex-end" align="center">
           <Button
             variant="subtle"
             onClick={handleReset}
@@ -445,7 +495,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
             Reset
           </Button>
           <Button
-            onClick={handleSearch}
+            onClick={handleFilter}
             styles={{
               root: {
                 backgroundColor: '#1a73e8',
@@ -460,7 +510,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
               },
             }}
           >
-            Search
+            Apply
           </Button>
         </Group>
       </Stack>

@@ -19,8 +19,8 @@ import { Card, Menu, Tooltip } from '../../../components';
 import { useMediaQuery } from '@mantine/hooks';
 import { formatDate, formatDateAndTime } from '../../../utils/helper';
 
-const FILE_CARD_HEIGHT = 220;
-const MIN_CARD_WIDTH = 240;
+const FILE_CARD_HEIGHT = 200;
+const MIN_CARD_WIDTH = 220;
 
 const selectedCardStyle = {
   border: '2px solid #3b82f6',
@@ -232,7 +232,7 @@ const FileGrid: React.FC<FileGridProps> = ({
   };
 
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : iconSize;
-  const responsiveFontSize = isXs ? 'xs' : 'sm';
+  const responsiveFontSize = isXs ? 'xs' : '13px';
 
   return (
     <Stack
@@ -434,7 +434,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     marginTop: 8,
                   }}
                 >
-                  {file.icon(isXs ? 50 : 60)}
+                  {file.icon(50)}
                   {/* {file.preview ? (
                   <Image
                     src={file.preview}

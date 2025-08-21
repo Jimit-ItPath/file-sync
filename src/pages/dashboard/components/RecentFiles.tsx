@@ -20,8 +20,8 @@ import { formatDate, formatDateAndTime } from '../../../utils/helper';
 import FileGridSkeleton from '../../../components/skeleton/FileGridSkeleton';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-const FILE_CARD_HEIGHT = 220;
-const MIN_CARD_WIDTH = 240;
+const FILE_CARD_HEIGHT = 200;
+const MIN_CARD_WIDTH = 220;
 
 const selectedCardStyle = {
   border: '2px solid #3b82f6',
@@ -383,7 +383,7 @@ const RecentFiles = () => {
                           marginTop: 8,
                         }}
                       >
-                        {file.icon(isXs ? 50 : 60)}
+                        {file.icon(50)}
                       </Box>
                       <Group justify="space-between" mt={8}>
                         <Text size="xs" c="gray.6">

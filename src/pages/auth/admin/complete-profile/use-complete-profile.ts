@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { passwordRequirements } from '../../../../utils/constants';
+import { NAME_REGEX, passwordRequirements } from '../../../../utils/constants';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -16,8 +16,18 @@ import { useAppDispatch } from '../../../../store';
 import { updateUser } from '../../../../store/slices/auth.slice';
 
 const completeProfileSchema = z.object({
-  first_name: z.string().trim().min(1, 'First name is required'),
-  last_name: z.string().trim().min(1, 'Last name is required'),
+  first_name: z
+    .string()
+    .trim()
+    .min(1, 'First name is required')
+    .max(20, 'First name must be less than 20 characters')
+    .regex(NAME_REGEX, "Letters only (spaces, - and ' allowed)"),
+  last_name: z
+    .string()
+    .trim()
+    .min(1, 'Last name is required')
+    .max(20, 'First name must be less than 20 characters')
+    .regex(NAME_REGEX, "Letters only (spaces, - and ' allowed)"),
   // email: z
   //   .string()
   //   .trim()

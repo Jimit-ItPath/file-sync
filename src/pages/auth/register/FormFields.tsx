@@ -59,6 +59,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           radius="md"
           size="md"
           withAsterisk
+          h={80}
         />
         <Input
           {...lastNameField}
@@ -66,6 +67,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           radius="md"
           size="md"
           withAsterisk
+          h={80}
         />
       </Group>
       {otherFields.map(
@@ -90,6 +92,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             size="md"
             pl={name === 'newsletterSubscribed' ? 30 : 0}
             withAsterisk={isRequired}
+            h={75}
             {...props}
           />
         )
