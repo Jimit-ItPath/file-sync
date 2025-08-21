@@ -17,19 +17,13 @@ const registerSchema = z.object({
     .trim()
     .min(1, 'First name is required')
     .max(20, 'First name must be less than 20 characters')
-    .regex(
-      NAME_REGEX,
-      'First name must contain only letters, spaces, hyphens, and apostrophes'
-    ),
+    .regex(NAME_REGEX, "Letters only (spaces, - and ' allowed)"),
   lastName: z
     .string()
     .trim()
     .min(1, 'Last name is required')
     .max(20, 'Last name must be less than 20 characters')
-    .regex(
-      NAME_REGEX,
-      'Last name must contain only letters, spaces, hyphens, and apostrophes'
-    ),
+    .regex(NAME_REGEX, "Letters only (spaces, - and ' allowed)"),
   email: z
     .string()
     .trim()
