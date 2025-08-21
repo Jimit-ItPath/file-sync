@@ -5,6 +5,7 @@ import {
   removeLocalStorage,
   setLocalStorage,
 } from '../../utils/helper';
+import { v4 as uuidv4 } from 'uuid';
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
@@ -403,6 +404,7 @@ export const uploadCloudStorageFilesV2 = createAsyncThunk(
           fileName: file.name,
           fileSize: file.size,
           mimeType: file.type,
+          sessionId: uuidv4(),
         })),
         ...(id && { id }),
         ...(account_id && { account_id }),
@@ -420,24 +422,18 @@ export const uploadFileChunk = createAsyncThunk(
   'cloudStorage/uploadFileChunk',
   async (
     {
-      uploadUrl,
       chunk,
       headers,
-      onProgress,
     }: {
-      uploadUrl: string;
       chunk: Blob;
       headers: Record<string, string>;
-      onProgress?: (progress: number) => void;
     },
     { rejectWithValue }
   ) => {
     try {
-      const response = await api.cloudStorage.uploadChunk({
-        uploadUrl,
+      const response = await api.cloudStorage.uploadFileInChunksFn({
         chunk,
         headers,
-        onProgress,
       });
       return response;
     } catch (error: any) {

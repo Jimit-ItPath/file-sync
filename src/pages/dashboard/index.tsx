@@ -188,7 +188,6 @@ const Dashboard = () => {
     checkConnectedAccDetails,
     // isAutoLoading,
     hasPaginationData,
-    handleRemoveUploadedFile,
   } = useDashboard({ downloadFile });
 
   const {

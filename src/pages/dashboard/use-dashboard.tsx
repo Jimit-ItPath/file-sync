@@ -1323,7 +1323,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       }
 
       try {
-        await startUpload(
+        const res = await startUpload(
           files,
           uploadOptions,
           checkConnectedAccDetails?.account_type
@@ -1335,20 +1335,23 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         // Refresh the file list after upload starts
         // The actual refresh should happen when all uploads complete
         // For now, we'll do a delayed refresh
-        setTimeout(async () => {
-          await getCloudStorageFiles(1, {
-            type:
-              typeFilter && typeFilter?.length
-                ? typeFilter?.join(',')
+
+        if (res?.length) {
+          setTimeout(async () => {
+            await getCloudStorageFiles(1, {
+              type:
+                typeFilter && typeFilter?.length
+                  ? typeFilter?.join(',')
+                  : undefined,
+              after: modifiedFilter?.after
+                ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
                 : undefined,
-            after: modifiedFilter?.after
-              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-              : undefined,
-            before: modifiedFilter?.before
-              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-              : undefined,
-          });
-        }, 2000); // Delay to allow upload to start
+              before: modifiedFilter?.before
+                ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+                : undefined,
+            });
+          }, 1000);
+        }
       } catch (error: any) {
         notifications.show({
           message: error?.message || 'Failed to start upload',

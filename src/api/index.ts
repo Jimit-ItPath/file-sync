@@ -636,23 +636,18 @@ export const api = {
         data,
         ...configs,
       }),
-    uploadChunk: ({
-      uploadUrl,
+    uploadFileInChunksFn: ({
       chunk,
       headers,
-      onProgress,
     }: {
-      uploadUrl: string;
       chunk: Blob;
       headers: Record<string, string>;
-      onProgress?: (progress: number) => void;
     }) =>
       client({
-        url: uploadUrl,
+        url: '/cloud-storage/upload-file-chunk',
         method: METHODS.PUT,
         data: chunk,
         headers,
-        onProgress,
       }),
   },
   adminUsers: {

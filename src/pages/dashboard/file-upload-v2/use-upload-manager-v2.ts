@@ -1,9 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { useAppDispatch } from '../../../store';
-import { uploadCloudStorageFilesV2 } from '../../../store/slices/cloudStorage.slice';
+import {
+  uploadCloudStorageFilesV2,
+  uploadFileChunk,
+} from '../../../store/slices/cloudStorage.slice';
 import { notifications } from '@mantine/notifications';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
 
 export type FileUploadStatus =
   | 'pending'
@@ -28,11 +30,6 @@ export type UploadingFile = {
   cancelController?: AbortController;
 };
 
-interface UploadResponse {
-  success: boolean;
-  fileData?: any;
-}
-
 const useUploadManagerV2 = () => {
   const dispatch = useAppDispatch();
   const [uploadingFiles, setUploadingFiles] = useState<
@@ -40,22 +37,6 @@ const useUploadManagerV2 = () => {
   >({});
   const [showUploadProgress, setShowUploadProgress] = useState(false);
   const uploadControllersRef = useRef<Record<string, AbortController>>({});
-
-  const createFileChunks = useCallback(
-    (file: File, chunkSize: number): Blob[] => {
-      const chunks: Blob[] = [];
-      let start = 0;
-
-      while (start < file.size) {
-        const end = Math.min(start + chunkSize, file.size);
-        chunks.push(file.slice(start, end));
-        start = end;
-      }
-
-      return chunks;
-    },
-    []
-  );
 
   // const uploadFileInChunks = useCallback(
   //   async (
@@ -622,14 +603,7 @@ const useUploadManagerV2 = () => {
   // );
 
   const uploadFileInChunks = useCallback(
-    async (
-      fileId: string,
-      file: File,
-      uploadUrl: string,
-      instructions: UploadingFile['instructions']
-    ) => {
-      if (!instructions) return { success: false, fileData: null };
-
+    async (fileId: string, file: File, backendSessionId: string) => {
       const chunkSize = 2621440; // 2.5MB
       const totalSize = file.size;
       let uploadedBytes = 0;
@@ -645,84 +619,30 @@ const useUploadManagerV2 = () => {
           const chunk = file.slice(uploadedBytes, end + 1);
           const isLastChunk = end + 1 >= totalSize;
 
-          const chunkHeaders: Record<string, string> = {
-            ...instructions.headers,
-            'Content-Range': `bytes ${uploadedBytes}-${end}/${totalSize}`,
-            'Content-Length': `${chunk.size}`,
-          };
-
-          let res;
-          try {
-            res = await axios.put(uploadUrl, chunk, {
-              headers: chunkHeaders,
-              validateStatus: () => true, // don’t throw on non-2xx
-            });
-          } catch (axiosError) {
-            // Google Drive often blocks last-chunk response via CORS
-            if (isLastChunk) {
-              console.log(
-                'Final chunk uploaded but response blocked by CORS (Google Drive case)'
-              );
-              uploadedBytes = totalSize;
-              setUploadingFiles(prev => ({
-                ...prev,
-                [fileId]: {
-                  ...prev[fileId],
-                  progress: 100,
-                  status: 'completed',
-                },
-              }));
-              return { success: true, fileData: null }; // metadata comes later from backend
-            }
-            throw axiosError;
-          }
-
-          // --- Resumable continuation ---
-          if (res.status === 308) {
-            const range = res.headers['range'];
-            if (range) {
-              const rangeEnd = parseInt(range.split('-')[1], 10);
-              uploadedBytes = rangeEnd + 1;
-            } else {
-              uploadedBytes = end + 1;
-            }
-          }
-          // --- Final success (Google Drive / OneDrive) ---
-          else if (res.status === 200 || res.status === 201) {
-            uploadedBytes = totalSize;
-
-            let fileData = null;
-            try {
-              // OneDrive usually returns JSON
-              if (typeof res.data === 'object') {
-                fileData = res.data;
-              }
-            } catch (err) {
-              // Google Drive CORS case: ignore
-              fileData = null;
-            }
-
-            setUploadingFiles(prev => ({
-              ...prev,
-              [fileId]: {
-                ...prev[fileId],
-                progress: 100,
-                status: 'completed',
+          const res = await dispatch(
+            uploadFileChunk({
+              chunk,
+              headers: {
+                'Content-Range': `bytes ${uploadedBytes}-${end}/${totalSize}`,
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': `${chunk.size}`,
+                'X-Session-Id': backendSessionId, // custom header to identify file
               },
-            }));
-            return { success: true, fileData };
-          }
-          // --- Error case ---
-          else if (res.status >= 400) {
+            })
+          );
+
+          console.log('res-', res);
+
+          if (res.payload?.status === 200 || res.payload?.status === 201) {
+            uploadedBytes = end + 1;
+          } else if (res.payload?.status >= 400) {
             throw new Error(
-              `Upload failed with status ${res.status}: ${res.statusText}`
+              `Upload failed with status ${res.payload?.status}: ${res.payload?.statusText}`
             );
           } else {
-            // Unexpected response → still advance
             uploadedBytes = end + 1;
           }
 
-          // Update progress
           const progress = Math.round((uploadedBytes / totalSize) * 100);
           setUploadingFiles(prev => ({
             ...prev,
@@ -733,7 +653,6 @@ const useUploadManagerV2 = () => {
           }));
         }
 
-        // Completed loop → mark finished
         setUploadingFiles(prev => ({
           ...prev,
           [fileId]: {
@@ -768,6 +687,7 @@ const useUploadManagerV2 = () => {
       if (files.length === 0) return;
 
       const fileEntries: Record<string, UploadingFile> = {};
+
       files.forEach(file => {
         const fileId = uuidv4();
         const controller = new AbortController();
@@ -787,21 +707,25 @@ const useUploadManagerV2 = () => {
       setShowUploadProgress(true);
 
       try {
-        // 🔑 Backend decides Google Drive vs OneDrive and creates session
+        // 🔑 First step → create upload sessions
+
         const result = await dispatch(
-          uploadCloudStorageFilesV2({ files, ...options })
+          uploadCloudStorageFilesV2({
+            files,
+            ...options,
+          })
         ).unwrap();
 
-        const { uploadUrls } = result.response.data;
+        const { session_ids } = result.response.data;
 
+        // Map backend session_ids to our files
         Object.keys(fileEntries).forEach((fileId, index) => {
-          if (uploadUrls[index]) {
+          if (session_ids[index]) {
             setUploadingFiles(prev => ({
               ...prev,
               [fileId]: {
                 ...prev[fileId],
-                uploadUrl: uploadUrls[index].uploadUrl,
-                instructions: uploadUrls[index].instructions,
+                backendSessionId: session_ids[index], // store backend session id
                 status: 'uploading',
               },
             }));
@@ -820,16 +744,15 @@ const useUploadManagerV2 = () => {
         for (let i = 0; i < fileIds.length; i++) {
           const fileId = fileIds[i];
           const file = fileEntries[fileId].file;
-          const uploadUrl = uploadUrls[i]?.uploadUrl;
-          const instructions = uploadUrls[i]?.instructions;
+          const backendSessionId = session_ids[i];
 
-          if (!uploadUrl || !instructions) {
+          if (!backendSessionId) {
             setUploadingFiles(prev => ({
               ...prev,
               [fileId]: {
                 ...prev[fileId],
                 status: 'error',
-                error: 'No upload URL provided',
+                error: 'No backend session ID returned',
               },
             }));
             uploadResults.push({ fileId, success: false, fileData: null });
@@ -837,11 +760,11 @@ const useUploadManagerV2 = () => {
           }
 
           try {
+            // 🔑 Now upload chunks via our API
             const result = await uploadFileInChunks(
               fileId,
               file,
-              uploadUrl,
-              instructions
+              backendSessionId // use backend session id
             );
 
             uploadResults.push({
