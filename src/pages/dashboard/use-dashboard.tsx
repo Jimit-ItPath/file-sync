@@ -187,6 +187,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const autoLoadRequestIdRef = useRef<string>('');
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
+  const isNavigatingRef = useRef(false);
+  const isRouteSwitchingRef = useRef(false);
 
   const {
     cloudStorage,
@@ -340,6 +342,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       loading ||
       isAutoLoading ||
       autoLoadInProgressRef.current ||
+      isNavigatingRef.current ||
+      isRouteSwitchingRef.current ||
       !pagination ||
       pagination.page_no >= pagination.total_pages ||
       !connectedAccounts?.length
@@ -363,7 +367,9 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         if (
           autoLoadRequestIdRef.current === requestId &&
           pagination &&
-          pagination.page_no < pagination.total_pages
+          pagination.page_no < pagination.total_pages &&
+          !isNavigatingRef.current &&
+          !isRouteSwitchingRef.current
         ) {
           const requestParams: any = {
             page: pagination.page_no + 1,
@@ -392,7 +398,11 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
           // Wait a bit for DOM to update, then check again
           setTimeout(() => {
-            if (autoLoadRequestIdRef.current === requestId) {
+            if (
+              autoLoadRequestIdRef.current === requestId &&
+              !isNavigatingRef.current &&
+              !isRouteSwitchingRef.current
+            ) {
               checkAndAutoLoad();
             }
           }, 100);
@@ -421,6 +431,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     dispatch,
   ]);
 
+  useEffect(() => {
+    isRouteSwitchingRef.current = true;
+  }, [checkLocation, location.pathname]);
+
   // **NEW: Setup observers for better DOM change detection**
   useEffect(() => {
     if (!scrollBoxRef.current) return;
@@ -433,7 +447,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
 
     resizeObserverRef.current = new ResizeObserver(() => {
-      if (!loading && !isAutoLoading && connectedAccounts?.length) {
+      if (
+        !loading &&
+        !isAutoLoading &&
+        connectedAccounts?.length &&
+        !isNavigatingRef.current &&
+        !isRouteSwitchingRef.current
+      ) {
         setTimeout(checkAndAutoLoad, 50);
       }
     });
@@ -446,7 +466,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
 
     mutationObserverRef.current = new MutationObserver(() => {
-      if (!loading && !isAutoLoading && connectedAccounts?.length) {
+      if (
+        !loading &&
+        !isAutoLoading &&
+        connectedAccounts?.length &&
+        !isNavigatingRef.current &&
+        !isRouteSwitchingRef.current
+      ) {
         setTimeout(checkAndAutoLoad, 50);
       }
     });
@@ -466,17 +492,29 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     };
   }, [checkAndAutoLoad, loading, isAutoLoading, connectedAccounts]);
 
+  useEffect(() => {
+    if (!loading && cloudStorage?.length > 0 && pagination?.page_no === 1) {
+      isRouteSwitchingRef.current = false;
+    }
+  }, [loading, cloudStorage.length, pagination?.page_no]);
+
   // **NEW: Trigger auto-load when data changes**
   useEffect(() => {
     if (
       !loading &&
       !isAutoLoading &&
+      !isNavigatingRef.current &&
+      !isRouteSwitchingRef.current &&
       cloudStorage.length > 0 &&
       connectedAccounts?.length
     ) {
       // Use RAF to ensure DOM has updated
       requestAnimationFrame(() => {
-        setTimeout(checkAndAutoLoad, 100);
+        setTimeout(() => {
+          if (!isNavigatingRef.current && !isRouteSwitchingRef.current) {
+            checkAndAutoLoad();
+          }
+        }, 100);
       });
     }
   }, [cloudStorage.length, loading, checkAndAutoLoad, connectedAccounts]);
@@ -485,6 +523,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const resetAutoLoadState = useCallback(() => {
     autoLoadInProgressRef.current = false;
     autoLoadRequestIdRef.current = '';
+    isNavigatingRef.current = false;
+    isRouteSwitchingRef.current = false;
     setIsAutoLoading(false);
   }, []);
 
@@ -513,13 +553,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     [resetAutoLoadState, getCloudStorageFiles]
   );
 
-  const handleAdvancedFilterReset = useCallback(async () => {
-    resetAutoLoadState();
+  const handleAdvancedFilterReset = useCallback(() => {
+    // resetAutoLoadState();
     setTypeFilter(null);
     setModifiedFilter(null);
-    closeAdvancedFilterModal();
-    await getCloudStorageFiles(1);
-  }, [resetAutoLoadState, getCloudStorageFiles]);
+    // closeAdvancedFilterModal();
+    // await getCloudStorageFiles(1);
+  }, []);
 
   // Add filter handler functions:
   const handleTypeFilter = useCallback(
@@ -557,12 +597,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     [typeFilter, resetAutoLoadState, getCloudStorageFiles]
   );
 
-  const handleClearFilters = useCallback(async () => {
-    resetAutoLoadState();
+  const handleClearFilters = useCallback(() => {
     setTypeFilter(null);
     setModifiedFilter(null);
-    await getCloudStorageFiles(1);
-  }, [resetAutoLoadState, getCloudStorageFiles]);
+  }, []);
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
@@ -708,7 +746,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
         : undefined,
     });
-  }, [accountId, checkLocation, typeFilter, modifiedFilter]);
+  }, [accountId, checkLocation]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     lastScrollTop.current = e.currentTarget.scrollTop;
@@ -778,6 +816,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
       resetAutoLoadState();
+      isNavigatingRef.current = true;
 
       const requestParams: any = {};
 
@@ -799,7 +838,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         setLastSelectedIndex(null);
       }
 
-      dispatch(
+      const navigationPromise = dispatch(
         navigateToFolder(
           folder
             ? requestParams
@@ -808,6 +847,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
               : null
         )
       );
+
+      navigationPromise.finally(() => {
+        isNavigatingRef.current = false;
+      });
     },
     [dispatch, isMoveMode, checkLocation, currentAccountId, resetAutoLoadState]
   );
