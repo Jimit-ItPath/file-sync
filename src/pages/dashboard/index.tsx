@@ -41,7 +41,6 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import FileDetailsDrawer from './components/FileDetailsDrawer';
 import useFileDownloader from './components/use-file-downloader';
 import DownloadProgress from './components/DownloadProgress';
-import DashboardFilters from './components/DashboardFilters';
 import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
 import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 import { notifications } from '@mantine/notifications';
@@ -167,9 +166,9 @@ const Dashboard = () => {
     selectedItemForDetails,
     detailsFile,
     detailsFileLoading,
-    handleClearFilters,
-    handleModifiedFilter,
-    handleTypeFilter,
+    // handleClearFilters,
+    // handleModifiedFilter,
+    // handleTypeFilter,
     typeFilter,
     modifiedFilter,
     connectedAccounts,
@@ -502,14 +501,39 @@ const Dashboard = () => {
             <Group gap={8} wrap="nowrap" mt={10} style={{ flexShrink: 0 }}>
               {/* Filters - Compact Version */}
               {/* {!isXs && ( */}
-              <DashboardFilters
+              {/* <DashboardFilters
                 onTypeFilter={handleTypeFilter}
                 onModifiedFilter={handleModifiedFilter}
                 onClearFilters={handleClearFilters}
                 activeTypeFilter={typeFilter}
                 activeModifiedFilter={modifiedFilter}
                 isMobile={isSm}
-              />
+              /> */}
+              <Tooltip
+                fz={'xs'}
+                label={hasFilters ? 'Filters are active' : 'Open filters'}
+              >
+                <ActionIcon
+                  size={36}
+                  variant={hasFilters ? 'filled' : 'outline'}
+                  onClick={openAdvancedFilterModal}
+                  style={{
+                    borderRadius: '8px',
+                    border: hasFilters ? 'none' : '1.5px solid #dadce0',
+                    backgroundColor: hasFilters ? '#1c7ed6' : '#ffffff',
+                    color: hasFilters ? '#ffffff' : '#5f6368',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: hasFilters
+                        ? '0 4px 12px rgba(30, 122, 232, 0.4)'
+                        : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    },
+                  }}
+                >
+                  <ICONS.IconFilter size={16} />
+                </ActionIcon>
+              </Tooltip>
               {/* )} */}
 
               {/* Account Select - Compact */}
