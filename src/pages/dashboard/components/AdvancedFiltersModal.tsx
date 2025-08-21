@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  Stack,
-  Group,
-  Text,
-  Select,
-  Button,
-  Box,
-  Checkbox,
-} from '@mantine/core';
+import { Stack, Group, Text, Select, Box, Checkbox } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
+import { Button, Modal } from '../../../components';
+import useResponsive from '../../../hooks/use-responsive';
 
-interface AdvancedSearchModalProps {
+interface AdvancedFiltersModalProps {
   opened: boolean;
   onClose: () => void;
   onSearch: (filters: {
@@ -157,7 +150,7 @@ const getActivePreset = (
   return 'custom';
 };
 
-const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
+const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
   opened,
   onClose,
   onSearch,
@@ -165,6 +158,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   activeTypeFilter,
   activeModifiedFilter,
 }) => {
+  const { isXs } = useResponsive();
   const [selectedTypes, setSelectedTypes] = useState<string[]>(
     activeTypeFilter || []
   );
@@ -244,26 +238,26 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Advanced search"
+      title="Filters"
       size="lg"
       centered
-      styles={{
-        title: {
-          fontSize: '18px',
-          fontWeight: 500,
-          color: '#202124',
-        },
-        header: {
-          padding: '20px 24px 0 24px',
-          borderBottom: 'none',
-        },
-        body: {
-          padding: '20px 24px 24px 24px',
-        },
-        content: {
-          borderRadius: '8px',
-        },
-      }}
+      // styles={{
+      //   title: {
+      //     fontSize: '18px',
+      //     fontWeight: 500,
+      //     color: '#202124',
+      //   },
+      //   header: {
+      //     padding: '20px 24px 0 24px',
+      //     borderBottom: 'none',
+      //   },
+      //   body: {
+      //     padding: '20px 24px 24px 24px',
+      //   },
+      //   content: {
+      //     borderRadius: '8px',
+      //   },
+      // }}
     >
       <Stack gap="lg">
         {/* Type Filter */}
@@ -308,7 +302,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         {/* Modified Filter */}
         <Box>
           <Text size="sm" fw={500} mb="xs" c="#202124">
-            Date modified
+            Date Modified
           </Text>
           <Select
             data={modifiedOptions}
@@ -348,12 +342,19 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         {/* Custom Date Range */}
         {isCustomRange && (
           <Box>
-            <Stack gap="md">
+            <Group
+              gap="md"
+              w={'100%'}
+              // wrap="wrap"
+              style={{ flexDirection: isXs ? 'column' : 'row' }}
+            >
               <DateInput
                 label="From"
+                style={{ flex: 1 }}
+                w={'100%'}
                 placeholder="Select start date"
                 value={customDateRange.after || null}
-                onChange={date =>
+                onChange={(date: any) =>
                   setCustomDateRange(prev => ({
                     ...prev,
                     after: date || undefined,
@@ -383,8 +384,10 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               <DateInput
                 label="To"
                 placeholder="Select end date"
+                style={{ flex: 1 }}
+                w={'100%'}
                 value={customDateRange.before || null}
-                onChange={date =>
+                onChange={(date: any) =>
                   setCustomDateRange(prev => ({
                     ...prev,
                     before: date || undefined,
@@ -412,7 +415,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
                   },
                 }}
               />
-            </Stack>
+            </Group>
           </Box>
         )}
 
@@ -465,4 +468,4 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   );
 };
 
-export default AdvancedSearchModal;
+export default AdvancedFiltersModal;

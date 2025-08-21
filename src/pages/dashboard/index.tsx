@@ -45,7 +45,7 @@ import DashboardFilters from './components/DashboardFilters';
 import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
 import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 import { notifications } from '@mantine/notifications';
-import AdvancedSearchModal from './components/AdvancedSearchModal';
+import AdvancedFiltersModal from './components/AdvancedFiltersModal';
 
 const iconStyle = {
   borderRadius: 999,
@@ -1124,7 +1124,7 @@ const Dashboard = () => {
         />
       )}
 
-      <AdvancedSearchModal
+      <AdvancedFiltersModal
         opened={advancedSearchModalOpen}
         onClose={closeAdvancedSearchModal}
         onSearch={handleAdvancedSearch}
