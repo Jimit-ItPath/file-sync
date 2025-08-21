@@ -12,13 +12,20 @@ import {
   Title,
 } from '@mantine/core';
 import { ICONS } from '../../assets/icons';
+import { AUTH_ROUTES } from '../../routing/routes';
+import type { NavigateFunction } from 'react-router';
 
 interface FooterProps {
   isSm: boolean;
   isMd: boolean;
+  navigate: NavigateFunction;
 }
 
-const LandingFooter: React.FC<FooterProps> = ({ isSm, isMd }) => {
+const LandingFooter: React.FC<FooterProps> = ({
+  isSm,
+  isMd,
+  navigate = () => {},
+}) => {
   return (
     <Box bg="dark" py={40}>
       <Container
@@ -52,13 +59,59 @@ const LandingFooter: React.FC<FooterProps> = ({ isSm, isMd }) => {
                 <Title order={6} c="white">
                   Product
                 </Title>
-                <Anchor size="sm" c="dimmed">
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => {
+                    if (location.pathname !== AUTH_ROUTES.LANDING.url) {
+                      navigate(AUTH_ROUTES.LANDING.url, {
+                        state: { scrollTo: 'powerful-features' },
+                      });
+                    } else {
+                      const element =
+                        document.getElementById('powerful-features');
+                      if (element) {
+                        const yOffset = -70;
+                        const y =
+                          element.getBoundingClientRect().top +
+                          window.scrollY +
+                          yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                >
                   Features
                 </Anchor>
-                <Anchor size="sm" c="dimmed">
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => navigate(AUTH_ROUTES.PRICING.url)}
+                >
                   Pricing
                 </Anchor>
-                <Anchor size="sm" c="dimmed">
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => {
+                    if (location.pathname !== AUTH_ROUTES.LANDING.url) {
+                      navigate(AUTH_ROUTES.LANDING.url, {
+                        state: { scrollTo: 'security-features' },
+                      });
+                    } else {
+                      const element =
+                        document.getElementById('security-features');
+                      if (element) {
+                        const yOffset = -70;
+                        const y =
+                          element.getBoundingClientRect().top +
+                          window.scrollY +
+                          yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                >
                   Security
                 </Anchor>
               </Stack>
@@ -66,24 +119,44 @@ const LandingFooter: React.FC<FooterProps> = ({ isSm, isMd }) => {
                 <Title order={6} c="white">
                   Support
                 </Title>
-                <Anchor size="sm" c="dimmed">
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => navigate(AUTH_ROUTES.FAQ.url)}
+                >
                   FAQ
                 </Anchor>
-                <Anchor size="sm" c="dimmed">
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => navigate(AUTH_ROUTES.CONTACT.url)}
+                >
                   Contact
                 </Anchor>
-                <Anchor size="sm" c="dimmed">
+                {/* <Anchor size="sm" c="dimmed">
                   Help Center
-                </Anchor>
+                </Anchor> */}
               </Stack>
               <Stack gap="sm">
                 <Title order={6} c="white">
                   Legal
                 </Title>
-                <Anchor size="sm" c="dimmed">
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() =>
+                    window.open(AUTH_ROUTES.PRIVACY_POLICY.url, '_blank')
+                  }
+                >
                   Privacy Policy
                 </Anchor>
-                <Anchor size="sm" c="dimmed">
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() =>
+                    window.open(AUTH_ROUTES.TERMS_OF_SERVICE.url, '_blank')
+                  }
+                >
                   Terms of Service
                 </Anchor>
               </Stack>

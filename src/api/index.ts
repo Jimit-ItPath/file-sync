@@ -514,7 +514,11 @@ export const api = {
         method: METHODS.GET,
         params,
       }),
-    getRecentFiles: (params: { account_id?: number | string }) =>
+    getRecentFiles: (params: {
+      account_id?: number | string;
+      page?: number;
+      limit?: number;
+    }) =>
       client({
         url: '/cloud-storage/recent-files',
         method: METHODS.GET,

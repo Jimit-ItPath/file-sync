@@ -37,6 +37,9 @@ import PrivacyPolicy from '../pages/auth/register/PrivacyPolicy';
 import TermsAndConditions from '../pages/auth/register/TermsAndConditions';
 import UnifidriveLanding from '../pages/landing';
 import RecentFiles from '../pages/dashboard/components/RecentFiles';
+import PricingPage from '../pages/landing/components/PricingPage';
+import FaqPage from '../pages/landing/components/FaqPage';
+import ContactForm from '../pages/landing/components/ContactForm';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -119,6 +122,9 @@ export const router = createBrowserRouter([
       { ...AUTH_ROUTES.COMPLETE_PROFILE, Component: CompleteProfile },
       { ...AUTH_ROUTES.PRIVACY_POLICY, Component: PrivacyPolicy },
       { ...AUTH_ROUTES.TERMS_OF_SERVICE, Component: TermsAndConditions },
+      { ...AUTH_ROUTES.PRICING, Component: PricingPage },
+      { ...AUTH_ROUTES.FAQ, Component: FaqPage },
+      { ...AUTH_ROUTES.CONTACT, Component: ContactForm },
     ],
   },
   {

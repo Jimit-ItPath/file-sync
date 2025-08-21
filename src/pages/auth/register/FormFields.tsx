@@ -52,21 +52,26 @@ export const FormFields: React.FC<FormFieldsProps> = ({
 
   return (
     <Stack gap={16} mb={6}>
-      <Group gap={12} grow>
-        <Input
-          {...firstNameField}
-          error={errors?.firstName?.message || firstNameField?.error}
-          radius="md"
-          size="md"
-          withAsterisk
-        />
-        <Input
-          {...lastNameField}
-          error={errors?.lastName?.message || lastNameField?.error}
-          radius="md"
-          size="md"
-          withAsterisk
-        />
+      <Group gap={12} grow align="flex-start">
+        <div style={{ flex: 1 }}>
+          <Input
+            {...firstNameField}
+            error={errors?.firstName?.message || firstNameField?.error}
+            radius="md"
+            size="md"
+            withAsterisk
+          />
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <Input
+            {...lastNameField}
+            error={errors?.lastName?.message || lastNameField?.error}
+            radius="md"
+            size="md"
+            withAsterisk
+          />
+        </div>
       </Group>
       {otherFields.map(
         ({

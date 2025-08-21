@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Container,
   Title,
@@ -15,9 +15,8 @@ import {
   Divider,
   Image,
 } from '@mantine/core';
-import { Carousel } from '@mantine/carousel';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { AUTH_ROUTES } from '../../routing/routes';
 import GooggleDriveIcon from '../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../assets/svgs/Dropbox.svg';
@@ -28,8 +27,9 @@ import { ICONS } from '../../assets/icons';
 import NavigationItems from './NavigationItems';
 import LandingHeader from './LandingHeader';
 import LandingFooter from './LandingFooter';
-
-// Types
+import AnimatedSection from './components/AnimatedSection';
+import StaggerContainer from './components/StaggerContainer';
+import MobileCarousel from './components/MobileCarousel';
 interface FeatureItem {
   icon: React.ComponentType<{ size: number }>;
   title: string;
@@ -37,286 +37,146 @@ interface FeatureItem {
   color: string;
 }
 
-interface AnimatedSectionProps {
-  children: React.ReactNode;
-  delay?: number;
-  duration?: number;
-  className?: string;
-}
+const features: FeatureItem[] = [
+  {
+    icon: ICONS.IconCloud,
+    title: 'Connect Your Cloud Drives',
+    description:
+      'Securely link your Google Drive, OneDrive, and Dropbox accounts with OAuth authentication.',
+    color: 'blue',
+  },
+  {
+    icon: ICONS.IconDatabase,
+    title: 'Manage Files in One Place',
+    description:
+      'Access all your cloud files through a single, intuitive dashboard interface.',
+    color: 'cyan',
+  },
+  {
+    icon: ICONS.IconLayoutDistributeVertical,
+    title: 'Smart Distribution',
+    description:
+      'Let our AI automatically optimize storage by distributing files based on available space.',
+    color: 'teal',
+  },
+];
 
-interface StaggerContainerProps {
-  children: React.ReactNode;
-  staggerDelay?: number;
-}
+const powerfulFeatures: FeatureItem[] = [
+  {
+    icon: ICONS.IconDashboard,
+    title: 'Unified Dashboard',
+    description:
+      'View and manage all your cloud storage accounts from one central location.',
+    color: 'blue',
+  },
+  {
+    icon: ICONS.IconLayoutDistributeVertical,
+    title: 'Smart Distribution',
+    description:
+      'Automatically upload files to drives with the most available space.',
+    color: 'green',
+  },
+  {
+    icon: ICONS.IconDragDrop2,
+    title: 'Drag & Drop Upload',
+    description:
+      'Effortlessly upload files with intuitive drag-and-drop functionality.',
+    color: 'orange',
+  },
+  {
+    icon: ICONS.IconTransfer,
+    title: 'Cross-Cloud Transfer',
+    description:
+      'Move files between different cloud storage providers seamlessly.',
+    color: 'indigo',
+  },
+  {
+    icon: ICONS.IconFolders,
+    title: 'Folder Sync',
+    description:
+      'Keep folders synchronized across multiple cloud storage platforms.',
+    color: 'violet',
+  },
+  {
+    icon: ICONS.IconEye,
+    title: 'File Preview',
+    description:
+      'Preview documents, images, and videos without downloading them.',
+    color: 'pink',
+  },
+];
 
-interface MobileCarouselProps {
-  items: FeatureItem[];
-  isMobile: boolean;
-}
+const benefits: FeatureItem[] = [
+  {
+    icon: ICONS.IconDownload,
+    title: 'Save Storage Costs',
+    description: 'Optimize usage across accounts',
+    color: 'green',
+  },
+  {
+    icon: ICONS.IconShield,
+    title: 'Centralized Access',
+    description: 'One place for all your files',
+    color: 'blue',
+  },
+  {
+    icon: ICONS.IconDeviceDesktop,
+    title: 'Cross-Platform',
+    description: 'Works on desktop and mobile',
+    color: 'orange',
+  },
+  {
+    icon: ICONS.IconRefresh,
+    title: 'Seamless Integration',
+    description: 'Native cloud provider APIs',
+    color: 'purple',
+  },
+];
 
-// Animation hook for intersection observer
-const useAnimateOnScroll = (
-  threshold: number = 0.1
-): [React.RefObject<HTMLDivElement>, boolean] => {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref: any = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return [ref, isVisible];
-};
-
-// Animated Section Component
-const AnimatedSection: React.FC<AnimatedSectionProps> = ({
-  children,
-  delay = 0,
-  duration = 0.6,
-  className = '',
-}) => {
-  const [ref, isVisible] = useAnimateOnScroll(0.1);
-
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(50px)',
-        transition: `all ${duration}s ease-out ${delay}s`,
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-
-// Stagger Animation Container
-const StaggerContainer: React.FC<StaggerContainerProps> = ({
-  children,
-  staggerDelay = 0.1,
-}) => {
-  const [ref, isVisible] = useAnimateOnScroll(0.1);
-
-  return (
-    <div ref={ref}>
-      {React.Children.map(children, (child, index) => (
-        <div
-          style={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
-            transition: `all 0.6s ease-out ${index * staggerDelay}s`,
-          }}
-        >
-          {child}
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Mobile Carousel Component
-const MobileCarousel: React.FC<MobileCarouselProps> = ({ items, isMobile }) => {
-  if (!isMobile) return null;
-
-  return (
-    <AnimatedSection>
-      <Carousel
-        slideSize="100%"
-        slideGap="md"
-        emblaOptions={{ loop: true, align: 'center', dragFree: true }}
-        // slidesToScroll={1}
-        withIndicators
-        styles={{
-          indicator: {
-            width: 8,
-            height: 8,
-            backgroundColor: '#e9ecef',
-            transition: 'all 0.3s ease',
-            '&[data-active]': {
-              backgroundColor: '#339af0',
-            },
-          },
-        }}
-      >
-        {items.map((item, index) => (
-          <Carousel.Slide key={index}>
-            <Card
-              shadow="sm"
-              padding="xl"
-              radius="md"
-              style={{
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                },
-              }}
-            >
-              <Stack align="center" gap="md">
-                <ThemeIcon
-                  size={40}
-                  radius="xl"
-                  color={item.color}
-                  variant="light"
-                >
-                  <item.icon size={24} />
-                </ThemeIcon>
-                <Title order={4} ta="center" fz={14}>
-                  {item.title}
-                </Title>
-                <Text ta="center" c="dimmed" size="xs">
-                  {item.description}
-                </Text>
-              </Stack>
-            </Card>
-          </Carousel.Slide>
-        ))}
-      </Carousel>
-    </AnimatedSection>
-  );
-};
+const security: FeatureItem[] = [
+  {
+    icon: ICONS.IconShieldHalfFilled,
+    title: 'OAuth 2.0 Security',
+    description:
+      'Industry-standard authentication protocol ensures secure access to your accounts.',
+    color: 'green',
+  },
+  {
+    icon: ICONS.IconForbid,
+    title: 'No Data Storage',
+    description:
+      'We never store your files on our servers. Everything stays in your cloud accounts.',
+    color: 'blue',
+  },
+  {
+    icon: ICONS.IconCheck,
+    title: 'Revoke Anytime',
+    description:
+      'Full control over permissions. Revoke access securely whenever you want.',
+    color: 'red',
+  },
+];
 
 export default function UnifidriveLanding() {
   const [opened, { open, close }] = useDisclosure(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { isMd, isSm } = useResponsive();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const features: FeatureItem[] = [
-    {
-      icon: ICONS.IconCloud,
-      title: 'Connect Your Cloud Drives',
-      description:
-        'Securely link your Google Drive, OneDrive, and Dropbox accounts with OAuth authentication.',
-      color: 'blue',
-    },
-    {
-      icon: ICONS.IconDatabase,
-      title: 'Manage Files in One Place',
-      description:
-        'Access all your cloud files through a single, intuitive dashboard interface.',
-      color: 'cyan',
-    },
-    {
-      icon: ICONS.IconLayoutDistributeVertical,
-      title: 'Smart Distribution',
-      description:
-        'Let our AI automatically optimize storage by distributing files based on available space.',
-      color: 'teal',
-    },
-  ];
-
-  const powerfulFeatures: FeatureItem[] = [
-    {
-      icon: ICONS.IconDashboard,
-      title: 'Unified Dashboard',
-      description:
-        'View and manage all your cloud storage accounts from one central location.',
-      color: 'blue',
-    },
-    {
-      icon: ICONS.IconLayoutDistributeVertical,
-      title: 'Smart Distribution',
-      description:
-        'Automatically upload files to drives with the most available space.',
-      color: 'green',
-    },
-    {
-      icon: ICONS.IconDragDrop2,
-      title: 'Drag & Drop Upload',
-      description:
-        'Effortlessly upload files with intuitive drag-and-drop functionality.',
-      color: 'orange',
-    },
-    {
-      icon: ICONS.IconTransfer,
-      title: 'Cross-Cloud Transfer',
-      description:
-        'Move files between different cloud storage providers seamlessly.',
-      color: 'indigo',
-    },
-    {
-      icon: ICONS.IconFolders,
-      title: 'Folder Sync',
-      description:
-        'Keep folders synchronized across multiple cloud storage platforms.',
-      color: 'violet',
-    },
-    {
-      icon: ICONS.IconEye,
-      title: 'File Preview',
-      description:
-        'Preview documents, images, and videos without downloading them.',
-      color: 'pink',
-    },
-  ];
-
-  const benefits: FeatureItem[] = [
-    {
-      icon: ICONS.IconDownload,
-      title: 'Save Storage Costs',
-      description: 'Optimize usage across accounts',
-      color: 'green',
-    },
-    {
-      icon: ICONS.IconShield,
-      title: 'Centralized Access',
-      description: 'One place for all your files',
-      color: 'blue',
-    },
-    {
-      icon: ICONS.IconDeviceDesktop,
-      title: 'Cross-Platform',
-      description: 'Works on desktop and mobile',
-      color: 'orange',
-    },
-    {
-      icon: ICONS.IconRefresh,
-      title: 'Seamless Integration',
-      description: 'Native cloud provider APIs',
-      color: 'purple',
-    },
-  ];
-
-  const security: FeatureItem[] = [
-    {
-      icon: ICONS.IconShieldHalfFilled,
-      title: 'OAuth 2.0 Security',
-      description:
-        'Industry-standard authentication protocol ensures secure access to your accounts.',
-      color: 'green',
-    },
-    {
-      icon: ICONS.IconForbid,
-      title: 'No Data Storage',
-      description:
-        'We never store your files on our servers. Everything stays in your cloud accounts.',
-      color: 'blue',
-    },
-    {
-      icon: ICONS.IconCheck,
-      title: 'Revoke Anytime',
-      description:
-        'Full control over permissions. Revoke access securely whenever you want.',
-      color: 'red',
-    },
-  ];
+  useEffect(() => {
+    if (location.state?.scrollTo) {
+      const element = document.getElementById(location.state.scrollTo);
+      if (element) {
+        setTimeout(() => {
+          const yOffset = -70;
+          const y =
+            element.getBoundingClientRect().top + window.scrollY + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location.state]);
 
   return (
     <AppShell
@@ -332,7 +192,7 @@ export default function UnifidriveLanding() {
 
       <AppShell.Navbar p="md">
         <Stack>
-          <NavigationItems />
+          <NavigationItems {...{ navigate }} />
           <Divider />
           <Button
             variant="subtle"
@@ -522,6 +382,7 @@ export default function UnifidriveLanding() {
           px={isSm ? 20 : isMd ? 40 : 120}
           py={isMobile ? 40 : 60}
           bg={'linear-gradient(120deg, #f8fafc 0%, #f0f9ff 100%)'}
+          id="powerful-features"
         >
           <AnimatedSection>
             <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
@@ -642,6 +503,7 @@ export default function UnifidriveLanding() {
           px={isSm ? 20 : isMd ? 40 : 120}
           py={isMobile ? 40 : 60}
           bg={'linear-gradient(120deg, #f8fafc 0%, #f0f9ff 100%)'}
+          id="security-features"
         >
           <AnimatedSection>
             <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
@@ -761,7 +623,7 @@ export default function UnifidriveLanding() {
         </AnimatedSection>
 
         {/* Footer */}
-        <LandingFooter {...{ isMd, isSm }} />
+        <LandingFooter {...{ isMd, isSm, navigate }} />
       </AppShell.Main>
 
       <style>{`
