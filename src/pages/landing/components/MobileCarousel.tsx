@@ -24,8 +24,13 @@ const MobileCarousel: React.FC<MobileCarouselProps> = ({ items, isMobile }) => {
       <Carousel
         slideSize="100%"
         slideGap="md"
-        emblaOptions={{ loop: true, align: 'center', dragFree: true }}
-        // slidesToScroll={1}
+        emblaOptions={{
+          loop: true,
+          align: 'center',
+          dragFree: false,
+          slidesToScroll: 1,
+          containScroll: 'trimSnaps',
+        }}
         withIndicators
         styles={{
           indicator: {
