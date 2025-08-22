@@ -40,8 +40,14 @@ const MENU_ITEMS: {
 
 const RecentFiles = () => {
   const { isXs, isSm } = useResponsive();
-  const { downloadProgress, cancelDownload, clearDownload, downloadFile } =
-    useFileDownloader();
+  const {
+    downloadProgress,
+    cancelDownload,
+    clearDownload,
+    downloadFile,
+    pauseDownload,
+    resumeDownload,
+  } = useFileDownloader();
   const {
     loading,
     selectedIds,
@@ -125,7 +131,8 @@ const RecentFiles = () => {
       if (
         stackRef.current &&
         !stackRef.current.contains(target) &&
-        !target.closest('.stickey-box')
+        !target.closest('.stickey-box') &&
+        !target.closest('.delete-file-folder-modal')
       ) {
         handleUnselectAll();
       }
@@ -424,6 +431,7 @@ const RecentFiles = () => {
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
+        className="delete-file-folder-modal"
       >
         <Text mb="md">
           Are you sure you want to delete this{' '}
@@ -460,6 +468,7 @@ const RecentFiles = () => {
         opened={removeFilesModalOpen}
         onClose={closeRemoveFilesModal}
         title={`Remove items`}
+        className="delete-file-folder-modal"
       >
         <Text mb="md">
           Are you sure you want to remove items? All contents will be deleted
@@ -551,6 +560,8 @@ const RecentFiles = () => {
           downloadProgress={downloadProgress}
           onCancelDownload={cancelDownload}
           onClose={clearDownload}
+          onPause={pauseDownload}
+          onResume={resumeDownload}
         />
       )}
 

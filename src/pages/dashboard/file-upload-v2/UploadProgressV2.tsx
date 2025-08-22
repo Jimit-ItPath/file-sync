@@ -314,7 +314,11 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
       </Box>
 
       {/* File List */}
-      <ScrollArea style={{ maxHeight: 400 }}>
+      <ScrollArea
+        h={fileEntries?.length > 4 ? '400px' : 'auto'}
+        scrollbars={'y'}
+        styles={{ scrollbar: { width: 10 } }}
+      >
         <Stack gap={0}>
           {fileEntries.map(([fileId, file]) => (
             <Box

@@ -58,8 +58,14 @@ const iconStyle = {
 };
 
 const Dashboard = () => {
-  const { downloadProgress, cancelDownload, clearDownload, downloadFile } =
-    useFileDownloader();
+  const {
+    downloadProgress,
+    cancelDownload,
+    clearDownload,
+    downloadFile,
+    pauseDownload,
+    resumeDownload,
+  } = useFileDownloader();
   const {
     layout,
     switchLayout,
@@ -900,6 +906,7 @@ const Dashboard = () => {
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
+        className="delete-file-folder-modal"
       >
         <Text mb="md">
           Are you sure you want to delete this{' '}
@@ -936,6 +943,7 @@ const Dashboard = () => {
         opened={removeFilesModalOpen}
         onClose={closeRemoveFilesModal}
         title={`Remove items`}
+        className="delete-file-folder-modal"
       >
         <Text mb="md">
           Are you sure you want to remove items? All contents will be deleted
@@ -1168,6 +1176,8 @@ const Dashboard = () => {
           downloadProgress={downloadProgress}
           onCancelDownload={cancelDownload}
           onClose={clearDownload}
+          onPause={pauseDownload}
+          onResume={resumeDownload}
         />
       )}
 

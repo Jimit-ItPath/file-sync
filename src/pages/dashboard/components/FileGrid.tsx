@@ -165,7 +165,8 @@ const FileGrid: React.FC<FileGridProps> = ({
       if (
         stackRef.current &&
         !stackRef.current.contains(target) &&
-        !target.closest('.stickey-box')
+        !target.closest('.stickey-box') &&
+        !target.closest('.delete-file-folder-modal')
       ) {
         handleUnselectAll();
       }

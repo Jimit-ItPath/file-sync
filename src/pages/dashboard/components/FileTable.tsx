@@ -65,7 +65,8 @@ const FileTable: React.FC<FileTableProps> = ({
       if (
         tableRef.current &&
         !tableRef.current.contains(event.target as Node) &&
-        !target.closest('.stickey-box')
+        !target.closest('.stickey-box') &&
+        !target.closest('.delete-file-folder-modal')
       ) {
         handleUnselectAll();
       }
