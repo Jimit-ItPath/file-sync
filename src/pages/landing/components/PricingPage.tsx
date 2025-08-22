@@ -157,32 +157,72 @@ const PricingPage = () => {
           </AnimatedSection>
 
           <Card shadow="sm" radius="md" withBorder>
-            <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" p="md">
-              <Text fw={600}>Features</Text>
-              <Text fw={600} ta="center">
-                Free
-              </Text>
-              <Text fw={600} ta="center">
-                Pro
-              </Text>
-              <Text fw={600} ta="center">
-                Business
-              </Text>
-            </SimpleGrid>
-            {comparison.map((row, idx) => (
-              <SimpleGrid
-                key={idx}
-                cols={{ base: 2, sm: 4 }}
-                spacing="md"
-                p="md"
-                style={{ borderTop: '1px solid #e9ecef' }}
-              >
-                <Text>{row.feature}</Text>
-                <Text ta="center">{row.free}</Text>
-                <Text ta="center">{row.pro}</Text>
-                <Text ta="center">{row.business}</Text>
-              </SimpleGrid>
-            ))}
+            {!isSm ? (
+              <>
+                <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" p="md">
+                  <Text fw={600}>Features</Text>
+                  <Text fw={600} ta="center">
+                    Free
+                  </Text>
+                  <Text fw={600} ta="center">
+                    Pro
+                  </Text>
+                  <Text fw={600} ta="center">
+                    Business
+                  </Text>
+                </SimpleGrid>
+
+                {comparison.map((row, idx) => (
+                  <SimpleGrid
+                    key={idx}
+                    cols={{ base: 2, sm: 4 }}
+                    spacing="md"
+                    p="md"
+                    style={{ borderTop: '1px solid #e9ecef' }}
+                  >
+                    <Text>{row.feature}</Text>
+                    <Text ta="center">{row.free}</Text>
+                    <Text ta="center">{row.pro}</Text>
+                    <Text ta="center">{row.business}</Text>
+                  </SimpleGrid>
+                ))}
+              </>
+            ) : (
+              <Stack p="sm" gap="sm">
+                {comparison.map(row => (
+                  <Card key={row.feature} withBorder radius="md" padding="md">
+                    <Stack gap={8}>
+                      <Text fw={600} fz={'sm'}>
+                        {row.feature}
+                      </Text>
+
+                      <SimpleGrid cols={2} spacing={6}>
+                        <Text c="dimmed" fz={'sm'}>
+                          Free
+                        </Text>
+                        <Text ta="right" fz={'sm'}>
+                          {row.free}
+                        </Text>
+
+                        <Text c="dimmed" fz={'sm'}>
+                          Pro
+                        </Text>
+                        <Text ta="right" fz={'sm'}>
+                          {row.pro}
+                        </Text>
+
+                        <Text c="dimmed" fz={'sm'}>
+                          Business
+                        </Text>
+                        <Text ta="right" fz={'sm'}>
+                          {row.business}
+                        </Text>
+                      </SimpleGrid>
+                    </Stack>
+                  </Card>
+                ))}
+              </Stack>
+            )}
           </Card>
         </Container>
 

@@ -523,6 +523,7 @@ const NavBar = ({
                 style={{
                   position: 'relative',
                   overflowY: 'auto',
+                  overflowX: 'hidden',
                   maxHeight: '300px',
                   display: 'block',
                 }}
