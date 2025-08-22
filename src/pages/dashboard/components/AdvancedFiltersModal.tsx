@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Stack, Group, Text, Select, Box, MultiSelect } from '@mantine/core';
+import {
+  Stack,
+  Group,
+  Text,
+  Select,
+  Box,
+  Combobox,
+  useCombobox,
+  Pill,
+  PillsInput,
+} from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { Button, Modal } from '../../../components';
 import useResponsive from '../../../hooks/use-responsive';
@@ -22,29 +32,29 @@ const typeOptions = [
     value: 'folder',
     label: 'Folders',
     icon: ICONS.IconFolder,
-    color: '#4285F4',
+    color: '#FBBC05',
   },
   {
     value: 'documents',
     label: 'Documents',
     icon: ICONS.IconFile,
-    color: '#34A853',
+    color: '#4285F4',
   },
   {
     value: 'sheets',
     label: 'Sheets',
     icon: ICONS.IconFileSpreadsheet,
-    color: '#FBBC05',
+    color: '#34A853',
   },
   {
     value: 'presentations',
     label: 'Presentations',
     icon: ICONS.IconPresentation,
-    color: '#EA4335',
+    color: '#FBBC05',
   },
   { value: 'photos', label: 'Photos', icon: ICONS.IconPhoto, color: '#4285F4' },
   { value: 'pdfs', label: 'PDFs', icon: ICONS.IconPdf, color: '#EA4335' },
-  { value: 'videos', label: 'Videos', icon: ICONS.IconVideo, color: '#34A853' },
+  { value: 'videos', label: 'Videos', icon: ICONS.IconVideo, color: '#dc2626' },
   {
     value: 'archives',
     label: 'Archives',
@@ -183,6 +193,10 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
   activeTypeFilter,
   activeModifiedFilter,
 }) => {
+  const combobox = useCombobox({
+    onDropdownClose: () => combobox.resetSelectedOption(),
+    onDropdownOpen: () => combobox.updateSelectedOptionIndex('active'),
+  });
   const { isXs } = useResponsive();
   const [selectedTypes, setSelectedTypes] = useState<string[]>(
     activeTypeFilter || []
@@ -197,6 +211,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
     after: activeModifiedFilter?.after,
     before: activeModifiedFilter?.before,
   });
+  const [search, setSearch] = useState('');
 
   // Update state when props change
   useEffect(() => {
@@ -257,6 +272,65 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
     onReset();
   };
 
+  const handleValueSelect = (val: string) => {
+    setSelectedTypes(current =>
+      current.includes(val) ? current.filter(v => v !== val) : [...current, val]
+    );
+  };
+
+  const handleValueRemove = (val: string) => {
+    setSelectedTypes(current => current.filter(v => v !== val));
+  };
+
+  const values = selectedTypes.map(item => {
+    const option = typeOptions.find(opt => opt.value === item);
+    return (
+      <Pill
+        key={item}
+        withRemoveButton
+        onRemove={() => handleValueRemove(item)}
+        styles={{
+          root: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: option?.color + '20',
+            whiteSpace: 'nowrap',
+          },
+          label: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            lineHeight: 1.2,
+          },
+        }}
+      >
+        {option?.icon && <option.icon size={14} color={option.color} />}
+        <Text fz={13}>{option?.label}</Text>
+      </Pill>
+    );
+  });
+
+  const options = typeOptions
+    .filter(item =>
+      item.label.toLowerCase().includes(search.trim().toLowerCase())
+    )
+    .map(item => (
+      <Combobox.Option
+        value={item.value}
+        key={item.value}
+        active={selectedTypes.includes(item.value)}
+      >
+        <Group gap="sm">
+          {selectedTypes.includes(item.value) ? (
+            <ICONS.IconCheck size={12} />
+          ) : null}
+          {item.icon && <item.icon size={16} color={item.color} />}
+          <span>{item.label}</span>
+        </Group>
+      </Combobox.Option>
+    ));
+
   const isCustomRange = selectedModified === 'custom';
   // const hasFilters = selectedTypes.length > 0 || selectedModified !== '';
 
@@ -291,7 +365,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
           <Text size="sm" fw={500} mb="xs" c="#202124">
             Type
           </Text>
-          <MultiSelect
+          {/* <MultiSelect
             data={typeOptions}
             value={selectedTypes}
             onChange={setSelectedTypes}
@@ -313,7 +387,50 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                 boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
               },
             }}
-          />
+          /> */}
+          <Combobox store={combobox} onOptionSubmit={handleValueSelect}>
+            <Combobox.DropdownTarget>
+              <PillsInput onClick={() => combobox.openDropdown()}>
+                <Pill.Group>
+                  {values}
+                  <Combobox.EventsTarget>
+                    <PillsInput.Field
+                      onFocus={() => combobox.openDropdown()}
+                      onBlur={() => combobox.closeDropdown()}
+                      value={search}
+                      placeholder="Select file types"
+                      onChange={event => {
+                        combobox.updateSelectedOptionIndex();
+                        setSearch(event.currentTarget.value);
+                      }}
+                      onKeyDown={event => {
+                        if (
+                          event.key === 'Backspace' &&
+                          search.length === 0 &&
+                          selectedTypes.length > 0
+                        ) {
+                          event.preventDefault();
+                          handleValueRemove(
+                            selectedTypes[selectedTypes.length - 1]
+                          );
+                        }
+                      }}
+                    />
+                  </Combobox.EventsTarget>
+                </Pill.Group>
+              </PillsInput>
+            </Combobox.DropdownTarget>
+
+            <Combobox.Dropdown>
+              <Combobox.Options>
+                {options.length > 0 ? (
+                  options
+                ) : (
+                  <Combobox.Empty>Nothing found...</Combobox.Empty>
+                )}
+              </Combobox.Options>
+            </Combobox.Dropdown>
+          </Combobox>
           {/* <Box
             style={{
               border: '1px solid #dadce0',
