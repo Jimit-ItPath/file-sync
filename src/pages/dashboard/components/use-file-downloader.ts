@@ -254,7 +254,7 @@ const useFileDownloader = () => {
 
         const initialProgress: DownloadProgress = {
           isDownloading: true,
-          fileName,
+          // fileName,
           totalSize: 0,
           downloadedSize: 0,
           percentage: 0,

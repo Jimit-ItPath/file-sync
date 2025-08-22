@@ -522,10 +522,10 @@ const NavBar = ({
               <Box
                 style={{
                   position: 'relative',
-                  overflowY: 'auto',
-                  overflowX: 'hidden',
-                  maxHeight: '300px',
-                  display: 'block',
+                  // overflowY: 'auto',
+                  // overflowX: 'hidden',
+                  // maxHeight: '300px',
+                  // display: 'block',
                 }}
               >
                 <DndContext

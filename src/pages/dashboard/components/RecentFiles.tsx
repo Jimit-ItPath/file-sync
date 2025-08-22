@@ -248,7 +248,13 @@ const RecentFiles = () => {
           // mt={16}
           className="stickey-box"
         >
-          <Group align="center" w={'100%'} h={48} gap={16}>
+          <Group
+            align={isXs ? 'start' : 'center'}
+            w={'100%'}
+            h={isXs ? 'auto' : 48}
+            gap={16}
+            style={{ flexDirection: isXs ? 'column' : 'row' }}
+          >
             <Text fw={700} fz="md" c="gray.9">
               Recent Files
             </Text>
