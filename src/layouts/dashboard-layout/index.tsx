@@ -342,6 +342,7 @@ const DashboardLayout = () => {
                         bottom: 20,
                         left: 20,
                         zIndex: 2000,
+                        display: mobileDrawerOpened ? 'none' : 'block',
                       }}
                     >
                       <ActionIcon
