@@ -178,6 +178,7 @@ const getFileIcon = (fileName: string) => {
     case 'png':
     case 'gif':
     case 'svg':
+    case 'webp':
       return <ICONS.IconPhoto size={20} color="#7c3aed" />;
     case 'mp4':
     case 'avi':
@@ -296,6 +297,7 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
           <Tooltip
             label={hasActiveUploads ? 'Cannot close while uploading' : 'Close'}
             fz={'xs'}
+            zIndex={1000}
           >
             <ActionIcon
               variant="subtle"
@@ -410,7 +412,7 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
                       {/* Action Buttons */}
                       {(file.status === 'uploading' ||
                         file.status === 'pending') && (
-                        <Tooltip label="Cancel upload" fz={'xs'}>
+                        <Tooltip label="Cancel upload" fz={'xs'} zIndex={1000}>
                           <ActionIcon
                             variant="subtle"
                             size="sm"
@@ -426,7 +428,11 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
                       {(file.status === 'completed' ||
                         file.status === 'error' ||
                         file.status === 'cancelled') && (
-                        <Tooltip label="Remove from list" fz={'xs'}>
+                        <Tooltip
+                          label="Remove from list"
+                          fz={'xs'}
+                          zIndex={1000}
+                        >
                           <ActionIcon
                             variant="subtle"
                             size="sm"
