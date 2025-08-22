@@ -1,14 +1,13 @@
 import { useState, useCallback, useRef } from 'react';
 import { notifications } from '@mantine/notifications';
-import { useAppDispatch } from '../../../store';
 
 interface DownloadProgress {
   isDownloading: boolean;
-  fileName: string;
+  fileName?: string;
   totalSize: number;
   downloadedSize: number;
   percentage: number;
-  status: 'downloading' | 'completed' | 'failed' | 'cancelled';
+  status: 'downloading' | 'completed' | 'failed' | 'cancelled' | 'paused';
   startTime: number;
   speed?: number; // bytes per second
   timeRemaining?: number; // seconds
@@ -26,7 +25,15 @@ const useFileDownloader = () => {
   const [downloadProgress, setDownloadProgress] =
     useState<DownloadProgress | null>(null);
   const abortController = useRef<AbortController | null>(null);
-  const dispatch = useAppDispatch();
+  const writerRef = useRef<any>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(
+    null
+  );
+  const downloadedSizeRef = useRef<number>(0);
+  const urlRef = useRef<string>('');
+  const selectedIdsRef = useRef<string[]>([]);
+  const isPausedRef = useRef<boolean>(false);
+  const pumpRef = useRef<any>(null);
 
   const calculateSpeed = (
     downloadedBytes: number,
@@ -48,16 +55,16 @@ const useFileDownloader = () => {
 
   const updateProgress = useCallback((update: Partial<DownloadProgress>) => {
     setDownloadProgress(prev => (prev ? { ...prev, ...update } : null));
-    if (
-      update.status === 'completed' ||
-      update.status === 'failed' ||
-      update.status === 'cancelled'
-    ) {
-      setTimeout(() => setDownloadProgress(null), 5000);
-    }
+    // if (
+    //   update.status === 'completed' ||
+    //   update.status === 'failed' ||
+    //   update.status === 'cancelled'
+    // ) {
+    //   setTimeout(() => setDownloadProgress(null), 5000);
+    // }
   }, []);
 
-  // const downloadFile1 = useCallback(
+  // const downloadFile = useCallback(
   //   async (selectedIds: string[]) => {
   //     // Cancel any existing download
   //     if (abortController.current) {
@@ -87,7 +94,7 @@ const useFileDownloader = () => {
 
   //       setDownloadProgress(initialProgress);
 
-  //       // Use your existing Redux action but intercept the response for streaming
+  //       // Create a cancellable fetch request
   //       const response = await fetch(
   //         `${import.meta.env.VITE_REACT_APP_BASE_URL}/cloud-storage/download`,
   //         {
@@ -95,94 +102,54 @@ const useFileDownloader = () => {
   //           headers: {
   //             'Content-Type': 'application/json',
   //             Authorization: `Bearer ${localStorage.getItem('token')}`,
-  //             // Add any auth headers your API needs
   //           },
   //           body: JSON.stringify({ ids: selectedIds }),
   //           signal: controller.signal,
   //         }
   //       );
 
+  //       // Immediately check if request was aborted
+  //       if (controller.signal.aborted) {
+  //         throw new DOMException('Aborted', 'AbortError');
+  //       }
+
   //       if (!response.ok) {
   //         throw new Error(`HTTP error! status: ${response.status}`);
   //       }
 
-  //       // Use appropriate header for total size
+  //       // Get total size
   //       let totalSize = 0;
-
-  //       if (selectedIds.length === 1) {
-  //         const contentLength = response.headers.get('Content-Length');
-  //         totalSize = contentLength ? parseInt(contentLength, 10) : 0;
-  //       } else {
-  //         const approxSize = response.headers.get('approximate-size');
-  //         totalSize = approxSize ? parseInt(approxSize, 10) : 0;
-  //       }
+  //       // if (selectedIds.length === 1) {
+  //       //   const contentLength = response.headers.get('Content-Length');
+  //       //   totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+  //       // } else {
+  //       const approxSize = response.headers.get('approximate-size');
+  //       totalSize = approxSize ? parseInt(approxSize, 10) : 0;
+  //       // }
 
   //       updateProgress({ totalSize });
 
-  //       // For small files or when StreamSaver is not available, use blob download
-  //       if (totalSize < 10 * 1024 * 1024 || !window.streamSaver) {
-  //         // Less than 10MB
-  //         const blob = await response.blob();
-
-  //         // Extract filename from Content-Disposition header if available
-  //         const contentDisposition = response.headers.get(
-  //           'Content-Disposition'
-  //         );
-  //         const match = contentDisposition?.match(/filename="?([^"]+)"?/);
-  //         const finalFileName = match?.[1] || fileName;
-
-  //         const url = window.URL.createObjectURL(blob);
-  //         const link = document.createElement('a');
-  //         link.href = url;
-  //         link.download = finalFileName;
-  //         document.body.appendChild(link);
-  //         link.click();
-  //         document.body.removeChild(link);
-  //         window.URL.revokeObjectURL(url);
-
-  //         updateProgress({
-  //           downloadedSize: totalSize || blob.size,
-  //           percentage: 100,
-  //           status: 'completed',
-  //         });
-
-  //         notifications.show({
-  //           message: `${selectedIds.length > 1 ? 'Files' : 'File'} downloaded successfully`,
-  //           color: 'green',
-  //         });
-
-  //         // Clear progress after 3 seconds
-  //         // setTimeout(() => setDownloadProgress(null), 3000);
-  //         return;
-  //       }
-
-  //       // Use StreamSaver for large files
-  //       const contentDisposition = response.headers.get('Content-Disposition');
-  //       const match = contentDisposition?.match(/filename="?([^"]+)"?/);
-  //       const finalFileName = match?.[1] || fileName;
-
-  //       const fileStream = window.streamSaver.createWriteStream(finalFileName);
-  //       const writer = fileStream.getWriter();
   //       const reader = response.body?.getReader();
+  //       if (!reader) throw new Error('Failed to get response reader');
 
-  //       if (!reader) {
-  //         throw new Error('Failed to get response reader');
-  //       }
-
+  //       const chunks: Uint8Array[] = [];
   //       let downloadedSize = 0;
   //       const startTime = Date.now();
 
   //       try {
   //         while (true) {
+  //           // Check for cancellation before each read
+  //           if (controller.signal.aborted) {
+  //             throw new DOMException('Aborted', 'AbortError');
+  //           }
+
   //           const { done, value } = await reader.read();
 
   //           if (done) break;
 
-  //           // Write chunk to file
-  //           await writer.write(value);
+  //           chunks.push(value);
   //           downloadedSize += value.length;
 
-  //           // Calculate progress
   //           const percentage =
   //             totalSize > 0
   //               ? Math.round((downloadedSize / totalSize) * 100)
@@ -194,32 +161,53 @@ const useFileDownloader = () => {
   //             speed
   //           );
 
-  //           // Update progress
   //           updateProgress({
   //             downloadedSize,
   //             percentage,
   //             speed,
   //             timeRemaining,
   //           });
+
+  //           // For small files, check cancellation more frequently
+  //           if (totalSize < 10 * 1024 * 1024) {
+  //             await new Promise(resolve => setTimeout(resolve, 0));
+  //           }
   //         }
 
-  //         // Complete the download
-  //         await writer.close();
-  //         updateProgress({
-  //           percentage: 100,
-  //           status: 'completed',
-  //         });
+  //         // Only create blob if not cancelled
+  //         if (!controller.signal.aborted) {
+  //           const blob = new Blob(chunks as any);
+  //           const url = window.URL.createObjectURL(blob);
+  //           const link = document.createElement('a');
 
-  //         notifications.show({
-  //           message: `${selectedIds.length > 1 ? 'Files' : 'File'} downloaded successfully`,
-  //           color: 'green',
-  //         });
+  //           // Extract filename from Content-Disposition header if available
+  //           const contentDisposition = response.headers.get(
+  //             'Content-Disposition'
+  //           );
+  //           const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+  //           const finalFileName = match?.[1] || fileName;
 
-  //         // Clear progress after 3 seconds
-  //         // setTimeout(() => setDownloadProgress(null), 3000);
-  //       } catch (writeError) {
-  //         await writer.abort();
-  //         throw writeError;
+  //           link.href = url;
+  //           link.download = finalFileName;
+  //           document.body.appendChild(link);
+  //           link.click();
+  //           document.body.removeChild(link);
+  //           window.URL.revokeObjectURL(url);
+
+  //           updateProgress({
+  //             downloadedSize: totalSize || blob.size,
+  //             percentage: 100,
+  //             status: 'completed',
+  //           });
+
+  //           notifications.show({
+  //             message: `${selectedIds.length > 1 ? 'Files' : 'File'} downloaded successfully`,
+  //             color: 'green',
+  //           });
+  //         }
+  //       } catch (error: any) {
+  //         if (error?.name === 'AbortError') throw error;
+  //         throw new Error(`Download failed: ${error}`);
   //       }
   //     } catch (error: any) {
   //       if (error?.name === 'AbortError') {
@@ -243,9 +231,6 @@ const useFileDownloader = () => {
   //           color: 'red',
   //         });
   //       }
-
-  //       // Clear progress after 3 seconds for failed/cancelled downloads
-  //       // setTimeout(() => setDownloadProgress(null), 3000);
   //     } finally {
   //       abortController.current = null;
   //     }
@@ -255,24 +240,21 @@ const useFileDownloader = () => {
 
   const downloadFile = useCallback(
     async (selectedIds: string[]) => {
-      // Cancel any existing download
-      if (abortController.current) {
-        abortController.current.abort();
-      }
-
-      const controller = new AbortController();
-      abortController.current = controller;
-
       try {
+        selectedIdsRef.current = selectedIds;
+        urlRef.current = `${import.meta.env.VITE_REACT_APP_BASE_URL}/cloud-storage/download`;
+
+        const controller = new AbortController();
+        abortController.current = controller;
+
         const fileName =
           selectedIds.length > 1
             ? `files-${Date.now()}.zip`
             : `download-${Date.now()}.zip`;
 
-        // Initialize download progress
         const initialProgress: DownloadProgress = {
           isDownloading: true,
-          fileName,
+          // fileName,
           totalSize: 0,
           downloadedSize: 0,
           percentage: 0,
@@ -283,140 +265,118 @@ const useFileDownloader = () => {
 
         setDownloadProgress(initialProgress);
 
-        // Create a cancellable fetch request
-        const response = await fetch(
-          `${import.meta.env.VITE_REACT_APP_BASE_URL}/cloud-storage/download`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-            body: JSON.stringify({ ids: selectedIds }),
-            signal: controller.signal,
-          }
-        );
-
-        // Immediately check if request was aborted
-        if (controller.signal.aborted) {
-          throw new DOMException('Aborted', 'AbortError');
-        }
+        // Request download stream
+        const response = await fetch(urlRef.current, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ ids: selectedIds }),
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         // Get total size
-        let totalSize = 0;
-        // if (selectedIds.length === 1) {
-        //   const contentLength = response.headers.get('Content-Length');
-        //   totalSize = contentLength ? parseInt(contentLength, 10) : 0;
-        // } else {
         const approxSize = response.headers.get('approximate-size');
-        totalSize = approxSize ? parseInt(approxSize, 10) : 0;
-        // }
-
+        const totalSize = approxSize ? parseInt(approxSize, 10) : 0;
         updateProgress({ totalSize });
+
+        // Extract file name from headers if available
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+        const finalFileName = match?.[1] || fileName;
+
+        setDownloadProgress(prev => ({
+          ...prev!,
+          fileName: finalFileName,
+        }));
+
+        // StreamSaver: create write stream
+        const fileStream = window.streamSaver.createWriteStream(finalFileName, {
+          size: totalSize || undefined,
+        });
+        const writer = fileStream.getWriter();
+        writerRef.current = writer;
+
+        writer.closed?.catch(() => {
+          setDownloadProgress(null);
+          notifications.show({
+            message: 'Download was cancelled from browser',
+            color: 'orange',
+          });
+        });
 
         const reader = response.body?.getReader();
         if (!reader) throw new Error('Failed to get response reader');
+        readerRef.current = reader;
 
-        const chunks: Uint8Array[] = [];
-        let downloadedSize = 0;
+        downloadedSizeRef.current = 0;
         const startTime = Date.now();
 
-        try {
+        const pump = async () => {
           while (true) {
-            // Check for cancellation before each read
-            if (controller.signal.aborted) {
-              throw new DOMException('Aborted', 'AbortError');
+            if (isPausedRef.current) {
+              updateProgress({ status: 'paused' });
+              return; // pause gracefully
             }
 
             const { done, value } = await reader.read();
-
             if (done) break;
 
-            chunks.push(value);
-            downloadedSize += value.length;
+            downloadedSizeRef.current += value.length;
+            await writer.write(value);
 
             const percentage =
               totalSize > 0
-                ? Math.round((downloadedSize / totalSize) * 100)
+                ? Math.round((downloadedSizeRef.current / totalSize) * 100)
                 : 0;
-            const speed = calculateSpeed(downloadedSize, startTime);
+            const speed = calculateSpeed(downloadedSizeRef.current, startTime);
             const timeRemaining = calculateTimeRemaining(
               totalSize,
-              downloadedSize,
+              downloadedSizeRef.current,
               speed
             );
 
             updateProgress({
-              downloadedSize,
+              downloadedSize: downloadedSizeRef.current,
               percentage,
               speed,
               timeRemaining,
-            });
-
-            // For small files, check cancellation more frequently
-            if (totalSize < 10 * 1024 * 1024) {
-              await new Promise(resolve => setTimeout(resolve, 0));
-            }
-          }
-
-          // Only create blob if not cancelled
-          if (!controller.signal.aborted) {
-            const blob = new Blob(chunks as any);
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-
-            // Extract filename from Content-Disposition header if available
-            const contentDisposition = response.headers.get(
-              'Content-Disposition'
-            );
-            const match = contentDisposition?.match(/filename="?([^"]+)"?/);
-            const finalFileName = match?.[1] || fileName;
-
-            link.href = url;
-            link.download = finalFileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            updateProgress({
-              downloadedSize: totalSize || blob.size,
-              percentage: 100,
-              status: 'completed',
-            });
-
-            notifications.show({
-              message: `${selectedIds.length > 1 ? 'Files' : 'File'} downloaded successfully`,
-              color: 'green',
+              status: 'downloading',
             });
           }
-        } catch (error: any) {
-          if (error?.name === 'AbortError') throw error;
-          throw new Error(`Download failed: ${error}`);
-        }
+
+          await writer.close();
+
+          updateProgress({
+            downloadedSize: totalSize,
+            percentage: 100,
+            status: 'completed',
+          });
+
+          notifications.show({
+            message: `${selectedIds.length > 1 ? 'Files' : 'File'} downloaded successfully`,
+            color: 'green',
+          });
+        };
+
+        pumpRef.current = pump;
+        pump();
       } catch (error: any) {
         if (error?.name === 'AbortError') {
-          updateProgress({
-            status: 'cancelled',
-            fileName: downloadProgress?.fileName || '',
-            fileCount: downloadProgress?.fileCount || 0,
-          });
+          updateProgress({ status: 'cancelled' });
           notifications.show({
             message: 'Download was cancelled',
             color: 'orange',
           });
         } else {
-          updateProgress({
-            status: 'failed',
-            fileName: downloadProgress?.fileName || '',
-            fileCount: downloadProgress?.fileCount || 0,
-          });
+          updateProgress({ status: 'failed' });
           notifications.show({
-            message: `Failed to download: ${error?.message ? error?.message : 'given file.'}`,
+            message: `Failed to download: ${error?.message || 'given file.'}`,
             color: 'red',
           });
         }
@@ -424,13 +384,32 @@ const useFileDownloader = () => {
         abortController.current = null;
       }
     },
-    [updateProgress, dispatch]
+    [updateProgress]
   );
+
+  const pauseDownload = useCallback(() => {
+    if (readerRef.current) {
+      isPausedRef.current = true;
+    }
+  }, []);
+
+  const resumeDownload = useCallback(() => {
+    if (isPausedRef.current && pumpRef.current) {
+      isPausedRef.current = false;
+      updateProgress({ status: 'downloading' });
+      pumpRef.current(); // continue same stream
+    }
+  }, [updateProgress]);
 
   const cancelDownload = useCallback(() => {
     if (abortController.current) {
       abortController.current.abort();
     }
+    // setDownloadProgress(null);
+    // notifications.show({
+    //   message: 'Download cancelled by user',
+    //   color: 'orange',
+    // });
   }, []);
 
   const clearDownload = useCallback(() => {
@@ -443,6 +422,8 @@ const useFileDownloader = () => {
     downloadFile,
     cancelDownload,
     clearDownload,
+    pauseDownload,
+    resumeDownload,
   };
 };
 

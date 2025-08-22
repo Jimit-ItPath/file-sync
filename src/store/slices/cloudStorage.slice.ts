@@ -5,6 +5,7 @@ import {
   removeLocalStorage,
   setLocalStorage,
 } from '../../utils/helper';
+import { v4 as uuidv4 } from 'uuid';
 
 export type AccountType = 'google_drive' | 'dropbox' | 'onedrive';
 
@@ -379,6 +380,70 @@ export const fetchMoveModalFolders = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error?.message || 'Failed to fetch folders');
+    }
+  }
+);
+
+export const uploadCloudStorageFilesV2 = createAsyncThunk(
+  'cloudStorage/uploadCloudStorageFilesV2',
+  async (
+    {
+      files,
+      id,
+      account_id,
+    }: {
+      files: File[];
+      id?: string;
+      account_id?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const payload = {
+        files: files.map(file => ({
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          sessionId: uuidv4(),
+        })),
+        ...(id && { id }),
+        ...(account_id && { account_id }),
+      };
+
+      const response = await api.cloudStorage.uploadFilesV2({ data: payload });
+      return { response: response.data, originalFiles: files };
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to get upload URLs');
+    }
+  }
+);
+
+export const uploadFileChunk = createAsyncThunk(
+  'cloudStorage/uploadFileChunk',
+  async (
+    {
+      chunk,
+      headers,
+      signal,
+    }: {
+      chunk: Blob;
+      headers: Record<string, string>;
+      signal?: AbortSignal;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.cloudStorage.uploadFileInChunksFn({
+        chunk,
+        headers,
+        signal,
+      });
+      return response;
+    } catch (error: any) {
+      if (signal?.aborted) {
+        return rejectWithValue('Upload canceled by user');
+      }
+      return rejectWithValue(error?.message || 'Failed to upload chunk');
     }
   }
 );

@@ -9,6 +9,7 @@ import {
 } from '../../../utils/helper';
 import { Tooltip } from '../../../components';
 import { CSS } from '@dnd-kit/utilities';
+import useResponsive from '../../../hooks/use-responsive';
 
 const SortableCloudAccountItem = ({
   account,
@@ -27,6 +28,7 @@ const SortableCloudAccountItem = ({
   mobileDrawerHandler: any;
   sortedCloudAccounts: any[];
 }) => {
+  const { isXs } = useResponsive();
   const {
     attributes,
     listeners,
@@ -59,7 +61,7 @@ const SortableCloudAccountItem = ({
       >
         <Stack style={{ flexDirection: 'row' }} w={'100%'} align="center">
           {/* Drag Handle - Only show when hovering and multiple accounts exist */}
-          {showDragHandle && (
+          {(showDragHandle || isXs) && (
             <Box
               {...attributes}
               {...listeners}
@@ -91,7 +93,7 @@ const SortableCloudAccountItem = ({
               cursor: 'pointer',
               fontSize: '14px',
               width: '100%',
-              marginLeft: showDragHandle ? '-20px' : '0px',
+              marginLeft: (showDragHandle || isXs) ? '-20px' : '0px',
             }}
             onClick={() => {
               if (!globalSearchState) {
@@ -121,7 +123,7 @@ const SortableCloudAccountItem = ({
           </Link>
 
           {/* Remove Access Button */}
-          {hoveredAccountId === account.id && (
+          {(hoveredAccountId === account.id || isXs) && (
             <Tooltip label="Remove Access" position="right" withArrow fz={'xs'}>
               <Box
                 style={{

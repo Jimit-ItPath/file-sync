@@ -124,6 +124,9 @@ import {
   IconArchive,
   IconMusic,
   IconUserOff,
+  IconLoader,
+  IconFileZip,
+  IconFocus2,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -252,4 +255,7 @@ export const ICONS = {
   IconArchive,
   IconMusic,
   IconUserOff,
+  IconLoader,
+  IconFileZip,
+  IconFocus2,
 };

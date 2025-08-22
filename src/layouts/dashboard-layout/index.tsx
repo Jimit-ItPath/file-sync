@@ -71,13 +71,18 @@ const DashboardLayout = () => {
     setUploadedFiles,
     getFileIcon,
     uploadedFiles,
-    uploadFilesLoading,
+    // uploadFilesLoading,
     showUploadProgress,
     uploadProgress,
     uploadingFiles,
     handleCancelUpload,
     handleCloseUploadProgress,
     handleRemoveUploadedFile,
+    handleFileUploadV2,
+    uploadingFilesV2,
+    cancelUploadV2,
+    closeUploadProgressV2,
+    showUploadProgressV2,
   } = useDashboard({});
 
   const { logout } = useAuth() as any;
@@ -337,6 +342,7 @@ const DashboardLayout = () => {
                         bottom: 20,
                         left: 20,
                         zIndex: 2000,
+                        display: mobileDrawerOpened ? 'none' : 'block',
                       }}
                     >
                       <ActionIcon
@@ -599,13 +605,18 @@ const DashboardLayout = () => {
               setUploadedFiles,
               getFileIcon,
               uploadedFiles,
-              uploadFilesLoading,
+              // uploadFilesLoading,
               showUploadProgress,
               uploadProgress,
               uploadingFiles,
               handleCancelUpload,
               handleCloseUploadProgress,
               handleRemoveUploadedFile,
+              handleFileUploadV2,
+              uploadingFilesV2,
+              cancelUploadV2,
+              closeUploadProgressV2,
+              showUploadProgressV2,
             }}
           />
         </AppShell.Navbar>
@@ -751,8 +762,11 @@ const DashboardLayout = () => {
               )}
               <Button
                 type="submit"
-                loading={uploadFilesLoading}
-                disabled={uploadedFiles.length === 0 || uploadFilesLoading}
+                // loading={uploadFilesLoading}
+                disabled={
+                  uploadedFiles.length === 0
+                  // || uploadFilesLoading
+                }
               >
                 Upload Files
               </Button>

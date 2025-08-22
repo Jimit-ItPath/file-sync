@@ -13,7 +13,7 @@ import {
   setLocalStorage,
 } from '../../utils/helper';
 import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
   createCloudStorageFolder,
@@ -24,7 +24,7 @@ import {
   renameCloudStorageFile,
   resetCloudStorageFolder,
   setAccountId,
-  uploadCloudStorageFiles,
+  // uploadCloudStorageFiles,
   moveCloudStorageFiles,
   syncCloudStorage,
   resetPagination,
@@ -47,6 +47,7 @@ import {
   VIDEO_FILE_TYPES,
 } from '../../utils/constants';
 import dayjs from 'dayjs';
+import useUploadManagerV2 from './file-upload-v2/use-upload-manager-v2';
 
 type UseDashboardProps = {
   downloadFile?: (ids: string[]) => Promise<void>;
@@ -94,6 +95,15 @@ type UploadFormData = z.infer<typeof uploadSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
 const useDashboard = ({ downloadFile }: UseDashboardProps) => {
+  const {
+    uploadingFiles: uploadingFilesV2,
+    showUploadProgress: showUploadProgressV2,
+    startUpload,
+    cancelUpload: cancelUploadV2,
+    removeUploadedFile,
+    closeUploadProgress: closeUploadProgressV2,
+    clearAllUploads,
+  } = useUploadManagerV2();
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
@@ -187,6 +197,9 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const autoLoadRequestIdRef = useRef<string>('');
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
+  const isNavigatingRef = useRef(false);
+  const isRouteSwitchingRef = useRef(false);
+  const prevLocationRef = useRef<string | null>(null);
 
   const {
     cloudStorage,
@@ -194,7 +207,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     pagination,
     currentFolderId,
     currentPath,
-    uploadLoading,
+    // uploadLoading,
     accountId,
     searchTerm,
     navigateLoading,
@@ -340,6 +353,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       loading ||
       isAutoLoading ||
       autoLoadInProgressRef.current ||
+      isNavigatingRef.current ||
+      isRouteSwitchingRef.current ||
       !pagination ||
       pagination.page_no >= pagination.total_pages ||
       !connectedAccounts?.length
@@ -363,7 +378,9 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         if (
           autoLoadRequestIdRef.current === requestId &&
           pagination &&
-          pagination.page_no < pagination.total_pages
+          pagination.page_no < pagination.total_pages &&
+          !isNavigatingRef.current &&
+          !isRouteSwitchingRef.current
         ) {
           const requestParams: any = {
             page: pagination.page_no + 1,
@@ -392,7 +409,11 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
           // Wait a bit for DOM to update, then check again
           setTimeout(() => {
-            if (autoLoadRequestIdRef.current === requestId) {
+            if (
+              autoLoadRequestIdRef.current === requestId &&
+              !isNavigatingRef.current &&
+              !isRouteSwitchingRef.current
+            ) {
               checkAndAutoLoad();
             }
           }, 100);
@@ -421,6 +442,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     dispatch,
   ]);
 
+  useEffect(() => {
+    isRouteSwitchingRef.current = true;
+  }, [checkLocation, location.pathname]);
+
   // **NEW: Setup observers for better DOM change detection**
   useEffect(() => {
     if (!scrollBoxRef.current) return;
@@ -433,7 +458,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
 
     resizeObserverRef.current = new ResizeObserver(() => {
-      if (!loading && !isAutoLoading && connectedAccounts?.length) {
+      if (
+        !loading &&
+        !isAutoLoading &&
+        connectedAccounts?.length &&
+        !isNavigatingRef.current &&
+        !isRouteSwitchingRef.current
+      ) {
         setTimeout(checkAndAutoLoad, 50);
       }
     });
@@ -446,7 +477,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
 
     mutationObserverRef.current = new MutationObserver(() => {
-      if (!loading && !isAutoLoading && connectedAccounts?.length) {
+      if (
+        !loading &&
+        !isAutoLoading &&
+        connectedAccounts?.length &&
+        !isNavigatingRef.current &&
+        !isRouteSwitchingRef.current
+      ) {
         setTimeout(checkAndAutoLoad, 50);
       }
     });
@@ -466,17 +503,29 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     };
   }, [checkAndAutoLoad, loading, isAutoLoading, connectedAccounts]);
 
+  useEffect(() => {
+    if (!loading && cloudStorage?.length > 0 && pagination?.page_no === 1) {
+      isRouteSwitchingRef.current = false;
+    }
+  }, [loading, cloudStorage.length, pagination?.page_no]);
+
   // **NEW: Trigger auto-load when data changes**
   useEffect(() => {
     if (
       !loading &&
       !isAutoLoading &&
+      !isNavigatingRef.current &&
+      !isRouteSwitchingRef.current &&
       cloudStorage.length > 0 &&
       connectedAccounts?.length
     ) {
       // Use RAF to ensure DOM has updated
       requestAnimationFrame(() => {
-        setTimeout(checkAndAutoLoad, 100);
+        setTimeout(() => {
+          if (!isNavigatingRef.current && !isRouteSwitchingRef.current) {
+            checkAndAutoLoad();
+          }
+        }, 100);
       });
     }
   }, [cloudStorage.length, loading, checkAndAutoLoad, connectedAccounts]);
@@ -485,6 +534,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const resetAutoLoadState = useCallback(() => {
     autoLoadInProgressRef.current = false;
     autoLoadRequestIdRef.current = '';
+    isNavigatingRef.current = false;
+    isRouteSwitchingRef.current = false;
     setIsAutoLoading(false);
   }, []);
 
@@ -513,13 +564,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     [resetAutoLoadState, getCloudStorageFiles]
   );
 
-  const handleAdvancedFilterReset = useCallback(async () => {
-    resetAutoLoadState();
+  const handleAdvancedFilterReset = useCallback(() => {
+    // resetAutoLoadState();
     setTypeFilter(null);
     setModifiedFilter(null);
-    closeAdvancedFilterModal();
-    await getCloudStorageFiles(1);
-  }, [resetAutoLoadState, getCloudStorageFiles]);
+    // closeAdvancedFilterModal();
+    // await getCloudStorageFiles(1);
+  }, []);
 
   // Add filter handler functions:
   const handleTypeFilter = useCallback(
@@ -557,12 +608,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     [typeFilter, resetAutoLoadState, getCloudStorageFiles]
   );
 
-  const handleClearFilters = useCallback(async () => {
-    resetAutoLoadState();
+  const handleClearFilters = useCallback(() => {
     setTypeFilter(null);
     setModifiedFilter(null);
-    await getCloudStorageFiles(1);
-  }, [resetAutoLoadState, getCloudStorageFiles]);
+  }, []);
 
   const [onInitialize] = useAsyncOperation(getCloudStorageFiles);
 
@@ -648,15 +697,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
   useEffect(() => {
     const currentLength = connectedAccounts?.length || 0;
+
+    // Only handle account connection state changes, don't trigger API calls here
     if (
       currentLength > 0 &&
       currentLength > prevConnectedAccountsLength.current &&
-      !hasCalledPostConnectAPIs.current &&
-      !hasCalledInitializeAPI.current
+      !hasCalledPostConnectAPIs.current
     ) {
-      onInitialize({});
       hasCalledPostConnectAPIs.current = true;
-      hasCalledInitializeAPI.current = true;
     }
 
     prevConnectedAccountsLength.current = currentLength;
@@ -665,21 +713,13 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       hasCalledPostConnectAPIs.current = false;
       hasCalledInitializeAPI.current = false;
       hasCalledRecentFilesAPI.current = false;
+      initializedRef.current = false;
+      hasMountedOnce.current = false;
       resetAutoLoadState();
     }
-  }, [connectedAccounts?.length, onInitialize, resetAutoLoadState]);
+  }, [connectedAccounts?.length, resetAutoLoadState]);
 
   useEffect(() => {
-    if (
-      !initializedRef.current &&
-      connectedAccounts?.length &&
-      !hasCalledInitializeAPI.current
-    ) {
-      onInitialize({});
-      initializedRef.current = true;
-      hasCalledInitializeAPI.current = true;
-    }
-
     return () => {
       dispatch(resetPagination());
       dispatch(resetCloudStorageFolder());
@@ -692,23 +732,60 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   }, []);
 
   useEffect(() => {
-    if (!hasMountedOnce.current || !connectedAccounts?.length) {
-      hasMountedOnce.current = true;
+    // Skip if no accounts
+    if (!connectedAccounts?.length) {
       return;
     }
 
-    resetAutoLoadState();
-    getCloudStorageFiles(checkLocation || accountId !== 'all' ? 1 : undefined, {
-      type:
-        typeFilter && typeFilter?.length ? typeFilter?.join(',') : undefined,
-      after: modifiedFilter?.after
-        ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-        : undefined,
-      before: modifiedFilter?.before
-        ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-        : undefined,
-    });
-  }, [accountId, checkLocation, typeFilter, modifiedFilter]);
+    // Handle initial mount
+    if (!hasMountedOnce.current) {
+      hasMountedOnce.current = true;
+
+      // Only initialize on first mount if we have accounts and haven't initialized
+      if (!initializedRef.current && !hasCalledInitializeAPI.current) {
+        onInitialize({});
+        initializedRef.current = true;
+        hasCalledInitializeAPI.current = true;
+      }
+      return;
+    }
+
+    // Handle subsequent route/account changes
+    // Only trigger API if this is a real change and we're already initialized
+    if (initializedRef.current && hasCalledInitializeAPI.current) {
+      resetAutoLoadState();
+      getCloudStorageFiles(
+        checkLocation || accountId !== 'all' ? 1 : undefined,
+        {
+          type:
+            typeFilter && typeFilter?.length
+              ? typeFilter?.join(',')
+              : undefined,
+          after: modifiedFilter?.after
+            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            : undefined,
+          before: modifiedFilter?.before
+            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+            : undefined,
+        }
+      );
+    }
+  }, [accountId, checkLocation, connectedAccounts?.length]);
+
+  useEffect(() => {
+    // Reset mounted flag when location type changes to prevent double calls
+    const prevCheckLocation =
+      prevLocationRef.current?.includes('/google-drive') ||
+      prevLocationRef.current?.includes('/dropbox') ||
+      prevLocationRef.current?.includes('/onedrive');
+
+    if (prevCheckLocation !== checkLocation) {
+      // Route type changed, reset to allow proper initialization
+      hasMountedOnce.current = false;
+    }
+
+    prevLocationRef.current = location.pathname;
+  }, [location.pathname, checkLocation]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     lastScrollTop.current = e.currentTarget.scrollTop;
@@ -778,6 +855,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const navigateToFolderFn = useCallback(
     (folder: { id?: string; name: string } | null) => {
       resetAutoLoadState();
+      isNavigatingRef.current = true;
 
       const requestParams: any = {};
 
@@ -799,7 +877,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         setLastSelectedIndex(null);
       }
 
-      dispatch(
+      const navigationPromise = dispatch(
         navigateToFolder(
           folder
             ? requestParams
@@ -808,6 +886,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
               : null
         )
       );
+
+      navigationPromise.finally(() => {
+        isNavigatingRef.current = false;
+      });
     },
     [dispatch, isMoveMode, checkLocation, currentAccountId, resetAutoLoadState]
   );
@@ -1007,6 +1089,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
   const handleRemoveUploadedFile = useCallback(
     (idx: number) => {
+      removeUploadedFile(idx?.toString());
       const updated = [...uploadedFiles];
       updated.splice(idx, 1);
       setUploadedFiles(updated);
@@ -1015,110 +1098,110 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     [uploadedFiles, uploadMethods]
   );
 
-  const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
-    async ({
-      files,
-      formData,
-    }: {
-      files: File[];
-      formData: UploadFormData;
-    }) => {
-      try {
-        setShowUploadProgress(true);
-        const fileIds = files.map(() => uuidv4());
+  // const [uploadFiles, uploadFilesLoading] = useAsyncOperation(
+  //   async ({
+  //     files,
+  //     formData,
+  //   }: {
+  //     files: File[];
+  //     formData: UploadFormData;
+  //   }) => {
+  //     try {
+  //       setShowUploadProgress(true);
+  //       const fileIds = files.map(() => uuidv4());
 
-        // Initialize progress and uploading files state
-        files.forEach((file, index) => {
-          const fileId = fileIds[index];
-          setUploadingFiles(prev => ({
-            ...prev,
-            [fileId]: {
-              name: file.name,
-              size: formatFileSize(file.size.toString()),
-            },
-          }));
-          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-        });
+  //       // Initialize progress and uploading files state
+  //       files.forEach((file, index) => {
+  //         const fileId = fileIds[index];
+  //         setUploadingFiles(prev => ({
+  //           ...prev,
+  //           [fileId]: {
+  //             name: file.name,
+  //             size: formatFileSize(file.size.toString()),
+  //           },
+  //         }));
+  //         setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+  //       });
 
-        const formDataToUpload = new FormData();
-        files.forEach(file => formDataToUpload.append('file', file));
-        if (currentFolderId) {
-          formDataToUpload.append('id', currentFolderId);
-        }
+  //       const formDataToUpload = new FormData();
+  //       files.forEach(file => formDataToUpload.append('file', file));
+  //       if (currentFolderId) {
+  //         formDataToUpload.append('id', currentFolderId);
+  //       }
 
-        if (checkLocation && currentAccountId) {
-          formDataToUpload.append('account_id', String(currentAccountId));
-        } else if (!checkLocation && !isSFDEnabled && formData.accountId) {
-          formDataToUpload.append('account_id', formData.accountId);
-        }
+  //       if (checkLocation && currentAccountId) {
+  //         formDataToUpload.append('account_id', String(currentAccountId));
+  //       } else if (!checkLocation && !isSFDEnabled && formData.accountId) {
+  //         formDataToUpload.append('account_id', formData.accountId);
+  //       }
 
-        closeModal();
-        closeDragDropModal();
+  //       closeModal();
+  //       closeDragDropModal();
 
-        // Call the API and track progress
-        await dispatch(
-          uploadCloudStorageFiles({
-            data: formDataToUpload,
-            onUploadProgress: (progressEvent: ProgressEvent) => {
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / progressEvent.total
-              );
-              files.forEach((_, index) => {
-                const fileId = fileIds[index];
-                setUploadProgress(prev => ({
-                  ...prev,
-                  [fileId]: percentCompleted,
-                }));
-              });
-            },
-          })
-        ).unwrap();
+  //       // Call the API and track progress
+  //       await dispatch(
+  //         uploadCloudStorageFiles({
+  //           data: formDataToUpload,
+  //           onUploadProgress: (progressEvent: ProgressEvent) => {
+  //             const percentCompleted = Math.round(
+  //               (progressEvent.loaded * 100) / progressEvent.total
+  //             );
+  //             files.forEach((_, index) => {
+  //               const fileId = fileIds[index];
+  //               setUploadProgress(prev => ({
+  //                 ...prev,
+  //                 [fileId]: percentCompleted,
+  //               }));
+  //             });
+  //           },
+  //         })
+  //       ).unwrap();
 
-        uploadMethods.reset();
+  //       uploadMethods.reset();
 
-        // Wait for `uploadLoading` to become false and set progress to 100%
-        const waitForUploadCompletion = () => {
-          const interval = setInterval(() => {
-            if (!uploadLoading) {
-              files.forEach((_, index) => {
-                const fileId = fileIds[index];
-                setUploadProgress(prev => ({
-                  ...prev,
-                  [fileId]: 100,
-                }));
-              });
-              clearInterval(interval);
-            }
-          }, 100);
-        };
+  //       // Wait for `uploadLoading` to become false and set progress to 100%
+  //       const waitForUploadCompletion = () => {
+  //         const interval = setInterval(() => {
+  //           if (!uploadLoading) {
+  //             files.forEach((_, index) => {
+  //               const fileId = fileIds[index];
+  //               setUploadProgress(prev => ({
+  //                 ...prev,
+  //                 [fileId]: 100,
+  //               }));
+  //             });
+  //             clearInterval(interval);
+  //           }
+  //         }, 100);
+  //       };
 
-        waitForUploadCompletion();
+  //       waitForUploadCompletion();
 
-        // Refresh the file list after upload
-        resetAutoLoadState();
-        await getCloudStorageFiles(1, {
-          type:
-            typeFilter && typeFilter?.length
-              ? typeFilter?.join(',')
-              : undefined,
-          after: modifiedFilter?.after
-            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-            : undefined,
-          before: modifiedFilter?.before
-            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-            : undefined,
-        });
-      } catch (error: any) {
-        notifications.show({
-          message:
-            typeof error === 'string'
-              ? error
-              : error?.message || 'Failed to upload files',
-          color: 'red',
-        });
-      }
-    }
-  );
+  //       // Refresh the file list after upload
+  //       resetAutoLoadState();
+  //       await getCloudStorageFiles(1, {
+  //         type:
+  //           typeFilter && typeFilter?.length
+  //             ? typeFilter?.join(',')
+  //             : undefined,
+  //         after: modifiedFilter?.after
+  //           ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+  //           : undefined,
+  //         before: modifiedFilter?.before
+  //           ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+  //           : undefined,
+  //       });
+  //     } catch (error: any) {
+  //       notifications.show({
+  //         message:
+  //           typeof error === 'string'
+  //             ? error
+  //             : error?.message || 'Failed to upload files',
+  //         color: 'red',
+  //       });
+  //     }
+  //   }
+  // );
 
   // File rename functionality
   const [renameFile, renameFileLoading] = useAsyncOperation(
@@ -1210,39 +1293,39 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
   }, [itemToDelete, removeFile]);
 
-  const uploadFilesHandler = useCallback(
-    async (files: File[], formData?: UploadFormData) => {
-      if (files.length === 0) return;
+  // const uploadFilesHandler = useCallback(
+  //   async (files: File[], formData?: UploadFormData) => {
+  //     if (files.length === 0) return;
 
-      uploadsInProgressRef.current = true;
-      setShowUploadProgress(true);
+  //     uploadsInProgressRef.current = true;
+  //     setShowUploadProgress(true);
 
-      setUploadProgress({});
-      setUploadingFiles({});
+  //     setUploadProgress({});
+  //     setUploadingFiles({});
 
-      files.forEach(file => {
-        const fileId = uuidv4();
-        const controller = new AbortController();
-        uploadControllers.current[fileId] = controller;
+  //     files.forEach(file => {
+  //       const fileId = uuidv4();
+  //       const controller = new AbortController();
+  //       uploadControllers.current[fileId] = controller;
 
-        setUploadingFiles(prev => ({
-          ...prev,
-          [fileId]: {
-            name: file.name,
-            size: formatFileSize(file.size.toString()),
-            fileObject: file,
-          },
-        }));
-      });
+  //       setUploadingFiles(prev => ({
+  //         ...prev,
+  //         [fileId]: {
+  //           name: file.name,
+  //           size: formatFileSize(file.size.toString()),
+  //           fileObject: file,
+  //         },
+  //       }));
+  //     });
 
-      await uploadFiles({ files, formData: formData || { accountId: '' } });
-    },
-    [uploadFiles]
-  );
+  //     await uploadFiles({ files, formData: formData || { accountId: '' } });
+  //   },
+  //   [uploadFiles]
+  // );
 
   const handleFileUpload = uploadMethods.handleSubmit(async data => {
     const filesToUpload = uploadedFiles.length > 0 ? uploadedFiles : [];
-    await uploadFilesHandler(filesToUpload, data);
+    await uploadFilesHandlerV2(filesToUpload, data);
   });
 
   const cleanupUpload = (fileId: string) => {
@@ -1286,28 +1369,28 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     };
   }, []);
 
-  const handleFileDrop = useCallback(
-    async (files: File[]) => {
-      if (files.length > 5) {
-        notifications.show({
-          message: 'You can upload a maximum of 5 files at a time.',
-          color: 'red',
-        });
-        files = files.slice(0, 5);
-      }
-      if (!isSFDEnabled) {
-        setDragDropFiles(files);
-        setDragDropModalOpen(true);
-        uploadMethods.reset({ accountId: '', files: files });
-      } else {
-        await uploadFilesHandler(files);
-      }
-    },
-    [uploadFilesHandler, isSFDEnabled, uploadMethods]
-  );
+  // const handleFileDrop = useCallback(
+  //   async (files: File[]) => {
+  //     if (files.length > 5) {
+  //       notifications.show({
+  //         message: 'You can upload a maximum of 5 files at a time.',
+  //         color: 'red',
+  //       });
+  //       files = files.slice(0, 5);
+  //     }
+  //     if (!isSFDEnabled) {
+  //       setDragDropFiles(files);
+  //       setDragDropModalOpen(true);
+  //       uploadMethods.reset({ accountId: '', files: files });
+  //     } else {
+  //       await uploadFilesHandler(files);
+  //     }
+  //   },
+  //   [uploadFilesHandler, isSFDEnabled, uploadMethods]
+  // );
 
   const handleDragDropUpload = uploadMethods.handleSubmit(async data => {
-    await uploadFilesHandler(dragDropFiles, data);
+    await uploadFilesHandlerV2(dragDropFiles, data);
     setDragDropModalOpen(false);
     setDragDropFiles([]);
   });
@@ -1318,9 +1401,113 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     uploadMethods.reset();
   }, [uploadMethods]);
 
+  const openModal = useCallback((type: 'folder' | 'files') => {
+    setModalType(type);
+    setModalOpen(true);
+    setUploadedFiles([]);
+    if (type === 'files') uploadMethods.reset({ accountId: '' });
+    resetFolderForm();
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setUploadedFiles([]);
+    setModalOpen(false);
+  }, []);
+
+  // Replace the handleFileUpload
+  const handleFileUploadV2 = uploadMethods.handleSubmit(async data => {
+    const filesToUpload = uploadedFiles.length > 0 ? uploadedFiles : [];
+    await uploadFilesHandlerV2(filesToUpload, data);
+  });
+
+  const uploadFilesHandlerV2 = useCallback(
+    async (files: File[], formData?: UploadFormData) => {
+      if (files.length === 0) return;
+
+      const uploadOptions: { id?: string; account_id?: string } = {};
+
+      if (currentFolderId) {
+        uploadOptions.id = currentFolderId;
+      }
+
+      if (checkLocation && currentAccountId) {
+        uploadOptions.account_id = String(currentAccountId);
+      } else if (!checkLocation && !isSFDEnabled && formData?.accountId) {
+        uploadOptions.account_id = formData.accountId;
+      }
+      closeModal();
+      closeDragDropModal();
+
+      try {
+        const res = await startUpload(files, uploadOptions);
+        uploadMethods.reset();
+
+        // Refresh the file list after upload starts
+        // The actual refresh should happen when all uploads complete
+        // For now, we'll do a delayed refresh
+
+        if (res?.response?.success === 1) {
+          setTimeout(async () => {
+            await getCloudStorageFiles(1, {
+              type:
+                typeFilter && typeFilter?.length
+                  ? typeFilter?.join(',')
+                  : undefined,
+              after: modifiedFilter?.after
+                ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+                : undefined,
+              before: modifiedFilter?.before
+                ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+                : undefined,
+            });
+          }, 1000);
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error?.message || 'Failed to start upload',
+          color: 'red',
+        });
+      }
+    },
+    [
+      currentFolderId,
+      checkLocation,
+      currentAccountId,
+      isSFDEnabled,
+      startUpload,
+      closeModal,
+      closeDragDropModal,
+      uploadMethods,
+      getCloudStorageFiles,
+      typeFilter,
+      modifiedFilter,
+    ]
+  );
+
+  // Replace the handleFileDrop
+  const handleFileDropV2 = useCallback(
+    async (files: File[]) => {
+      if (!isSFDEnabled) {
+        setDragDropFiles(files);
+        setDragDropModalOpen(true);
+        uploadMethods.reset({ accountId: '', files: files });
+      } else {
+        await uploadFilesHandlerV2(files);
+      }
+    },
+    [uploadFilesHandlerV2, isSFDEnabled, uploadMethods]
+  );
+
+  const handleDragDropUploadV2 = uploadMethods.handleSubmit(async data => {
+    await uploadFilesHandlerV2(dragDropFiles, data);
+    setDragDropModalOpen(false);
+    setDragDropFiles([]);
+  });
+
   // Drag and drop functionality
   const { dragRef, isDragging } = useDragDrop({
-    onFileDrop: handleFileDrop,
+    // onFileDrop: handleFileDrop,
+    onFileDrop: handleFileDropV2,
     acceptedFileTypes: ['*'],
   });
 
@@ -1489,19 +1676,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       window.open(checkFiles.web_view_url, '_blank');
     }
   }, [files, selectedIds]);
-
-  const openModal = useCallback((type: 'folder' | 'files') => {
-    setModalType(type);
-    setModalOpen(true);
-    setUploadedFiles([]);
-    if (type === 'files') uploadMethods.reset({ accountId: '' });
-    resetFolderForm();
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setUploadedFiles([]);
-    setModalOpen(false);
-  }, []);
 
   const [downloadItems] = useAsyncOperation(async data => {
     try {
@@ -1903,7 +2077,7 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     // create file / folder
     createFolderLoading,
     handleCreateFolder,
-    uploadFilesLoading,
+    // uploadFilesLoading,
     openModal,
     closeModal,
     currentPath,
@@ -2008,6 +2182,17 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     typeFilter,
     modifiedFilter,
 
+    // file upload v2
+    showUploadProgressV2,
+    uploadingFilesV2,
+    cancelUploadV2,
+    closeUploadProgressV2,
+    clearAllUploads,
+
+    // Replace old upload handlers
+    handleFileUploadV2,
+    handleDragDropUploadV2,
+    uploadFilesHandler: uploadFilesHandlerV2,
     isAutoLoading,
     checkConnectedAccDetails,
     hasPaginationData,

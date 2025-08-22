@@ -1,38 +1,27 @@
-import React from 'react';
-import { Box, Text, Progress, Group, ActionIcon } from '@mantine/core';
+import { Box, Group, Text, Progress, ActionIcon } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { formatBytes, formatTime } from '../../../utils/helper';
 
-type DownloadProgressType = {
-  isDownloading: boolean;
-  fileName: string;
-  totalSize: number;
-  downloadedSize: number;
-  percentage: number;
-  status: 'downloading' | 'completed' | 'failed' | 'cancelled';
-  startTime: number;
-  speed?: number; // bytes per second
-  timeRemaining?: number; // seconds
-  fileCount: number;
-};
-
 interface DownloadProgressProps {
-  downloadProgress: DownloadProgressType;
+  downloadProgress: any;
   onCancelDownload: () => void;
   onClose: () => void;
+  onPause: () => void;
+  onResume: () => void;
 }
 
 const DownloadProgress: React.FC<DownloadProgressProps> = ({
   downloadProgress,
   onCancelDownload,
   onClose,
+  // onPause,
+  // onResume,
 }) => {
-  // if (!downloadProgress) return null;
-
   const isComplete = downloadProgress?.status === 'completed';
   const isFailed = downloadProgress?.status === 'failed';
   const isCancelled = downloadProgress?.status === 'cancelled';
   const isDownloading = downloadProgress?.status === 'downloading';
+  const isPaused = downloadProgress?.status === 'paused';
 
   return (
     <Box
@@ -61,8 +50,11 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
             {isComplete && 'Download Complete'}
             {isFailed && 'Download Failed'}
             {isCancelled && 'Download Cancelled'}
+            {isPaused && 'Download Paused'}
             {isDownloading &&
-              `Downloading ${downloadProgress?.fileCount} file${downloadProgress?.fileCount > 1 ? 's' : ''}`}
+              `Downloading ${downloadProgress?.fileCount} file${
+                downloadProgress?.fileCount > 1 ? 's' : ''
+              }`}
           </Text>
           <ActionIcon
             onClick={onClose}
@@ -82,9 +74,37 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
               {downloadProgress?.fileName}
             </Text>
             <Text size="xs" c="gray.6">
-              {downloadProgress?.totalSize > 0
-                ? formatBytes(downloadProgress?.totalSize)
-                : 'Calculating...'}
+              {(() => {
+                if (!downloadProgress) return null;
+
+                if (downloadProgress.status === 'downloading') {
+                  return downloadProgress.totalSize > 0
+                    ? formatBytes(downloadProgress.totalSize)
+                    : 'Calculating...';
+                }
+
+                if (downloadProgress.status === 'paused') {
+                  return `Paused • ${formatBytes(downloadProgress.downloadedSize)} of ${
+                    downloadProgress.totalSize > 0
+                      ? formatBytes(downloadProgress.totalSize)
+                      : 'unknown size'
+                  }`;
+                }
+
+                if (downloadProgress.status === 'completed') {
+                  return `Completed • ${formatBytes(downloadProgress.totalSize)}`;
+                }
+
+                if (downloadProgress.status === 'failed') {
+                  return 'Download failed';
+                }
+
+                if (downloadProgress.status === 'cancelled') {
+                  return 'Download cancelled';
+                }
+
+                return null;
+              })()}
             </Text>
           </Box>
 
@@ -166,19 +186,50 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
           }}
         />
 
-        {isDownloading && downloadProgress?.speed ? (
+        {isDownloading || isPaused ? (
           <Group justify="space-between" mt={8}>
             <Text size="xs" c="gray.6">
               {formatBytes(downloadProgress?.downloadedSize)} /{' '}
               {formatBytes(downloadProgress?.totalSize)}
             </Text>
             <Text size="xs" c="gray.6">
-              {formatBytes(downloadProgress?.speed)}/s
+              {downloadProgress?.speed
+                ? `${formatBytes(downloadProgress?.speed)}/s`
+                : ''}
               {downloadProgress?.timeRemaining &&
                 ` • ${formatTime(downloadProgress?.timeRemaining)} left`}
             </Text>
           </Group>
         ) : null}
+
+        {/* Buttons */}
+        {/* {(isDownloading || isPaused) && (
+          <Group justify="flex-end" mt={12}>
+            {isDownloading && (
+              <Button
+                size="xs"
+                variant="light"
+                color="yellow"
+                onClick={onPause}
+              >
+                Pause
+              </Button>
+            )}
+            {isPaused && (
+              <Button size="xs" variant="light" color="blue" onClick={onResume}>
+                Resume
+              </Button>
+            )}
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              onClick={onCancelDownload}
+            >
+              Cancel
+            </Button>
+          </Group>
+        )} */}
       </Box>
     </Box>
   );

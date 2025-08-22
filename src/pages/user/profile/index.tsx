@@ -61,7 +61,7 @@ const Profile = () => {
     user,
   } = useSidebar();
 
-  const { isMd } = useResponsive();
+  const { isMd, isXs } = useResponsive();
 
   const {
     formState: { errors },
@@ -78,7 +78,7 @@ const Profile = () => {
           <Grid.Col span={{ base: 12 }}>
             <Stack gap="lg">
               <Box>
-                <Title order={2} fw={600} mb={4}>
+                <Title order={isXs ? 3 : 2} fw={600} mb={4}>
                   Profile
                 </Title>
                 <Text size="sm" c="dimmed">
@@ -220,7 +220,7 @@ const Profile = () => {
           <Grid.Col span={{ base: 12 }}>
             <Stack gap="lg">
               <Box>
-                <Title order={2} fw={600} mb={4}>
+                <Title order={isXs ? 3 : 2} fw={600} mb={4}>
                   Settings
                 </Title>
                 <Text size="sm" c="dimmed">
@@ -232,7 +232,7 @@ const Profile = () => {
               {user?.user?.role === ROLES.USER && (
                 <Card radius="md" p="lg" shadow="xs" withBorder>
                   <Stack gap="md">
-                    <Title order={4} fw={600}>
+                    <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
                       Smart File Distribution
                     </Title>
                     <Text size="sm" c="dimmed" lh={1.5}>
@@ -284,7 +284,7 @@ const Profile = () => {
               {user?.user?.role === ROLES.USER && (
                 <Card radius="md" p="lg" shadow="xs" withBorder>
                   <Stack gap="sm">
-                    <Title order={4} fw={600}>
+                    <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
                       Connected Services
                     </Title>
                     <Text size="xs" c="dimmed">
@@ -317,18 +317,18 @@ const Profile = () => {
                           const accountConfigs = {
                             google_drive: {
                               icon: (
-                                <Image src={GoogleDriveIcon} w={20} h={20} />
+                                <Image src={GoogleDriveIcon} w={isXs ? 16 : 20} h={isXs ? 16 : 20} />
                               ),
                               color: 'red',
                               label: 'Google Drive',
                             },
                             dropbox: {
-                              icon: <Image src={DropboxIcon} w={24} />,
+                              icon: <Image src={DropboxIcon} w={isXs ? 20 : 24} />,
                               color: 'blue',
                               label: 'Dropbox',
                             },
                             onedrive: {
-                              icon: <Image src={OneDriveIcon} w={20} h={20} />,
+                              icon: <Image src={OneDriveIcon} w={isXs ? 20 : 24} h={isXs ? 20 : 24} />,
                               color: 'indigo',
                               label: 'OneDrive',
                             },
@@ -356,12 +356,13 @@ const Profile = () => {
                                   <Group
                                     justify="space-between"
                                     align="flex-start"
+                                    wrap="nowrap"
                                   >
                                     <Group gap="sm">
                                       <Avatar
                                         color={cfg.color}
                                         radius="sm"
-                                        size="lg"
+                                        size={isXs ? 'md' : 'lg'}
                                       >
                                         {cfg.icon}
                                       </Avatar>
@@ -374,11 +375,12 @@ const Profile = () => {
                                             fw={600}
                                             truncate
                                             maw={!isMd ? 300 : 150}
+                                            fz={isXs ? 'sm' : 'md'}
                                           >
                                             {account.account_name}
                                           </Text>
                                         </Tooltip>
-                                        <Text size="sm" c="dimmed">
+                                        <Text size="sm" c="dimmed" fz={isXs ? 'xs' : 'sm'}>
                                           {cfg.label}
                                         </Text>
                                         <Text size="xs" c="dimmed">

@@ -100,6 +100,7 @@ export const IMAGE_FILE_TYPES = [
   'bmp',
   'webp',
   'svg',
+  'ico',
 ];
 
 export const VIDEO_FILE_TYPES = [

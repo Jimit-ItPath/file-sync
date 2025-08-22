@@ -92,8 +92,14 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { accountId } = useAppSelector(state => state.cloudStorage);
-  const { downloadFile, cancelDownload, clearDownload, downloadProgress } =
-    useFileDownloader();
+  const {
+    downloadFile,
+    cancelDownload,
+    clearDownload,
+    downloadProgress,
+    pauseDownload,
+    resumeDownload,
+  } = useFileDownloader();
 
   const [previewFileLoading, setPreviewFileLoading] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -689,6 +695,8 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
           downloadProgress={downloadProgress}
           onCancelDownload={cancelDownload}
           onClose={clearDownload}
+          onPause={pauseDownload}
+          onResume={resumeDownload}
         />
       )}
     </Box>

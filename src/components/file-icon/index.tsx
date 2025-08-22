@@ -130,6 +130,7 @@ const getFileIcon = (item: {
       case 'gif':
       case 'svg':
       case 'webp':
+      case 'ico':
         return <ICONS.IconPhoto size={iconSize} color="#3b82f6" />;
       case 'txt':
       case 'md':

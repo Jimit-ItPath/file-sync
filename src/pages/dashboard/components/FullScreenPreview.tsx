@@ -21,6 +21,7 @@ import {
   DOCUMENT_FILE_TYPES,
 } from '../../../utils/constants';
 import { getVideoMimeType } from '../../../utils/helper';
+import useResponsive from '../../../hooks/use-responsive';
 
 // PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -50,8 +51,8 @@ interface FullScreenPreviewProps {
 
 const minZoom = 0.5;
 const maxZoom = 2;
-const zoomStep = 0.2;
-const defaultPdfWidth = 800;
+// const zoomStep = 0.2;
+// const defaultPdfWidth = 800;
 
 const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   previewFile,
@@ -62,13 +63,23 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   onDownload,
   onShare,
 }) => {
+  const { isXs, isSm } = useResponsive();
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [loadError, setLoadError] = useState(false);
   const [pdfPages, setPdfPages] = useState<number>(0);
-  const [pdfZoom, setPdfZoom] = useState(1);
-  const [pdfWidth, setPdfWidth] = useState(defaultPdfWidth);
+  // const [pdfZoom, setPdfZoom] = useState(1);
+  // const [pdfWidth, setPdfWidth] = useState(defaultPdfWidth);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageDragging, setImageDragging] = useState(false);
+  const [imageStartPos, setImageStartPos] = useState({ x: 0, y: 0 });
+  const [imageLastPos, setImageLastPos] = useState({ x: 0, y: 0 });
+
+  const [pdfScale, setPdfScale] = useState(1);
+  // const [pdfPageDimensions, setPdfPageDimensions] = useState({
+  //   width: 0,
+  //   height: 0,
+  // });
 
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [scrollPos, setScrollPos] = useState({ x: 0, y: 0 });
@@ -81,24 +92,32 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   useEffect(() => {
     if (previewModalOpen) {
       setImageZoom(1);
-      setPdfZoom(1);
+      // setPdfZoom(1);
+      if (isXs) {
+        setPdfScale(0.5);
+      } else if (isSm) {
+        setPdfScale(0.7);
+      } else {
+        setPdfScale(1);
+      }
       setImagePosition({ x: 0, y: 0 });
+      setImageLastPos({ x: 0, y: 0 });
       setLoadError(false);
     }
   }, [previewModalOpen, previewFile]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (scrollAreaRef.current) {
-        const containerWidth = scrollAreaRef.current.clientWidth;
-        setPdfWidth(Math.min(containerWidth * 0.9, defaultPdfWidth));
-      }
-    };
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     if (scrollAreaRef.current) {
+  //       const containerWidth = scrollAreaRef.current.clientWidth;
+  //       // setPdfWidth(Math.min(containerWidth * 0.9, defaultPdfWidth));
+  //     }
+  //   };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  //   handleResize();
+  //   window.addEventListener('resize', handleResize);
+  //   return () => window.removeEventListener('resize', handleResize);
+  // }, []);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -193,7 +212,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
       setImageZoom(prev => Math.min(prev * 1.2, maxZoom));
     } else if (isDocumentFile()) {
       // setPdfZoom(prev => Math.min(prev + 0.2, maxZoom));
-      setPdfZoom(prev => Math.min(prev + zoomStep, maxZoom));
+      // setPdfZoom(prev => Math.min(prev + zoomStep, maxZoom));
     }
   }, [isDocumentFile, isImageFile]);
 
@@ -202,13 +221,9 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
       setImageZoom(prev => Math.max(prev / 1.2, minZoom));
     } else if (isDocumentFile()) {
       // setPdfZoom(prev => Math.max(prev - 0.2, minZoom)); // Decrement PDF zoom
-      setPdfZoom(prev => Math.max(prev - zoomStep, minZoom));
+      // setPdfZoom(prev => Math.max(prev - zoomStep, minZoom));
     }
   }, [isImageFile, isDocumentFile]);
-
-  const handleZoomReset = useCallback(() => {
-    setPdfZoom(1);
-  }, []);
 
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
@@ -219,13 +234,6 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
     },
     [handleZoomIn, handleZoomOut, isImageFile]
   );
-
-  const handleWheelZoom = useCallback((e: React.WheelEvent) => {
-    if (!e.ctrlKey || !isDocumentFile()) return;
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
-    setPdfZoom(prev => Math.min(Math.max(prev + delta, minZoom), maxZoom));
-  }, []);
 
   const isTextFile = useCallback(() => {
     return ['txt', 'json'].some(ext =>
@@ -261,6 +269,50 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
       y: scrollAreaRef.current.scrollTop,
     });
   };
+
+  const handleImageMouseDown = (e: React.MouseEvent) => {
+    if (imageZoom <= 1) return; // Only allow dragging when zoomed in
+    e.preventDefault();
+    setImageDragging(true);
+    setImageStartPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent) => {
+    if (!imageDragging || imageZoom <= 1) return;
+
+    const deltaX = e.clientX - imageStartPos.x;
+    const deltaY = e.clientY - imageStartPos.y;
+
+    setImagePosition({
+      x: imageLastPos.x + deltaX,
+      y: imageLastPos.y + deltaY,
+    });
+  };
+
+  const handleImageMouseUp = () => {
+    if (!imageDragging) return;
+    setImageDragging(false);
+    setImageLastPos(imagePosition);
+  };
+
+  const handlePdfZoomIn = useCallback(() => {
+    setPdfScale(prev => Math.min(prev + 0.25, 3)); // Higher resolution increments
+  }, []);
+
+  const handlePdfZoomOut = useCallback(() => {
+    setPdfScale(prev => Math.max(prev - 0.25, 0.5));
+  }, []);
+
+  const handlePdfZoomReset = useCallback(() => {
+    setPdfScale(1);
+  }, []);
+
+  const handlePdfWheelZoom = useCallback((e: React.WheelEvent) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setPdfScale(prev => Math.min(Math.max(prev + delta, 0.5), 3));
+  }, []);
 
   const renderUnsupportedPreview = (message: string) => (
     <Box
@@ -347,66 +399,96 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
             justifyContent: 'center',
             height: '100%',
             overflow: 'hidden',
-            cursor: imageZoom > 1 ? 'grab' : 'default',
+            cursor:
+              imageZoom > 1 ? (imageDragging ? 'grabbing' : 'grab') : 'default',
+            userSelect: 'none',
           }}
           onWheel={handleWheel}
+          onMouseDown={handleImageMouseDown}
+          onMouseMove={handleImageMouseMove}
+          onMouseUp={handleImageMouseUp}
+          onMouseLeave={handleImageMouseUp}
         >
           <Image
             src={previewFile.url}
             alt={previewFile.name}
             style={{
-              width: previewFile.size ? 'auto' : '100%',
-              height: previewFile.size ? 'auto' : '100%',
+              width: 'auto',
+              height: 'auto',
               transform: `scale(${imageZoom}) translate(${imagePosition.x / imageZoom}px, ${imagePosition.y / imageZoom}px)`,
               userSelect: 'none',
               pointerEvents: 'none',
-              transition: 'transform 0.2s ease',
-              maxWidth: '100%',
-              maxHeight: '100%',
+              transition: imageDragging ? 'none' : 'transform 0.2s ease',
+              maxWidth: imageZoom <= 1 ? '100%' : 'none',
+              maxHeight: imageZoom <= 1 ? '100%' : 'none',
               objectFit: 'contain',
             }}
             onError={() => setLoadError(true)}
           />
+
+          {/* Image Zoom Controls */}
           <Box
             style={{
               position: 'absolute',
               bottom: '20px',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              borderRadius: '8px',
-              padding: '6px',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              borderRadius: '24px',
+              padding: '8px 12px',
               display: 'flex',
-              gap: '6px',
+              gap: '8px',
+              alignItems: 'center',
+              pointerEvents: 'auto',
             }}
           >
             <Tooltip label="Zoom Out" fz={'xs'}>
               <ActionIcon
-                variant="filled"
-                color="dark"
+                variant="subtle"
+                color="gray"
                 onClick={handleZoomOut}
                 disabled={imageZoom <= minZoom}
+                size="lg"
               >
-                <ICONS.IconMinus size={16} />
+                <ICONS.IconMinus size={20} />
               </ActionIcon>
             </Tooltip>
-            <Text
-              size="sm"
-              c="white"
-              style={{
-                minWidth: '50px',
-                textAlign: 'center',
-                alignSelf: 'center',
+
+            <Button
+              variant="subtle"
+              color="gray"
+              onClick={() => {
+                setImageZoom(1);
+                setImagePosition({ x: 0, y: 0 });
+                setImageLastPos({ x: 0, y: 0 });
               }}
+              size="xs"
+              style={{ minWidth: '80px' }}
             >
               {Math.round(imageZoom * 100)}%
-            </Text>
+            </Button>
+
             <Tooltip label="Zoom In" fz={'xs'}>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                onClick={handleZoomIn}
+                disabled={imageZoom >= maxZoom}
+                size="lg"
+              >
+                <ICONS.IconPlus size={20} />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="Reset Position" fz={'xs'}>
               <ActionIcon
                 variant="filled"
                 color="dark"
-                onClick={handleZoomIn}
-                disabled={imageZoom >= maxZoom}
+                onClick={() => {
+                  setImagePosition({ x: 0, y: 0 });
+                  setImageLastPos({ x: 0, y: 0 });
+                }}
+                // disabled={imageZoom <= 1}
               >
-                <ICONS.IconPlus size={16} />
+                <ICONS.IconFocus2 size={16} />
               </ActionIcon>
             </Tooltip>
           </Box>
@@ -449,158 +531,210 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
     }
     if (isDocumentFile()) {
       return (
-        <ScrollArea
-          ref={scrollAreaRef}
-          style={{
-            height: '100%',
-            width: '100%',
-            cursor: isDragging ? 'grabbing' : 'grab',
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onWheel={handleWheelZoom}
-        >
-          <Box
+        <Box style={{ height: '100%', width: '100%', position: 'relative' }}>
+          <ScrollArea
+            ref={scrollAreaRef}
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              padding: '20px 0',
-              transformOrigin: 'center top',
-              transform: `scale(${pdfZoom})`,
-              width: `${pdfWidth}px`,
-              margin: '0 auto',
+              height: '100%',
+              width: '100%',
+              cursor: 'default',
+              overflowX: 'auto',
+              overflowY: 'auto',
+              // cursor: isDragging ? 'grabbing' : 'grab',
             }}
-          >
-            <Document
-              file={previewFile.url}
-              onLoadSuccess={({ numPages }) => setPdfPages(numPages)}
-              loading={
-                <Box
-                  style={{
-                    height: '100vh',
-                    display: 'grid',
-                    placeItems: 'center',
-                  }}
-                >
-                  <Loader size="xl" />
-                </Box>
-              }
-            >
-              {Array.from({ length: pdfPages }, (_, idx) => (
-                <Box
-                  key={idx}
-                  style={{
-                    marginBottom: '16px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                    backgroundColor: '#fff',
-                  }}
-                >
-                  <Page
-                    pageNumber={idx + 1}
-                    width={pdfWidth}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                  />
-                </Box>
-              ))}
-            </Document>
-          </Box>
-
-          {/* Enhanced Zoom Controls */}
-          <Box
-            style={{
-              position: 'fixed',
-              bottom: '24px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              borderRadius: '24px',
-              padding: '8px 12px',
-              display: 'flex',
-              gap: '8px',
-              alignItems: 'center',
-              zIndex: 10,
+            viewportProps={{
+              style: {
+                pointerEvents: 'auto',
+                zIndex: 10,
+              },
             }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onWheel={handlePdfWheelZoom}
+            scrollbars={'xy'}
+            type="auto"
           >
-            <Tooltip label="Zoom Out (Ctrl + Scroll)" fz={'xs'}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={handleZoomOut}
-                disabled={pdfZoom <= minZoom}
-                size="lg"
-              >
-                <ICONS.IconMinus size={20} />
-              </ActionIcon>
-            </Tooltip>
-
-            <Button
-              variant="subtle"
-              color="gray"
-              onClick={handleZoomReset}
-              size="xs"
-              style={{ minWidth: '80px' }}
-            >
-              {Math.round(pdfZoom * 100)}%
-            </Button>
-
-            <Tooltip label="Zoom In (Ctrl + Scroll)" fz={'xs'}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={handleZoomIn}
-                disabled={pdfZoom >= maxZoom}
-                size="lg"
-              >
-                <ICONS.IconPlus size={20} />
-              </ActionIcon>
-            </Tooltip>
-
             <Box
               style={{
-                height: '24px',
-                width: '1px',
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                margin: '0 8px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: '20px 0',
+                // minHeight: '100%',
+                minWidth: 'max-content',
+                width: 'fit-content',
+                margin: '0 auto',
               }}
-            />
+            >
+              <Document
+                file={previewFile.url}
+                onLoadSuccess={({ numPages }) => {
+                  setPdfPages(numPages);
+                  // Get page dimensions for proper scaling
+                  // const page = document.querySelector('.react-pdf__Page');
+                  // if (page) {
+                  //   const rect = page.getBoundingClientRect();
+                  //   setPdfPageDimensions({
+                  //     width: rect.width,
+                  //     height: rect.height,
+                  //   });
+                  // }
+                }}
+                loading={
+                  <Box
+                    style={{
+                      height: '50vh',
+                      display: 'grid',
+                      placeItems: 'center',
+                    }}
+                  >
+                    <Loader size="xl" />
+                  </Box>
+                }
+              >
+                {Array.from({ length: pdfPages }, (_, idx) => (
+                  <Box
+                    key={`${idx}-${pdfScale}`} // Force re-render on scale change
+                    style={{
+                      marginBottom: '20px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      backgroundColor: '#fff',
+                      borderRadius: '4px',
+                      // overflow: 'hidden',
+                      overflow: 'visible',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      width: 'auto',
+                    }}
+                  >
+                    <Page
+                      pageNumber={idx + 1}
+                      scale={pdfScale} // This is the key - react-pdf renders at this resolution
+                      renderTextLayer={true} // Enable for crisp text
+                      renderAnnotationLayer={false}
+                      loading={
+                        <Box
+                          style={{
+                            height: '600px',
+                            width: '450px',
+                            display: 'grid',
+                            placeItems: 'center',
+                          }}
+                        >
+                          <Loader />
+                        </Box>
+                      }
+                    />
+                  </Box>
+                ))}
+              </Document>
+            </Box>
 
-            <Tooltip label="Fit to Width" fz={'xs'}>
-              <ActionIcon
+            {/* PDF Zoom Controls */}
+            <Box
+              style={{
+                position: 'fixed',
+                bottom: '24px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                borderRadius: '32px',
+                padding: '12px 16px',
+                display: 'flex',
+                gap: '12px',
+                alignItems: 'center',
+                zIndex: 10,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              }}
+            >
+              <Tooltip label="Zoom Out (Ctrl + Scroll)" fz={'xs'}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={handlePdfZoomOut}
+                  disabled={pdfScale <= 0.5}
+                  size="lg"
+                >
+                  <ICONS.IconMinus size={20} />
+                </ActionIcon>
+              </Tooltip>
+
+              <Button
                 variant="subtle"
                 color="gray"
-                onClick={() => {
-                  if (scrollAreaRef.current) {
-                    const containerWidth = scrollAreaRef.current.clientWidth;
-                    setPdfZoom(containerWidth / pdfWidth);
-                  }
-                }}
-                size="lg"
+                onClick={handlePdfZoomReset}
+                size="sm"
+                style={{ minWidth: '90px', fontWeight: 500 }}
               >
-                <ICONS.IconArrowsHorizontal size={20} />
-              </ActionIcon>
-            </Tooltip>
+                {Math.round(pdfScale * 100)}%
+              </Button>
 
-            <Tooltip label="Fit to Page" fz={'xs'}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={() => {
-                  if (scrollAreaRef.current) {
-                    const containerHeight = scrollAreaRef.current.clientHeight;
-                    setPdfZoom((containerHeight * 0.9) / (pdfWidth * 1.414)); // A4 ratio
-                  }
+              <Tooltip label="Zoom In (Ctrl + Scroll)" fz={'xs'}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={handlePdfZoomIn}
+                  disabled={pdfScale >= 3}
+                  size="lg"
+                >
+                  <ICONS.IconPlus size={20} />
+                </ActionIcon>
+              </Tooltip>
+
+              <Box
+                style={{
+                  height: '28px',
+                  width: '1px',
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  margin: '0 8px',
                 }}
-                size="lg"
-              >
-                <ICONS.IconArrowsVertical size={20} />
-              </ActionIcon>
-            </Tooltip>
-          </Box>
-        </ScrollArea>
+              />
+
+              <Tooltip label="Fit to Width" fz={'xs'}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => {
+                    if (scrollAreaRef.current) {
+                      const containerWidth = scrollAreaRef.current.clientWidth;
+                      const targetWidth = containerWidth - 80; // Account for padding
+                      const pageWidth = 595; // Standard A4 width in points
+                      const newScale = targetWidth / pageWidth;
+                      // const newScale = (containerWidth * 0.85) / 595; // A4 width in points
+                      setPdfScale(Math.max(0.5, Math.min(3, newScale)));
+                    }
+                  }}
+                  size="lg"
+                >
+                  <ICONS.IconArrowsHorizontal size={20} />
+                </ActionIcon>
+              </Tooltip>
+
+              <Tooltip label="Fit to Height" fz={'xs'}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => {
+                    if (scrollAreaRef.current) {
+                      const containerHeight =
+                        scrollAreaRef.current.clientHeight;
+                      const targetHeight = containerHeight - 140; // Account for padding and controls
+                      const pageHeight = 842; // Standard A4 height in points
+                      // const newScale = (containerHeight * 0.85) / 842; // A4 height in points
+                      const newScale = targetHeight / pageHeight;
+                      setPdfScale(Math.max(0.5, Math.min(3, newScale)));
+                    }
+                  }}
+                  size="lg"
+                >
+                  <ICONS.IconArrowsVertical size={20} />
+                </ActionIcon>
+              </Tooltip>
+            </Box>
+          </ScrollArea>
+        </Box>
       );
     }
     if (isTextFile()) {

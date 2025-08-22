@@ -24,7 +24,7 @@ import {
 } from '../../components';
 import FileGrid from './components/FileGrid';
 import DragDropOverlay from '../../components/inputs/dropzone/DragDropOverlay';
-import UploadProgress from './components/UploadProgress';
+// import UploadProgress from './components/UploadProgress';
 import CustomToggle from './components/CustomToggle';
 import { LoaderOverlay } from '../../components/loader';
 import { Controller } from 'react-hook-form';
@@ -41,6 +41,8 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import FileDetailsDrawer from './components/FileDetailsDrawer';
 import useFileDownloader from './components/use-file-downloader';
 import DownloadProgress from './components/DownloadProgress';
+// import DashboardFilters from './components/DashboardFilters';
+import UploadProgressV2 from './file-upload-v2/UploadProgressV2';
 import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
 import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 import { notifications } from '@mantine/notifications';
@@ -56,8 +58,14 @@ const iconStyle = {
 };
 
 const Dashboard = () => {
-  const { downloadProgress, cancelDownload, clearDownload, downloadFile } =
-    useFileDownloader();
+  const {
+    downloadProgress,
+    cancelDownload,
+    clearDownload,
+    downloadFile,
+    pauseDownload,
+    resumeDownload,
+  } = useFileDownloader();
   const {
     layout,
     switchLayout,
@@ -77,17 +85,17 @@ const Dashboard = () => {
     onSelectRow,
     dragRef,
     isDragging,
-    uploadProgress,
-    handleCancelUpload,
-    uploadingFiles,
-    showUploadProgress,
-    handleCloseUploadProgress,
+    // uploadProgress,
+    // handleCancelUpload,
+    // uploadingFiles,
+    // showUploadProgress,
+    // handleCloseUploadProgress,
     closeModal,
     createFolderLoading,
     handleCreateFolder,
-    handleFileUpload,
+    // handleFileUpload,
     // openModal,
-    uploadFilesLoading,
+    // uploadFilesLoading,
     currentPath,
     navigateToFolderFn,
     modalOpen,
@@ -171,11 +179,23 @@ const Dashboard = () => {
     // handleTypeFilter,
     typeFilter,
     modifiedFilter,
+    // file upload v2
+    showUploadProgressV2,
+    uploadingFilesV2,
+    cancelUploadV2,
+    closeUploadProgressV2,
+    handleRemoveUploadedFile,
+    // clearAllUploads,
+
+    // Replace old upload handlers
+    handleFileUploadV2,
+    // handleDragDropUploadV2,
+    // uploadFilesHandler,
     connectedAccounts,
     checkConnectedAccDetails,
     // isAutoLoading,
     hasPaginationData,
-    handleRemoveUploadedFile,
+    // handleRemoveUploadedFile,
 
     // advance filter
     advancedFilterModalOpen,
@@ -733,14 +753,14 @@ const Dashboard = () => {
         )}
       </Box>
       {/* </ScrollArea> */}
-      {showUploadProgress ? (
+      {/* {showUploadProgress ? (
         <UploadProgress
           uploadProgress={uploadProgress}
           uploadingFiles={uploadingFiles}
           onCancelUpload={handleCancelUpload}
           onClose={handleCloseUploadProgress}
         />
-      ) : null}
+      ) : null} */}
 
       {/* Create folder / upload file modal */}
       <Modal
@@ -804,7 +824,7 @@ const Dashboard = () => {
             </Stack>
           </Form>
         ) : (
-          <Form onSubmit={handleFileUpload} methods={uploadMethods}>
+          <Form onSubmit={handleFileUploadV2} methods={uploadMethods}>
             <Stack gap={'md'}>
               <Dropzone
                 // onFilesSelected={setUploadedFiles}
@@ -866,9 +886,10 @@ const Dashboard = () => {
               <Button
                 // onClick={handleFileUpload}
                 type="submit"
-                loading={uploadFilesLoading}
+                // loading={uploadFilesLoading}
                 disabled={
-                  uploadedFiles.length === 0 || uploadFilesLoading
+                  uploadedFiles.length === 0
+                  // || uploadFilesLoading
                   // ||
                   // (!isSFDEnabled && !uploadMethods.formState.isValid)
                 }
@@ -885,6 +906,7 @@ const Dashboard = () => {
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
+        className="delete-file-folder-modal"
       >
         <Text mb="md">
           Are you sure you want to delete this{' '}
@@ -921,6 +943,7 @@ const Dashboard = () => {
         opened={removeFilesModalOpen}
         onClose={closeRemoveFilesModal}
         title={`Remove items`}
+        className="delete-file-folder-modal"
       >
         <Text mb="md">
           Are you sure you want to remove items? All contents will be deleted
@@ -1074,10 +1097,10 @@ const Dashboard = () => {
 
             <Button
               type="submit"
-              loading={uploadFilesLoading}
+              // loading={uploadFilesLoading}
               disabled={
                 dragDropFiles.length === 0 ||
-                uploadFilesLoading ||
+                // uploadFilesLoading ||
                 !uploadMethods.formState.isValid
               }
             >
@@ -1153,9 +1176,19 @@ const Dashboard = () => {
           downloadProgress={downloadProgress}
           onCancelDownload={cancelDownload}
           onClose={clearDownload}
+          onPause={pauseDownload}
+          onResume={resumeDownload}
         />
       )}
 
+      {showUploadProgressV2 ? (
+        <UploadProgressV2
+          uploadingFiles={uploadingFilesV2}
+          onCancelUpload={cancelUploadV2}
+          onRemoveFile={handleRemoveUploadedFile as any}
+          onClose={closeUploadProgressV2}
+        />
+      ) : null}
       <AdvancedFiltersModal
         opened={advancedFilterModalOpen}
         onClose={closeAdvancedFilterModal}
