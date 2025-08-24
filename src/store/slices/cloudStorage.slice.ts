@@ -133,6 +133,9 @@ export const fetchRecentFiles = createAsyncThunk(
       account_id?: number | string;
       page?: number;
       limit?: number;
+      type?: string;
+      start_date?: string;
+      end_date?: string;
     },
     { rejectWithValue }
   ) => {

@@ -93,7 +93,7 @@ const SortableCloudAccountItem = ({
               cursor: 'pointer',
               fontSize: '14px',
               width: '100%',
-              marginLeft: (showDragHandle || isXs) ? '-20px' : '0px',
+              marginLeft: showDragHandle || isXs ? '-20px' : '0px',
             }}
             onClick={() => {
               if (!globalSearchState) {

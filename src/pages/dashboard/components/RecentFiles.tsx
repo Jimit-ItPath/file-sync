@@ -19,6 +19,7 @@ import FullScreenPreview from './FullScreenPreview';
 import { formatDate, formatDateAndTime } from '../../../utils/helper';
 import FileGridSkeleton from '../../../components/skeleton/FileGridSkeleton';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import AdvancedFiltersModal from './AdvancedFiltersModal';
 
 const FILE_CARD_HEIGHT = 200;
 const MIN_CARD_WIDTH = 220;
@@ -102,6 +103,14 @@ const RecentFiles = () => {
     // infinite scroll
     loadMoreFiles,
     hasMore,
+    openAdvancedFilterModal,
+    closeAdvancedFilterModal,
+    typeFilter,
+    modifiedFilter,
+    advancedFilterModalOpen,
+    hasFilters,
+    handleAdvancedFilter,
+    handleAdvancedFilterReset,
   } = useRecentFiles({ downloadFile });
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
@@ -258,6 +267,31 @@ const RecentFiles = () => {
             <Text fw={700} fz="md" c="gray.9">
               Recent Files
             </Text>
+            <Tooltip
+              fz={'xs'}
+              label={hasFilters ? 'Filters are active' : 'Open filters'}
+            >
+              <ActionIcon
+                size={36}
+                variant={hasFilters ? 'filled' : 'outline'}
+                onClick={openAdvancedFilterModal}
+                style={{
+                  borderRadius: '8px',
+                  border: hasFilters ? 'none' : '1.5px solid #dadce0',
+                  backgroundColor: hasFilters ? '#1c7ed6' : '#ffffff',
+                  color: hasFilters ? '#ffffff' : '#5f6368',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                    boxShadow: hasFilters
+                      ? '0 4px 12px rgba(30, 122, 232, 0.4)'
+                      : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  },
+                }}
+              >
+                <ICONS.IconFilter size={16} />
+              </ActionIcon>
+            </Tooltip>
             <Box flex={isXs ? 1 : 2} w={isXs ? '100%' : 'max-content'}>
               {selectedIds.length > 0 ? (
                 <SelectionBar
@@ -581,6 +615,15 @@ const RecentFiles = () => {
         }}
         detailsFile={detailsFile}
         detailsFileLoading={detailsFileLoading}
+      />
+
+      <AdvancedFiltersModal
+        opened={advancedFilterModalOpen}
+        onClose={closeAdvancedFilterModal}
+        onFilter={handleAdvancedFilter}
+        onReset={handleAdvancedFilterReset}
+        activeTypeFilter={typeFilter}
+        activeModifiedFilter={modifiedFilter}
       />
     </Box>
   );

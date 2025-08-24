@@ -23,6 +23,7 @@ import {
   PREVIEW_FILE_TYPES,
   VIDEO_FILE_TYPES,
 } from '../../../utils/constants';
+import dayjs from 'dayjs';
 
 const renameSchema = z.object({
   newName: z.string().trim().min(1, 'New name is required'),
@@ -84,6 +85,13 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
   const lastAutoLoadCheck = useRef<string>('');
   const autoLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [typeFilter, setTypeFilter] = useState<string[] | null>(null);
+  const [modifiedFilter, setModifiedFilter] = useState<{
+    after?: Date;
+    before?: Date;
+  } | null>(null);
+  const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false);
+
   const renameMethods = useForm<RenameFormData>({
     resolver: zodResolver(renameSchema),
     mode: 'onChange',
@@ -97,6 +105,18 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
         fetchRecentFiles({
           page: typeof page === 'number' ? page : 1,
           limit: pagination?.page_limit || 20,
+          ...(typeFilter && {
+            type:
+              typeFilter && typeFilter?.length
+                ? typeFilter?.join(',')
+                : undefined,
+          }),
+          ...(modifiedFilter?.after && {
+            start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
+          }),
+          ...(modifiedFilter?.before && {
+            end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
+          }),
         })
       );
 
@@ -107,7 +127,7 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
 
       // return result;
     },
-    [dispatch, pagination?.page_limit]
+    [dispatch, pagination?.page_limit, typeFilter, modifiedFilter]
   );
 
   const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
@@ -648,6 +668,51 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     setSelectedItemForDetails(null);
   }, []);
 
+  const openAdvancedFilterModal = useCallback(() => {
+    setAdvancedFilterModalOpen(true);
+  }, []);
+
+  const closeAdvancedFilterModal = useCallback(() => {
+    setAdvancedFilterModalOpen(false);
+  }, []);
+
+  const hasFilters = useMemo(() => {
+    return typeFilter?.length || modifiedFilter ? true : false;
+  }, [typeFilter, modifiedFilter]);
+
+  const handleAdvancedFilter = useCallback(
+    async (filters: {
+      types: string[] | null;
+      modified: { after?: Date; before?: Date } | null;
+    }) => {
+      setTypeFilter(filters.types);
+      setModifiedFilter(filters.modified);
+
+      await dispatch(
+        fetchRecentFiles({
+          page: pagination?.page_no || 1,
+          limit: pagination?.page_limit || 20,
+          type:
+            filters.types && filters.types?.length
+              ? filters.types?.join(',')
+              : undefined,
+          start_date: filters.modified?.after
+            ? dayjs(filters.modified.after).format('MM/DD/YYYY')
+            : undefined,
+          end_date: filters.modified?.before
+            ? dayjs(filters.modified.before).format('MM/DD/YYYY')
+            : undefined,
+        })
+      );
+    },
+    []
+  );
+
+  const handleAdvancedFilterReset = useCallback(() => {
+    setTypeFilter(null);
+    setModifiedFilter(null);
+  }, []);
+
   return {
     loading,
     selectedIds,
@@ -710,6 +775,16 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     hasMore,
     scrollBoxRef,
     pagination,
+
+    //filter
+    openAdvancedFilterModal,
+    closeAdvancedFilterModal,
+    typeFilter,
+    modifiedFilter,
+    advancedFilterModalOpen,
+    hasFilters,
+    handleAdvancedFilter,
+    handleAdvancedFilterReset,
   };
 };
 
