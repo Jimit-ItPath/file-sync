@@ -265,7 +265,7 @@ const RecentFiles = () => {
             style={{ flexDirection: isXs ? 'column' : 'row' }}
           >
             <Group>
-              <Text fw={700} fz="md" c="gray.9">
+              <Text fw={700} fz={isXs ? 'sm' : 'md'} c="gray.9">
                 Recent Files
               </Text>
               <Tooltip

@@ -266,7 +266,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                 key={folder.id}
                 radius="md"
                 shadow="sm"
-                p={isXs ? 'sm' : "md"}
+                p={isXs ? 'sm' : 'md'}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -355,7 +355,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                 key={file.id}
                 radius="md"
                 shadow="sm"
-                p={isXs ? 'sm' : "md"}
+                p={isXs ? 'sm' : 'md'}
                 style={{
                   // flex: 1,
                   display: 'flex',

@@ -69,7 +69,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, isXs }) => {
           radius="md"
           style={{
             fontWeight: 500,
-            fontSize: 16,
+            fontSize: isXs ? 14 : 16,
             background: '#0284c7',
             color: '#fff',
           }}
