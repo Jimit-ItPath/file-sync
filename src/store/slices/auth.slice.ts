@@ -60,6 +60,7 @@ type AuthState = {
     storage_details: StorageDetailsType;
   } | null;
   token: string | null;
+  hasInitializedAccounts: boolean;
 };
 
 const initialState: AuthState = {
@@ -69,9 +70,10 @@ const initialState: AuthState = {
   activeUI: '',
   connectedAccounts: [],
   checkStorageDetails: null,
-  loading: false,
+  loading: true,
   error: null,
   token: null,
+  hasInitializedAccounts: false,
 };
 
 export const connectCloudAccount = createAsyncThunk(
@@ -196,6 +198,7 @@ const authSlice = createSlice({
       state.checkStorageDetails = null;
       state.isLoggedIn = false;
       state.token = null;
+      state.hasInitializedAccounts = false;
     },
   },
   extraReducers: builder => {
@@ -207,11 +210,13 @@ const authSlice = createSlice({
       .addCase(getConnectedAccount.fulfilled, (state, action) => {
         state.loading = false;
         state.connectedAccounts = action.payload?.data || [];
+        state.hasInitializedAccounts = true;
       })
       .addCase(getConnectedAccount.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.connectedAccounts = [];
+        state.hasInitializedAccounts = true;
       })
       // .addCase(fetchStorageDetails.pending, state => {
       //   state.loading = true;

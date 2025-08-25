@@ -17,7 +17,7 @@ function App() {
           defaultColorScheme: 'light',
         }}
       >
-        <Notifications position="top-right" />
+        <Notifications position="top-right" autoClose={3000} />
         <AuthProvider>
           <Routing />
         </AuthProvider>

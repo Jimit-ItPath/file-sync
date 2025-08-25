@@ -95,7 +95,7 @@ export const PRIVATE_ROUTES = {
   DASHBOARD: {
     path: DASHBOARD_PATH,
     roles: Object.values(ROLES),
-    title: 'Dashboard',
+    title: 'Home',
     url: DASHBOARD_PATH,
   },
   RECENT_FILES: {

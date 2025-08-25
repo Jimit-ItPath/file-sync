@@ -200,6 +200,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const isNavigatingRef = useRef(false);
   const isRouteSwitchingRef = useRef(false);
   const prevLocationRef = useRef<string | null>(null);
+  // Use ref to track the last filter state
+  const lastFilterKeyRef = useRef<string>('');
 
   const {
     cloudStorage,
@@ -731,36 +733,97 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     };
   }, []);
 
+  // useEffect(() => {
+  //   // Skip if no accounts
+  //   if (!connectedAccounts?.length) {
+  //     return;
+  //   }
+
+  //   // Handle initial mount
+  //   if (!hasMountedOnce.current) {
+  //     hasMountedOnce.current = true;
+
+  //     // Only initialize on first mount if we have accounts and haven't initialized
+  //     if (!initializedRef.current && !hasCalledInitializeAPI.current) {
+  //       console.log('1st');
+  //       onInitialize({});
+  //       initializedRef.current = true;
+  //       hasCalledInitializeAPI.current = true;
+  //     }
+  //     return;
+  //   }
+
+  //   // Handle subsequent route/account changes
+  //   // Only trigger API if this is a real change and we're already initialized
+  //   if (initializedRef.current && hasCalledInitializeAPI.current) {
+  //     resetAutoLoadState();
+  //     console.log('2nd effect');
+  //     getCloudStorageFiles(
+  //       checkLocation || accountId !== 'all' ? 1 : undefined,
+  //       {
+  //         type:
+  //           typeFilter && typeFilter?.length
+  //             ? typeFilter?.join(',')
+  //             : undefined,
+  //         after: modifiedFilter?.after
+  //           ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+  //           : undefined,
+  //         before: modifiedFilter?.before
+  //           ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+  //           : undefined,
+  //       }
+  //     );
+  //   }
+  // }, [accountId, checkLocation, connectedAccounts?.length]);
+
   useEffect(() => {
     // Skip if no accounts
     if (!connectedAccounts?.length) {
       return;
     }
 
+    // Generate a unique key for the current filter state to detect real changes
+    const filterKey = JSON.stringify({
+      accountId,
+      checkLocation,
+      typeFilter: typeFilter?.join(','),
+      modifiedFilter: modifiedFilter
+        ? {
+            after: modifiedFilter.after?.toISOString(),
+            before: modifiedFilter.before?.toISOString(),
+          }
+        : null,
+    });
+
     // Handle initial mount
     if (!hasMountedOnce.current) {
       hasMountedOnce.current = true;
 
-      // Only initialize on first mount if we have accounts and haven't initialized
       if (!initializedRef.current && !hasCalledInitializeAPI.current) {
         onInitialize({});
         initializedRef.current = true;
         hasCalledInitializeAPI.current = true;
+        lastFilterKeyRef.current = filterKey;
       }
       return;
     }
 
-    // Handle subsequent route/account changes
-    // Only trigger API if this is a real change and we're already initialized
-    if (initializedRef.current && hasCalledInitializeAPI.current) {
+    // Only trigger API if filters actually changed (not just ref values)
+    const hasFiltersChanged =
+      filterKey !== lastFilterKeyRef.current && !checkLocation;
+    const shouldTriggerAPI =
+      hasFiltersChanged &&
+      initializedRef.current &&
+      hasCalledInitializeAPI.current;
+
+    if (shouldTriggerAPI) {
       resetAutoLoadState();
+
       getCloudStorageFiles(
         checkLocation || accountId !== 'all' ? 1 : undefined,
         {
           type:
-            typeFilter && typeFilter?.length
-              ? typeFilter?.join(',')
-              : undefined,
+            typeFilter && typeFilter.length ? typeFilter.join(',') : undefined,
           after: modifiedFilter?.after
             ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
             : undefined,
@@ -769,8 +832,18 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
             : undefined,
         }
       );
+
+      lastFilterKeyRef.current = filterKey;
     }
-  }, [accountId, checkLocation, connectedAccounts?.length]);
+  }, [
+    accountId,
+    checkLocation,
+    connectedAccounts?.length,
+    typeFilter,
+    modifiedFilter,
+    getCloudStorageFiles,
+    resetAutoLoadState,
+  ]);
 
   useEffect(() => {
     // Reset mounted flag when location type changes to prevent double calls

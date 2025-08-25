@@ -47,6 +47,7 @@ import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
 import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 import { notifications } from '@mantine/notifications';
 import AdvancedFiltersModal from './components/AdvancedFiltersModal';
+import { useAppSelector } from '../../store';
 
 const iconStyle = {
   borderRadius: 999,
@@ -217,6 +218,9 @@ const Dashboard = () => {
     loading: connectedAccountLoading,
   } = useSidebar();
   const { isSm, theme } = useResponsive();
+  const { loading: authLoading, hasInitializedAccounts } = useAppSelector(
+    state => state.auth
+  );
 
   const isInitialLoading =
     loading ||
@@ -224,9 +228,21 @@ const Dashboard = () => {
     navigateLoading ||
     syncCloudStorageLoading;
 
-  // if (loading) return <LoaderOverlay visible={loading} opacity={1} />;
+  if (authLoading || !hasInitializedAccounts) {
+    return null;
+  }
 
-  if ((connectAccountLoading || !connectedAccounts?.length) && !files?.length) {
+  if (
+    !authLoading &&
+    hasInitializedAccounts &&
+    // !connectedAccountLoading &&
+    connectedAccounts?.length === 0
+    // &&
+    // files?.length === 0 &&
+    // !loading
+  ) {
+    // if (authLoading || connectAccountLoading || connectedAccountLoading)
+    //   return null;
     return (
       <>
         {/* <LoaderOverlay visible={loading} opacity={1} /> */}

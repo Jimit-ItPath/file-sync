@@ -33,7 +33,7 @@ export default function Login() {
             letterSpacing: -0.5,
           }}
         >
-          AllCloudHub
+          All Cloud Hub
         </Text>
       </Group>
       <Grid gutter={0} style={{ minHeight: '100vh' }}>

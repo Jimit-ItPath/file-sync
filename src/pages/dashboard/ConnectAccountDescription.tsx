@@ -4,7 +4,7 @@ const ConnectAccountDescription = () => {
   return (
     <Text size="sm" c="dimmed" lh={1.6}>
       <Text size="sm" fw={600}>
-        Why you can trust AllCloudHub:
+        Why you can trust All Cloud Hub:
       </Text>
       <ul
         style={{
@@ -25,7 +25,7 @@ const ConnectAccountDescription = () => {
           not duplicate or move them.
         </li>
         <li>
-          📁 AllCloudHub simply unifies your Google Drive, Dropbox, and OneDrive
+          📁 All Cloud Hub simply unifies your Google Drive, Dropbox, and OneDrive
           accounts into one smart dashboard.
         </li>
         <li>

@@ -27,7 +27,7 @@ const FaqPage = () => {
 
   const faqs = [
     {
-      q: 'Can I use AllCloudHub for free?',
+      q: 'Can I use All Cloud Hub for free?',
       a: 'Yes! We offer a free plan with basic features such as connecting a single cloud account and limited file transfers. You can upgrade anytime to unlock more storage, integrations, and premium support.',
     },
     {
@@ -47,7 +47,7 @@ const FaqPage = () => {
       a: 'Yes, with our cross-cloud transfer feature, you can seamlessly move files from one provider to another. The process is fast, secure, and requires no downloads to your local device.',
     },
     {
-      q: 'Does AllCloudHub work on mobile devices?',
+      q: 'Does All Cloud Hub work on mobile devices?',
       a: 'Yes, our platform is fully responsive and works smoothly on desktops, tablets, and smartphones. You can manage your files anywhere without needing to install extra software.',
     },
     {
@@ -55,7 +55,7 @@ const FaqPage = () => {
       a: 'If you reach your free or paid plan limits, you’ll still have access to your files. However, advanced actions may be paused until you upgrade or free up space by deleting files.',
     },
     {
-      q: 'Can I collaborate with my team using AllCloudHub?',
+      q: 'Can I collaborate with my team using All Cloud Hub?',
       a: 'Yes, our Business plan includes team collaboration features such as shared folders, permissions, and role-based access. It’s perfect for small businesses and growing teams.',
     },
     {
@@ -95,7 +95,7 @@ const FaqPage = () => {
                 Frequently Asked Questions
               </Title>
               <Text c="dimmed" ta="center" maw={700} fz={isSm ? 14 : 16}>
-                Everything you need to know about AllCloudHub, from pricing to
+                Everything you need to know about All Cloud Hub, from pricing to
                 security and features.
               </Text>
             </Stack>

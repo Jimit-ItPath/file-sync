@@ -30,7 +30,7 @@ const PrivacyPolicy = () => {
             letterSpacing: -0.5,
           }}
         >
-          AllCloudHub
+          All Cloud Hub
         </Text>
       </Group>
 
@@ -56,7 +56,7 @@ const PrivacyPolicy = () => {
                 </Text>
 
                 <Text fz={16}>
-                  At AllCloudHub, we value your privacy. This Privacy Policy
+                  At All Cloud Hub, we value your privacy. This Privacy Policy
                   explains how we collect, use, and protect your personal
                   information when using our platform.
                 </Text>
