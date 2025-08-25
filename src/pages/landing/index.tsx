@@ -164,7 +164,7 @@ export default function UnifidriveLanding() {
 
   useEffect(() => {
     if (location.pathname === AUTH_ROUTES.LANDING.url) {
-      document.title = 'AllCloudHub';
+      document.title = 'All Cloud Hub';
     }
   }, [location]);
 
@@ -215,7 +215,7 @@ export default function UnifidriveLanding() {
                   </Title>
 
                   <Text size="lg" c="dimmed" maw={600} fz={isMobile ? 16 : 18}>
-                    AllCloudHub lets you connect Google Drive, OneDrive, and
+                    All Cloud Hub lets you connect Google Drive, OneDrive, and
                     Dropbox in one place and smartly manage your storage.
                   </Text>
 
@@ -439,7 +439,7 @@ export default function UnifidriveLanding() {
             <AnimatedSection>
               <Stack align="center" gap={isMobile ? 'md' : 'xl'}>
                 <Title order={2} ta="center" fz={isMobile ? 24 : 30}>
-                  Why Choose AllCloudHub?
+                  Why Choose All Cloud Hub?
                 </Title>
               </Stack>
             </AnimatedSection>

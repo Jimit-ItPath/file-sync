@@ -32,7 +32,7 @@ export const usePageData = () => {
     );
   }, [location?.pathname]);
 
-  useDocumentTitle(`${title} | AllCloudHub`);
+  useDocumentTitle(`${title} | All Cloud Hub`);
 
   return [title];
 };

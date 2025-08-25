@@ -44,7 +44,7 @@ const LandingFooter: React.FC<FooterProps> = ({
                   <ICONS.IconCloud size={16} />
                 </ThemeIcon>
                 <Title order={4} c="white">
-                  AllCloudHub
+                  All Cloud Hub
                 </Title>
               </Group>
               <Text size="sm" c="dimmed">
@@ -166,7 +166,7 @@ const LandingFooter: React.FC<FooterProps> = ({
 
         <Divider my="xl" color="dark.4" />
         <Text ta="center" size="sm" c="dimmed">
-          © 2025 AllCloudHub. All rights reserved.
+          © 2025 All Cloud Hub. All rights reserved.
         </Text>
       </Container>
     </Box>

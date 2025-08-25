@@ -258,7 +258,7 @@ const DashboardLayout = () => {
                       c="blue.7"
                       style={{ letterSpacing: -0.5 }}
                     >
-                      AllCloudHub
+                      All Cloud Hub
                     </Box>
                   </Group>
                 )}
@@ -294,7 +294,7 @@ const DashboardLayout = () => {
                     gap={0}
                     flex={1}
                     style={{ position: 'relative' }}
-                    ml={isSm ? 0 : 20}
+                    // ml={isSm ? 0 : 20}
                     w={'100%'}
                   >
                     <GlobalSearchBar

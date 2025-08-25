@@ -44,7 +44,7 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({
             >
               <ICONS.IconCloud size={32} color={'#0ea5e9'} />
               <Title order={3} c="#0ea5e9">
-                AllCloudHub
+                All Cloud Hub
               </Title>
             </Group>
 

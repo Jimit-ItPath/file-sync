@@ -30,7 +30,7 @@ const TermsAndConditions = () => {
             letterSpacing: -0.5,
           }}
         >
-          AllCloudHub
+          All Cloud Hub
         </Text>
       </Group>
 
@@ -56,7 +56,7 @@ const TermsAndConditions = () => {
                 </Text>
 
                 <Text fz={16}>
-                  Welcome to AllCloudHub. By using our service, you agree to the
+                  Welcome to All Cloud Hub. By using our service, you agree to the
                   following terms and conditions.
                 </Text>
 
@@ -69,7 +69,7 @@ const TermsAndConditions = () => {
 
                 <Text fw={600}>2. Acceptable Use</Text>
                 <Text fz={15}>
-                  You agree not to use AllCloudHub to upload, store, or
+                  You agree not to use All Cloud Hub to upload, store, or
                   distribute unlawful content, violate intellectual property
                   rights, or misuse integrated cloud services (Google Drive,
                   Dropbox, OneDrive).
@@ -90,7 +90,7 @@ const TermsAndConditions = () => {
 
                 <Text fw={600}>5. Disclaimer</Text>
                 <Text fz={15}>
-                  AllCloudHub is provided "as is" without warranties. We are not
+                  All Cloud Hub is provided "as is" without warranties. We are not
                   liable for data loss or third-party service interruptions.
                 </Text>
 
