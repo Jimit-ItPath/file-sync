@@ -32,7 +32,15 @@ export const usePageData = () => {
     );
   }, [location?.pathname]);
 
-  useDocumentTitle(`${title} | All Cloud Hub`);
+  if (location.pathname?.includes('google-drive')) {
+    useDocumentTitle('Google Drive | All Cloud Hub');
+  } else if (location.pathname?.includes('dropbox')) {
+    useDocumentTitle('Dropbox | All Cloud Hub');
+  } else if (location.pathname?.includes('onedrive')) {
+    useDocumentTitle('OneDrive | All Cloud Hub');
+  } else {
+    useDocumentTitle(`${title} | All Cloud Hub`);
+  }
 
   return [title];
 };
