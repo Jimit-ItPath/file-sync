@@ -37,7 +37,7 @@ export const FeatureList: React.FC<FeatureListProps> = ({ isXs, isMd }) => {
   return (
     <Paper
       radius={0}
-      p={{ base: 32, md: 56 }}
+      p={{ base: 16, md: 56 }}
       style={{
         background: 'linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%)',
         borderRight: '1px solid #e5e7eb',

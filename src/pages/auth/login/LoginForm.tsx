@@ -7,9 +7,10 @@ import { ICONS } from '../../../assets/icons';
 
 interface LoginFormProps {
   onBack: () => void;
+  isXs: boolean;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onBack, isXs }) => {
   const { loginFormData, isLoading, handleLoginSubmit, methods } = useLogin();
 
   return (
@@ -50,7 +51,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
         <Group justify="flex-end" mt={-10}>
           <Link
             to={AUTH_ROUTES.FORGOT_PASSWORD.url}
-            style={{ textDecoration: 'none', color: '#0284c7', fontSize: 14 }}
+            style={{ textDecoration: 'none', color: '#0284c7', fontSize: isXs ? 12 : 14 }}
           >
             Forgot your password?
           </Link>
@@ -60,7 +61,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
           fullWidth
           loading={Boolean(isLoading)}
           disabled={Boolean(isLoading) || !methods.formState.isValid}
-          size="md"
+          size={isXs ? 'sm' : 'md'}
           radius="md"
           style={{
             fontWeight: 500,
@@ -71,7 +72,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
         >
           Log in
         </Button>
-        <Text ta="center" fz="sm" c="dimmed" mt={-5}>
+        <Text ta="center" fz={isXs ? 12 : 14} c="dimmed" mt={-5}>
           Don't have an account?{' '}
           <Link
             to={AUTH_ROUTES.REGISTER.url}
