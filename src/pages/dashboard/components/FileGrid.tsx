@@ -258,7 +258,7 @@ const FileGrid: React.FC<FileGridProps> = ({
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-              gap: '20px',
+              gap: isXs ? '10px' : '20px',
             }}
           >
             {folders?.map(folder => (
@@ -266,7 +266,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                 key={folder.id}
                 radius="md"
                 shadow="sm"
-                p="md"
+                p={isXs ? 'sm' : "md"}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -274,7 +274,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                   background: '#f6faff',
                   border: '1px solid #e5e7eb',
                   cursor: 'pointer',
-                  height: 64,
+                  height: isXs ? 'auto' : 64,
                   transition: 'box-shadow 0.2s ease',
                   ...(selectedIds.includes(folder.id) ||
                   filesToMove.includes(folder.id)
@@ -346,16 +346,16 @@ const FileGrid: React.FC<FileGridProps> = ({
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-              gap: '20px',
+              gap: isXs ? '10px' : '20px',
             }}
-            mt={20}
+            mt={isXs ? 10 : 20}
           >
             {files.map(file => (
               <Card
                 key={file.id}
                 radius="md"
                 shadow="sm"
-                p="md"
+                p={isXs ? 'sm' : "md"}
                 style={{
                   // flex: 1,
                   display: 'flex',
@@ -435,7 +435,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     marginTop: 8,
                   }}
                 >
-                  {file.icon(50)}
+                  {file.icon(isXs ? 40 : 50)}
                   {/* {file.preview ? (
                   <Image
                     src={file.preview}
