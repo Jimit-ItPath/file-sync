@@ -10,7 +10,7 @@ import { Button, Form, Input } from '../../../components';
 import { useEffect } from 'react';
 
 const ContactForm = () => {
-  const { isMd, isSm } = useResponsive();
+  const { isMd, isSm, isXs } = useResponsive();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
   const { contactFormData, handleContactSubmit, methods } = useContact();
@@ -35,8 +35,8 @@ const ContactForm = () => {
         <Container size="sm" py={isSm ? 40 : 80}>
           <AnimatedSection>
             <Form methods={methods} onSubmit={handleContactSubmit}>
-              <Stack gap={20}>
-                <Title order={2} ta="center">
+              <Stack gap={isXs ? 10 : 20}>
+                <Title order={isXs ? 3 : 2} ta="center">
                   Contact Us
                 </Title>
                 <Text c="dimmed" ta="center" mb="md">
@@ -63,11 +63,12 @@ const ContactForm = () => {
                   type="submit"
                   fullWidth
                   disabled={!methods.formState.isValid}
-                  size="md"
+                  size={isXs ? 'sm' : 'md'}
                   radius="md"
+                  mt={isXs ? 10 : 0}
                   style={{
                     fontWeight: 500,
-                    fontSize: 16,
+                    fontSize: isXs ? 14 : 16,
                     background: '#0284c7',
                     color: '#fff',
                   }}

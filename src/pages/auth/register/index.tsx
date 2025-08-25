@@ -187,7 +187,12 @@ const Register = () => {
                           </Button>
                         </Stack>
                       </Form>
-                      <Text ta="center" fz={isXs ? 12 : 14} c="dimmed" mt={isXs ? 0 : -20}>
+                      <Text
+                        ta="center"
+                        fz={isXs ? 12 : 14}
+                        c="dimmed"
+                        mt={isXs ? 0 : -20}
+                      >
                         Already have an account?{' '}
                         <Link
                           to={AUTH_ROUTES.LOGIN.url}

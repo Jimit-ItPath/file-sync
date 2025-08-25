@@ -51,7 +51,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, isXs }) => {
         <Group justify="flex-end" mt={-10}>
           <Link
             to={AUTH_ROUTES.FORGOT_PASSWORD.url}
-            style={{ textDecoration: 'none', color: '#0284c7', fontSize: isXs ? 12 : 14 }}
+            style={{
+              textDecoration: 'none',
+              color: '#0284c7',
+              fontSize: isXs ? 12 : 14,
+            }}
           >
             Forgot your password?
           </Link>

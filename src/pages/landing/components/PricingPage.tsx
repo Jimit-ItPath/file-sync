@@ -19,7 +19,7 @@ import useResponsive from '../../../hooks/use-responsive';
 import { useEffect } from 'react';
 
 const PricingPage = () => {
-  const { isMd, isSm } = useResponsive();
+  const { isMd, isSm, isXs } = useResponsive();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
 
@@ -97,7 +97,7 @@ const PricingPage = () => {
         <Container size="xl" py={isSm ? 40 : 80}>
           <AnimatedSection>
             <Stack align="center" gap="md">
-              <Title order={2}>Choose Your Plan</Title>
+              <Title order={isXs ? 3 : 2}>Choose Your Plan</Title>
               <Text c="dimmed" ta="center" maw={600}>
                 Flexible pricing for individuals and teams
               </Text>
@@ -105,13 +105,17 @@ const PricingPage = () => {
           </AnimatedSection>
 
           <StaggerContainer staggerDelay={0.15}>
-            <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="xl" mt="xl">
+            <SimpleGrid
+              cols={{ base: 1, sm: 2, md: 3 }}
+              spacing={isXs ? 'md' : 'xl'}
+              mt={isXs ? 'md' : 'xl'}
+            >
               {plans.map((plan, i) => (
                 <Card
                   key={i}
                   shadow="md"
                   radius="md"
-                  padding="xl"
+                  padding={isXs ? 'md' : 'xl'}
                   style={{
                     border: plan.highlight
                       ? '2px solid #0284c7'
@@ -119,20 +123,20 @@ const PricingPage = () => {
                     transform: plan.highlight ? 'scale(1.05)' : 'scale(1)',
                   }}
                 >
-                  <Stack gap="md" align="center">
-                    <Title order={3}>{plan.title}</Title>
-                    <Title order={2} c="blue">
+                  <Stack gap={isXs ? 'sm' : 'md'} align="center">
+                    <Title order={isXs ? 4 : 3}>{plan.title}</Title>
+                    <Title order={isXs ? 3 : 2} c="blue">
                       {plan.price}
                     </Title>
                     <Stack gap="xs">
                       {plan.features.map((f, idx) => (
-                        <Text key={idx} size="sm" c="dimmed">
+                        <Text key={idx} fz={isXs ? '13px' : 'sm'} c="dimmed">
                           • {f}
                         </Text>
                       ))}
                     </Stack>
                     <Button
-                      size="md"
+                      size={isXs ? 'sm' : 'md'}
                       fullWidth
                       onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
                     >
@@ -146,95 +150,96 @@ const PricingPage = () => {
         </Container>
 
         {/* Comparison Table */}
-        <Container size="lg" py={isSm ? 40 : 80}>
+        <Container size="lg">
           <AnimatedSection>
             <Stack gap="md" align="center" mb="lg">
-              <Title order={2}>Compare Plans</Title>
+              <Title order={isXs ? 3 : 2}>Compare Plans</Title>
               <Text c="dimmed" ta="center" maw={700}>
                 See what you get with each plan
               </Text>
             </Stack>
           </AnimatedSection>
 
-          <Card shadow="sm" radius="md" withBorder>
-            {!isSm ? (
-              <>
-                <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" p="md">
-                  <Text fw={600}>Features</Text>
-                  <Text fw={600} ta="center">
-                    Free
-                  </Text>
-                  <Text fw={600} ta="center">
-                    Pro
-                  </Text>
-                  <Text fw={600} ta="center">
-                    Business
-                  </Text>
-                </SimpleGrid>
+          {/* <Card shadow="sm" radius="md" withBorder> */}
+          {!isSm ? (
+            <Card shadow="sm" radius={'md'} withBorder>
+              <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" p="md">
+                <Text fw={600}>Features</Text>
+                <Text fw={600} ta="center">
+                  Free
+                </Text>
+                <Text fw={600} ta="center">
+                  Pro
+                </Text>
+                <Text fw={600} ta="center">
+                  Business
+                </Text>
+              </SimpleGrid>
 
-                {comparison.map((row, idx) => (
-                  <SimpleGrid
-                    key={idx}
-                    cols={{ base: 2, sm: 4 }}
-                    spacing="md"
-                    p="md"
-                    style={{ borderTop: '1px solid #e9ecef' }}
-                  >
-                    <Text>{row.feature}</Text>
-                    <Text ta="center">{row.free}</Text>
-                    <Text ta="center">{row.pro}</Text>
-                    <Text ta="center">{row.business}</Text>
-                  </SimpleGrid>
-                ))}
-              </>
-            ) : (
-              <Stack p="sm" gap="sm">
-                {comparison.map(row => (
-                  <Card key={row.feature} withBorder radius="md" padding="md">
-                    <Stack gap={8}>
-                      <Text fw={600} fz={'sm'}>
-                        {row.feature}
+              {comparison.map((row, idx) => (
+                <SimpleGrid
+                  key={idx}
+                  cols={{ base: 2, sm: 4 }}
+                  spacing="md"
+                  p="md"
+                  style={{ borderTop: '1px solid #e9ecef' }}
+                >
+                  <Text>{row.feature}</Text>
+                  <Text ta="center">{row.free}</Text>
+                  <Text ta="center">{row.pro}</Text>
+                  <Text ta="center">{row.business}</Text>
+                </SimpleGrid>
+              ))}
+            </Card>
+          ) : (
+            <Stack p="sm" gap="sm">
+              {comparison.map(row => (
+                <Card key={row.feature} withBorder radius="md" padding="md">
+                  <Stack gap={8}>
+                    <Text fw={600} fz={'sm'}>
+                      {row.feature}
+                    </Text>
+
+                    <SimpleGrid cols={2} spacing={6}>
+                      <Text c="dimmed" fz={'sm'}>
+                        Free
+                      </Text>
+                      <Text ta="right" fz={'sm'}>
+                        {row.free}
                       </Text>
 
-                      <SimpleGrid cols={2} spacing={6}>
-                        <Text c="dimmed" fz={'sm'}>
-                          Free
-                        </Text>
-                        <Text ta="right" fz={'sm'}>
-                          {row.free}
-                        </Text>
+                      <Text c="dimmed" fz={'sm'}>
+                        Pro
+                      </Text>
+                      <Text ta="right" fz={'sm'}>
+                        {row.pro}
+                      </Text>
 
-                        <Text c="dimmed" fz={'sm'}>
-                          Pro
-                        </Text>
-                        <Text ta="right" fz={'sm'}>
-                          {row.pro}
-                        </Text>
-
-                        <Text c="dimmed" fz={'sm'}>
-                          Business
-                        </Text>
-                        <Text ta="right" fz={'sm'}>
-                          {row.business}
-                        </Text>
-                      </SimpleGrid>
-                    </Stack>
-                  </Card>
-                ))}
-              </Stack>
-            )}
-          </Card>
+                      <Text c="dimmed" fz={'sm'}>
+                        Business
+                      </Text>
+                      <Text ta="right" fz={'sm'}>
+                        {row.business}
+                      </Text>
+                    </SimpleGrid>
+                  </Stack>
+                </Card>
+              ))}
+            </Stack>
+          )}
+          {/* </Card> */}
         </Container>
 
         {/* Why Upgrade Section */}
         <Container
           size="xl"
           py={isSm ? 40 : 80}
+          mt={10}
           bg="linear-gradient(120deg,#f8fafc,#f0f9ff)"
         >
           <AnimatedSection>
             <Stack align="center" gap="md">
-              <Title order={2}>Why Upgrade?</Title>
+              <Title order={isXs ? 3 : 2}>Why Upgrade?</Title>
               <Text c="dimmed" ta="center" maw={600}>
                 Unlock powerful features and better support to boost your
                 productivity
@@ -244,22 +249,22 @@ const PricingPage = () => {
           <StaggerContainer staggerDelay={0.15}>
             <SimpleGrid cols={{ base: 1, md: 3 }} spacing="xl" mt="xl">
               <Card shadow="sm" radius="md" padding="lg">
-                <Title order={4}>Save Time</Title>
-                <Text c="dimmed" size="sm">
+                <Title order={isXs ? 5 : 4}>Save Time</Title>
+                <Text c="dimmed" fz={isXs ? '13px' : 'sm'}>
                   Automate file transfers and manage all your drives from one
                   dashboard.
                 </Text>
               </Card>
               <Card shadow="sm" radius="md" padding="lg">
-                <Title order={4}>Better Security</Title>
-                <Text c="dimmed" size="sm">
+                <Title order={isXs ? 5 : 4}>Better Security</Title>
+                <Text c="dimmed" fz={isXs ? '13px' : 'sm'}>
                   Get enterprise-grade security with OAuth, encryption, and
                   role-based access.
                 </Text>
               </Card>
               <Card shadow="sm" radius="md" padding="lg">
-                <Title order={4}>Team Collaboration</Title>
-                <Text c="dimmed" size="sm">
+                <Title order={isXs ? 5 : 4}>Team Collaboration</Title>
+                <Text c="dimmed" fz={isXs ? '13px' : 'sm'}>
                   Share access with your team and manage permissions with ease.
                 </Text>
               </Card>

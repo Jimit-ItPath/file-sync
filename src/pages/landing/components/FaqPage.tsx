@@ -17,7 +17,7 @@ import { Card } from '../../../components';
 import { useEffect } from 'react';
 
 const FaqPage = () => {
-  const { isMd, isSm } = useResponsive();
+  const { isMd, isSm, isXs } = useResponsive();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
 
@@ -91,7 +91,7 @@ const FaqPage = () => {
         >
           <AnimatedSection>
             <Stack align="center" gap="md" mb={isSm ? 30 : 50}>
-              <Title order={2} fz={isSm ? 26 : 34} fw={700}>
+              <Title order={isXs ? 3 : 2} fw={700}>
                 Frequently Asked Questions
               </Title>
               <Text c="dimmed" ta="center" maw={700} fz={isSm ? 14 : 16}>
@@ -101,14 +101,23 @@ const FaqPage = () => {
             </Stack>
           </AnimatedSection>
 
-          <SimpleGrid spacing={isSm ? 'lg' : 'xl'}>
+          <SimpleGrid spacing={isXs ? 'md' : isSm ? 'lg' : 'xl'}>
             {/* FAQ Accordion */}
-            <Card shadow="sm" radius="md" padding="xl" withBorder>
+            <Card
+              shadow="sm"
+              radius="md"
+              padding={isXs ? 'sm' : isSm ? 'md' : 'xl'}
+              withBorder
+            >
               <Accordion transitionDuration={400}>
                 {faqs.map((item, i) => (
                   <Accordion.Item key={i} value={item.q}>
-                    <Accordion.Control fw={500}>{item.q}</Accordion.Control>
-                    <Accordion.Panel>{item.a}</Accordion.Panel>
+                    <Accordion.Control fw={500} fz={isXs ? 14 : 16}>
+                      {item.q}
+                    </Accordion.Control>
+                    <Accordion.Panel fz={isXs ? 14 : 16}>
+                      {item.a}
+                    </Accordion.Panel>
                   </Accordion.Item>
                 ))}
               </Accordion>

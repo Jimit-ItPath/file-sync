@@ -141,7 +141,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           styles={{
             label: {
               fontSize: isXs ? 14 : 16,
-            }
+            },
           }}
           radius="md"
           size="md"
