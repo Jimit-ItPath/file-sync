@@ -745,7 +745,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
 
   //     // Only initialize on first mount if we have accounts and haven't initialized
   //     if (!initializedRef.current && !hasCalledInitializeAPI.current) {
-  //       console.log('1st');
   //       onInitialize({});
   //       initializedRef.current = true;
   //       hasCalledInitializeAPI.current = true;
@@ -757,7 +756,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   //   // Only trigger API if this is a real change and we're already initialized
   //   if (initializedRef.current && hasCalledInitializeAPI.current) {
   //     resetAutoLoadState();
-  //     console.log('2nd effect');
   //     getCloudStorageFiles(
   //       checkLocation || accountId !== 'all' ? 1 : undefined,
   //       {
@@ -839,8 +837,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     accountId,
     checkLocation,
     connectedAccounts?.length,
-    typeFilter,
-    modifiedFilter,
+    // typeFilter,
+    // modifiedFilter,
     getCloudStorageFiles,
     resetAutoLoadState,
   ]);
