@@ -518,6 +518,9 @@ export const api = {
       account_id?: number | string;
       page?: number;
       limit?: number;
+      type?: string;
+      start_date?: string;
+      end_date?: string;
     }) =>
       client({
         url: '/cloud-storage/recent-files',

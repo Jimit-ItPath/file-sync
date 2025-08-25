@@ -317,18 +317,30 @@ const Profile = () => {
                           const accountConfigs = {
                             google_drive: {
                               icon: (
-                                <Image src={GoogleDriveIcon} w={isXs ? 16 : 20} h={isXs ? 16 : 20} />
+                                <Image
+                                  src={GoogleDriveIcon}
+                                  w={isXs ? 16 : 20}
+                                  h={isXs ? 16 : 20}
+                                />
                               ),
                               color: 'red',
                               label: 'Google Drive',
                             },
                             dropbox: {
-                              icon: <Image src={DropboxIcon} w={isXs ? 20 : 24} />,
+                              icon: (
+                                <Image src={DropboxIcon} w={isXs ? 20 : 24} />
+                              ),
                               color: 'blue',
                               label: 'Dropbox',
                             },
                             onedrive: {
-                              icon: <Image src={OneDriveIcon} w={isXs ? 20 : 24} h={isXs ? 20 : 24} />,
+                              icon: (
+                                <Image
+                                  src={OneDriveIcon}
+                                  w={isXs ? 20 : 24}
+                                  h={isXs ? 20 : 24}
+                                />
+                              ),
                               color: 'indigo',
                               label: 'OneDrive',
                             },
@@ -380,7 +392,11 @@ const Profile = () => {
                                             {account.account_name}
                                           </Text>
                                         </Tooltip>
-                                        <Text size="sm" c="dimmed" fz={isXs ? 'xs' : 'sm'}>
+                                        <Text
+                                          size="sm"
+                                          c="dimmed"
+                                          fz={isXs ? 'xs' : 'sm'}
+                                        >
                                           {cfg.label}
                                         </Text>
                                         <Text size="xs" c="dimmed">
