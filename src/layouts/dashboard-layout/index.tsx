@@ -305,7 +305,7 @@ const DashboardLayout = () => {
                 ) : null}
               </Group>
 
-              {isSm ? (
+              {isSm && userProfile?.role === ROLES.USER ? (
                 <MantineMenu
                   position="top-end"
                   withArrow
