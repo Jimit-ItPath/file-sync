@@ -57,7 +57,7 @@ const getStrength = (password: string) => {
   let multiplier = password.length > 5 ? 0 : 1;
 
   passwordRequirements.forEach(requirement => {
-    if (!requirement.re.test(password)) {
+    if (!requirement.re.test(password?.trim())) {
       multiplier += 1;
     }
   });
@@ -164,7 +164,7 @@ const PasswordInput = ({
     <PasswordRequirement
       key={index}
       label={requirement.label}
-      meets={requirement.re.test(value)}
+      meets={value?.trim() ? requirement.re.test(value) : false}
     />
   ));
   const strength = getStrength(value);
