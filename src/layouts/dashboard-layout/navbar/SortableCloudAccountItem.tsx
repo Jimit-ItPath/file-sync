@@ -71,6 +71,7 @@ const SortableCloudAccountItem = ({
           position: 'relative',
           width: '100%',
         }}
+        align="center"
         onMouseEnter={() => setHoveredAccountId(account.id)}
         onMouseLeave={() => setHoveredAccountId(null)}
       >
@@ -155,8 +156,7 @@ const SortableCloudAccountItem = ({
                 style={{
                   position: 'absolute',
                   right: isXs ? 40 : 28,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
+                  top: 9,
                   cursor: 'pointer',
                   zIndex: 10,
                   flexShrink: 0,
@@ -179,11 +179,10 @@ const SortableCloudAccountItem = ({
                 style={{
                   position: 'absolute',
                   right: 8,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
+                  top: 9,
                   cursor: 'pointer',
-                  zIndex: 10, // Ensure it's above other elements
-                  flexShrink: 0, // Prevent shrinking
+                  zIndex: 10,
+                  flexShrink: 0,
                 }}
                 onClick={e => {
                   e.stopPropagation();
