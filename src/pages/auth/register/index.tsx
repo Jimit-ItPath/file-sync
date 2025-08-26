@@ -163,6 +163,7 @@ const Register = () => {
                             registerFormData={registerFormData}
                             onCaptchaChange={onCaptchaChange}
                             recaptchaRef={recaptchaRef}
+                            isXs={isXs}
                           />
 
                           <Button
@@ -172,11 +173,11 @@ const Register = () => {
                               // || !methods.formState.isValid
                             }
                             loading={Boolean(isLoading)}
-                            size="md"
+                            size={isXs ? 'sm' : 'md'}
                             radius="md"
                             style={{
                               fontWeight: 500,
-                              fontSize: 16,
+                              fontSize: isXs ? 14 : 16,
                               background: '#0284c7',
                               color: '#fff',
                               marginTop: 8,
@@ -186,7 +187,12 @@ const Register = () => {
                           </Button>
                         </Stack>
                       </Form>
-                      <Text ta="center" fz={isXs ? 12 : 14} c="dimmed" mt={-20}>
+                      <Text
+                        ta="center"
+                        fz={isXs ? 12 : 14}
+                        c="dimmed"
+                        mt={isXs ? 0 : -20}
+                      >
                         Already have an account?{' '}
                         <Link
                           to={AUTH_ROUTES.LOGIN.url}

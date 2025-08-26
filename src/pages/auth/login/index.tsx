@@ -72,7 +72,7 @@ export default function Login() {
                   </Text>
                 </Box>
                 {showLoginForm ? (
-                  <LoginForm onBack={toggleLoginForm} />
+                  <LoginForm onBack={toggleLoginForm} isXs={isXs} />
                 ) : (
                   <>
                     <SocialLoginButtons

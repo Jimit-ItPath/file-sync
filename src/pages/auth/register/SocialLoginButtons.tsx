@@ -26,7 +26,7 @@ export const SocialLoginButtons = ({
           <Image src={GoogleDriveIcon} alt="Google Drive" w={16} h={16} />
         }
         fullWidth
-        size="md"
+        size={isXs ? 'sm' : 'md'}
         radius="md"
         fw={500}
         type="button"
@@ -39,7 +39,7 @@ export const SocialLoginButtons = ({
         // leftSection={<ICONS.IconBrandFacebook size={18} color="#1877f3" />}
         leftSection={<Image src={FacebookIcon} alt="Facebook" w={16} h={16} />}
         fullWidth
-        size="md"
+        size={isXs ? 'sm' : 'md'}
         radius="md"
         fw={500}
         type="button"
@@ -51,7 +51,7 @@ export const SocialLoginButtons = ({
         variant="default"
         leftSection={<ICONS.IconMail size={18} color="#0284c7" />}
         fullWidth
-        size="md"
+        size={isXs ? 'sm' : 'md'}
         radius="md"
         fw={500}
         type="button"

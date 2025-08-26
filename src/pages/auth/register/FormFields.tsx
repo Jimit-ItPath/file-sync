@@ -9,6 +9,7 @@ type FormFieldsProps = {
   registerFormData: any[];
   recaptchaRef: React.RefObject<ReCAPTCHA | null>;
   onCaptchaChange: (token: string | null) => void;
+  isXs: boolean;
 };
 
 export const FormFields: React.FC<FormFieldsProps> = ({
@@ -16,6 +17,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
   registerFormData,
   recaptchaRef,
   onCaptchaChange = () => {},
+  isXs,
 }) => {
   const {
     formState: { errors },
@@ -103,7 +105,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
         <Checkbox
           {...register('termsAccepted')}
           label={
-            <Group>
+            <Group fz={isXs ? 14 : 16}>
               I agree to the{' '}
               <Stack
                 // <Link
@@ -136,6 +138,11 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             errors?.[newsletterSubscribedField.name]?.message ||
             newsletterSubscribedField.error
           }
+          styles={{
+            label: {
+              fontSize: isXs ? 14 : 16,
+            },
+          }}
           radius="md"
           size="md"
           pl={30}

@@ -86,7 +86,7 @@ export default function AdminLogin() {
                   </Text>
                 </Box>
                 <Form methods={methods} onSubmit={handleLoginSubmit}>
-                  <Stack gap={16}>
+                  <Stack gap={isXs ? 6 : 16}>
                     {loginFormData.map(
                       ({
                         id,
@@ -114,7 +114,11 @@ export default function AdminLogin() {
                     <Group justify="flex-end">
                       <Link
                         to={AUTH_ROUTES.FORGOT_PASSWORD.url}
-                        style={{ textDecoration: 'none', color: '#0284c7' }}
+                        style={{
+                          textDecoration: 'none',
+                          color: '#0284c7',
+                          fontSize: isXs ? 12 : 14,
+                        }}
                       >
                         Forgot your password?
                       </Link>
@@ -126,11 +130,11 @@ export default function AdminLogin() {
                       disabled={
                         Boolean(isLoading) || !methods.formState.isValid
                       }
-                      size="md"
+                      size={isXs ? 'sm' : 'md'}
                       radius="md"
                       style={{
                         fontWeight: 500,
-                        fontSize: 16,
+                        fontSize: isXs ? 14 : 16,
                         background: '#0284c7',
                         color: '#fff',
                         marginTop: 8,
@@ -154,7 +158,7 @@ export default function AdminLogin() {
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'stretch',
-              minHeight: '100vh',
+              minHeight: isXs ? '60vh' : '100vh',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -167,9 +171,10 @@ export default function AdminLogin() {
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center',
+                justifyContent: isXs ? 'flex-start' : 'center',
                 minHeight: 0,
                 zIndex: 2,
+                marginTop: isXs ? 20 : 0,
               }}
             >
               <Title
@@ -231,7 +236,7 @@ export default function AdminLogin() {
                   </ThemeIcon>
                   <Box>
                     <Text fw={600} fz={{ base: 14, sm: 16 }} mb={2} c="#fff">
-                      Personalized Smart File Distribution (SFD)
+                      Smart File Distribution (SFD)
                     </Text>
                   </Box>
                 </Group>

@@ -1,17 +1,9 @@
 import useCompleteProfile from './use-complete-profile';
-import {
-  Box,
-  Grid,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title,
-} from '@mantine/core';
+import { Box, Grid, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { ICONS } from '../../../../assets/icons';
 import { Button, Form, Input } from '../../../../components';
 import { AUTH_ROUTES } from '../../../../routing/routes';
+import { FeatureList } from '../../register/FeatureList';
 
 const CompleteProfile = () => {
   const {
@@ -22,7 +14,6 @@ const CompleteProfile = () => {
     isMd,
     isSm,
     isXs,
-    features,
     navigate,
   } = useCompleteProfile();
   return (
@@ -119,11 +110,11 @@ const CompleteProfile = () => {
                       disabled={
                         Boolean(isLoading) || !methods.formState.isValid
                       }
-                      size="md"
+                      size={isXs ? 'sm' : 'md'}
                       radius="md"
                       style={{
                         fontWeight: 500,
-                        fontSize: 16,
+                        fontSize: isXs ? 14 : 16,
                         background: '#0284c7',
                         color: '#fff',
                         marginTop: 8,
@@ -138,69 +129,7 @@ const CompleteProfile = () => {
           </Paper>
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 2, md: 1 }}>
-          <Paper
-            p={0}
-            style={{
-              background: 'linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%)',
-              borderRight: '1px solid #e5e7eb',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              height: isMd ? '100%' : '100vh',
-              position: 'relative',
-            }}
-          >
-            <Box
-              maw={600}
-              mx="auto"
-              p={{ base: 16, sm: 24, md: 32 }}
-              pt={isMd ? 40 : 0}
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                minHeight: 0,
-                zIndex: 2,
-              }}
-            >
-              <Title
-                order={1}
-                mb={{ base: 16, sm: 20 }}
-                fw={700}
-                fz={{ base: 24, sm: 28, md: 32 }}
-                // c="#fff"
-              >
-                All Your Cloud Files. One Smart Dashboard.
-              </Title>
-              <Text
-                c={'dimmed'}
-                mb={{ base: 24, sm: 32 }}
-                fz={{ base: 14, sm: 16 }}
-              >
-                Connect your Google Drive, Dropbox, and OneDrive accounts.
-                Manage, search, and smart-distribute files across
-                platforms—securely.
-              </Text>
-              <Stack gap={isXs ? 16 : 24}>
-                {features.map((feature, idx) => (
-                  <Group key={idx} align="flex-start" gap={isXs ? 12 : 16}>
-                    <ThemeIcon color="cyan" size={isXs ? 28 : 36} radius="md">
-                      <feature.icon size={isXs ? 16 : 20} />
-                    </ThemeIcon>
-                    <Box>
-                      <Text fw={600} fz={{ base: 14, sm: 16 }} mb={2}>
-                        {feature.title}
-                      </Text>
-                      <Text c="dimmed" fz="sm">
-                        {feature.description}
-                      </Text>
-                    </Box>
-                  </Group>
-                ))}
-              </Stack>
-            </Box>
-          </Paper>
+          <FeatureList {...{ isMd, isXs }} />
         </Grid.Col>
       </Grid>
     </Box>

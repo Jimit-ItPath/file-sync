@@ -264,34 +264,36 @@ const RecentFiles = () => {
             gap={16}
             style={{ flexDirection: isXs ? 'column' : 'row' }}
           >
-            <Text fw={700} fz="md" c="gray.9">
-              Recent Files
-            </Text>
-            <Tooltip
-              fz={'xs'}
-              label={hasFilters ? 'Filters are active' : 'Open filters'}
-            >
-              <ActionIcon
-                size={36}
-                variant={hasFilters ? 'filled' : 'outline'}
-                onClick={openAdvancedFilterModal}
-                style={{
-                  borderRadius: '8px',
-                  border: hasFilters ? 'none' : '1.5px solid #dadce0',
-                  backgroundColor: hasFilters ? '#1c7ed6' : '#ffffff',
-                  color: hasFilters ? '#ffffff' : '#5f6368',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'scale(1.05)',
-                    boxShadow: hasFilters
-                      ? '0 4px 12px rgba(30, 122, 232, 0.4)'
-                      : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                  },
-                }}
+            <Group>
+              <Text fw={700} fz={isXs ? 'sm' : 'md'} c="gray.9">
+                Recent Files
+              </Text>
+              <Tooltip
+                fz={'xs'}
+                label={hasFilters ? 'Filters are active' : 'Open filters'}
               >
-                <ICONS.IconFilter size={16} />
-              </ActionIcon>
-            </Tooltip>
+                <ActionIcon
+                  size={36}
+                  variant={hasFilters ? 'filled' : 'outline'}
+                  onClick={openAdvancedFilterModal}
+                  style={{
+                    borderRadius: '8px',
+                    border: hasFilters ? 'none' : '1.5px solid #dadce0',
+                    backgroundColor: hasFilters ? '#1c7ed6' : '#ffffff',
+                    color: hasFilters ? '#ffffff' : '#5f6368',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: hasFilters
+                        ? '0 4px 12px rgba(30, 122, 232, 0.4)'
+                        : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    },
+                  }}
+                >
+                  <ICONS.IconFilter size={16} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
             <Box flex={isXs ? 1 : 2} w={isXs ? '100%' : 'max-content'}>
               {selectedIds.length > 0 ? (
                 <SelectionBar
@@ -348,16 +350,15 @@ const RecentFiles = () => {
                   style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-                    gap: '20px',
+                    gap: isXs ? '10px' : '20px',
                   }}
-                  mt={20}
                 >
                   {recentFiles.map(file => (
                     <Card
                       key={file.id}
                       radius="md"
                       shadow="sm"
-                      p="md"
+                      p={isXs ? 'sm' : 'md'}
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -430,7 +431,7 @@ const RecentFiles = () => {
                           marginTop: 8,
                         }}
                       >
-                        {file.icon(50)}
+                        {file.icon(isXs ? 40 : 50)}
                       </Box>
                       <Group justify="space-between" mt={8}>
                         <Text size="xs" c="gray.6">

@@ -27,7 +27,7 @@ import adminUserReducer from './slices/adminUser.slice';
 const persistConfig = {
   key: LOCAL_STORAGE_KEY,
   storage,
-  whitelist: ['auth', 'cloudStorage', 'user'],
+  whitelist: ['auth', 'user'],
 };
 
 const rootReducer = combineReducers({

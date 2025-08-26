@@ -5,6 +5,7 @@ import { ICONS } from '../../../assets/icons';
 import { LoaderOverlay } from '../../../components/loader';
 import { DataTable } from 'mantine-datatable';
 import SelectFilter from '../../../components/inputs/select/SelectFilter';
+import useResponsive from '../../../hooks/use-responsive';
 
 const AdminAuditLogs = () => {
   const {
@@ -39,12 +40,13 @@ const AdminAuditLogs = () => {
     handleReset,
     disableReset,
   } = useAuditLogs();
+  const { isXs } = useResponsive();
 
   return (
     <Box>
       <LoaderOverlay visible={downloadLogsLoading} opacity={1} />
       <Box
-        px={32}
+        px={isXs ? 16 : 32}
         pb={20}
         bg="#f8fafc"
         style={{

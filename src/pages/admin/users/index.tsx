@@ -17,6 +17,7 @@ import { formatDate } from '../../../utils/helper';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
+import useResponsive from '../../../hooks/use-responsive';
 
 type AccountConfig = {
   icon: React.ReactNode;
@@ -70,12 +71,13 @@ const AdminUsers = () => {
     totalRecords,
     limit,
   } = useUsers();
+  const { isXs } = useResponsive();
 
   return (
     <Box>
       <LoaderOverlay visible={loading} opacity={1} />
       <Box
-        px={32}
+        px={isXs ? 16 : 32}
         pb={20}
         bg="#f8fafc"
         style={{

@@ -24,7 +24,7 @@ export const FeatureList: React.FC<FeatureListProps> = ({ isXs, isMd }) => {
     },
     {
       icon: ICONS.IconRefresh,
-      title: 'Fast file syncing across cloud drives',
+      title: 'Fast file syncing across cloud',
       description: 'Real-time synchronization across all your platforms',
     },
     {
@@ -37,7 +37,7 @@ export const FeatureList: React.FC<FeatureListProps> = ({ isXs, isMd }) => {
   return (
     <Paper
       radius={0}
-      p={{ base: 32, md: 56 }}
+      p={{ base: 16, md: 56 }}
       style={{
         background: 'linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%)',
         borderRight: '1px solid #e5e7eb',
@@ -75,21 +75,39 @@ export const FeatureList: React.FC<FeatureListProps> = ({ isXs, isMd }) => {
           search, and smart-distribute files across platforms—securely.
         </Text>
         <Stack gap={isXs ? 16 : 24}>
-          {features.map((feature, idx) => (
-            <Group key={idx} align="flex-start" gap={isXs ? 12 : 16}>
-              <ThemeIcon color="cyan" size={isXs ? 28 : 36} radius="md">
-                <feature.icon size={isXs ? 16 : 20} />
-              </ThemeIcon>
-              <Box>
-                <Text fw={600} fz={{ base: 14, sm: 16 }} mb={2}>
-                  {feature.title}
-                </Text>
-                <Text c="dimmed" fz="sm">
-                  {feature.description}
-                </Text>
-              </Box>
-            </Group>
-          ))}
+          {features.map((feature, idx) =>
+            isXs ? (
+              <Group key={idx} align="flex-start" gap={isXs ? 12 : 16}>
+                <Group gap={'xs'}>
+                  <ThemeIcon color="cyan" size={isXs ? 28 : 36} radius="md">
+                    <feature.icon size={isXs ? 16 : 20} />
+                  </ThemeIcon>
+                  <Text fw={600} fz={{ base: 13, sm: 16 }} mb={2}>
+                    {feature.title}
+                  </Text>
+                </Group>
+                <Box>
+                  <Text c="dimmed" fz={isXs ? 'xs' : 'sm'}>
+                    {feature.description}
+                  </Text>
+                </Box>
+              </Group>
+            ) : (
+              <Group key={idx} align="flex-start" gap={isXs ? 12 : 16}>
+                <ThemeIcon color="cyan" size={isXs ? 28 : 36} radius="md">
+                  <feature.icon size={isXs ? 16 : 20} />
+                </ThemeIcon>
+                <Box>
+                  <Text fw={600} fz={{ base: 14, sm: 16 }} mb={2}>
+                    {feature.title}
+                  </Text>
+                  <Text c="dimmed" fz="sm">
+                    {feature.description}
+                  </Text>
+                </Box>
+              </Group>
+            )
+          )}
         </Stack>
       </Box>
       {/* <Box style={{ position: 'absolute', bottom: 24, right: 24 }}>

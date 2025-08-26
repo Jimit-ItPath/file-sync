@@ -121,11 +121,11 @@ const ResetPassword = () => {
                       disabled={
                         Boolean(isLoading) || !methods.formState.isValid
                       }
-                      size="md"
+                      size={isXs ? 'sm' : 'md'}
                       radius="md"
                       style={{
                         fontWeight: 500,
-                        fontSize: 16,
+                        fontSize: isXs ? 14 : 16,
                         background: '#0284c7',
                         color: '#fff',
                         marginTop: 8,
@@ -135,8 +135,8 @@ const ResetPassword = () => {
                     </Button>
                   </Stack>
                 </Form>
-                <Group justify="center" mt={8}>
-                  <Text fz="sm" c="dimmed">
+                <Group justify="center" mt={isXs ? 0 : 8}>
+                  <Text fz={isXs ? 'xs' : 'sm'} c="dimmed">
                     <Link
                       to={AUTH_ROUTES.LOGIN.url}
                       style={{ textDecoration: 'none', color: '#0284c7' }}

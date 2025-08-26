@@ -207,10 +207,19 @@ export default function UnifidriveLanding() {
             <Grid.Col span={{ base: 12, md: 6 }}>
               <AnimatedSection delay={0.2}>
                 <Stack gap={isMobile ? 'md' : 'xl'}>
-                  <Title order={1} fw={700} fz={isMobile ? 36 : 60}>
+                  <Title
+                    order={1}
+                    fw={700}
+                    fz={isXs ? 28 : isSm ? 36 : isMd ? 44 : 60}
+                  >
                     One Platform.{' '}
                   </Title>
-                  <Title c="blue" fw={700} fz={isMobile ? 36 : 60} maw={600}>
+                  <Title
+                    c="blue"
+                    fw={700}
+                    fz={isXs ? 28 : isSm ? 36 : isMd ? 44 : 60}
+                    maw={600}
+                  >
                     All Your Cloud Drives.
                   </Title>
 

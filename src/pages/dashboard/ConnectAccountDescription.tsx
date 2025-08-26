@@ -1,6 +1,8 @@
 import { Text } from '@mantine/core';
+import useResponsive from '../../hooks/use-responsive';
 
 const ConnectAccountDescription = () => {
+  const { isXs } = useResponsive();
   return (
     <Text size="sm" c="dimmed" lh={1.6}>
       <Text size="sm" fw={600}>
@@ -10,7 +12,7 @@ const ConnectAccountDescription = () => {
         style={{
           paddingLeft: 16,
           margin: 0,
-          fontSize: 14,
+          fontSize: isXs ? 12 : 14,
           color: '#6b7280',
           lineHeight: 1.6,
         }}
@@ -25,8 +27,8 @@ const ConnectAccountDescription = () => {
           not duplicate or move them.
         </li>
         <li>
-          📁 All Cloud Hub simply unifies your Google Drive, Dropbox, and OneDrive
-          accounts into one smart dashboard.
+          📁 All Cloud Hub simply unifies your Google Drive, Dropbox, and
+          OneDrive accounts into one smart dashboard.
         </li>
         <li>
           ✨ Our goal is to help you manage everything in one place — securely
