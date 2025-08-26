@@ -23,6 +23,7 @@ const SortableCloudAccountItem = ({
   sortedCloudAccounts = [],
   connectedAccounts = [],
   handleReAuthenticate = () => {},
+  openRenameAccountModal,
 }: {
   account: any;
   isActive: boolean;
@@ -33,6 +34,7 @@ const SortableCloudAccountItem = ({
   sortedCloudAccounts: any[];
   connectedAccounts: ConnectedAccountType[];
   handleReAuthenticate: (account: ConnectedAccountType) => void;
+  openRenameAccountModal: (id: number) => void;
 }) => {
   const { isXs } = useResponsive();
   const {
@@ -129,11 +131,46 @@ const SortableCloudAccountItem = ({
           >
             {account.icon}
             <Tooltip label={account.title} fz={'xs'}>
-              <Text fz={'sm'} ml={10} c={'#000'} truncate maw={'70%'}>
+              <Text
+                fz={'sm'}
+                ml={10}
+                c={'#000'}
+                truncate
+                maw={isXs ? '70%' : '62%'}
+              >
                 {account.title}
               </Text>
             </Tooltip>
           </Link>
+
+          {/* Rename Account Button */}
+          {(hoveredAccountId === account.id || isXs) && (
+            <Tooltip
+              label="Rename Account"
+              position="right"
+              withArrow
+              fz={'xs'}
+            >
+              <Box
+                style={{
+                  position: 'absolute',
+                  right: isXs ? 40 : 28,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  cursor: 'pointer',
+                  zIndex: 10,
+                  flexShrink: 0,
+                }}
+                onClick={e => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  openRenameAccountModal(account.id);
+                }}
+              >
+                <ICONS.IconEdit size={16} color="#1c7ed6" />
+              </Box>
+            </Tooltip>
+          )}
 
           {/* Remove Access Button */}
           {(hoveredAccountId === account.id || isXs) && (

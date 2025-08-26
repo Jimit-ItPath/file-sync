@@ -39,7 +39,6 @@ import SortableCloudAccountItem from './SortableCloudAccountItem';
 import { Controller } from 'react-hook-form';
 // import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
 import { notifications } from '@mantine/notifications';
-import UploadProgressV2 from '../../../pages/dashboard/file-upload-v2/UploadProgressV2';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -87,10 +86,6 @@ const NavBar = ({
   // handleCloseUploadProgress,
   handleRemoveUploadedFile,
   handleFileUploadV2,
-  uploadingFilesV2,
-  cancelUploadV2,
-  closeUploadProgressV2,
-  showUploadProgressV2,
 }: any) => {
   const location = useLocation();
   const {
@@ -125,6 +120,12 @@ const NavBar = ({
     setMenuOpened,
     connectedAccounts,
     handleReAuthenticate,
+    openRenameAccountModal,
+    closeRenameAccountModal,
+    renameAccountLoading,
+    handleRenameConfirm,
+    renameAccountModalOpen,
+    renameAccountMethods,
   } = useSidebar();
 
   const isActiveRoute = useMemo(
@@ -581,6 +582,7 @@ const NavBar = ({
                           sortedCloudAccounts={sortedCloudAccounts}
                           connectedAccounts={connectedAccounts}
                           handleReAuthenticate={handleReAuthenticate}
+                          openRenameAccountModal={openRenameAccountModal}
                         />
                       );
                     })}
@@ -1118,22 +1120,34 @@ const NavBar = ({
         )}
       </Modal>
 
-      {/* {showUploadProgress ? (
-        <UploadProgress
-          uploadProgress={uploadProgress}
-          uploadingFiles={uploadingFiles}
-          onCancelUpload={handleCancelUpload}
-          onClose={handleCloseUploadProgress}
-        />
-      ) : null} */}
-      {showUploadProgressV2 ? (
-        <UploadProgressV2
-          uploadingFiles={uploadingFilesV2}
-          onCancelUpload={cancelUploadV2}
-          onRemoveFile={handleRemoveUploadedFile}
-          onClose={closeUploadProgressV2}
-        />
-      ) : null}
+      {/* Rename Account Modal */}
+      <Modal
+        opened={renameAccountModalOpen}
+        onClose={closeRenameAccountModal}
+        title={`Rename Account`}
+      >
+        <Form methods={renameAccountMethods} onSubmit={handleRenameConfirm}>
+          <Stack gap="md">
+            <TextInput
+              placeholder={`Account name`}
+              label={`Account Name`}
+              {...renameAccountMethods.register('name')}
+              error={renameAccountMethods.formState.errors.name?.message}
+              withAsterisk
+            />
+            <Button
+              type="submit"
+              loading={renameAccountLoading}
+              maw={150}
+              disabled={
+                !renameAccountMethods.formState.isValid || renameAccountLoading
+              }
+            >
+              Rename
+            </Button>
+          </Stack>
+        </Form>
+      </Modal>
     </Box>
   );
 };

@@ -10,6 +10,7 @@ import {
   fetchStorageDetails,
   getConnectedAccount,
   removeAccountAccess,
+  renameConnectedAccount,
   updateSequence,
   type ConnectedAccountType,
 } from '../../../store/slices/auth.slice';
@@ -39,6 +40,12 @@ const connectAccountSchema = z.object({
   }),
 });
 
+const renameAccountSchema = z.object({
+  name: z.string().trim().min(1, 'Account name is required'),
+});
+
+type RenameAccountFormData = z.infer<typeof renameAccountSchema>;
+
 type ConnectAccountFormData = z.infer<typeof connectAccountSchema>;
 
 const accountTypeConfig = {
@@ -66,6 +73,7 @@ const useSidebar = () => {
     useAppSelector(state => state.auth);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState(false);
+  const [renameAccountModalOpen, setRenameAccountModalOpen] = useState(false);
   const [hoveredAccountId, setHoveredAccountId] = useState<number | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
     null
@@ -94,6 +102,27 @@ const useSidebar = () => {
     reset,
     formState: { errors },
   } = methods;
+
+  const renameAccountMethods = useForm<RenameAccountFormData>({
+    resolver: zodResolver(renameAccountSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+    },
+  });
+
+  const { reset: resetRenameAccount } = renameAccountMethods;
+
+  useEffect(() => {
+    if (selectedAccountId && renameAccountModalOpen) {
+      const account = connectedAccounts?.find(
+        account => account.id === selectedAccountId
+      );
+      if (account) {
+        renameAccountMethods.setValue('name', account.account_name);
+      }
+    }
+  }, [selectedAccountId, connectedAccounts, renameAccountModalOpen]);
 
   const getAccounts = useCallback(async () => {
     // Don't fetch accounts if drag is in progress
@@ -327,6 +356,19 @@ const useSidebar = () => {
     setHoveredAccountId(null);
   }, []);
 
+  const openRenameAccountModal = useCallback((id: number) => {
+    setHoveredAccountId(id);
+    setSelectedAccountId(id);
+    setRenameAccountModalOpen(true);
+  }, []);
+
+  const closeRenameAccountModal = useCallback(() => {
+    setRenameAccountModalOpen(false);
+    setSelectedAccountId(null);
+    setHoveredAccountId(null);
+    resetRenameAccount({ name: '' });
+  }, []);
+
   const getCloudStorageFiles = useCallback(async () => {
     await dispatch(
       initializeCloudStorageFromStorage({
@@ -366,6 +408,36 @@ const useSidebar = () => {
         message: error || 'Error removing access',
         color: 'red',
       });
+    }
+  });
+
+  const [renameAccount, renameAccountLoading] = useAsyncOperation(
+    async ({ accountId, name }: { accountId: number; name: string }) => {
+      try {
+        const res = await dispatch(
+          renameConnectedAccount({ id: accountId, name })
+        ).unwrap();
+
+        if (res?.success === 1) {
+          notifications.show({
+            message: res?.message || 'Item renamed successfully',
+            color: 'green',
+          });
+          setRenameAccountModalOpen(false);
+          onInitialize({});
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to rename item',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleRenameConfirm = renameAccountMethods.handleSubmit(data => {
+    if (selectedAccountId) {
+      renameAccount({ accountId: selectedAccountId, name: data.name });
     }
   });
 
@@ -420,6 +492,12 @@ const useSidebar = () => {
     menuOpened,
     setMenuOpened,
     handleReAuthenticate,
+    openRenameAccountModal,
+    closeRenameAccountModal,
+    renameAccountLoading,
+    handleRenameConfirm,
+    renameAccountModalOpen,
+    renameAccountMethods,
   };
 };
 

@@ -119,6 +119,22 @@ export const api = {
         data,
         ...configs,
       }),
+    renameConnectedAccount: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        id: number;
+        name: string;
+      };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/connected-account/rename`,
+        method: METHODS.PATCH,
+        data,
+        ...configs,
+      }),
   },
   user: {
     get: ({ id, ...configs }: { id: string; [key: string]: any }) =>

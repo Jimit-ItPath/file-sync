@@ -179,6 +179,18 @@ export const updateSequence = createAsyncThunk(
   }
 );
 
+export const renameConnectedAccount = createAsyncThunk(
+  'auth/renameConnectedAccount',
+  async (data: { id: number; name: string }) => {
+    try {
+      const response = await api.auth.renameConnectedAccount({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
