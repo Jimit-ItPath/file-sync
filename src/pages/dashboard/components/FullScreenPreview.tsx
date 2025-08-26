@@ -440,7 +440,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               pointerEvents: 'auto',
             }}
           >
-            <Tooltip label="Zoom Out" fz={'xs'}>
+            <Tooltip label="Zoom Out" fz={'xs'} zIndex={1000}>
               <ActionIcon
                 variant="subtle"
                 color="gray"
@@ -466,7 +466,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               {Math.round(imageZoom * 100)}%
             </Button>
 
-            <Tooltip label="Zoom In" fz={'xs'}>
+            <Tooltip label="Zoom In" fz={'xs'} zIndex={1000}>
               <ActionIcon
                 variant="subtle"
                 color="gray"
@@ -478,7 +478,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               </ActionIcon>
             </Tooltip>
 
-            <Tooltip label="Reset Position" fz={'xs'}>
+            <Tooltip label="Reset Position" fz={'xs'} zIndex={1000}>
               <ActionIcon
                 variant="filled"
                 color="dark"
@@ -649,7 +649,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
                 boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
               }}
             >
-              <Tooltip label="Zoom Out (Ctrl + Scroll)" fz={'xs'}>
+              <Tooltip label="Zoom Out" fz={'xs'} zIndex={1000}>
                 <ActionIcon
                   variant="subtle"
                   color="gray"
@@ -671,7 +671,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
                 {Math.round(pdfScale * 100)}%
               </Button>
 
-              <Tooltip label="Zoom In (Ctrl + Scroll)" fz={'xs'}>
+              <Tooltip label="Zoom In" fz={'xs'} zIndex={1000}>
                 <ActionIcon
                   variant="subtle"
                   color="gray"
@@ -692,7 +692,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
                 }}
               />
 
-              <Tooltip label="Fit to Width" fz={'xs'}>
+              <Tooltip label="Fit to Width" fz={'xs'} zIndex={1000}>
                 <ActionIcon
                   variant="subtle"
                   color="gray"
@@ -712,7 +712,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
                 </ActionIcon>
               </Tooltip>
 
-              <Tooltip label="Fit to Height" fz={'xs'}>
+              <Tooltip label="Fit to Height" fz={'xs'} zIndex={1000}>
                 <ActionIcon
                   variant="subtle"
                   color="gray"
@@ -813,7 +813,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
         </Text>
         <Group gap="sm">
           {onShare && previewFile?.share && (
-            <Tooltip label="Share" fz={'xs'}>
+            <Tooltip label="Share" fz={'xs'} zIndex={1000}>
               <ActionIcon
                 variant="subtle"
                 color="gray"
@@ -833,7 +833,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
             </Tooltip>
           )}
           {onDownload && (
-            <Tooltip label="Download" fz={'xs'}>
+            <Tooltip label="Download" fz={'xs'} zIndex={1000}>
               <ActionIcon
                 variant="subtle"
                 color="gray"
@@ -852,7 +852,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               </ActionIcon>
             </Tooltip>
           )}
-          <Tooltip label="Close (Esc)" fz={'xs'}>
+          <Tooltip label="Close (Esc)" fz={'xs'} zIndex={1000}>
             <ActionIcon
               variant="subtle"
               color="gray"

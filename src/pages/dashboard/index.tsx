@@ -1234,7 +1234,7 @@ const Dashboard = () => {
         radius="lg"
         transitionProps={{ transition: 'fade', duration: 300 }}
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-        title="Connection Error"
+        title="Connect Account Error"
       >
         <Text size="sm" mb="md" c="red" fw={500}>
           {connectErrorMessage}

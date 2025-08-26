@@ -1,6 +1,7 @@
 import { Box, Group, Text, Progress, ActionIcon } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { formatBytes, formatTime } from '../../../utils/helper';
+import useResponsive from '../../../hooks/use-responsive';
 
 interface DownloadProgressProps {
   downloadProgress: any;
@@ -22,14 +23,15 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
   const isCancelled = downloadProgress?.status === 'cancelled';
   const isDownloading = downloadProgress?.status === 'downloading';
   const isPaused = downloadProgress?.status === 'paused';
+  const { isXs } = useResponsive();
 
   return (
     <Box
       style={{
         position: 'fixed',
-        bottom: 20,
-        right: 100,
-        width: 350,
+        bottom: isXs ? 100 : 20,
+        right: isXs ? 20 : 100,
+        width: isXs ? '80%' : 350,
         backgroundColor: 'white',
         borderRadius: 12,
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',

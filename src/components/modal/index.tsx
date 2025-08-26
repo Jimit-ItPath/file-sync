@@ -1,3 +1,4 @@
+import useResponsive from '../../hooks/use-responsive';
 import classes from './modal.module.css';
 import {
   Modal as MantineModal,
@@ -22,13 +23,14 @@ export const Modal = ({
   size = 'lg',
   ...props
 }: ModalProps) => {
+  const { isXs } = useResponsive();
   return (
     <MantineModal
       w="100%"
       {...{ opened, onClose, size }}
       title={
         title && (
-          <Title component="span" order={4}>
+          <Title component="span" order={isXs ? 5 : 4} flex={1}>
             {title}
           </Title>
         )
