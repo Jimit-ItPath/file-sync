@@ -67,7 +67,7 @@ const useUsers = () => {
       await dispatch(
         fetchUsers({
           limit,
-          page: pageNo ? pageNo : pagination?.page_no || 1,
+          page: typeof pageNo === 'number' ? pageNo : pagination?.page_no || 1,
           searchTerm: debouncedSearchTerm || '',
         })
       );
