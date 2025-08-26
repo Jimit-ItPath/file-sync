@@ -50,6 +50,7 @@ import {
   resetCloudStorageFolder,
 } from '../../store/slices/cloudStorage.slice';
 import { notifications } from '@mantine/notifications';
+import UploadProgressV2 from '../../pages/dashboard/file-upload-v2/UploadProgressV2';
 
 const DashboardLayout = () => {
   usePageData();
@@ -613,10 +614,6 @@ const DashboardLayout = () => {
               handleCloseUploadProgress,
               handleRemoveUploadedFile,
               handleFileUploadV2,
-              uploadingFilesV2,
-              cancelUploadV2,
-              closeUploadProgressV2,
-              showUploadProgressV2,
             }}
           />
         </AppShell.Navbar>
@@ -626,6 +623,15 @@ const DashboardLayout = () => {
           </Container>
         </AppShell.Main>
       </AppShell>
+
+      {showUploadProgressV2 ? (
+        <UploadProgressV2
+          uploadingFiles={uploadingFilesV2}
+          onCancelUpload={cancelUploadV2}
+          onRemoveFile={handleRemoveUploadedFile as any}
+          onClose={closeUploadProgressV2}
+        />
+      ) : null}
 
       <ConfirmModal
         opened={logoutConfirmOpened}

@@ -84,6 +84,67 @@ const ReAuthenticateAccount: React.FC<ReAuthenticateAccountProps> = ({
           font-size: 1rem;
           font-weight: 500;
         }
+        .background-shapes {
+          position: absolute;
+          top: 0;
+          left: 10%;
+          right: 0;
+          bottom: 0;
+          overflow: hidden;
+          z-index: 1;
+        }
+
+        .shape {
+          position: absolute;
+          border-radius: 50%;
+          opacity: 0.1;
+          animation: floatAnimation 6s ease-in-out infinite;
+        }
+        .shape-1 {
+          width: 200px;
+          height: 200px;
+          background: #FFD93D;
+          top: 10%;
+          left: 10%;
+          animation-delay: 0s;
+        }
+
+        .shape-2 {
+          width: 150px;
+          height: 150px;
+          background: #FF6B6B;
+          top: 20%;
+          right: 15%;
+          animation-delay: 2s;
+        }
+
+        .shape-3 {
+          width: 120px;
+          height: 120px;
+          background: #4ECDC4;
+          bottom: 15%;
+          left: 20%;
+          animation-delay: 4s;
+        }
+
+        .shape-4 {
+          width: 180px;
+          height: 180px;
+          background: #45B7D1;
+          bottom: 10%;
+          right: 10%;
+          animation-delay: 1s;
+        }
+
+        @media (max-width: 768px) {
+          .background-shapes {
+            left: 0;
+          }
+          .shape-1, .shape-2, .shape-3, .shape-4 {
+            width: 100px !important;
+            height: 100px !important;
+          }
+        }
       `}</style>
 
       <Box
@@ -94,6 +155,12 @@ const ReAuthenticateAccount: React.FC<ReAuthenticateAccountProps> = ({
           minHeight: '70vh',
         }}
       >
+        <div className="background-shapes">
+          <div className="shape shape-1" />
+          <div className="shape shape-2" />
+          <div className="shape shape-3" />
+          <div className="shape shape-4" />
+        </div>
         <Container className="content-wrapper">
           <Stack align="center" gap="xl">
             <Text className="title">Re-authentication Required</Text>

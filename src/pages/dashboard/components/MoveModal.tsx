@@ -7,6 +7,7 @@ import {
   Box,
   Loader,
   Center,
+  Badge,
 } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { notifications } from '@mantine/notifications';
@@ -43,6 +44,11 @@ type FolderData = {
   icon: (size: number) => React.ReactNode;
   parent_id: string | null;
   external_parent_id?: string | null;
+  userConnectedAccount?: {
+    id: string;
+    account_name: string;
+    account_type: string;
+  };
 };
 
 const MoveModal: React.FC<MoveModalProps> = ({
@@ -82,6 +88,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
       }),
       parent_id: item.parent_id,
       external_parent_id: item.external_parent_id,
+      userConnectedAccount: item.UserConnectedAccount,
     }));
   }, [folders]);
 
@@ -588,6 +595,41 @@ const MoveModal: React.FC<MoveModalProps> = ({
                             </Tooltip>
                           </Box>
                         </Group>
+
+                        {folder?.userConnectedAccount?.account_name && (
+                          <Tooltip
+                            label={folder?.userConnectedAccount?.account_name}
+                            fz={'xs'}
+                          >
+                            <Text
+                              truncate
+                              fz={9}
+                              fw={500}
+                              maw={100}
+                              style={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <Badge
+                                size="xs"
+                                variant="light"
+                                fw={500}
+                                color={
+                                  folder?.userConnectedAccount?.account_type ===
+                                  'google_drive'
+                                    ? 'red'
+                                    : folder?.userConnectedAccount
+                                          ?.account_type === 'dropbox'
+                                      ? '#0061FE'
+                                      : 'blue'
+                                }
+                              >
+                                {folder?.userConnectedAccount?.account_name}
+                              </Badge>
+                            </Text>
+                          </Tooltip>
+                        )}
 
                         <ActionIcon
                           variant="subtle"
