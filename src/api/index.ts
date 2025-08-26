@@ -54,9 +54,10 @@ export const api = {
       ...configs
     }: {
       data: {
-        id: number;
+        id?: number;
         account_type: 'google_drive' | 'dropbox' | 'onedrive';
         account_name: string;
+        account_id?: number | string;
       };
       [key: string]: any;
     }) =>
@@ -115,6 +116,22 @@ export const api = {
       client({
         url: `/connected-account/update-sequence`,
         method: METHODS.PUT,
+        data,
+        ...configs,
+      }),
+    renameConnectedAccount: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        id: number;
+        name: string;
+      };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/connected-account/rename`,
+        method: METHODS.PATCH,
         data,
         ...configs,
       }),

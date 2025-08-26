@@ -17,6 +17,7 @@ import {
   type UploadingFile,
   type FileUploadStatus,
 } from './use-upload-manager-v2';
+import useResponsive from '../../../hooks/use-responsive';
 
 interface UploadProgressV2Props {
   uploadingFiles: Record<string, UploadingFile>;
@@ -201,6 +202,7 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
   onRemoveFile,
   onClose,
 }) => {
+  const { isXs } = useResponsive();
   const fileEntries = Object.entries(uploadingFiles);
 
   if (fileEntries.length === 0) {
@@ -247,26 +249,32 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
   return (
     <Paper
       shadow="lg"
-      radius="lg"
+      radius={isXs ? 'md' : 'lg'}
       p={0}
       style={{
         position: 'fixed',
-        bottom: 24,
-        right: 100,
-        width: 400,
+        bottom: isXs ? 100 : 24,
+        right: isXs ? 10 : 100,
+        width: isXs ? '70%' : 400,
         maxHeight: 600,
         zIndex: 1000,
+        borderTopLeftRadius: isXs ? 16 : 'var(--mantine-radius-lg)',
+        borderTopRightRadius: isXs ? 16 : 'var(--mantine-radius-lg)',
         border: '1px solid #e5e7eb',
         backgroundColor: 'white',
         overflow: 'hidden',
+        transition: 'all 0.3s ease',
       }}
     >
       {/* Header */}
       <Box
-        p="lg"
+        p="md"
         style={{
           borderBottom: '1px solid #f3f4f6',
           backgroundColor: '#fafafa',
+          position: isXs ? 'sticky' : 'static',
+          top: 0,
+          zIndex: 10,
         }}
       >
         <Group justify="space-between" align="flex-start">
@@ -316,7 +324,7 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
       {/* File List */}
       <ScrollArea
         h={fileEntries?.length > 4 ? '400px' : 'auto'}
-        scrollbars={'y'}
+        scrollbars="y"
         styles={{ scrollbar: { width: 10 } }}
       >
         <Stack gap={0}>

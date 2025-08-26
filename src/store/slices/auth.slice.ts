@@ -80,9 +80,10 @@ export const connectCloudAccount = createAsyncThunk(
   'auth/connectCloudAccount',
   async (
     data: {
-      id: number;
+      id?: number;
       account_type: 'google_drive' | 'dropbox' | 'onedrive';
       account_name: string;
+      account_id?: number | string;
     },
     { rejectWithValue }
   ) => {
@@ -171,6 +172,18 @@ export const updateSequence = createAsyncThunk(
   ) => {
     try {
       const response = await api.auth.updateSequence({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const renameConnectedAccount = createAsyncThunk(
+  'auth/renameConnectedAccount',
+  async (data: { id: number; name: string }) => {
+    try {
+      const response = await api.auth.renameConnectedAccount({ data });
       return response.data;
     } catch (error: any) {
       return error;

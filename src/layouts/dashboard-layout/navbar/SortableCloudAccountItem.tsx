@@ -10,6 +10,8 @@ import {
 import { Tooltip } from '../../../components';
 import { CSS } from '@dnd-kit/utilities';
 import useResponsive from '../../../hooks/use-responsive';
+import type { ConnectedAccountType } from '../../../store/slices/auth.slice';
+import { useMemo } from 'react';
 
 const SortableCloudAccountItem = ({
   account,
@@ -19,6 +21,9 @@ const SortableCloudAccountItem = ({
   openRemoveAccessModal,
   mobileDrawerHandler,
   sortedCloudAccounts = [],
+  connectedAccounts = [],
+  handleReAuthenticate = () => {},
+  openRenameAccountModal,
 }: {
   account: any;
   isActive: boolean;
@@ -27,6 +32,9 @@ const SortableCloudAccountItem = ({
   openRemoveAccessModal: (id: number) => void;
   mobileDrawerHandler: any;
   sortedCloudAccounts: any[];
+  connectedAccounts: ConnectedAccountType[];
+  handleReAuthenticate: (account: ConnectedAccountType) => void;
+  openRenameAccountModal: (id: number) => void;
 }) => {
   const { isXs } = useResponsive();
   const {
@@ -49,6 +57,13 @@ const SortableCloudAccountItem = ({
   const showDragHandle =
     sortedCloudAccounts?.length > 1 && hoveredAccountId === account.id;
 
+  const getConnectedAccount = useMemo(() => {
+    const connectedAccount = connectedAccounts?.find(
+      acc => acc.id === account.id
+    );
+    return connectedAccount;
+  }, [connectedAccounts, account.id]);
+
   return (
     <Box key={account.id} mb={'xs'} ref={setNodeRef} style={style}>
       <Group
@@ -56,6 +71,7 @@ const SortableCloudAccountItem = ({
           position: 'relative',
           width: '100%',
         }}
+        align="center"
         onMouseEnter={() => setHoveredAccountId(account.id)}
         onMouseLeave={() => setHoveredAccountId(null)}
       >
@@ -116,11 +132,45 @@ const SortableCloudAccountItem = ({
           >
             {account.icon}
             <Tooltip label={account.title} fz={'xs'}>
-              <Text fz={'sm'} ml={10} c={'#000'} truncate maw={'70%'}>
+              <Text
+                fz={'sm'}
+                ml={10}
+                c={'#000'}
+                truncate
+                maw={isXs ? '70%' : '62%'}
+              >
                 {account.title}
               </Text>
             </Tooltip>
           </Link>
+
+          {/* Rename Account Button */}
+          {(hoveredAccountId === account.id || isXs) && (
+            <Tooltip
+              label="Rename Account"
+              position="right"
+              withArrow
+              fz={'xs'}
+            >
+              <Box
+                style={{
+                  position: 'absolute',
+                  right: isXs ? 40 : 28,
+                  top: 9,
+                  cursor: 'pointer',
+                  zIndex: 10,
+                  flexShrink: 0,
+                }}
+                onClick={e => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  openRenameAccountModal(account.id);
+                }}
+              >
+                <ICONS.IconEdit size={16} color="#1c7ed6" />
+              </Box>
+            </Tooltip>
+          )}
 
           {/* Remove Access Button */}
           {(hoveredAccountId === account.id || isXs) && (
@@ -129,11 +179,10 @@ const SortableCloudAccountItem = ({
                 style={{
                   position: 'absolute',
                   right: 8,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
+                  top: 9,
                   cursor: 'pointer',
-                  zIndex: 10, // Ensure it's above other elements
-                  flexShrink: 0, // Prevent shrinking
+                  zIndex: 10,
+                  flexShrink: 0,
                 }}
                 onClick={e => {
                   e.stopPropagation();
@@ -149,7 +198,35 @@ const SortableCloudAccountItem = ({
       </Group>
 
       {/* Storage Progress Bar */}
-      {account.storageInfo && account.storageInfo.total ? (
+      {getConnectedAccount?.re_authentication_required ? (
+        <Text
+          fz="xs"
+          fw={500}
+          ml={-1}
+          style={{
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            color: '#2563eb', // blue-600
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => handleReAuthenticate(getConnectedAccount)}
+          onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = '#eff6ff';
+            e.currentTarget.style.color = '#1d4ed8';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#2563eb';
+          }}
+        >
+          <ICONS.IconRefresh size={16} stroke={2} />
+          Re-authenticate Account
+        </Text>
+      ) : account.storageInfo && account.storageInfo.total ? (
         <Box
           px={8}
           mt={4}

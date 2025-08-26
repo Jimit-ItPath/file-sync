@@ -10,7 +10,9 @@ import {
   fetchStorageDetails,
   getConnectedAccount,
   removeAccountAccess,
+  renameConnectedAccount,
   updateSequence,
+  type ConnectedAccountType,
 } from '../../../store/slices/auth.slice';
 import {
   decodeToken,
@@ -37,6 +39,12 @@ const connectAccountSchema = z.object({
     errorMap: () => ({ message: 'Please select an account type' }),
   }),
 });
+
+const renameAccountSchema = z.object({
+  name: z.string().trim().min(1, 'Account name is required'),
+});
+
+type RenameAccountFormData = z.infer<typeof renameAccountSchema>;
 
 type ConnectAccountFormData = z.infer<typeof connectAccountSchema>;
 
@@ -65,6 +73,7 @@ const useSidebar = () => {
     useAppSelector(state => state.auth);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState(false);
+  const [renameAccountModalOpen, setRenameAccountModalOpen] = useState(false);
   const [hoveredAccountId, setHoveredAccountId] = useState<number | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
     null
@@ -93,6 +102,27 @@ const useSidebar = () => {
     reset,
     formState: { errors },
   } = methods;
+
+  const renameAccountMethods = useForm<RenameAccountFormData>({
+    resolver: zodResolver(renameAccountSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+    },
+  });
+
+  const { reset: resetRenameAccount } = renameAccountMethods;
+
+  useEffect(() => {
+    if (selectedAccountId && renameAccountModalOpen) {
+      const account = connectedAccounts?.find(
+        account => account.id === selectedAccountId
+      );
+      if (account) {
+        renameAccountMethods.setValue('name', account.account_name);
+      }
+    }
+  }, [selectedAccountId, connectedAccounts, renameAccountModalOpen]);
 
   const getAccounts = useCallback(async () => {
     // Don't fetch accounts if drag is in progress
@@ -261,6 +291,7 @@ const useSidebar = () => {
           }
           reset();
           setIsConnectModalOpen(false);
+          setLocalStorage('connectErrorFromBackend', true);
           window.location.href = res?.data?.redirect_url;
         }
       } catch (error: any) {
@@ -275,6 +306,34 @@ const useSidebar = () => {
   const handleConnectAccount = methods.handleSubmit(data => {
     connectAccount(data);
   });
+
+  const [handleReAuthenticate] = useAsyncOperation(
+    async (account: ConnectedAccountType) => {
+      try {
+        const token = localStorage.getItem('token') || null;
+        const decodedToken: any = decodeToken(token);
+        const res = await dispatch(
+          connectCloudAccount({
+            id: Number(decodedToken?.user?.id),
+            account_name: account.account_name,
+            account_type: account.account_type,
+            account_id: account.id,
+          })
+        ).unwrap();
+        if (res?.success || res?.data?.redirect_url) {
+          reset();
+          setIsConnectModalOpen(false);
+          setLocalStorage('connectErrorFromBackend', true);
+          window.location.href = res?.data?.redirect_url;
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to connect account',
+          color: 'red',
+        });
+      }
+    }
+  );
 
   const openAccountModal = useCallback(() => {
     setIsConnectModalOpen(true);
@@ -295,6 +354,19 @@ const useSidebar = () => {
     setRemoveAccessModalOpen(false);
     setSelectedAccountId(null);
     setHoveredAccountId(null);
+  }, []);
+
+  const openRenameAccountModal = useCallback((id: number) => {
+    setHoveredAccountId(id);
+    setSelectedAccountId(id);
+    setRenameAccountModalOpen(true);
+  }, []);
+
+  const closeRenameAccountModal = useCallback(() => {
+    setRenameAccountModalOpen(false);
+    setSelectedAccountId(null);
+    setHoveredAccountId(null);
+    resetRenameAccount({ name: '' });
   }, []);
 
   const getCloudStorageFiles = useCallback(async () => {
@@ -336,6 +408,36 @@ const useSidebar = () => {
         message: error || 'Error removing access',
         color: 'red',
       });
+    }
+  });
+
+  const [renameAccount, renameAccountLoading] = useAsyncOperation(
+    async ({ accountId, name }: { accountId: number; name: string }) => {
+      try {
+        const res = await dispatch(
+          renameConnectedAccount({ id: accountId, name })
+        ).unwrap();
+
+        if (res?.success === 1) {
+          notifications.show({
+            message: res?.message || 'Item renamed successfully',
+            color: 'green',
+          });
+          setRenameAccountModalOpen(false);
+          onInitialize({});
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to rename item',
+          color: 'red',
+        });
+      }
+    }
+  );
+
+  const handleRenameConfirm = renameAccountMethods.handleSubmit(data => {
+    if (selectedAccountId) {
+      renameAccount({ accountId: selectedAccountId, name: data.name });
     }
   });
 
@@ -389,6 +491,13 @@ const useSidebar = () => {
     setShowConfetti,
     menuOpened,
     setMenuOpened,
+    handleReAuthenticate,
+    openRenameAccountModal,
+    closeRenameAccountModal,
+    renameAccountLoading,
+    handleRenameConfirm,
+    renameAccountModalOpen,
+    renameAccountMethods,
   };
 };
 
