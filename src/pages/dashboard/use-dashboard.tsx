@@ -189,6 +189,10 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     before?: Date;
   } | null>(null);
   const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false);
+  const [connectErrorModalOpen, setConnectErrorModalOpen] = useState(false);
+  const [connectErrorMessage, setConnectErrorMessage] = useState<string | null>(
+    null
+  );
 
   // **NEW: Improved infinite scroll state management**
   const [isAutoLoading, setIsAutoLoading] = useState(false);
@@ -314,11 +318,20 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     setAdvancedFilterModalOpen(false);
   }, []);
 
+  const checkConnectedAccDetails = useMemo(() => {
+    if (checkLocation) {
+      return connectedAccounts.find(
+        account => account.id?.toString() === currentAccountId
+      );
+    }
+  }, [connectedAccounts, currentAccountId, checkLocation]);
+
   const getCloudStorageFiles = useCallback(
     async (
       page?: number,
       filters?: { type?: string; after?: string; before?: string }
     ) => {
+      if (checkConnectedAccDetails?.re_authentication_required) return;
       const requestParams: any = {
         ...(folderId && { id: folderId }),
         limit: pagination?.page_limit || 20,
@@ -345,12 +358,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
       debouncedSearchTerm,
       checkLocation,
       currentAccountId,
+      checkConnectedAccDetails?.re_authentication_required,
     ]
   );
 
   // **NEW: Improved auto-load logic with better state management**
   const checkAndAutoLoad = useCallback(async () => {
     if (
+      checkConnectedAccDetails?.re_authentication_required ||
       !scrollBoxRef.current ||
       loading ||
       isAutoLoading ||
@@ -442,7 +457,29 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     currentAccountId,
     accountId,
     dispatch,
+    checkConnectedAccDetails?.re_authentication_required,
   ]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const errorMsg = searchParams.get('connect-error');
+    const fromBackend = getLocalStorage('connectErrorFromBackend');
+
+    if (errorMsg && fromBackend) {
+      setConnectErrorMessage(errorMsg);
+      setConnectErrorModalOpen(true);
+
+      removeLocalStorage('connectErrorFromBackend');
+      searchParams.delete('connect-error');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: searchParams.toString(),
+        },
+        { replace: true }
+      );
+    }
+  }, [location.search, navigate, location.pathname]);
 
   useEffect(() => {
     isRouteSwitchingRef.current = true;
@@ -1123,6 +1160,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
         }
 
         const res = await dispatch(createCloudStorageFolder(requestParams));
+
+        if (res?.payload?.status === 400) {
+          notifications.show({
+            message: res?.payload?.message || 'Failed to create folder',
+            color: 'red',
+          });
+          return;
+        }
 
         if (res?.payload?.success) {
           resetAutoLoadState();
@@ -2105,17 +2150,14 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     setPreviewFile(null);
   }, []);
 
-  const checkConnectedAccDetails = useMemo(() => {
-    if (checkLocation) {
-      return connectedAccounts.find(
-        account => account.id?.toString() === currentAccountId
-      );
-    }
-  }, [connectedAccounts, currentAccountId, checkLocation]);
-
   const hasFilters = useMemo(() => {
     return typeFilter?.length || modifiedFilter ? true : false;
   }, [typeFilter, modifiedFilter]);
+
+  const closeConnectErrorModal = useCallback(() => {
+    setConnectErrorModalOpen(false);
+    setConnectErrorMessage(null);
+  }, []);
 
   return {
     layout,
@@ -2275,6 +2317,11 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     handleAdvancedFilter,
     handleAdvancedFilterReset,
     hasFilters,
+
+    // connect error
+    connectErrorModalOpen,
+    connectErrorMessage,
+    closeConnectErrorModal,
   };
 };
 

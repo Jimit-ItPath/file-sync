@@ -54,9 +54,10 @@ export const api = {
       ...configs
     }: {
       data: {
-        id: number;
+        id?: number;
         account_type: 'google_drive' | 'dropbox' | 'onedrive';
         account_name: string;
+        account_id?: number | string;
       };
       [key: string]: any;
     }) =>

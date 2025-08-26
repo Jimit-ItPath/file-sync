@@ -11,6 +11,7 @@ import {
   getConnectedAccount,
   removeAccountAccess,
   updateSequence,
+  type ConnectedAccountType,
 } from '../../../store/slices/auth.slice';
 import {
   decodeToken,
@@ -261,6 +262,7 @@ const useSidebar = () => {
           }
           reset();
           setIsConnectModalOpen(false);
+          setLocalStorage('connectErrorFromBackend', true);
           window.location.href = res?.data?.redirect_url;
         }
       } catch (error: any) {
@@ -275,6 +277,34 @@ const useSidebar = () => {
   const handleConnectAccount = methods.handleSubmit(data => {
     connectAccount(data);
   });
+
+  const [handleReAuthenticate] = useAsyncOperation(
+    async (account: ConnectedAccountType) => {
+      try {
+        const token = localStorage.getItem('token') || null;
+        const decodedToken: any = decodeToken(token);
+        const res = await dispatch(
+          connectCloudAccount({
+            id: Number(decodedToken?.user?.id),
+            account_name: account.account_name,
+            account_type: account.account_type,
+            account_id: account.id,
+          })
+        ).unwrap();
+        if (res?.success || res?.data?.redirect_url) {
+          reset();
+          setIsConnectModalOpen(false);
+          setLocalStorage('connectErrorFromBackend', true);
+          window.location.href = res?.data?.redirect_url;
+        }
+      } catch (error: any) {
+        notifications.show({
+          message: error || 'Failed to connect account',
+          color: 'red',
+        });
+      }
+    }
+  );
 
   const openAccountModal = useCallback(() => {
     setIsConnectModalOpen(true);
@@ -389,6 +419,7 @@ const useSidebar = () => {
     setShowConfetti,
     menuOpened,
     setMenuOpened,
+    handleReAuthenticate,
   };
 };
 

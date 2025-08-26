@@ -48,6 +48,7 @@ import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
 import { notifications } from '@mantine/notifications';
 import AdvancedFiltersModal from './components/AdvancedFiltersModal';
 import { useAppSelector } from '../../store';
+import ReAuthenticateAccount from './ReAuthenticateAccount';
 
 const iconStyle = {
   borderRadius: 999,
@@ -205,6 +206,10 @@ const Dashboard = () => {
     handleAdvancedFilter,
     handleAdvancedFilterReset,
     hasFilters,
+    // connect error
+    connectErrorModalOpen,
+    connectErrorMessage,
+    closeConnectErrorModal,
   } = useDashboard({ downloadFile });
 
   const {
@@ -216,6 +221,7 @@ const Dashboard = () => {
     connectAccountFormData,
     connectAccountLoading,
     loading: connectedAccountLoading,
+    handleReAuthenticate,
   } = useSidebar();
   const { isSm, theme } = useResponsive();
   const { loading: authLoading, hasInitializedAccounts } = useAppSelector(
@@ -241,11 +247,8 @@ const Dashboard = () => {
     // files?.length === 0 &&
     // !loading
   ) {
-    // if (authLoading || connectAccountLoading || connectedAccountLoading)
-    //   return null;
     return (
       <>
-        {/* <LoaderOverlay visible={loading} opacity={1} /> */}
         <NoConnectedAccount
           {...{
             closeAccountModal,
@@ -259,6 +262,15 @@ const Dashboard = () => {
           }}
         />
       </>
+    );
+  }
+
+  if (checkLocation && checkConnectedAccDetails?.re_authentication_required) {
+    return (
+      <ReAuthenticateAccount
+        account={checkConnectedAccDetails}
+        handleReAuthenticate={handleReAuthenticate}
+      />
     );
   }
 
@@ -688,7 +700,7 @@ const Dashboard = () => {
           <DragDropOverlay
             isDragging={isDragging}
             message="Drop files here to upload"
-            subMessage="Support for PDF, DOC, XLS, PPT, images and more"
+            subMessage="Upload up to 5 files (max 5 MB each)."
           />
         </Box>
         {isInitialLoading && hasPaginationData ? (
@@ -1213,6 +1225,26 @@ const Dashboard = () => {
         activeTypeFilter={typeFilter}
         activeModifiedFilter={modifiedFilter}
       />
+
+      {/* Connect Error Modal */}
+      <Modal
+        opened={connectErrorModalOpen}
+        onClose={closeConnectErrorModal}
+        centered
+        radius="lg"
+        transitionProps={{ transition: 'fade', duration: 300 }}
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+        title="Connection Error"
+      >
+        <Text size="sm" mb="md" c="red" fw={500}>
+          {connectErrorMessage}
+        </Text>
+        <Group justify="flex-end">
+          <Button onClick={closeConnectErrorModal} color="red" radius="md">
+            Close
+          </Button>
+        </Group>
+      </Modal>
     </Box>
   );
 };

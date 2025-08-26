@@ -123,6 +123,8 @@ const NavBar = ({
     // openNewModal,
     menuOpened,
     setMenuOpened,
+    connectedAccounts,
+    handleReAuthenticate,
   } = useSidebar();
 
   const isActiveRoute = useMemo(
@@ -577,6 +579,8 @@ const NavBar = ({
                           openRemoveAccessModal={openRemoveAccessModal}
                           mobileDrawerHandler={mobileDrawerHandler}
                           sortedCloudAccounts={sortedCloudAccounts}
+                          connectedAccounts={connectedAccounts}
+                          handleReAuthenticate={handleReAuthenticate}
                         />
                       );
                     })}
