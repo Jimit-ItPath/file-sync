@@ -217,224 +217,227 @@ const Profile = () => {
           </Grid.Col>
 
           {/* ===== SETTINGS SECTION ===== */}
-          <Grid.Col span={{ base: 12 }}>
-            <Stack gap="lg">
-              <Box>
-                <Title order={isXs ? 3 : 2} fw={600} mb={4}>
-                  Settings
-                </Title>
-                <Text size="sm" c="dimmed">
-                  Manage your smart file distribution and connected services
-                </Text>
-              </Box>
+          {userProfile?.role === ROLES.USER ? (
+            <Grid.Col span={{ base: 12 }}>
+              <Stack gap="lg">
+                <Box>
+                  <Title order={isXs ? 3 : 2} fw={600} mb={4}>
+                    Settings
+                  </Title>
+                  <Text size="sm" c="dimmed">
+                    Manage your smart file distribution and connected services
+                  </Text>
+                </Box>
 
-              {/* Smart File Distribution */}
-              {user?.user?.role === ROLES.USER && (
-                <Card radius="md" p="lg" shadow="xs" withBorder>
-                  <Stack gap="md">
-                    <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
-                      Smart File Distribution
-                    </Title>
-                    <Text size="sm" c="dimmed" lh={1.5}>
-                      {/* Automatically route uploaded files to your preferred cloud
-                      storage based on type or rules. */}
-                      Smart File Distribution helps you automatically route
-                      uploaded files or folders to your preferred cloud storage
-                      platforms (Google Drive, Dropbox, or OneDrive) based on
-                      file types, content, or your selected preferences.
-                    </Text>
-
-                    <Text fz={13} c="gray" mt={8}>
-                      You can turn this off or choose to be asked each time
-                      during file upload.
-                    </Text>
-
-                    <Group wrap="wrap" align="center" gap="xs">
-                      <MantineInput.Label
-                        htmlFor="sfd-switch"
-                        w="auto"
-                        fz="sm"
-                        style={{ cursor: 'pointer' }}
-                      >
-                        Ask Every Time
-                      </MantineInput.Label>
-                      <Switch
-                        id="sfd-switch"
-                        checked={userProfile?.is_sfd_enabled}
-                        onChange={event =>
-                          handleSFDToggle(event.currentTarget.checked)
-                        }
-                        size="sm"
-                        color="cyan"
-                      />
-                      <MantineInput.Label
-                        htmlFor="sfd-switch"
-                        w="auto"
-                        fz="sm"
-                        style={{ cursor: 'pointer' }}
-                      >
+                {/* Smart File Distribution */}
+                {user?.user?.role === ROLES.USER && (
+                  <Card radius="md" p="lg" shadow="xs" withBorder>
+                    <Stack gap="md">
+                      <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
                         Smart File Distribution
-                      </MantineInput.Label>
-                    </Group>
-                  </Stack>
-                </Card>
-              )}
+                      </Title>
+                      <Text size="sm" c="dimmed" lh={1.5}>
+                        {/* Automatically route uploaded files to your preferred cloud
+                      storage based on type or rules. */}
+                        Smart File Distribution helps you automatically route
+                        uploaded files or folders to your preferred cloud
+                        storage platforms (Google Drive, Dropbox, or OneDrive)
+                        based on file types, content, or your selected
+                        preferences.
+                      </Text>
 
-              {/* Connected Services */}
-              {user?.user?.role === ROLES.USER && (
-                <Card radius="md" p="lg" shadow="xs" withBorder>
-                  <Stack gap="sm">
-                    <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
-                      Connected Services
-                    </Title>
-                    <Text size="xs" c="dimmed">
-                      Manage your cloud storage integrations
-                    </Text>
+                      <Text fz={13} c="gray" mt={8}>
+                        You can turn this off or choose to be asked each time
+                        during file upload.
+                      </Text>
 
-                    {connectedAccounts.length === 0 ? (
-                      <Card withBorder radius="md" bg="gray.0">
-                        <Group gap="sm">
-                          <ICONS.IconCloudOff
-                            size={20}
-                            color="var(--mantine-color-gray-5)"
-                          />
-                          <Text size="sm" c="dimmed">
-                            No accounts connected
-                          </Text>
-                        </Group>
-                        <Button
-                          mt="sm"
-                          size="xs"
-                          leftSection={<ICONS.IconPlus size={14} />}
-                          onClick={openAccountModal}
+                      <Group wrap="wrap" align="center" gap="xs">
+                        <MantineInput.Label
+                          htmlFor="sfd-switch"
+                          w="auto"
+                          fz="sm"
+                          style={{ cursor: 'pointer' }}
                         >
-                          Connect Account
-                        </Button>
-                      </Card>
-                    ) : (
-                      <Grid gutter="sm">
-                        {connectedAccounts.map(account => {
-                          const accountConfigs = {
-                            google_drive: {
-                              icon: (
-                                <Image
-                                  src={GoogleDriveIcon}
-                                  w={isXs ? 16 : 20}
-                                  h={isXs ? 16 : 20}
-                                />
-                              ),
-                              color: 'red',
-                              label: 'Google Drive',
-                            },
-                            dropbox: {
-                              icon: (
-                                <Image src={DropboxIcon} w={isXs ? 20 : 24} />
-                              ),
-                              color: 'blue',
-                              label: 'Dropbox',
-                            },
-                            onedrive: {
-                              icon: (
-                                <Image
-                                  src={OneDriveIcon}
-                                  w={isXs ? 20 : 24}
-                                  h={isXs ? 20 : 24}
-                                />
-                              ),
-                              color: 'indigo',
-                              label: 'OneDrive',
-                            },
-                          };
-                          const cfg = accountConfigs[account.account_type];
-                          if (!cfg) return null;
+                          Ask Every Time
+                        </MantineInput.Label>
+                        <Switch
+                          id="sfd-switch"
+                          checked={userProfile?.is_sfd_enabled}
+                          onChange={event =>
+                            handleSFDToggle(event.currentTarget.checked)
+                          }
+                          size="sm"
+                          color="cyan"
+                        />
+                        <MantineInput.Label
+                          htmlFor="sfd-switch"
+                          w="auto"
+                          fz="sm"
+                          style={{ cursor: 'pointer' }}
+                        >
+                          Smart File Distribution
+                        </MantineInput.Label>
+                      </Group>
+                    </Stack>
+                  </Card>
+                )}
 
-                          return (
-                            <Grid.Col
-                              key={account.id}
-                              span={{ base: 12, sm: 6, lg: 4 }}
-                            >
-                              <Card
-                                withBorder
-                                radius="md"
-                                p={isMd ? 'sm' : 'lg'}
-                                // bg={cfg.bg}
-                                style={{
-                                  height: '100%',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                }}
+                {/* Connected Services */}
+                {user?.user?.role === ROLES.USER && (
+                  <Card radius="md" p="lg" shadow="xs" withBorder>
+                    <Stack gap="sm">
+                      <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
+                        Connected Services
+                      </Title>
+                      <Text size="xs" c="dimmed">
+                        Manage your cloud storage integrations
+                      </Text>
+
+                      {connectedAccounts.length === 0 ? (
+                        <Card withBorder radius="md" bg="gray.0">
+                          <Group gap="sm">
+                            <ICONS.IconCloudOff
+                              size={20}
+                              color="var(--mantine-color-gray-5)"
+                            />
+                            <Text size="sm" c="dimmed">
+                              No accounts connected
+                            </Text>
+                          </Group>
+                          <Button
+                            mt="sm"
+                            size="xs"
+                            leftSection={<ICONS.IconPlus size={14} />}
+                            onClick={openAccountModal}
+                          >
+                            Connect Account
+                          </Button>
+                        </Card>
+                      ) : (
+                        <Grid gutter="sm">
+                          {connectedAccounts.map(account => {
+                            const accountConfigs = {
+                              google_drive: {
+                                icon: (
+                                  <Image
+                                    src={GoogleDriveIcon}
+                                    w={isXs ? 16 : 20}
+                                    h={isXs ? 16 : 20}
+                                  />
+                                ),
+                                color: 'red',
+                                label: 'Google Drive',
+                              },
+                              dropbox: {
+                                icon: (
+                                  <Image src={DropboxIcon} w={isXs ? 20 : 24} />
+                                ),
+                                color: 'blue',
+                                label: 'Dropbox',
+                              },
+                              onedrive: {
+                                icon: (
+                                  <Image
+                                    src={OneDriveIcon}
+                                    w={isXs ? 20 : 24}
+                                    h={isXs ? 20 : 24}
+                                  />
+                                ),
+                                color: 'indigo',
+                                label: 'OneDrive',
+                              },
+                            };
+                            const cfg = accountConfigs[account.account_type];
+                            if (!cfg) return null;
+
+                            return (
+                              <Grid.Col
+                                key={account.id}
+                                span={{ base: 12, sm: 6, lg: 4 }}
                               >
-                                <Box style={{ flex: 1 }}>
-                                  <Group
-                                    justify="space-between"
-                                    align="flex-start"
-                                    wrap="nowrap"
-                                  >
-                                    <Group gap="sm">
-                                      <Avatar
-                                        color={cfg.color}
-                                        radius="sm"
-                                        size={isXs ? 'md' : 'lg'}
-                                      >
-                                        {cfg.icon}
-                                      </Avatar>
-                                      <Stack gap={2}>
-                                        <Tooltip
-                                          label={account.account_name}
-                                          fz={'xs'}
-                                        >
-                                          <Text
-                                            fw={600}
-                                            truncate
-                                            maw={!isMd ? 300 : 150}
-                                            fz={isXs ? 'sm' : 'md'}
-                                          >
-                                            {account.account_name}
-                                          </Text>
-                                        </Tooltip>
-                                        <Text
-                                          size="sm"
-                                          c="dimmed"
-                                          fz={isXs ? 'xs' : 'sm'}
-                                        >
-                                          {cfg.label}
-                                        </Text>
-                                        <Text size="xs" c="dimmed">
-                                          Connected on{' '}
-                                          {new Date(
-                                            account.createdAt
-                                          ).toLocaleDateString()}
-                                        </Text>
-                                      </Stack>
-                                    </Group>
-                                    <Tooltip
-                                      label={`Disconnect ${cfg.label}`}
-                                      fz={'xs'}
+                                <Card
+                                  withBorder
+                                  radius="md"
+                                  p={isMd ? 'sm' : 'lg'}
+                                  // bg={cfg.bg}
+                                  style={{
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                  }}
+                                >
+                                  <Box style={{ flex: 1 }}>
+                                    <Group
+                                      justify="space-between"
+                                      align="flex-start"
+                                      wrap="nowrap"
                                     >
-                                      <ActionIcon
-                                        variant="subtle"
-                                        color="red"
-                                        onClick={() =>
-                                          openRemoveAccessModal(account.id)
-                                        }
-                                        loading={removeAccessLoading}
+                                      <Group gap="sm">
+                                        <Avatar
+                                          color={cfg.color}
+                                          radius="sm"
+                                          size={isXs ? 'md' : 'lg'}
+                                        >
+                                          {cfg.icon}
+                                        </Avatar>
+                                        <Stack gap={2}>
+                                          <Tooltip
+                                            label={account.account_name}
+                                            fz={'xs'}
+                                          >
+                                            <Text
+                                              fw={600}
+                                              truncate
+                                              maw={!isMd ? 300 : 150}
+                                              fz={isXs ? 'sm' : 'md'}
+                                            >
+                                              {account.account_name}
+                                            </Text>
+                                          </Tooltip>
+                                          <Text
+                                            size="sm"
+                                            c="dimmed"
+                                            fz={isXs ? 'xs' : 'sm'}
+                                          >
+                                            {cfg.label}
+                                          </Text>
+                                          <Text size="xs" c="dimmed">
+                                            Connected on{' '}
+                                            {new Date(
+                                              account.createdAt
+                                            ).toLocaleDateString()}
+                                          </Text>
+                                        </Stack>
+                                      </Group>
+                                      <Tooltip
+                                        label={`Disconnect ${cfg.label}`}
+                                        fz={'xs'}
                                       >
-                                        <ICONS.IconTrash size={18} />
-                                      </ActionIcon>
-                                    </Tooltip>
-                                  </Group>
-                                </Box>
-                              </Card>
-                            </Grid.Col>
-                          );
-                        })}
-                      </Grid>
-                    )}
-                  </Stack>
-                </Card>
-              )}
-            </Stack>
-          </Grid.Col>
+                                        <ActionIcon
+                                          variant="subtle"
+                                          color="red"
+                                          onClick={() =>
+                                            openRemoveAccessModal(account.id)
+                                          }
+                                          loading={removeAccessLoading}
+                                        >
+                                          <ICONS.IconTrash size={18} />
+                                        </ActionIcon>
+                                      </Tooltip>
+                                    </Group>
+                                  </Box>
+                                </Card>
+                              </Grid.Col>
+                            );
+                          })}
+                        </Grid>
+                      )}
+                    </Stack>
+                  </Card>
+                )}
+              </Stack>
+            </Grid.Col>
+          ) : null}
         </Grid>
 
         {/** Remove Profile Pic Modal */}

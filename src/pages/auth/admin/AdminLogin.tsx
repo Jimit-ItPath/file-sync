@@ -23,6 +23,7 @@ export default function AdminLogin() {
     isLoading,
     loginFormData,
     methods,
+    navigate,
   } = useAdminLogin();
 
   return (
@@ -34,7 +35,9 @@ export default function AdminLogin() {
           top: 24,
           left: 32,
           zIndex: 2,
+          cursor: 'pointer',
         }}
+        onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
         <ICONS.IconCloud
           size={32}

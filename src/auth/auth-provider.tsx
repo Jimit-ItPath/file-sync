@@ -33,7 +33,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const redirectUrl = Object.keys(user).length
     ? isAdmin
       ? // ? PRIVATE_ROUTES.ADMIN_DASHBOARD.url
-        PRIVATE_ROUTES.USERS.url
+        PRIVATE_ROUTES.ADMIN_DASHBOARD.url
       : PRIVATE_ROUTES.DASHBOARD.url
     : // : AUTH_ROUTES.LOGIN.url;
       AUTH_ROUTES.LANDING.url;

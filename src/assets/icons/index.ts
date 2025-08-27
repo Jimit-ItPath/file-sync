@@ -127,6 +127,8 @@ import {
   IconLoader,
   IconFileZip,
   IconFocus2,
+  IconAddressBook,
+  IconStatusChange,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -258,4 +260,6 @@ export const ICONS = {
   IconLoader,
   IconFileZip,
   IconFocus2,
+  IconAddressBook,
+  IconStatusChange,
 };

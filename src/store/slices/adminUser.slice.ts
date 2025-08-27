@@ -9,6 +9,21 @@ type PaginationType = {
   page_limit: number;
 };
 
+export type ContactUsType = {
+  id: number;
+  name: string;
+  email: string;
+  contact_number: string;
+  subject: string;
+  message: string;
+  status: string;
+  ip_address: string;
+  user_agent: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type UserType = {
   UserConnectedAccounts: [
     {
@@ -46,6 +61,20 @@ export type AuditLogType = {
   user_id: string;
 };
 
+type UserAnalyticsType = {
+  total_users: string;
+  active_users: string;
+  blocked_users: string;
+};
+
+type ConnectedAccountAnalyticsType = {
+  total_accounts: string;
+  active_google_drive_accounts: string;
+  active_dropbox_accounts: string;
+  active_onedrive_accounts: string;
+  re_authentication_required: string;
+};
+
 type AdminUserState = {
   users: UserType[];
   pagination: PaginationType | null;
@@ -59,6 +88,23 @@ type AdminUserState = {
   auditLogSearchTerm: string;
   types: Record<string, string> | null;
   actionTypes: Record<string, string> | null;
+  contactUs: {
+    loading: boolean;
+    data: ContactUsType[];
+    pagination: PaginationType | null;
+    searchTerm?: string;
+    error: string | null;
+  };
+  userAnalytics: {
+    loading: boolean;
+    data: UserAnalyticsType | null;
+    error: string | null;
+  };
+  connectedAccountAnalytics: {
+    loading: boolean;
+    data: ConnectedAccountAnalyticsType | null;
+    error: string | null;
+  };
 };
 
 const initialState: AdminUserState = {
@@ -74,6 +120,23 @@ const initialState: AdminUserState = {
   auditLogSearchTerm: '',
   types: null,
   actionTypes: null,
+  contactUs: {
+    loading: true,
+    data: [],
+    pagination: null,
+    searchTerm: '',
+    error: null,
+  },
+  userAnalytics: {
+    loading: true,
+    data: null,
+    error: null,
+  },
+  connectedAccountAnalytics: {
+    loading: true,
+    data: null,
+    error: null,
+  },
 };
 
 export const fetchUsers = createAsyncThunk(
@@ -177,6 +240,62 @@ export const fetchActionTypes = createAsyncThunk(
   }
 );
 
+export const fetchContactUs = createAsyncThunk(
+  'adminUser/fetchContactUs',
+  async (
+    data: {
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+      status?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.adminUsers.getContactUs(data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch contact us');
+    }
+  }
+);
+
+export const updateContactUs = createAsyncThunk(
+  'adminUser/updateContactUs',
+  async (data: { id: number; status: string; notes?: string }) => {
+    try {
+      const response = await api.adminUsers.updateContactUs({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const fetchUserAnalytics = createAsyncThunk(
+  'adminUser/fetchUserAnalytics',
+  async () => {
+    try {
+      const response = await api.adminUsers.getUserAnalytics();
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const fetchConnectedAccountAnalytics = createAsyncThunk(
+  'adminUser/fetchConnectedAccountAnalytics',
+  async () => {
+    try {
+      const response = await api.adminUsers.getConnectedAccountAnalytics();
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const adminUserSlice = createSlice({
   name: 'adminUser',
   initialState,
@@ -198,6 +317,18 @@ const adminUserSlice = createSlice({
       state.auditLogSearchTerm = '';
       state.types = null;
       state.actionTypes = null;
+    },
+    setContactUsSearchTerm: (state, action) => {
+      state.contactUs.searchTerm = action.payload;
+    },
+    resetContactUsState: state => {
+      state.contactUs = {
+        loading: true,
+        data: [],
+        pagination: null,
+        searchTerm: '',
+        error: null,
+      };
     },
   },
   extraReducers: builder => {
@@ -256,6 +387,59 @@ const adminUserSlice = createSlice({
       })
       .addCase(fetchActionTypes.rejected, state => {
         state.actionTypes = null;
+      })
+      .addCase(fetchContactUs.pending, state => {
+        state.contactUs.loading = true;
+      })
+      .addCase(fetchContactUs.fulfilled, (state, action) => {
+        state.contactUs = {
+          loading: false,
+          data: action.payload?.data?.data || [],
+          pagination: action.payload?.data?.paging || null,
+          error: null,
+        };
+      })
+      .addCase(fetchContactUs.rejected, state => {
+        state.contactUs = {
+          loading: false,
+          data: [],
+          pagination: null,
+          error: null,
+        };
+      })
+      .addCase(fetchUserAnalytics.pending, state => {
+        state.userAnalytics.loading = true;
+      })
+      .addCase(fetchUserAnalytics.fulfilled, (state, action) => {
+        state.userAnalytics = {
+          loading: false,
+          data: action.payload?.data || null,
+          error: null,
+        };
+      })
+      .addCase(fetchUserAnalytics.rejected, state => {
+        state.userAnalytics = {
+          loading: false,
+          data: null,
+          error: null,
+        };
+      })
+      .addCase(fetchConnectedAccountAnalytics.pending, state => {
+        state.connectedAccountAnalytics.loading = true;
+      })
+      .addCase(fetchConnectedAccountAnalytics.fulfilled, (state, action) => {
+        state.connectedAccountAnalytics = {
+          loading: false,
+          data: action.payload?.data || null,
+          error: null,
+        };
+      })
+      .addCase(fetchConnectedAccountAnalytics.rejected, state => {
+        state.connectedAccountAnalytics = {
+          loading: false,
+          data: null,
+          error: null,
+        };
       });
   },
 });
@@ -265,6 +449,8 @@ export const {
   setAuditLogSearchTerm,
   resetAdminLogsState,
   resetAdminUserState,
+  setContactUsSearchTerm,
+  resetContactUsState,
 } = adminUserSlice.actions;
 
 export default adminUserSlice.reducer;

@@ -32,7 +32,7 @@ const useAuditLogs = () => {
   const dispatch = useAppDispatch();
 
   const [localSearchTerm, setLocalSearchTerm] = useState(auditLogSearchTerm);
-  const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
+  const debouncedSearchTerm = useDebounce(localSearchTerm, 300);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [initialUserList, setInitialUserList] = useState<SelectOption[]>([]);
   const [userSearchResults, setUserSearchResults] = useState<SelectOption[]>(

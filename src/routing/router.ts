@@ -40,6 +40,7 @@ import RecentFiles from '../pages/dashboard/components/RecentFiles';
 import PricingPage from '../pages/landing/components/PricingPage';
 import FaqPage from '../pages/landing/components/FaqPage';
 import ContactForm from '../pages/landing/components/ContactForm';
+import ContactUs from '../pages/admin/contact-us';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -60,8 +61,12 @@ const dashboardLayoutLoader = () => {
   return null;
 };
 
-const dashboardPageLoader = (_: string[]) => () => {
-  // const { isAuthenticated, role } = getAuth({});
+const dashboardPageLoader = (roles: string[]) => () => {
+  const { role } = getAuth({});
+
+  if (!roles?.includes(role)) {
+    return redirect('/');
+  }
 
   // if (isAuthenticated && !roles.includes(role)) {
   //   return redirect('/404');
@@ -83,7 +88,7 @@ export const router = createBrowserRouter([
       if (isAuthenticated) {
         return redirect(
           role === ROLES.ADMIN
-            ? PRIVATE_ROUTES.USERS.url
+            ? PRIVATE_ROUTES.ADMIN_DASHBOARD.url
             : PRIVATE_ROUTES.DASHBOARD.url
         );
       }
@@ -91,7 +96,7 @@ export const router = createBrowserRouter([
       // return redirect(
       //   isAuthenticated
       //     ? role === ROLES.ADMIN
-      //       ? PRIVATE_ROUTES.USERS.url
+      //       ? PRIVATE_ROUTES.ADMIN_DASHBOARD.url
       //       : PRIVATE_ROUTES.DASHBOARD.url
       //     : // : AUTH_ROUTES.LOGIN.url
       //       AUTH_ROUTES.LANDING.url
@@ -182,6 +187,11 @@ export const router = createBrowserRouter([
         ...PRIVATE_ROUTES.AUDIT_LOGS,
         Component: AdminAuditLogs,
         loader: dashboardPageLoader(PRIVATE_ROUTES.AUDIT_LOGS.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.CONTACT_US,
+        Component: ContactUs,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.CONTACT_US.roles),
       },
     ],
   },

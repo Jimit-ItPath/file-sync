@@ -131,7 +131,7 @@ const DashboardLayout = () => {
 
   //     if (role === ROLES.ADMIN && !currentPath.startsWith('/admin')) {
   //       // navigate('/admin/dashboard', { replace: true });
-  //       navigate(PRIVATE_ROUTES.USERS.url);
+  //       navigate(PRIVATE_ROUTES.ADMIN_DASHBOARD.url);
   //     }
   //     // else if (role === ROLES.USER && currentPath === '/dashboard') {
   //     //   navigate('/dashboard', { replace: true });
@@ -195,22 +195,26 @@ const DashboardLayout = () => {
   };
 
   const redirectToDashboard = useCallback(() => {
-    if (
-      location.pathname === PRIVATE_ROUTES.DASHBOARD.url &&
-      (!!getLocalStorage('folderId') || !!getLocalStorage('cloudStoragePath'))
-    ) {
-      dispatch(
-        fetchCloudStorageFiles({
-          limit: 20,
-          page: 1,
-        })
-      );
-      dispatch(resetCloudStorageFolder());
+    if (userProfile?.role === ROLES.ADMIN) {
+      navigate(PRIVATE_ROUTES.ADMIN_DASHBOARD.url);
+    } else {
+      if (
+        location.pathname === PRIVATE_ROUTES.DASHBOARD.url &&
+        (!!getLocalStorage('folderId') || !!getLocalStorage('cloudStoragePath'))
+      ) {
+        dispatch(
+          fetchCloudStorageFiles({
+            limit: 20,
+            page: 1,
+          })
+        );
+        dispatch(resetCloudStorageFolder());
+      }
+      removeLocalStorage('folderId');
+      removeLocalStorage('cloudStoragePath');
+      navigate(PRIVATE_ROUTES.DASHBOARD.url);
     }
-    removeLocalStorage('folderId');
-    removeLocalStorage('cloudStoragePath');
-    navigate(PRIVATE_ROUTES.DASHBOARD.url);
-  }, [location]);
+  }, [location, userProfile?.role]);
 
   return (
     <>
@@ -289,7 +293,7 @@ const DashboardLayout = () => {
                     />
                   </Group>
                 ) : null} */}
-                {!isXs ? (
+                {!isXs && userProfile?.role === ROLES.USER ? (
                   <Group
                     align="center"
                     gap={0}

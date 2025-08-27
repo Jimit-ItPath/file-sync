@@ -6,11 +6,9 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  TextInput,
 } from '@mantine/core';
 import useUsers from './use-users';
 import { Button, Card, Form, Modal, Tooltip } from '../../../components';
-import { LoaderOverlay } from '../../../components/loader';
 import { DataTable } from 'mantine-datatable';
 import EmailMultiInput from './EmailMultiInput';
 import { formatDate } from '../../../utils/helper';
@@ -18,6 +16,7 @@ import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../../assets/svgs/OneDrive.svg';
 import useResponsive from '../../../hooks/use-responsive';
+import SearchBox from '../../../components/inputs/input/SearchBox';
 
 type AccountConfig = {
   icon: React.ReactNode;
@@ -52,7 +51,6 @@ const AdminUsers = () => {
     closeInviteUserModal,
     inviteUserMethods,
     handleSearchChange,
-    loading,
     searchTerm,
     itemToBlock,
     openInviteUserModal,
@@ -75,7 +73,6 @@ const AdminUsers = () => {
 
   return (
     <Box>
-      <LoaderOverlay visible={loading} opacity={1} />
       <Box
         px={isXs ? 16 : 32}
         pb={20}
@@ -89,12 +86,12 @@ const AdminUsers = () => {
         }}
       >
         <Group justify="flex-end" w={'100%'} mt={16}>
-          <TextInput
-            placeholder="Search users..."
+          <SearchBox
             value={searchTerm}
-            onChange={event => handleSearchChange(event.currentTarget.value)}
+            onChange={handleSearchChange}
+            onClear={() => handleSearchChange('')}
+            placeholder="Search users..."
             maw={500}
-            w={'100%'}
           />
           <Button
             onClick={openInviteUserModal}

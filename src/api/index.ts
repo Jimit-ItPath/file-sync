@@ -135,6 +135,25 @@ export const api = {
         data,
         ...configs,
       }),
+    contactUs: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        name: string;
+        email: string;
+        contact_number?: string | number;
+        subject: string;
+        message: string;
+        captcha_token: string;
+      };
+    }) =>
+      client({
+        url: `/contact-us`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
   },
   user: {
     get: ({ id, ...configs }: { id: string; [key: string]: any }) =>
@@ -745,6 +764,40 @@ export const api = {
     getTypes: () =>
       client({
         url: `/admin/types`,
+        method: METHODS.GET,
+      }),
+    getContactUs: (params: {
+      page?: number;
+      limit?: number;
+      searchTerm?: string;
+      status?: string;
+    }) =>
+      client({
+        url: `/contact-us`,
+        method: METHODS.GET,
+        params,
+      }),
+    updateContactUs: ({
+      data,
+      ...configs
+    }: {
+      data: { id: number; status: string; notes?: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/contact-us`,
+        method: METHODS.PATCH,
+        data,
+        ...configs,
+      }),
+    getUserAnalytics: () =>
+      client({
+        url: `/admin/user-analytics`,
+        method: METHODS.GET,
+      }),
+    getConnectedAccountAnalytics: () =>
+      client({
+        url: `/connected-account/analytics`,
         method: METHODS.GET,
       }),
   },
