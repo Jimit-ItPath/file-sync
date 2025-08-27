@@ -9,6 +9,7 @@ import CheckboxGroup from '../checkbox-group';
 import { Dropzone } from '../dropzone';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import Textarea from '../text-area';
 
 type InputProps = {
   name: string;
@@ -164,6 +165,26 @@ export const Input = ({
               onFilesSelected,
               getFileIcon,
               files,
+              ...props,
+            }}
+          />
+        );
+      case 'textarea':
+        return (
+          <Textarea
+            {...{
+              name,
+              label,
+              placeholder,
+              error: errorMessage,
+              disabled,
+              withAsterisk,
+              withErrorStyles,
+              size,
+              field,
+              isXs,
+              isSm,
+              isMd,
               ...props,
             }}
           />
