@@ -61,6 +61,20 @@ export type AuditLogType = {
   user_id: string;
 };
 
+type UserAnalyticsType = {
+  total_users: string;
+  active_users: string;
+  blocked_users: string;
+};
+
+type ConnectedAccountAnalyticsType = {
+  total_accounts: string;
+  active_google_drive_accounts: string;
+  active_dropbox_accounts: string;
+  active_onedrive_accounts: string;
+  re_authentication_required: string;
+};
+
 type AdminUserState = {
   users: UserType[];
   pagination: PaginationType | null;
@@ -79,6 +93,16 @@ type AdminUserState = {
     data: ContactUsType[];
     pagination: PaginationType | null;
     searchTerm?: string;
+    error: string | null;
+  };
+  userAnalytics: {
+    loading: boolean;
+    data: UserAnalyticsType | null;
+    error: string | null;
+  };
+  connectedAccountAnalytics: {
+    loading: boolean;
+    data: ConnectedAccountAnalyticsType | null;
     error: string | null;
   };
 };
@@ -101,6 +125,16 @@ const initialState: AdminUserState = {
     data: [],
     pagination: null,
     searchTerm: '',
+    error: null,
+  },
+  userAnalytics: {
+    loading: true,
+    data: null,
+    error: null,
+  },
+  connectedAccountAnalytics: {
+    loading: true,
+    data: null,
     error: null,
   },
 };
@@ -238,6 +272,30 @@ export const updateContactUs = createAsyncThunk(
   }
 );
 
+export const fetchUserAnalytics = createAsyncThunk(
+  'adminUser/fetchUserAnalytics',
+  async () => {
+    try {
+      const response = await api.adminUsers.getUserAnalytics();
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
+export const fetchConnectedAccountAnalytics = createAsyncThunk(
+  'adminUser/fetchConnectedAccountAnalytics',
+  async () => {
+    try {
+      const response = await api.adminUsers.getConnectedAccountAnalytics();
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const adminUserSlice = createSlice({
   name: 'adminUser',
   initialState,
@@ -346,6 +404,40 @@ const adminUserSlice = createSlice({
           loading: false,
           data: [],
           pagination: null,
+          error: null,
+        };
+      })
+      .addCase(fetchUserAnalytics.pending, state => {
+        state.userAnalytics.loading = true;
+      })
+      .addCase(fetchUserAnalytics.fulfilled, (state, action) => {
+        state.userAnalytics = {
+          loading: false,
+          data: action.payload?.data || null,
+          error: null,
+        };
+      })
+      .addCase(fetchUserAnalytics.rejected, state => {
+        state.userAnalytics = {
+          loading: false,
+          data: null,
+          error: null,
+        };
+      })
+      .addCase(fetchConnectedAccountAnalytics.pending, state => {
+        state.connectedAccountAnalytics.loading = true;
+      })
+      .addCase(fetchConnectedAccountAnalytics.fulfilled, (state, action) => {
+        state.connectedAccountAnalytics = {
+          loading: false,
+          data: action.payload?.data || null,
+          error: null,
+        };
+      })
+      .addCase(fetchConnectedAccountAnalytics.rejected, state => {
+        state.connectedAccountAnalytics = {
+          loading: false,
+          data: null,
           error: null,
         };
       });

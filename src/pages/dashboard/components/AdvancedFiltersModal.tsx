@@ -490,6 +490,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                 border: '1px solid #dadce0',
                 borderRadius: '4px',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                zIndex: 200,
               },
               option: {
                 fontSize: '14px',

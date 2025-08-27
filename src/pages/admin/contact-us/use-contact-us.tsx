@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { notifications } from '@mantine/notifications';
 import useDebounce from '../../../hooks/use-debounce';
 import { formatDate, formatDateAndTime } from '../../../utils/helper';
-import { ActionIcon, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Badge, Text, Tooltip } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { CONTACT_US_STATUS } from '../../../utils/constants';
 
@@ -283,7 +283,28 @@ const useContactUs = () => {
         accessor: 'status',
         title: 'Status',
         width: 120,
-        render: (row: ContactUsType) => <Text fz="sm">{row.status}</Text>,
+        render: (row: ContactUsType) => {
+          let color: string;
+          switch (row.status) {
+            case 'new':
+              color = 'blue';
+              break;
+            case 'in_progress':
+              color = 'yellow';
+              break;
+            case 'resolved':
+              color = 'green';
+              break;
+            default:
+              color = 'gray';
+          }
+
+          return (
+            <Badge color={color} variant="light" size="sm">
+              {row.status.replace('_', ' ')}
+            </Badge>
+          );
+        },
       },
       {
         accessor: 'lastModified',

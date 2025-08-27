@@ -119,6 +119,7 @@ const useAdminLogin = () => {
     isXs,
     isSm,
     isMd,
+    navigate,
   };
 };
 

@@ -790,5 +790,15 @@ export const api = {
         data,
         ...configs,
       }),
+    getUserAnalytics: () =>
+      client({
+        url: `/admin/user-analytics`,
+        method: METHODS.GET,
+      }),
+    getConnectedAccountAnalytics: () =>
+      client({
+        url: `/connected-account/analytics`,
+        method: METHODS.GET,
+      }),
   },
 };
