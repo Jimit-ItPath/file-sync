@@ -191,6 +191,25 @@ export const renameConnectedAccount = createAsyncThunk(
   }
 );
 
+export const contactUs = createAsyncThunk(
+  'auth/contactUs',
+  async (data: {
+    name: string;
+    email: string;
+    contact_number?: string | number;
+    subject: string;
+    message: string;
+    captcha_token: string;
+  }) => {
+    try {
+      const response = await api.auth.contactUs({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,

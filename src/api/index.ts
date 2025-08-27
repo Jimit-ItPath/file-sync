@@ -135,6 +135,25 @@ export const api = {
         data,
         ...configs,
       }),
+    contactUs: ({
+      data,
+      ...configs
+    }: {
+      data: {
+        name: string;
+        email: string;
+        contact_number?: string | number;
+        subject: string;
+        message: string;
+        captcha_token: string;
+      };
+    }) =>
+      client({
+        url: `/contact-us`,
+        method: METHODS.POST,
+        data,
+        ...configs,
+      }),
   },
   user: {
     get: ({ id, ...configs }: { id: string; [key: string]: any }) =>

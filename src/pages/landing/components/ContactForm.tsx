@@ -8,12 +8,19 @@ import LandingFooter from '../LandingFooter';
 import useContact from './use-contact';
 import { Button, Form, Input } from '../../../components';
 import { useEffect } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const ContactForm = () => {
   const { isMd, isSm, isXs } = useResponsive();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
-  const { contactFormData, handleContactSubmit, methods } = useContact();
+  const {
+    contactFormData,
+    handleContactSubmit,
+    methods,
+    onCaptchaChange,
+    recaptchaRef,
+  } = useContact();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -59,9 +66,16 @@ const ContactForm = () => {
                   )
                 )}
 
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={
+                    import.meta.env.VITE_REACT_APP_CAPTCHA_SITE_KEY || ''
+                  }
+                  onChange={onCaptchaChange}
+                />
+
                 <Button
                   type="submit"
-                  fullWidth
                   disabled={!methods.formState.isValid}
                   size={isXs ? 'sm' : 'md'}
                   radius="md"
@@ -73,7 +87,7 @@ const ContactForm = () => {
                     color: '#fff',
                   }}
                 >
-                  Send Message
+                  Submit
                 </Button>
               </Stack>
             </Form>

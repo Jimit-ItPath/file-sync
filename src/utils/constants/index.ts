@@ -92,6 +92,8 @@ export const passwordRequirements = [
 
 export const NAME_REGEX = /^[a-zA-Z\s'-]+$/;
 
+export const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
+
 export const IMAGE_FILE_TYPES = [
   'jpg',
   'jpeg',

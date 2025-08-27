@@ -10,6 +10,7 @@ import { Dropzone } from '../dropzone';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import Textarea from '../text-area';
+import PhoneNumberInput from '../phone-number-input';
 
 type InputProps = {
   name: string;
@@ -165,6 +166,26 @@ export const Input = ({
               onFilesSelected,
               getFileIcon,
               files,
+              ...props,
+            }}
+          />
+        );
+      case 'phone-number':
+        return (
+          <PhoneNumberInput
+            {...{
+              name,
+              label,
+              placeholder,
+              error: errorMessage,
+              disabled,
+              withAsterisk,
+              withErrorStyles,
+              size,
+              field,
+              isXs,
+              isSm,
+              isMd,
               ...props,
             }}
           />
