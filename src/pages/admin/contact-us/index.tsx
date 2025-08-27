@@ -99,6 +99,93 @@ const ContactUs = () => {
                       tableLayout: 'fixed',
                     },
                   }}
+                  rowExpansion={{
+                    allowMultiple: true,
+                    content: ({ record }) => (
+                      <Box
+                        p="md"
+                        bg="gray.0"
+                        style={{
+                          borderRadius: 8,
+                          display: 'grid',
+                          gridTemplateColumns: '1fr',
+                          gap: '1rem',
+                        }}
+                        className="expansion-grid"
+                      >
+                        <Stack gap="xs">
+                          <Group gap="xs">
+                            <Text size="sm" fw={600} c="gray.7">
+                              📞 Contact Number:
+                            </Text>
+                            <Text size="sm" c="gray.8">
+                              {record.contact_number || '--'}
+                            </Text>
+                          </Group>
+
+                          <Group gap="xs">
+                            <Text size="sm" fw={600} c="gray.7">
+                              🌐 IP Address:
+                            </Text>
+                            <Text size="sm" c="gray.8">
+                              {record.ip_address || '--'}
+                            </Text>
+                          </Group>
+
+                          <Group align="flex-start" gap="xs">
+                            <Text size="sm" fw={600} c="gray.7">
+                              💻 User Agent:
+                            </Text>
+                            <Text
+                              size="sm"
+                              c="gray.8"
+                              style={{ wordBreak: 'break-word' }}
+                            >
+                              {record.user_agent || '--'}
+                            </Text>
+                          </Group>
+                        </Stack>
+
+                        <Stack gap="sm">
+                          <Group align="center" mb={4}>
+                            <Text size="sm" fw={600} c="gray.7">
+                              📨 Message:
+                            </Text>
+                            <Text
+                              size="sm"
+                              c="gray.8"
+                              style={{ whiteSpace: 'pre-wrap' }}
+                            >
+                              {record.message || '--'}
+                            </Text>
+                          </Group>
+
+                          <Group align="center">
+                            <Text size="sm" fw={600} c="gray.7">
+                              📝 Notes:
+                            </Text>
+                            <Text
+                              size="sm"
+                              c="gray.8"
+                              style={{ whiteSpace: 'pre-wrap' }}
+                            >
+                              {record.notes || '--'}
+                            </Text>
+                          </Group>
+                        </Stack>
+
+                        <style>
+                          {`
+                            @media (min-width: 768px) {
+                                .expansion-grid {
+                                    grid-template-columns: 1fr 1fr;
+                                }
+                            }
+                          `}
+                        </style>
+                      </Box>
+                    ),
+                  }}
                 />
                 <style>
                   {`
@@ -106,6 +193,7 @@ const ContactUs = () => {
                     .datatable-wrapper {
                         width: 100%;
                         overflow-x: auto;
+                        cursor: pointer;
                     }
 
                     @media (min-width: 1261px) {
