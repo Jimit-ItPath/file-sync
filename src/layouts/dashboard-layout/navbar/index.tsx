@@ -842,6 +842,45 @@ const NavBar = ({
               />
             );
           })()}
+
+          {(() => {
+            const url = PRIVATE_ROUTES.CONTACT_US.url;
+            const isActive = location?.pathname === url;
+
+            return (
+              <NavLink
+                component={Link}
+                label="Contact Us"
+                leftSection={
+                  <Icon
+                    component={ICONS.IconAddressBook}
+                    size={18}
+                    stroke={1.25}
+                  />
+                }
+                active={isActive}
+                to={url}
+                style={{
+                  borderRadius: 'var(--mantine-radius-default)',
+                  ...(isActive && {
+                    fontWeight: 400,
+                  }),
+                }}
+                onClick={() => {
+                  mobileDrawerHandler?.close();
+                }}
+                w={{ base: '100%', sm: 'auto' }}
+                px={{ sm: 8 }}
+                py={{ sm: 6 }}
+                styles={{
+                  section: {
+                    marginInlineEnd: 'var(--mantine-spacing-xs)',
+                    marginBottom: rem(-1),
+                  },
+                }}
+              />
+            );
+          })()}
         </>
       )}
 

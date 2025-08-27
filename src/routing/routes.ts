@@ -154,4 +154,11 @@ export const PRIVATE_ROUTES = {
     title: 'Audit Logs',
     url: '/logs',
   },
+  CONTACT_US: {
+    path: '/contact-us',
+    // roles: Object.values(ROLES),
+    roles: [ROLES.ADMIN],
+    title: 'Contact Us',
+    url: '/contact-us',
+  },
 };

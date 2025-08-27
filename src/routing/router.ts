@@ -40,6 +40,7 @@ import RecentFiles from '../pages/dashboard/components/RecentFiles';
 import PricingPage from '../pages/landing/components/PricingPage';
 import FaqPage from '../pages/landing/components/FaqPage';
 import ContactForm from '../pages/landing/components/ContactForm';
+import ContactUs from '../pages/admin/contact-us';
 
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
@@ -186,6 +187,11 @@ export const router = createBrowserRouter([
         ...PRIVATE_ROUTES.AUDIT_LOGS,
         Component: AdminAuditLogs,
         loader: dashboardPageLoader(PRIVATE_ROUTES.AUDIT_LOGS.roles),
+      },
+      {
+        ...PRIVATE_ROUTES.CONTACT_US,
+        Component: ContactUs,
+        loader: dashboardPageLoader(PRIVATE_ROUTES.CONTACT_US.roles),
       },
     ],
   },

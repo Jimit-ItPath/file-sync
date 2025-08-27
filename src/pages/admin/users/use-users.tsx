@@ -56,7 +56,7 @@ const useUsers = () => {
   const { reset } = inviteUserMethods;
 
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
+  const debouncedSearchTerm = useDebounce(localSearchTerm, 300);
 
   const handleSearchChange = (value: string) => {
     setLocalSearchTerm(value);

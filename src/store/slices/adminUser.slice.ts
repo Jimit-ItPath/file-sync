@@ -9,6 +9,21 @@ type PaginationType = {
   page_limit: number;
 };
 
+export type ContactUsType = {
+  id: number;
+  name: string;
+  email: string;
+  contact_number: string;
+  subject: string;
+  message: string;
+  status: string;
+  ip_address: string;
+  user_agent: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type UserType = {
   UserConnectedAccounts: [
     {
@@ -59,6 +74,13 @@ type AdminUserState = {
   auditLogSearchTerm: string;
   types: Record<string, string> | null;
   actionTypes: Record<string, string> | null;
+  contactUs: {
+    loading: boolean;
+    data: ContactUsType[];
+    pagination: PaginationType | null;
+    searchTerm?: string;
+    error: string | null;
+  };
 };
 
 const initialState: AdminUserState = {
@@ -74,6 +96,13 @@ const initialState: AdminUserState = {
   auditLogSearchTerm: '',
   types: null,
   actionTypes: null,
+  contactUs: {
+    loading: true,
+    data: [],
+    pagination: null,
+    searchTerm: '',
+    error: null,
+  },
 };
 
 export const fetchUsers = createAsyncThunk(
@@ -177,6 +206,38 @@ export const fetchActionTypes = createAsyncThunk(
   }
 );
 
+export const fetchContactUs = createAsyncThunk(
+  'adminUser/fetchContactUs',
+  async (
+    data: {
+      searchTerm?: string;
+      page?: number;
+      limit?: number;
+      status?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.adminUsers.getContactUs(data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch contact us');
+    }
+  }
+);
+
+export const updateContactUs = createAsyncThunk(
+  'adminUser/updateContactUs',
+  async (data: { id: number; status: string; notes?: string }) => {
+    try {
+      const response = await api.adminUsers.updateContactUs({ data });
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const adminUserSlice = createSlice({
   name: 'adminUser',
   initialState,
@@ -198,6 +259,18 @@ const adminUserSlice = createSlice({
       state.auditLogSearchTerm = '';
       state.types = null;
       state.actionTypes = null;
+    },
+    setContactUsSearchTerm: (state, action) => {
+      state.contactUs.searchTerm = action.payload;
+    },
+    resetContactUsState: state => {
+      state.contactUs = {
+        loading: true,
+        data: [],
+        pagination: null,
+        searchTerm: '',
+        error: null,
+      };
     },
   },
   extraReducers: builder => {
@@ -256,6 +329,25 @@ const adminUserSlice = createSlice({
       })
       .addCase(fetchActionTypes.rejected, state => {
         state.actionTypes = null;
+      })
+      .addCase(fetchContactUs.pending, state => {
+        state.contactUs.loading = true;
+      })
+      .addCase(fetchContactUs.fulfilled, (state, action) => {
+        state.contactUs = {
+          loading: false,
+          data: action.payload?.data?.data || [],
+          pagination: action.payload?.data?.paging || null,
+          error: null,
+        };
+      })
+      .addCase(fetchContactUs.rejected, state => {
+        state.contactUs = {
+          loading: false,
+          data: [],
+          pagination: null,
+          error: null,
+        };
       });
   },
 });
@@ -265,6 +357,8 @@ export const {
   setAuditLogSearchTerm,
   resetAdminLogsState,
   resetAdminUserState,
+  setContactUsSearchTerm,
+  resetContactUsState,
 } = adminUserSlice.actions;
 
 export default adminUserSlice.reducer;

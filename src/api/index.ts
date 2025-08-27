@@ -766,5 +766,29 @@ export const api = {
         url: `/admin/types`,
         method: METHODS.GET,
       }),
+    getContactUs: (params: {
+      page?: number;
+      limit?: number;
+      searchTerm?: string;
+      status?: string;
+    }) =>
+      client({
+        url: `/contact-us`,
+        method: METHODS.GET,
+        params,
+      }),
+    updateContactUs: ({
+      data,
+      ...configs
+    }: {
+      data: { id: number; status: string; notes?: string };
+      [key: string]: any;
+    }) =>
+      client({
+        url: `/contact-us`,
+        method: METHODS.PATCH,
+        data,
+        ...configs,
+      }),
   },
 };
