@@ -60,8 +60,12 @@ const dashboardLayoutLoader = () => {
   return null;
 };
 
-const dashboardPageLoader = (_: string[]) => () => {
-  // const { isAuthenticated, role } = getAuth({});
+const dashboardPageLoader = (roles: string[]) => () => {
+  const { role } = getAuth({});
+
+  if (!roles?.includes(role)) {
+    return redirect('/');
+  }
 
   // if (isAuthenticated && !roles.includes(role)) {
   //   return redirect('/404');

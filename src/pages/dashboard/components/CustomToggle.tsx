@@ -14,7 +14,7 @@ const CustomToggle: React.FC<CustomToggleProps> = ({ value, onChange }) => {
       style={{
         backgroundColor: '#ffffff',
         borderRadius: 8,
-        padding: '4px',
+        padding: '2px',
         height: '44px',
         display: 'flex',
         alignItems: 'center',
