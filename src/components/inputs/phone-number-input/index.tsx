@@ -86,6 +86,9 @@ const PhoneNumberInput = ({
           .PhoneInputInput::placeholder {
             color: #adb5bd;
           }
+          .PhoneInputCountrySelect {
+            left: -10px;
+          }
           .PhoneInputCountry {
             border-right: 1px solid #ced4da;
             padding-right: 10px;
