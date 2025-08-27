@@ -81,7 +81,7 @@ const useAdminLogin = () => {
           color: 'green',
         });
         reset();
-        navigate(PRIVATE_ROUTES.USERS.url);
+        navigate(PRIVATE_ROUTES.ADMIN_DASHBOARD.url);
       }
     }
   });

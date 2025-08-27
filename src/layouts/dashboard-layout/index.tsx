@@ -131,7 +131,7 @@ const DashboardLayout = () => {
 
   //     if (role === ROLES.ADMIN && !currentPath.startsWith('/admin')) {
   //       // navigate('/admin/dashboard', { replace: true });
-  //       navigate(PRIVATE_ROUTES.USERS.url);
+  //       navigate(PRIVATE_ROUTES.ADMIN_DASHBOARD.url);
   //     }
   //     // else if (role === ROLES.USER && currentPath === '/dashboard') {
   //     //   navigate('/dashboard', { replace: true });
@@ -196,7 +196,7 @@ const DashboardLayout = () => {
 
   const redirectToDashboard = useCallback(() => {
     if (userProfile?.role === ROLES.ADMIN) {
-      navigate(PRIVATE_ROUTES.USERS.url);
+      navigate(PRIVATE_ROUTES.ADMIN_DASHBOARD.url);
     } else {
       if (
         location.pathname === PRIVATE_ROUTES.DASHBOARD.url &&
