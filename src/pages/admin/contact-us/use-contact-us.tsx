@@ -369,7 +369,7 @@ const useContactUs = () => {
         label: 'Notes',
         isRequired: false,
         error: errors.notes?.message,
-        maxCharCount: 300
+        maxCharCount: 300,
       },
     ],
     []

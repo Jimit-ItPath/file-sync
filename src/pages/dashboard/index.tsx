@@ -67,6 +67,7 @@ const Dashboard = () => {
     downloadFile,
     pauseDownload,
     resumeDownload,
+    fetchPreviewFileWithProgress,
   } = useFileDownloader();
   const {
     layout,
@@ -162,6 +163,8 @@ const Dashboard = () => {
     setPreviewFile,
     setPreviewModalOpen,
     previewFileLoading,
+    previewProgress,
+    previewAbortRef,
     displayPreviewIcon,
     closeMoveModal,
     handleMoveModalConfirm,
@@ -210,7 +213,7 @@ const Dashboard = () => {
     connectErrorModalOpen,
     connectErrorMessage,
     closeConnectErrorModal,
-  } = useDashboard({ downloadFile });
+  } = useDashboard({ downloadFile, fetchPreviewFileWithProgress });
 
   const {
     openAccountModal,
@@ -1173,6 +1176,8 @@ const Dashboard = () => {
         previewModalOpen={previewModalOpen}
         setPreviewModalOpen={setPreviewModalOpen}
         setPreviewFile={setPreviewFile}
+        previewProgress={previewProgress}
+        previewAbortRef={previewAbortRef}
         onDownload={() => {
           if (previewFile && files.find(f => f.name === previewFile.name)) {
             const fileToDownload = files.find(f => f.name === previewFile.name);

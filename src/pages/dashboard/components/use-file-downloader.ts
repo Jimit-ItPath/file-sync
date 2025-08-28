@@ -318,50 +318,52 @@ const useFileDownloader = () => {
         const startTime = Date.now();
 
         const pump = async () => {
-          while (true) {
-            if (isPausedRef.current) {
-              updateProgress({ status: 'paused' });
-              return; // pause gracefully
+          try {
+            while (true) {
+              if (isPausedRef.current) {
+                updateProgress({ status: 'paused' });
+                return;
+              }
+
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              downloadedSizeRef.current += value.length;
+              await writer.write(value);
+
+              const percentage =
+                totalSize > 0
+                  ? Math.round((downloadedSizeRef.current / totalSize) * 100)
+                  : 0;
+
+              const speed = calculateSpeed(
+                downloadedSizeRef.current,
+                startTime
+              );
+              const timeRemaining = calculateTimeRemaining(
+                totalSize,
+                downloadedSizeRef.current,
+                speed
+              );
+
+              updateProgress({
+                downloadedSize: downloadedSizeRef.current,
+                percentage,
+                speed,
+                timeRemaining,
+                status: 'downloading',
+              });
             }
 
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            downloadedSizeRef.current += value.length;
-            await writer.write(value);
-
-            const percentage =
-              totalSize > 0
-                ? Math.round((downloadedSizeRef.current / totalSize) * 100)
-                : 0;
-            const speed = calculateSpeed(downloadedSizeRef.current, startTime);
-            const timeRemaining = calculateTimeRemaining(
-              totalSize,
-              downloadedSizeRef.current,
-              speed
-            );
-
-            updateProgress({
-              downloadedSize: downloadedSizeRef.current,
-              percentage,
-              speed,
-              timeRemaining,
-              status: 'downloading',
-            });
+            await writer.close();
+            updateProgress({ percentage: 100, status: 'completed' });
+          } catch (err: any) {
+            if (err.name === 'AbortError') {
+              updateProgress({ status: 'cancelled' });
+            } else {
+              updateProgress({ status: 'failed' });
+            }
           }
-
-          await writer.close();
-
-          updateProgress({
-            downloadedSize: totalSize,
-            percentage: 100,
-            status: 'completed',
-          });
-
-          notifications.show({
-            message: `${selectedIds.length > 1 ? 'Files' : 'File'} downloaded successfully`,
-            color: 'green',
-          });
         };
 
         pumpRef.current = pump;
@@ -405,17 +407,83 @@ const useFileDownloader = () => {
     if (abortController.current) {
       abortController.current.abort();
     }
-    // setDownloadProgress(null);
-    // notifications.show({
-    //   message: 'Download cancelled by user',
-    //   color: 'orange',
-    // });
-  }, []);
+    if (readerRef.current) {
+      try {
+        readerRef.current.cancel();
+      } catch (err) {
+        console.warn('Reader cancel failed:', err);
+      }
+    }
+    if (writerRef.current) {
+      try {
+        writerRef.current?.abort?.(); // abort StreamSaver writer
+      } catch (err) {
+        console.warn('Writer abort failed:', err);
+      }
+    }
+    updateProgress({ status: 'cancelled' });
+  }, [updateProgress]);
 
   const clearDownload = useCallback(() => {
     cancelDownload();
     setDownloadProgress(null);
   }, []);
+
+  const fetchPreviewFileWithProgress = async (
+    url: string,
+    signal: AbortSignal,
+    selectedIds: string[],
+    onProgress?: (percent: number) => void
+  ): Promise<Blob> => {
+    const response = await fetch(url, {
+      signal,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    if (!response.body) throw new Error('ReadableStream not supported');
+
+    const approxSize = response.headers.get('approximate-size');
+    // const contentLength = response.headers.get('content-length');
+    const total = approxSize
+      ? parseInt(approxSize, 10)
+      : // : contentLength
+        //   ? parseInt(contentLength, 10)
+        0;
+
+    let loaded = 0;
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        loaded += value.length;
+
+        if (onProgress) {
+          if (total > 0) {
+            const percent = Math.round((loaded / total) * 100);
+            onProgress(percent);
+          } else {
+            // fallback: just tick up, never reach 100 until finished
+            onProgress(Math.min(95, Math.floor((loaded / 1024 / 1024) % 100)));
+          }
+        }
+      }
+    }
+
+    return new Blob(chunks as BlobPart[]);
+  };
 
   return {
     downloadProgress,
@@ -424,6 +492,7 @@ const useFileDownloader = () => {
     clearDownload,
     pauseDownload,
     resumeDownload,
+    fetchPreviewFileWithProgress,
   };
 };
 

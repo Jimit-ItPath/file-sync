@@ -2,7 +2,7 @@ import { downloadFilesEnhanced } from './../../../utils/helper/index';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
-  downloadFiles,
+  // downloadFiles,
   fetchRecentFiles,
   removeCloudStorageFiles,
   renameCloudStorageFile,
@@ -33,9 +33,18 @@ type RenameFormData = z.infer<typeof renameSchema>;
 
 type UseRecentFilesProps = {
   downloadFile: (ids: string[]) => Promise<void>;
+  fetchPreviewFileWithProgress: (
+    url: string,
+    signal: AbortSignal,
+    selectedIds: string[],
+    onProgress?: (percent: number) => void
+  ) => Promise<Blob>;
 };
 
-const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
+const useRecentFiles = ({
+  downloadFile,
+  fetchPreviewFileWithProgress,
+}: UseRecentFilesProps) => {
   const {
     loading,
     recentFiles,
@@ -84,6 +93,8 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
   const isInitialLoadComplete = useRef(false);
   const lastAutoLoadCheck = useRef<string>('');
   const autoLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [previewProgress, setPreviewProgress] = useState<number | null>(null);
+  const previewAbortRef = useRef<AbortController | null>(null);
 
   const [typeFilter, setTypeFilter] = useState<string[] | null>(null);
   const [modifiedFilter, setModifiedFilter] = useState<{
@@ -484,106 +495,192 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     }
   }, [recentFilesData, selectedIds]);
 
-  const previewItems = useCallback(
-    async (row: FileType, isPreview = true) => {
-      try {
+  // const previewItems = useCallback(
+  //   async (row: FileType, isPreview = true) => {
+  //     try {
+  //       if (isPreview) {
+  //         setPreviewFileLoading(true);
+  //         setPreviewFile({
+  //           name: row.name,
+  //         } as any);
+  //       } else {
+  //         setDetailsFileLoading(true);
+  //         setDetailsFile({
+  //           name: row.name,
+  //         } as any);
+  //       }
+
+  //       const ext = row.fileExtension
+  //         ? `${row.fileExtension.toLowerCase()}`
+  //         : '';
+  //       const isSupported = isPreview
+  //         ? PREVIEW_FILE_TYPES.includes(ext)
+  //         : IMAGE_FILE_TYPES.includes(ext);
+
+  //       if (!isSupported) {
+  //         if (isPreview) {
+  //           setPreviewFile({
+  //             url: '',
+  //             type: ext || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //           setPreviewFileLoading(false);
+  //         } else {
+  //           setDetailsFile({
+  //             url: '',
+  //             type: ext || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //           setDetailsFileLoading(false);
+  //         }
+  //         return;
+  //       }
+
+  //       const res = await dispatch(downloadFiles({ ids: [row.id] }));
+  //       if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
+  //         const url = URL.createObjectURL(res.payload?.data);
+  //         const isVideo = VIDEO_FILE_TYPES.includes(ext);
+  //         const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
+  //         if (isPreview) {
+  //           setPreviewFile({
+  //             url,
+  //             type: row.fileExtension || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             isVideo,
+  //             isDocument,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //         } else {
+  //           setDetailsFile({
+  //             url,
+  //             type: row.fileExtension || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             isVideo,
+  //             isDocument,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //         }
+  //       } else {
+  //         notifications.show({
+  //           message: res?.payload?.message || 'Failed to preview file',
+  //           color: 'red',
+  //         });
+  //       }
+  //     } catch (error: any) {
+  //       notifications.show({
+  //         message: error || 'Failed to preview file',
+  //         color: 'red',
+  //       });
+  //     } finally {
+  //       if (isPreview) {
+  //         setPreviewFileLoading(false);
+  //       } else {
+  //         setDetailsFileLoading(false);
+  //       }
+  //     }
+  //   },
+  //   [dispatch]
+  // );
+
+  const previewItems = useCallback(async (row: FileType, isPreview = true) => {
+    try {
+      if (isPreview) {
+        setPreviewFileLoading(true);
+        setPreviewFile({
+          name: row.name,
+        } as any);
+      } else {
+        setDetailsFileLoading(true);
+        setDetailsFile({
+          name: row.name,
+        } as any);
+      }
+      const ext = row.fileExtension ? `${row.fileExtension.toLowerCase()}` : '';
+      const isSupported = isPreview
+        ? PREVIEW_FILE_TYPES.includes(ext)
+        : IMAGE_FILE_TYPES.includes(ext);
+
+      if (!isSupported) {
         if (isPreview) {
-          setPreviewFileLoading(true);
           setPreviewFile({
+            url: '',
+            type: ext || row.mimeType || '',
             name: row.name,
-          } as any);
-        } else {
-          setDetailsFileLoading(true);
-          setDetailsFile({
-            name: row.name,
-          } as any);
-        }
-
-        const ext = row.fileExtension
-          ? `${row.fileExtension.toLowerCase()}`
-          : '';
-        const isSupported = isPreview
-          ? PREVIEW_FILE_TYPES.includes(ext)
-          : IMAGE_FILE_TYPES.includes(ext);
-
-        if (!isSupported) {
-          if (isPreview) {
-            setPreviewFile({
-              url: '',
-              type: ext || row.mimeType || '',
-              name: row.name,
-              size: row.size
-                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-                : undefined,
-              share: row.web_view_url ?? null,
-            });
-            setPreviewFileLoading(false);
-          } else {
-            setDetailsFile({
-              url: '',
-              type: ext || row.mimeType || '',
-              name: row.name,
-              size: row.size
-                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-                : undefined,
-              share: row.web_view_url ?? null,
-            });
-            setDetailsFileLoading(false);
-          }
-          return;
-        }
-
-        const res = await dispatch(downloadFiles({ ids: [row.id] }));
-        if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
-          const url = URL.createObjectURL(res.payload?.data);
-          const isVideo = VIDEO_FILE_TYPES.includes(ext);
-          const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
-          if (isPreview) {
-            setPreviewFile({
-              url,
-              type: row.fileExtension || row.mimeType || '',
-              name: row.name,
-              size: row.size
-                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-                : undefined,
-              isVideo,
-              isDocument,
-              share: row.web_view_url ?? null,
-            });
-          } else {
-            setDetailsFile({
-              url,
-              type: row.fileExtension || row.mimeType || '',
-              name: row.name,
-              size: row.size
-                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-                : undefined,
-              isVideo,
-              isDocument,
-              share: row.web_view_url ?? null,
-            });
-          }
-        } else {
-          notifications.show({
-            message: res?.payload?.message || 'Failed to preview file',
-            color: 'red',
+            size: row.size
+              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+              : undefined,
+            share: row.web_view_url ?? null,
           });
-        }
-      } catch (error: any) {
-        notifications.show({
-          message: error || 'Failed to preview file',
-          color: 'red',
-        });
-      } finally {
-        if (isPreview) {
           setPreviewFileLoading(false);
         } else {
+          setDetailsFile({
+            url: '',
+            type: ext || row.mimeType || '',
+            name: row.name,
+            size: row.size
+              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+              : undefined,
+            share: row.web_view_url ?? null,
+          });
           setDetailsFileLoading(false);
         }
+        return;
       }
-    },
-    [dispatch]
-  );
+
+      // setPreviewFileLoading(true);
+      setPreviewProgress(0);
+      previewAbortRef.current = new AbortController();
+
+      const fileUrl = `${import.meta.env.VITE_REACT_APP_BASE_URL}/cloud-storage/download`; // replace with your actual API endpoint
+      const blob = await fetchPreviewFileWithProgress(
+        fileUrl,
+        previewAbortRef.current!.signal,
+        [row.id],
+        percent => setPreviewProgress(percent)
+      );
+
+      const url = URL.createObjectURL(blob);
+      setPreviewFile({
+        url,
+        type: row.fileExtension || row.mimeType || '',
+        name: row.name,
+        size: row.size
+          ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+          : undefined,
+        isVideo: VIDEO_FILE_TYPES.includes(
+          row.fileExtension?.toLowerCase() || ''
+        ),
+        isDocument: DOCUMENT_FILE_TYPES.includes(
+          row.fileExtension?.toLowerCase() || ''
+        ),
+        share: row.web_view_url ?? null,
+      });
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        notifications.show({
+          message: 'Failed to preview file',
+          color: 'red',
+        });
+      }
+    } finally {
+      setPreviewFileLoading(false);
+      setPreviewProgress(null);
+    }
+  }, []);
 
   const [downloadItems] = useAsyncOperation(async data => {
     try {
@@ -762,6 +859,8 @@ const useRecentFiles = ({ downloadFile }: UseRecentFilesProps) => {
     setPreviewFile,
     previewFileLoading,
     displayPreviewIcon,
+    previewProgress,
+    previewAbortRef,
 
     // details drawer
     closeDetailsDrawer,

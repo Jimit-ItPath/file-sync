@@ -43,6 +43,8 @@ interface FullScreenPreviewProps {
   previewFile: PreviewFileType | null;
   previewFileLoading: boolean;
   previewModalOpen: boolean;
+  previewProgress: number | null;
+  previewAbortRef: React.RefObject<AbortController | null>;
   setPreviewModalOpen: (value: boolean) => void;
   setPreviewFile: (value: PreviewFileType | null) => void;
   onDownload?: () => void;
@@ -58,6 +60,8 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   previewFile,
   previewFileLoading,
   previewModalOpen,
+  previewAbortRef,
+  previewProgress = null,
   setPreviewModalOpen,
   setPreviewFile,
   onDownload,
@@ -172,6 +176,10 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
 
   const handleClose = useCallback(() => {
     setPreviewModalOpen(false);
+    if (previewAbortRef.current) {
+      previewAbortRef.current.abort();
+      previewAbortRef.current = null;
+    }
     if (previewFile?.url) {
       URL.revokeObjectURL(previewFile.url);
     }
@@ -349,9 +357,16 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             height: '100%',
+            flexDirection: 'column',
+            gap: '8px',
           }}
         >
           <Loader size="xl" />
+          {previewProgress !== null && (
+            <Text size="sm" c="white">
+              {previewProgress}%
+            </Text>
+          )}
         </Box>
       );
     }

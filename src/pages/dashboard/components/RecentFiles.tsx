@@ -48,6 +48,7 @@ const RecentFiles = () => {
     downloadFile,
     pauseDownload,
     resumeDownload,
+    fetchPreviewFileWithProgress,
   } = useFileDownloader();
   const {
     loading,
@@ -92,6 +93,8 @@ const RecentFiles = () => {
     setPreviewFile,
     previewFileLoading,
     displayPreviewIcon,
+    previewProgress,
+    previewAbortRef,
 
     closeDetailsDrawer,
     detailsDrawerOpen,
@@ -111,7 +114,7 @@ const RecentFiles = () => {
     hasFilters,
     handleAdvancedFilter,
     handleAdvancedFilterReset,
-  } = useRecentFiles({ downloadFile });
+  } = useRecentFiles({ downloadFile, fetchPreviewFileWithProgress });
   const responsiveIconSize = isXs ? 16 : isSm ? 20 : 24;
   const responsiveFontSize = isXs ? 'xs' : 'sm';
   const [columnsCount, setColumnsCount] = useState(2);
@@ -568,6 +571,8 @@ const RecentFiles = () => {
         previewModalOpen={previewModalOpen}
         setPreviewModalOpen={setPreviewModalOpen}
         setPreviewFile={setPreviewFile}
+        previewAbortRef={previewAbortRef}
+        previewProgress={previewProgress}
         onDownload={() => {
           if (
             previewFile &&
@@ -625,6 +630,7 @@ const RecentFiles = () => {
         onReset={handleAdvancedFilterReset}
         activeTypeFilter={typeFilter}
         activeModifiedFilter={modifiedFilter}
+        allowFolder={false}
       />
     </Box>
   );
