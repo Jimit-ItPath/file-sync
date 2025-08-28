@@ -8,9 +8,11 @@ const AdminDashboard = () => {
   const {
     animate,
     userAnalytics,
-    userAnalyticsLoading,
+    // userAnalyticsLoading,
     connectedAccountAnalytics,
-    connectedAccountAnalyticsLoading,
+    allAnalyticsLoading,
+    contactUsAnalytics,
+    // connectedAccountAnalyticsLoading,
   } = useAdminDashboard();
 
   return (
@@ -32,7 +34,7 @@ const AdminDashboard = () => {
       </Text> */}
 
       {/* Stats Cards */}
-      {userAnalyticsLoading || connectedAccountAnalyticsLoading ? (
+      {allAnalyticsLoading ? (
         <AdminDashboardSkeleton />
       ) : (
         <>
@@ -91,6 +93,48 @@ const AdminDashboard = () => {
               }}
             >
               {connectedAccountAnalytics?.map((item, index) => (
+                <Card
+                  key={index}
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  className={`dashboard-card ${animate ? 'enter' : ''}`}
+                  style={{
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 120,
+                    animationDelay: `${index * 0.1}s`,
+                  }}
+                >
+                  <Stack gap="xs" align="center">
+                    <Text fw={700} size="xl">
+                      {item.value.toLocaleString()}
+                    </Text>
+                    <Text size="sm" c="dimmed">
+                      {item.label}
+                    </Text>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
+          </Box>
+
+          {/* Contact Us Analytics */}
+          <Box>
+            <Text fw={700} size="md" mt={40} mb={24}>
+              Contact Us Analytics
+            </Text>
+            <SimpleGrid
+              spacing="lg"
+              mb={20}
+              style={{
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              }}
+            >
+              {contactUsAnalytics?.map((item, index) => (
                 <Card
                   key={index}
                   shadow="sm"

@@ -22,7 +22,7 @@ import NavBar from './navbar';
 import { Button, Dropzone, Form, Menu, Modal } from '../../components';
 import { ConfirmModal } from '../../components/confirm-modal';
 import Icon from '../../assets/icons/icon';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
@@ -51,12 +51,22 @@ import {
 } from '../../store/slices/cloudStorage.slice';
 import { notifications } from '@mantine/notifications';
 import UploadProgressV2 from '../../pages/dashboard/file-upload-v2/UploadProgressV2';
+import useFileDownloader from '../../pages/dashboard/components/use-file-downloader';
 
 const DashboardLayout = () => {
   usePageData();
   const [mobileDrawerOpened, mobileDrawerHandler] = useDisclosure();
   const [logoutConfirmOpened, logoutConfirmHandler] = useDisclosure();
   const { isSm, isXs } = useResponsive();
+  const {
+    downloadFile,
+    cancelDownload,
+    clearDownload,
+    downloadProgress,
+    pauseDownload,
+    resumeDownload,
+    fetchPreviewFileWithProgress,
+  } = useFileDownloader();
   const {
     openModal,
     modalOpen,
@@ -84,13 +94,14 @@ const DashboardLayout = () => {
     cancelUploadV2,
     closeUploadProgressV2,
     showUploadProgressV2,
-  } = useDashboard({});
+  } = useDashboard({ fetchPreviewFileWithProgress });
 
   const { logout } = useAuth() as any;
   const dispatch = useAppDispatch();
   const { userProfile } = useAppSelector(state => state.user);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const hasCalledOnce = useRef(false);
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
 
@@ -152,7 +163,8 @@ const DashboardLayout = () => {
   }, []);
 
   useEffect(() => {
-    if (userProfile?.role === ROLES.USER) {
+    if (userProfile?.role === ROLES.USER && !hasCalledOnce.current) {
+      hasCalledOnce.current = true;
       onInitialize({});
       fetchStorageData({});
     }
@@ -305,6 +317,15 @@ const DashboardLayout = () => {
                     <GlobalSearchBar
                       placeholder="Search files and folders..."
                       isSm={isSm}
+                      downloadFile={downloadFile}
+                      cancelDownload={cancelDownload}
+                      clearDownload={clearDownload}
+                      downloadProgress={downloadProgress}
+                      pauseDownload={pauseDownload}
+                      resumeDownload={resumeDownload}
+                      fetchPreviewFileWithProgress={
+                        fetchPreviewFileWithProgress
+                      }
                     />
                   </Group>
                 ) : null}

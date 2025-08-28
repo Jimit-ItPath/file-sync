@@ -523,7 +523,8 @@ const Profile = () => {
                 onChange={val =>
                   connectAccountMethods.setValue(
                     'accountType',
-                    val as 'google_drive' | 'dropbox' | 'onedrive'
+                    val as 'google_drive' | 'dropbox' | 'onedrive',
+                    { shouldValidate: true, shouldDirty: true }
                   )
                 }
                 error={

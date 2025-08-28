@@ -7,14 +7,14 @@ interface AdminDashboardSkeletonProps {
 }
 
 const AdminDashboardSkeleton: React.FC<AdminDashboardSkeletonProps> = ({
-  cards,
+  cards = 4,
 }) => {
   const skeletonCards = Array(typeof cards === 'number' ? cards : 4).fill(null);
 
   return (
     <SimpleGrid
       spacing="lg"
-      mb={20}
+      my={20}
       style={{
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
       }}

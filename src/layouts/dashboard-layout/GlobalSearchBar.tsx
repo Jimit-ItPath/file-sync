@@ -23,7 +23,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { api } from '../../api';
 import {
   navigateToFolder,
-  downloadFiles,
+  // downloadFiles,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import useDebounce from '../../hooks/use-debounce';
@@ -43,14 +43,38 @@ import {
 import type { FileType } from '../../pages/dashboard/use-dashboard';
 import { useNavigate, useParams } from 'react-router';
 import FullScreenPreview from '../../pages/dashboard/components/FullScreenPreview';
-import useFileDownloader from '../../pages/dashboard/components/use-file-downloader';
 import DownloadProgress from '../../pages/dashboard/components/DownloadProgress';
 import TextInput from '../../components/inputs/text-input';
 import { PRIVATE_ROUTES } from '../../routing/routes';
 
+interface DownloadProgress {
+  isDownloading: boolean;
+  fileName?: string;
+  totalSize: number;
+  downloadedSize: number;
+  percentage: number;
+  status: 'downloading' | 'completed' | 'failed' | 'cancelled' | 'paused';
+  startTime: number;
+  speed?: number; // bytes per second
+  timeRemaining?: number; // seconds
+  fileCount: number;
+}
+
 interface SearchBarProps {
   placeholder?: string;
   isSm?: boolean;
+  downloadFile: (selectedIds: string[]) => Promise<void>;
+  cancelDownload: () => void;
+  clearDownload: () => void;
+  downloadProgress: DownloadProgress | null;
+  pauseDownload: () => void;
+  resumeDownload: () => void;
+  fetchPreviewFileWithProgress: (
+    url: string,
+    signal: AbortSignal,
+    selectedIds: string[],
+    onProgress?: ((percent: number) => void) | undefined
+  ) => Promise<Blob>;
 }
 
 interface SearchResult {
@@ -78,6 +102,13 @@ interface SearchResult {
 const GlobalSearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Search files and folders...',
   isSm = false,
+  downloadFile,
+  cancelDownload,
+  clearDownload,
+  downloadProgress,
+  pauseDownload,
+  resumeDownload,
+  fetchPreviewFileWithProgress,
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -92,14 +123,6 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { accountId } = useAppSelector(state => state.cloudStorage);
-  const {
-    downloadFile,
-    cancelDownload,
-    clearDownload,
-    downloadProgress,
-    pauseDownload,
-    resumeDownload,
-  } = useFileDownloader();
 
   const [previewFileLoading, setPreviewFileLoading] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -113,6 +136,8 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
     isDocument?: boolean;
     share?: string | null;
   } | null>(null);
+  const [previewProgress, setPreviewProgress] = useState<number | null>(null);
+  const previewAbortRef = useRef<AbortController | null>(null);
 
   const checkLocation = useMemo(
     () =>
@@ -305,69 +330,136 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
     }
   });
 
-  const handleFilePreview = useCallback(
-    async (row: FileType) => {
-      try {
-        setPreviewFileLoading(true);
-        setPreviewModalOpen(true);
+  // const handleFilePreview = useCallback(
+  //   async (row: FileType) => {
+  //     try {
+  //       setPreviewFileLoading(true);
+  //       setPreviewModalOpen(true);
+  //       setPreviewFile({
+  //         name: row.name,
+  //       } as any);
+
+  //       const ext = row.fileExtension
+  //         ? `${row.fileExtension.toLowerCase()}`
+  //         : '';
+  //       const isSupported = PREVIEW_FILE_TYPES.includes(ext);
+
+  //       if (!isSupported) {
+  //         setPreviewFile({
+  //           id: row.id,
+  //           url: '',
+  //           type: ext || row.mimeType || '',
+  //           name: row.name,
+  //           size: row.size
+  //             ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //             : undefined,
+  //           share: row.web_view_url ?? null,
+  //         });
+  //         setPreviewFileLoading(false);
+  //         return;
+  //       }
+
+  //       const res = await dispatch(downloadFiles({ ids: [row.id] }));
+  //       if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
+  //         const url = URL.createObjectURL(res.payload?.data);
+  //         const isVideo = VIDEO_FILE_TYPES.includes(ext);
+  //         const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
+  //         setPreviewFile({
+  //           id: row.id,
+  //           url,
+  //           type: row.fileExtension || row.mimeType || '',
+  //           name: row.name,
+  //           size: row.size
+  //             ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //             : undefined,
+  //           isVideo,
+  //           isDocument,
+  //           share: row.web_view_url ?? null,
+  //         });
+  //       } else {
+  //         notifications.show({
+  //           message: res?.payload?.message || 'Failed to preview file',
+  //           color: 'red',
+  //         });
+  //       }
+  //     } catch (error: any) {
+  //       notifications.show({
+  //         message: error || 'Failed to preview file',
+  //         color: 'red',
+  //       });
+  //     } finally {
+  //       setPreviewFileLoading(false);
+  //     }
+  //   },
+  //   [dispatch]
+  // );
+
+  const handleFilePreview = useCallback(async (row: FileType) => {
+    try {
+      setPreviewFileLoading(true);
+      setPreviewModalOpen(true);
+      setPreviewFile({
+        name: row.name,
+      } as any);
+
+      const ext = row.fileExtension ? `${row.fileExtension.toLowerCase()}` : '';
+      const isSupported = PREVIEW_FILE_TYPES.includes(ext);
+
+      if (!isSupported) {
         setPreviewFile({
+          id: row.id,
+          url: '',
+          type: ext || row.mimeType || '',
           name: row.name,
-        } as any);
+          size: row.size
+            ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+            : undefined,
+          share: row.web_view_url ?? null,
+        });
+        setPreviewFileLoading(false);
+        return;
+      }
 
-        const ext = row.fileExtension
-          ? `${row.fileExtension.toLowerCase()}`
-          : '';
-        const isSupported = PREVIEW_FILE_TYPES.includes(ext);
+      setPreviewProgress(0);
+      previewAbortRef.current = new AbortController();
 
-        if (!isSupported) {
-          setPreviewFile({
-            id: row.id,
-            url: '',
-            type: ext || row.mimeType || '',
-            name: row.name,
-            size: row.size
-              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-              : undefined,
-            share: row.web_view_url ?? null,
-          });
-          setPreviewFileLoading(false);
-          return;
-        }
+      const fileUrl = `${import.meta.env.VITE_REACT_APP_BASE_URL}/cloud-storage/download`; // replace with your actual API endpoint
+      const blob = await fetchPreviewFileWithProgress(
+        fileUrl,
+        previewAbortRef.current!.signal,
+        [row.id],
+        percent => setPreviewProgress(percent)
+      );
 
-        const res = await dispatch(downloadFiles({ ids: [row.id] }));
-        if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
-          const url = URL.createObjectURL(res.payload?.data);
-          const isVideo = VIDEO_FILE_TYPES.includes(ext);
-          const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
-          setPreviewFile({
-            id: row.id,
-            url,
-            type: row.fileExtension || row.mimeType || '',
-            name: row.name,
-            size: row.size
-              ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-              : undefined,
-            isVideo,
-            isDocument,
-            share: row.web_view_url ?? null,
-          });
-        } else {
-          notifications.show({
-            message: res?.payload?.message || 'Failed to preview file',
-            color: 'red',
-          });
-        }
-      } catch (error: any) {
+      const url = URL.createObjectURL(blob);
+      setPreviewFile({
+        id: row.id,
+        url,
+        type: row.fileExtension || row.mimeType || '',
+        name: row.name,
+        size: row.size
+          ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+          : undefined,
+        isVideo: VIDEO_FILE_TYPES.includes(
+          row.fileExtension?.toLowerCase() || ''
+        ),
+        isDocument: DOCUMENT_FILE_TYPES.includes(
+          row.fileExtension?.toLowerCase() || ''
+        ),
+        share: row.web_view_url ?? null,
+      });
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
         notifications.show({
-          message: error || 'Failed to preview file',
+          message: 'Failed to preview file',
           color: 'red',
         });
-      } finally {
-        setPreviewFileLoading(false);
       }
-    },
-    [dispatch]
-  );
+    } finally {
+      setPreviewFileLoading(false);
+      setPreviewProgress(null);
+    }
+  }, []);
 
   const handleResultSelect = useCallback(
     (result: SearchResult) => {
@@ -678,6 +770,8 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         previewModalOpen={previewModalOpen}
         setPreviewModalOpen={setPreviewModalOpen}
         setPreviewFile={setPreviewFile}
+        previewAbortRef={previewAbortRef}
+        previewProgress={previewProgress}
         onDownload={() => {
           if (previewFile && previewFile.id) {
             downloadItems([previewFile.id]);

@@ -198,8 +198,9 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
               {downloadProgress?.speed
                 ? `${formatBytes(downloadProgress?.speed)}/s`
                 : ''}
-              {downloadProgress?.timeRemaining &&
-                ` • ${formatTime(downloadProgress?.timeRemaining)} left`}
+              {downloadProgress?.timeRemaining
+                ? ` • ${formatTime(downloadProgress?.timeRemaining)} left`
+                : null}
             </Text>
           </Group>
         ) : null}

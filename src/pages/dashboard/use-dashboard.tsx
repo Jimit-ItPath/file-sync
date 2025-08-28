@@ -17,7 +17,7 @@ import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
   createCloudStorageFolder,
-  downloadFiles,
+  // downloadFiles,
   initializeCloudStorageFromStorage,
   navigateToFolder,
   removeCloudStorageFiles,
@@ -51,6 +51,12 @@ import useUploadManagerV2 from './file-upload-v2/use-upload-manager-v2';
 
 type UseDashboardProps = {
   downloadFile?: (ids: string[]) => Promise<void>;
+  fetchPreviewFileWithProgress: (
+    url: string,
+    signal: AbortSignal,
+    selectedIds: string[],
+    onProgress?: (percent: number) => void
+  ) => Promise<Blob>;
 };
 
 export type FileType = {
@@ -94,7 +100,10 @@ type FolderFormData = z.infer<typeof folderSchema>;
 type UploadFormData = z.infer<typeof uploadSchema>;
 type RenameFormData = z.infer<typeof renameSchema>;
 
-const useDashboard = ({ downloadFile }: UseDashboardProps) => {
+const useDashboard = ({
+  downloadFile,
+  fetchPreviewFileWithProgress,
+}: UseDashboardProps) => {
   const {
     uploadingFiles: uploadingFilesV2,
     showUploadProgress: showUploadProgressV2,
@@ -206,6 +215,9 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
   const prevLocationRef = useRef<string | null>(null);
   // Use ref to track the last filter state
   const lastFilterKeyRef = useRef<string>('');
+
+  const [previewProgress, setPreviewProgress] = useState<number | null>(null);
+  const previewAbortRef = useRef<AbortController | null>(null);
 
   const {
     cloudStorage,
@@ -1043,6 +1055,107 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     }
   };
 
+  // const handleFilePreview = useCallback(
+  //   async (row: FileType, isPreview = true) => {
+  //     try {
+  //       if (isPreview) {
+  //         setPreviewFileLoading(true);
+  //         setPreviewFile({
+  //           name: row.name,
+  //         } as any);
+  //       } else {
+  //         setDetailsFileLoading(true);
+  //         setDetailsFile({
+  //           name: row.name,
+  //         } as any);
+  //       }
+
+  //       const ext = row.fileExtension
+  //         ? `${row.fileExtension.toLowerCase()}`
+  //         : '';
+  //       const isSupported = isPreview
+  //         ? PREVIEW_FILE_TYPES.includes(ext)
+  //         : IMAGE_FILE_TYPES.includes(ext);
+
+  //       if (!isSupported) {
+  //         if (isPreview) {
+  //           setPreviewFile({
+  //             url: '',
+  //             type: ext || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //           setPreviewFileLoading(false);
+  //         } else {
+  //           setDetailsFile({
+  //             url: '',
+  //             type: ext || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //           setDetailsFileLoading(false);
+  //         }
+  //         return;
+  //       }
+
+  //       const res = await dispatch(downloadFiles({ ids: [row.id] }));
+  //       if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
+  //         const url = URL.createObjectURL(res.payload?.data);
+  //         const isVideo = VIDEO_FILE_TYPES.includes(ext);
+  //         const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
+  //         if (isPreview) {
+  //           setPreviewFile({
+  //             url,
+  //             type: row.fileExtension || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             isVideo,
+  //             isDocument,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //         } else {
+  //           setDetailsFile({
+  //             url,
+  //             type: row.fileExtension || row.mimeType || '',
+  //             name: row.name,
+  //             size: row.size
+  //               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+  //               : undefined,
+  //             isVideo,
+  //             isDocument,
+  //             share: row.web_view_url ?? null,
+  //           });
+  //         }
+  //       } else {
+  //         notifications.show({
+  //           message: res?.payload?.message || 'Failed to preview file',
+  //           color: 'red',
+  //         });
+  //       }
+  //     } catch (error: any) {
+  //       notifications.show({
+  //         message: error || 'Failed to preview file',
+  //         color: 'red',
+  //       });
+  //     } finally {
+  //       if (isPreview) {
+  //         setPreviewFileLoading(false);
+  //       } else {
+  //         setDetailsFileLoading(false);
+  //       }
+  //     }
+  //   },
+  //   [dispatch]
+  // );
+
   const handleFilePreview = useCallback(
     async (row: FileType, isPreview = true) => {
       try {
@@ -1057,7 +1170,6 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
             name: row.name,
           } as any);
         }
-
         const ext = row.fileExtension
           ? `${row.fileExtension.toLowerCase()}`
           : '';
@@ -1092,56 +1204,47 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
           return;
         }
 
-        const res = await dispatch(downloadFiles({ ids: [row.id] }));
-        if (res.payload?.status === 200 && res.payload?.data instanceof Blob) {
-          const url = URL.createObjectURL(res.payload?.data);
-          const isVideo = VIDEO_FILE_TYPES.includes(ext);
-          const isDocument = DOCUMENT_FILE_TYPES.includes(ext);
-          if (isPreview) {
-            setPreviewFile({
-              url,
-              type: row.fileExtension || row.mimeType || '',
-              name: row.name,
-              size: row.size
-                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-                : undefined,
-              isVideo,
-              isDocument,
-              share: row.web_view_url ?? null,
-            });
-          } else {
-            setDetailsFile({
-              url,
-              type: row.fileExtension || row.mimeType || '',
-              name: row.name,
-              size: row.size
-                ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
-                : undefined,
-              isVideo,
-              isDocument,
-              share: row.web_view_url ?? null,
-            });
-          }
-        } else {
+        // setPreviewFileLoading(true);
+        setPreviewProgress(0);
+        previewAbortRef.current = new AbortController();
+
+        const fileUrl = `${import.meta.env.VITE_REACT_APP_BASE_URL}/cloud-storage/download`; // replace with your actual API endpoint
+        const blob = await fetchPreviewFileWithProgress(
+          fileUrl,
+          previewAbortRef.current!.signal,
+          [row.id],
+          percent => setPreviewProgress(percent)
+        );
+
+        const url = URL.createObjectURL(blob);
+        setPreviewFile({
+          url,
+          type: row.fileExtension || row.mimeType || '',
+          name: row.name,
+          size: row.size
+            ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
+            : undefined,
+          isVideo: VIDEO_FILE_TYPES.includes(
+            row.fileExtension?.toLowerCase() || ''
+          ),
+          isDocument: DOCUMENT_FILE_TYPES.includes(
+            row.fileExtension?.toLowerCase() || ''
+          ),
+          share: row.web_view_url ?? null,
+        });
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
           notifications.show({
-            message: res?.payload?.message || 'Failed to preview file',
+            message: 'Failed to preview file',
             color: 'red',
           });
         }
-      } catch (error: any) {
-        notifications.show({
-          message: error || 'Failed to preview file',
-          color: 'red',
-        });
       } finally {
-        if (isPreview) {
-          setPreviewFileLoading(false);
-        } else {
-          setDetailsFileLoading(false);
-        }
+        setPreviewFileLoading(false);
+        setPreviewProgress(null);
       }
     },
-    [dispatch]
+    []
   );
 
   // Folder creation functionality
@@ -2272,6 +2375,8 @@ const useDashboard = ({ downloadFile }: UseDashboardProps) => {
     previewFileLoading,
     displayPreviewIcon,
     downloadItems,
+    previewProgress,
+    previewAbortRef,
 
     // modal move
     moveModalOpen,

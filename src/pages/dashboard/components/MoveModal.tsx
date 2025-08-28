@@ -8,6 +8,7 @@ import {
   Loader,
   Center,
   Badge,
+  Transition,
 } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { notifications } from '@mantine/notifications';
@@ -414,40 +415,50 @@ const MoveModal: React.FC<MoveModalProps> = ({
 
         {/* Navigation Header */}
         <Box
-          px={20}
+          px={15}
           py={15}
+          h={55}
           style={{
             borderBottom: '1px solid #e5e7eb',
             backgroundColor: '#f8fafc',
             flexShrink: 0,
           }}
         >
-          <Group justify="space-between" align="center">
-            <Group gap="sm">
-              {currentPath.length > 0 && (
-                <ActionIcon
-                  variant="subtle"
-                  size="md"
-                  onClick={navigateBack}
-                  style={{
-                    borderRadius: '50%',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: '#e2e8f0',
-                    },
-                  }}
-                >
-                  <ICONS.IconArrowLeft size={18} />
-                </ActionIcon>
-              )}
-              <Group align="center">
-                <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5}>
-                  Current Location:
-                </Text>
-                <Text size="sm" fw={600} c="dark">
-                  {currentLocationText}
-                </Text>
-              </Group>
+          <Group gap="sm" align="center">
+            <Box w={30} h={30} style={{ position: 'relative' }}>
+              <Transition
+                mounted={currentPath.length > 0}
+                transition="pop"
+                duration={200}
+                timingFunction="ease"
+              >
+                {styles => (
+                  <ActionIcon
+                    variant="subtle"
+                    size="md"
+                    mt={1}
+                    onClick={navigateBack}
+                    style={{
+                      ...styles,
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      borderRadius: '50%',
+                    }}
+                  >
+                    <ICONS.IconArrowLeft size={18} />
+                  </ActionIcon>
+                )}
+              </Transition>
+            </Box>
+
+            <Group align="center">
+              <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5}>
+                Current Location:
+              </Text>
+              <Text size="sm" fw={600} c="dark" mt={-1}>
+                {currentLocationText}
+              </Text>
             </Group>
           </Group>
         </Box>
@@ -495,8 +506,8 @@ const MoveModal: React.FC<MoveModalProps> = ({
                 <Loader size="md" color="blue" />
               </Center>
             }
-            // height={'100%'}
-            height={folderData?.length ? 400 : '100%'}
+            // height={folderData?.length ? 400 : '100%'}
+            height={400}
             style={{ padding: '10px' }}
             scrollThreshold={0.8}
           >

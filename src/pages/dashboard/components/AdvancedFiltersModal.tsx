@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Stack,
   Group,
@@ -25,44 +25,8 @@ interface AdvancedFiltersModalProps {
   onReset: () => void;
   activeTypeFilter: string[] | null;
   activeModifiedFilter: { after?: Date; before?: Date } | null;
+  allowFolder?: boolean;
 }
-
-const typeOptions = [
-  {
-    value: 'folder',
-    label: 'Folders',
-    icon: ICONS.IconFolder,
-    color: '#FBBC05',
-  },
-  {
-    value: 'documents',
-    label: 'Documents',
-    icon: ICONS.IconFile,
-    color: '#4285F4',
-  },
-  {
-    value: 'sheets',
-    label: 'Sheets',
-    icon: ICONS.IconFileSpreadsheet,
-    color: '#34A853',
-  },
-  {
-    value: 'presentations',
-    label: 'Presentations',
-    icon: ICONS.IconPresentation,
-    color: '#FBBC05',
-  },
-  { value: 'photos', label: 'Photos', icon: ICONS.IconPhoto, color: '#4285F4' },
-  { value: 'pdfs', label: 'PDFs', icon: ICONS.IconPdf, color: '#EA4335' },
-  { value: 'videos', label: 'Videos', icon: ICONS.IconVideo, color: '#dc2626' },
-  {
-    value: 'archives',
-    label: 'Archives',
-    icon: ICONS.IconArchive,
-    color: '#673AB7',
-  },
-  { value: 'audio', label: 'Audio', icon: ICONS.IconMusic, color: '#FF5722' },
-];
 
 const modifiedOptions = [
   { value: 'today', label: 'Today' },
@@ -192,6 +156,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
   onReset,
   activeTypeFilter,
   activeModifiedFilter,
+  allowFolder = true,
 }) => {
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -212,6 +177,65 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
     before: activeModifiedFilter?.before,
   });
   const [search, setSearch] = useState('');
+
+  const typeOptions = useMemo(
+    () => [
+      ...(allowFolder
+        ? [
+            {
+              value: 'folder',
+              label: 'Folders',
+              icon: ICONS.IconFolder,
+              color: '#FBBC05',
+            },
+          ]
+        : []),
+      {
+        value: 'documents',
+        label: 'Documents',
+        icon: ICONS.IconFile,
+        color: '#4285F4',
+      },
+      {
+        value: 'sheets',
+        label: 'Sheets',
+        icon: ICONS.IconFileSpreadsheet,
+        color: '#34A853',
+      },
+      {
+        value: 'presentations',
+        label: 'Presentations',
+        icon: ICONS.IconPresentation,
+        color: '#FBBC05',
+      },
+      {
+        value: 'photos',
+        label: 'Photos',
+        icon: ICONS.IconPhoto,
+        color: '#4285F4',
+      },
+      { value: 'pdfs', label: 'PDFs', icon: ICONS.IconPdf, color: '#EA4335' },
+      {
+        value: 'videos',
+        label: 'Videos',
+        icon: ICONS.IconVideo,
+        color: '#dc2626',
+      },
+      {
+        value: 'archives',
+        label: 'Archives',
+        icon: ICONS.IconArchive,
+        color: '#673AB7',
+      },
+      {
+        value: 'audio',
+        label: 'Audio',
+        icon: ICONS.IconMusic,
+        color: '#FF5722',
+      },
+    ],
+    []
+  );
 
   // Update state when props change
   useEffect(() => {

@@ -800,5 +800,15 @@ export const api = {
         url: `/connected-account/analytics`,
         method: METHODS.GET,
       }),
+    getAllAnalytics: () =>
+      client({
+        url: `/admin/get-all-analytics`,
+        method: METHODS.GET,
+      }),
+    getContactUsAnalytics: () =>
+      client({
+        url: `/contact-us/analytics`,
+        method: METHODS.GET,
+      }),
   },
 };
