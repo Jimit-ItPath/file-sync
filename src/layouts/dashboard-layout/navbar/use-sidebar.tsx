@@ -22,7 +22,7 @@ import {
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import { generatePath, useNavigate } from 'react-router';
 import {
-  fetchRecentFiles,
+  // fetchRecentFiles,
   initializeCloudStorageFromStorage,
 } from '../../../store/slices/cloudStorage.slice';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
@@ -380,11 +380,11 @@ const useSidebar = () => {
 
   const [getFiles] = useAsyncOperation(getCloudStorageFiles);
 
-  const getRecentFiles = useCallback(async () => {
-    await dispatch(fetchRecentFiles({}));
-  }, [dispatch]);
+  // const getRecentFiles = useCallback(async () => {
+  //   await dispatch(fetchRecentFiles({}));
+  // }, [dispatch]);
 
-  const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
+  // const [onGetRecentFiles] = useAsyncOperation(getRecentFiles);
 
   const [removeAccess, removeAccessLoading] = useAsyncOperation(async () => {
     try {
@@ -397,10 +397,12 @@ const useSidebar = () => {
           color: 'green',
         });
         onInitialize({});
-        onGetRecentFiles({});
-        getFiles({});
+        // onGetRecentFiles({});
+        if (location.pathname === PRIVATE_ROUTES.DASHBOARD.path) {
+          getFiles({});
+        }
         fetchStorageData({});
-        navigate(PRIVATE_ROUTES.DASHBOARD.path);
+        navigate(PRIVATE_ROUTES.DASHBOARD.path, { replace: true });
         closeRemoveAccessModal();
       }
     } catch (error: any) {
@@ -459,6 +461,10 @@ const useSidebar = () => {
   const openNewModal = () => setIsNewModalOpen(true);
   const closeNewModal = () => setIsNewModalOpen(false);
 
+  const getSelectedAccount = useMemo(() => {
+    return connectedAccounts.find(account => account.id === selectedAccountId);
+  }, [connectedAccounts, selectedAccountId]);
+
   return {
     methods,
     isConnectModalOpen,
@@ -498,6 +504,7 @@ const useSidebar = () => {
     handleRenameConfirm,
     renameAccountModalOpen,
     renameAccountMethods,
+    getSelectedAccount,
   };
 };
 

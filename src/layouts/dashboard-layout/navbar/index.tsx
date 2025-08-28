@@ -126,6 +126,7 @@ const NavBar = ({
     handleRenameConfirm,
     renameAccountModalOpen,
     renameAccountMethods,
+    getSelectedAccount,
   } = useSidebar();
 
   const isActiveRoute = useMemo(
@@ -993,7 +994,8 @@ const NavBar = ({
               onChange={val =>
                 methods.setValue(
                   'accountType',
-                  val as 'google_drive' | 'dropbox' | 'onedrive'
+                  val as 'google_drive' | 'dropbox' | 'onedrive',
+                  { shouldValidate: true, shouldDirty: true }
                 )
               }
               error={methods.formState.errors.accountType?.message}
@@ -1026,7 +1028,13 @@ const NavBar = ({
         onClose={closeRemoveAccessModal}
         title="Remove Access"
       >
-        <Text mb="md">Are you sure you want to remove account access?</Text>
+        <Text mb="md">
+          Are you sure you want to remove{' '}
+          <span style={{ fontWeight: 600 }}>
+            "{getSelectedAccount?.account_name}"
+          </span>{' '}
+          account access?
+        </Text>
         <Group>
           <Button
             variant="outline"

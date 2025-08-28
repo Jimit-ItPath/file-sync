@@ -486,7 +486,8 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
                 onChange={val =>
                   methods.setValue(
                     'accountType',
-                    val as 'google_drive' | 'dropbox' | 'onedrive'
+                    val as 'google_drive' | 'dropbox' | 'onedrive',
+                    { shouldValidate: true, shouldDirty: true }
                   )
                 }
                 error={methods.formState.errors.accountType?.message}

@@ -951,10 +951,16 @@ const Dashboard = () => {
         <Text mb="md">
           Are you sure you want to delete this{' '}
           {itemToDelete?.type === 'folder' ? 'folder' : 'file'} "
-          {itemToDelete?.name}"{' '}
-          {itemToDelete?.UserConnectedAccount?.account_name
-            ? `from "${itemToDelete?.UserConnectedAccount?.account_name}"`
-            : ''}
+          <span style={{ fontWeight: 600 }}>{itemToDelete?.name}"</span>{' '}
+          {itemToDelete?.UserConnectedAccount?.account_name && (
+            <>
+              from "
+              <span style={{ fontWeight: 600 }}>
+                {itemToDelete?.UserConnectedAccount?.account_name}
+              </span>
+              "
+            </>
+          )}
           ?
           {itemToDelete?.type === 'folder' &&
             ' All contents will be deleted permanently.'}
@@ -1245,7 +1251,7 @@ const Dashboard = () => {
         centered
         radius="lg"
         transitionProps={{ transition: 'fade', duration: 300 }}
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+        // overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
         title="Connect Account Error"
       >
         <Text size="sm" mb="md" c="red" fw={500}>
