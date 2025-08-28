@@ -19,7 +19,7 @@ import { ICONS } from '../../../assets/icons';
 import { CONTACT_US_STATUS } from '../../../utils/constants';
 
 const updateConactUsSchema = z.object({
-  status: z.enum(['new', 'in_progress', 'resolved']),
+  status: z.enum(['new', 'in_progress', 'resolved', 'rejected']),
   notes: z.string().optional(),
 });
 
@@ -111,7 +111,11 @@ const useContactUs = () => {
     if (contactUsModalOpen) {
       updateContactUsMethods.setValue(
         'status',
-        (contactUsItem?.status as 'new' | 'in_progress' | 'resolved') || 'new'
+        (contactUsItem?.status as
+          | 'new'
+          | 'in_progress'
+          | 'resolved'
+          | 'rejected') || 'new'
       );
       updateContactUsMethods.setValue('notes', contactUsItem?.notes || '');
     }
@@ -295,6 +299,9 @@ const useContactUs = () => {
             case 'resolved':
               color = 'green';
               break;
+            case 'rejected':
+              color = 'red';
+              break;
             default:
               color = 'gray';
           }
@@ -362,6 +369,7 @@ const useContactUs = () => {
         label: 'Notes',
         isRequired: false,
         error: errors.notes?.message,
+        maxCharCount: 300
       },
     ],
     []

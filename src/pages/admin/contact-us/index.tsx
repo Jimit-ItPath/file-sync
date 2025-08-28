@@ -245,6 +245,7 @@ const ContactUs = () => {
                 isRequired={item.isRequired}
                 error={item.error}
                 data={item.data}
+                maxCharCount={item.maxCharCount}
               />
             ))}
             <Button

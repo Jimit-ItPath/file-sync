@@ -138,4 +138,5 @@ export const CONTACT_US_STATUS = {
   NEW: 'new',
   IN_PROGRESS: 'in_progress',
   RESOLVED: 'resolved',
+  REJECTED: 'rejected',
 };

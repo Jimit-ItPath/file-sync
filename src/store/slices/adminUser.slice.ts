@@ -73,6 +73,21 @@ type ConnectedAccountAnalyticsType = {
   active_dropbox_accounts: string;
   active_onedrive_accounts: string;
   re_authentication_required: string;
+  inactive_accounts: string;
+};
+
+type ContactUsAccountAnalyticsType = {
+  total_submissions: string;
+  new: string;
+  in_progress: string;
+  resolved: string;
+  rejected: string;
+};
+
+type AllAnalyticsType = {
+  user_analytics: UserAnalyticsType;
+  account_analytics: ConnectedAccountAnalyticsType;
+  contact_us_analytics: ContactUsAccountAnalyticsType;
 };
 
 type AdminUserState = {
@@ -105,6 +120,11 @@ type AdminUserState = {
     data: ConnectedAccountAnalyticsType | null;
     error: string | null;
   };
+  allAnalytics: {
+    loading: boolean;
+    data: AllAnalyticsType | null;
+    error: string | null;
+  };
 };
 
 const initialState: AdminUserState = {
@@ -133,6 +153,11 @@ const initialState: AdminUserState = {
     error: null,
   },
   connectedAccountAnalytics: {
+    loading: true,
+    data: null,
+    error: null,
+  },
+  allAnalytics: {
     loading: true,
     data: null,
     error: null,
@@ -296,6 +321,18 @@ export const fetchConnectedAccountAnalytics = createAsyncThunk(
   }
 );
 
+export const fetchAllAnalytics = createAsyncThunk(
+  'adminUser/fetchAllAnalytics',
+  async () => {
+    try {
+      const response = await api.adminUsers.getAllAnalytics();
+      return response.data;
+    } catch (error: any) {
+      return error;
+    }
+  }
+);
+
 const adminUserSlice = createSlice({
   name: 'adminUser',
   initialState,
@@ -436,6 +473,23 @@ const adminUserSlice = createSlice({
       })
       .addCase(fetchConnectedAccountAnalytics.rejected, state => {
         state.connectedAccountAnalytics = {
+          loading: false,
+          data: null,
+          error: null,
+        };
+      })
+      .addCase(fetchAllAnalytics.pending, state => {
+        state.allAnalytics.loading = true;
+      })
+      .addCase(fetchAllAnalytics.fulfilled, (state, action) => {
+        state.allAnalytics = {
+          loading: false,
+          data: action.payload?.data || null,
+          error: null,
+        };
+      })
+      .addCase(fetchAllAnalytics.rejected, state => {
+        state.allAnalytics = {
           loading: false,
           data: null,
           error: null,
