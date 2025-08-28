@@ -22,7 +22,7 @@ import NavBar from './navbar';
 import { Button, Dropzone, Form, Menu, Modal } from '../../components';
 import { ConfirmModal } from '../../components/confirm-modal';
 import Icon from '../../assets/icons/icon';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
@@ -101,6 +101,7 @@ const DashboardLayout = () => {
   const { userProfile } = useAppSelector(state => state.user);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const hasCalledOnce = useRef(false);
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
 
@@ -162,7 +163,8 @@ const DashboardLayout = () => {
   }, []);
 
   useEffect(() => {
-    if (userProfile?.role === ROLES.USER) {
+    if (userProfile?.role === ROLES.USER && !hasCalledOnce.current) {
+      hasCalledOnce.current = true;
       onInitialize({});
       fetchStorageData({});
     }
