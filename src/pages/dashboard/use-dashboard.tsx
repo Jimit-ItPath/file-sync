@@ -385,9 +385,15 @@ const useDashboard = ({
       isNavigatingRef.current ||
       isRouteSwitchingRef.current ||
       !pagination ||
-      pagination.page_no >= pagination.total_pages ||
+      // pagination.page_no >= pagination.total_pages ||
       !connectedAccounts?.length
     ) {
+      return;
+    }
+
+    if (pagination?.page_no >= pagination?.total_pages) {
+      autoLoadInProgressRef.current = false;
+      setIsAutoLoading(false);
       return;
     }
 
@@ -437,15 +443,17 @@ const useDashboard = ({
           await dispatch(initializeCloudStorageFromStorage(requestParams));
 
           // Wait a bit for DOM to update, then check again
-          setTimeout(() => {
-            if (
-              autoLoadRequestIdRef.current === requestId &&
-              !isNavigatingRef.current &&
-              !isRouteSwitchingRef.current
-            ) {
-              checkAndAutoLoad();
-            }
-          }, 100);
+          if (pagination.page_no + 1 < pagination.total_pages) {
+            setTimeout(() => {
+              if (
+                autoLoadRequestIdRef.current === requestId &&
+                !isNavigatingRef.current &&
+                !isRouteSwitchingRef.current
+              ) {
+                checkAndAutoLoad();
+              }
+            }, 100);
+          }
         }
       } catch (error) {
         console.error('Auto-load failed:', error);
@@ -514,7 +522,9 @@ const useDashboard = ({
         !isAutoLoading &&
         connectedAccounts?.length &&
         !isNavigatingRef.current &&
-        !isRouteSwitchingRef.current
+        !isRouteSwitchingRef.current &&
+        pagination &&
+        pagination.page_no < pagination.total_pages
       ) {
         setTimeout(checkAndAutoLoad, 50);
       }
@@ -533,7 +543,9 @@ const useDashboard = ({
         !isAutoLoading &&
         connectedAccounts?.length &&
         !isNavigatingRef.current &&
-        !isRouteSwitchingRef.current
+        !isRouteSwitchingRef.current &&
+        pagination &&
+        pagination.page_no < pagination.total_pages
       ) {
         setTimeout(checkAndAutoLoad, 50);
       }
@@ -568,7 +580,9 @@ const useDashboard = ({
       !isNavigatingRef.current &&
       !isRouteSwitchingRef.current &&
       cloudStorage.length > 0 &&
-      connectedAccounts?.length
+      connectedAccounts?.length &&
+      pagination &&
+      pagination.page_no < pagination.total_pages
     ) {
       // Use RAF to ensure DOM has updated
       requestAnimationFrame(() => {
@@ -579,7 +593,13 @@ const useDashboard = ({
         }, 100);
       });
     }
-  }, [cloudStorage.length, loading, checkAndAutoLoad, connectedAccounts]);
+  }, [
+    cloudStorage.length,
+    loading,
+    checkAndAutoLoad,
+    connectedAccounts,
+    pagination,
+  ]);
 
   // **NEW: Reset auto-load state on context changes**
   const resetAutoLoadState = useCallback(() => {
