@@ -162,7 +162,7 @@ export function Dropzone({
           <Text size="sm" c="dimmed" inline mt={7}>
             {!props.multiple
               ? 'Attach a file, should not exceed 5mb'
-              : 'Upload up to 5 files (max 5 MB each).'}
+              : 'Upload up to 5 files'}
           </Text>
         </div>
       </Group>
