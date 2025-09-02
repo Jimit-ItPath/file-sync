@@ -715,7 +715,7 @@ const Dashboard = () => {
           <DragDropOverlay
             isDragging={isDragging}
             message="Drop files here to upload"
-            subMessage="Upload up to 5 files (max 5 MB each)."
+            subMessage="Upload up to 5 files"
           />
         </Box>
         {isInitialLoading && hasPaginationData ? (

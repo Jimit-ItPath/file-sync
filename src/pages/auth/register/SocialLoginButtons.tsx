@@ -30,6 +30,7 @@ export const SocialLoginButtons = ({
         radius="md"
         fw={500}
         type="button"
+        disabled
       >
         Continue with Google
       </Button>
@@ -43,6 +44,7 @@ export const SocialLoginButtons = ({
         radius="md"
         fw={500}
         type="button"
+        disabled
       >
         Continue with Facebook
       </Button>
