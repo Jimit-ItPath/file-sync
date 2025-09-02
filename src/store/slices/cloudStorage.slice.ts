@@ -444,7 +444,7 @@ export const uploadFileChunk = createAsyncThunk(
       if (signal?.aborted) {
         return rejectWithValue('Upload canceled by user');
       }
-      return rejectWithValue(error?.message || 'Failed to upload chunk');
+      return rejectWithValue(error);
     }
   }
 );

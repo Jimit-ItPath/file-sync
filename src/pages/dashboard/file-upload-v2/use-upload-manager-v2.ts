@@ -140,7 +140,10 @@ const useUploadManagerV2 = () => {
           [fileId]: {
             ...prev[fileId],
             status: 'error',
-            error: error?.message || 'Upload failed',
+            error:
+              typeof error === 'string'
+                ? error
+                : error?.message || 'Upload failed',
           },
         }));
         return { success: false };

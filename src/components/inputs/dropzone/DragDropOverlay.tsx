@@ -58,7 +58,7 @@ const DragDropOverlay: React.FC<DragDropOverlayProps> = ({
             >
               {message}
             </Text>
-            <Text size="sm" c="#64748b" style={{ textAlign: 'center' }}>
+            <Text size="sm" c="#2563eb" style={{ textAlign: 'center' }}>
               {subMessage}
             </Text>
           </Stack>
