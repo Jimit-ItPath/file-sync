@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   downloadFilesEnhanced,
+  formatBytes,
   formatFileSize,
   getLocalStorage,
   removeLocalStorage,
@@ -744,7 +745,8 @@ const useDashboard = ({
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
       lastModified: item.modified_at ? item.modified_at : item.updatedAt,
-      size: item.size ? formatFileSize(item.size.toString()) : null,
+      // size: item.size ? formatFileSize(item.size.toString()) : null,
+      size: item.size ? formatBytes(Number(item.size)) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
@@ -1198,7 +1200,7 @@ const useDashboard = ({
           ? PREVIEW_FILE_TYPES.includes(ext)
           : IMAGE_FILE_TYPES.includes(ext);
 
-        if (!isSupported) {
+        if (!isSupported || !isPreview) {
           if (isPreview) {
             setPreviewFile({
               url: '',
@@ -1263,6 +1265,7 @@ const useDashboard = ({
       } finally {
         setPreviewFileLoading(false);
         setPreviewProgress(null);
+        setDetailsFileLoading(false);
       }
     },
     []

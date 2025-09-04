@@ -1,4 +1,7 @@
-import { downloadFilesEnhanced } from './../../../utils/helper/index';
+import {
+  downloadFilesEnhanced,
+  formatBytes,
+} from './../../../utils/helper/index';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
@@ -11,7 +14,6 @@ import {
 } from '../../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import getFileIcon from '../../../components/file-icon';
-import { formatFileSize } from '../../../utils/helper';
 import { notifications } from '@mantine/notifications';
 import { z } from 'zod';
 import type { FileType } from '../use-dashboard';
@@ -157,7 +159,8 @@ const useRecentFiles = ({
       }),
       owner: { name: 'You', avatar: null, initials: 'JS' },
       lastModified: item.modified_at ? item.modified_at : item.updatedAt,
-      size: item.size ? formatFileSize(item.size.toString()) : null,
+      // size: item.size ? formatFileSize(item.size.toString()) : null,
+      size: item.size ? formatBytes(Number(item.size)) : null,
       mimeType: item.mime_type,
       fileExtension: item.file_extension,
       preview: item.download_url,
@@ -614,7 +617,7 @@ const useRecentFiles = ({
         ? PREVIEW_FILE_TYPES.includes(ext)
         : IMAGE_FILE_TYPES.includes(ext);
 
-      if (!isSupported) {
+      if (!isSupported || !isPreview) {
         if (isPreview) {
           setPreviewFile({
             url: '',
@@ -679,6 +682,7 @@ const useRecentFiles = ({
     } finally {
       setPreviewFileLoading(false);
       setPreviewProgress(null);
+      setDetailsFileLoading(false);
     }
   }, []);
 
