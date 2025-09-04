@@ -298,6 +298,7 @@ const useDashboard = ({
       const options = checkStorageDetails?.result?.map(account => ({
         value: account.id,
         label: account.account_name,
+        accountType: account.account_type,
       }));
       return [{ value: 'all', label: 'All Accounts' }, ...options];
     }

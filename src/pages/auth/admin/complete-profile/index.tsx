@@ -1,9 +1,18 @@
 import useCompleteProfile from './use-complete-profile';
-import { Box, Grid, Group, Paper, Stack, Text, Title } from '@mantine/core';
-import { ICONS } from '../../../../assets/icons';
+import {
+  Box,
+  Grid,
+  Group,
+  Image,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
 import { Button, Form, Input } from '../../../../components';
 import { AUTH_ROUTES } from '../../../../routing/routes';
 import { FeatureList } from '../../register/FeatureList';
+import AllCloudHubLogo from '../../../../assets/svgs/AllCloudHub-Logo.svg';
 
 const CompleteProfile = () => {
   const {
@@ -22,14 +31,14 @@ const CompleteProfile = () => {
         align="center"
         style={{
           position: 'absolute',
-          top: 24,
-          left: 32,
+          top: 12,
+          left: 100,
           zIndex: 2,
           cursor: 'pointer',
         }}
         onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
-        <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+        {/* <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
           fw={700}
           fz={20}
@@ -39,7 +48,8 @@ const CompleteProfile = () => {
           }}
         >
           All Cloud Hub
-        </Text>
+        </Text> */}
+        <Image src={AllCloudHubLogo} w={150} h={50} fit="contain" />
       </Group>
       <Grid gutter={0}>
         <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 1, md: 2 }}>

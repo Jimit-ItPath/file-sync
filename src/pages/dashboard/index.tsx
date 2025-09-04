@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ActionIcon,
   Autocomplete,
@@ -15,7 +16,6 @@ import {
   Breadcrumbs,
   Button,
   Card,
-  Dropzone,
   Form,
   Image,
   Modal,
@@ -45,10 +45,12 @@ import DownloadProgress from './components/DownloadProgress';
 import UploadProgressV2 from './file-upload-v2/UploadProgressV2';
 import FileTableSkeleton from '../../components/skeleton/FileTableSkeleton';
 import FileGridSkeleton from '../../components/skeleton/FileGridSkeleton';
-import { notifications } from '@mantine/notifications';
 import AdvancedFiltersModal from './components/AdvancedFiltersModal';
 import { useAppSelector } from '../../store';
 import ReAuthenticateAccount from './ReAuthenticateAccount';
+import GoogleDriveIcon from '../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../assets/svgs/OneDrive.svg';
 
 const iconStyle = {
   borderRadius: 999,
@@ -93,19 +95,11 @@ const Dashboard = () => {
     // uploadingFiles,
     // showUploadProgress,
     // handleCloseUploadProgress,
-    closeModal,
-    createFolderLoading,
-    handleCreateFolder,
     // handleFileUpload,
     // openModal,
     // uploadFilesLoading,
     currentPath,
     navigateToFolderFn,
-    modalOpen,
-    modalType,
-    folderMethods,
-    setUploadedFiles,
-    uploadedFiles,
     getFileIcon,
     deleteModalOpen,
     handleDeleteConfirm,
@@ -144,7 +138,6 @@ const Dashboard = () => {
     moveFilesLoading,
     isPasteEnabled,
     cancelMoveMode,
-    isSFDEnabled,
     uploadMethods,
     accountOptionsForSFD,
     checkLocation,
@@ -193,7 +186,6 @@ const Dashboard = () => {
     // clearAllUploads,
 
     // Replace old upload handlers
-    handleFileUploadV2,
     // handleDragDropUploadV2,
     // uploadFilesHandler,
     connectedAccounts,
@@ -226,6 +218,28 @@ const Dashboard = () => {
     loading: connectedAccountLoading,
     handleReAuthenticate,
   } = useSidebar();
+
+  const accountConfigs = useMemo(
+    () => ({
+      google_drive: {
+        icon: <Image src={GoogleDriveIcon} w={14} h={14} />,
+        color: 'red',
+        label: 'Google Drive',
+      },
+      dropbox: {
+        icon: <Image src={DropboxIcon} w={15} />,
+        color: 'blue',
+        label: 'Dropbox',
+      },
+      onedrive: {
+        icon: <Image src={OneDriveIcon} w={14} h={14} />,
+        color: 'indigo',
+        label: 'OneDrive',
+      },
+    }),
+    []
+  );
+
   const { isSm, theme } = useResponsive();
   const { loading: authLoading, hasInitializedAccounts } = useAppSelector(
     state => state.auth
@@ -805,145 +819,6 @@ const Dashboard = () => {
         />
       ) : null} */}
 
-      {/* Create folder / upload file modal */}
-      <Modal
-        opened={modalOpen}
-        onClose={closeModal}
-        title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
-      >
-        {modalType === 'folder' ? (
-          <Form methods={folderMethods} onSubmit={handleCreateFolder}>
-            <Stack gap="md">
-              <TextInput
-                placeholder="Folder name"
-                label="Folder Name"
-                {...folderMethods.register('folderName')}
-                error={folderMethods.formState.errors.folderName?.message}
-                withAsterisk
-              />
-              {!isSFDEnabled && (
-                <Controller
-                  control={folderMethods.control}
-                  name="accountId"
-                  render={({ field }) => {
-                    const selectedOption = accountOptionsForSFD.find(
-                      option => option.value === field.value
-                    );
-
-                    return (
-                      <Autocomplete
-                        label="Select Account"
-                        placeholder="Choose an account"
-                        data={accountOptionsForSFD}
-                        value={selectedOption ? selectedOption.label : ''}
-                        onChange={value => {
-                          const matchedOption = accountOptionsForSFD.find(
-                            option =>
-                              option.label === value || option.value === value
-                          );
-                          field.onChange(
-                            matchedOption ? matchedOption.value : ''
-                          );
-                        }}
-                        error={
-                          folderMethods.formState.errors.accountId?.message
-                        }
-                        required
-                      />
-                    );
-                  }}
-                />
-              )}
-              <Button
-                type="submit"
-                loading={createFolderLoading}
-                disabled={
-                  !folderMethods.formState.isValid || createFolderLoading
-                }
-                maw={150}
-              >
-                Create Folder
-              </Button>
-            </Stack>
-          </Form>
-        ) : (
-          <Form onSubmit={handleFileUploadV2} methods={uploadMethods}>
-            <Stack gap={'md'}>
-              <Dropzone
-                // onFilesSelected={setUploadedFiles}
-                onFilesSelected={files => {
-                  if (files.length > 5) {
-                    notifications.show({
-                      message: 'You can upload a maximum of 5 files at a time.',
-                      color: 'red',
-                    });
-                    // Only take the first 5 files
-                    const limitedFiles = files.slice(0, 5);
-                    setUploadedFiles(limitedFiles);
-                    uploadMethods.setValue('files', limitedFiles);
-                  } else {
-                    setUploadedFiles(files);
-                    uploadMethods.setValue('files', files);
-                  }
-                }}
-                // maxSize={5 * 1024 ** 2}
-                multiple={true}
-                mb="md"
-                getFileIcon={getFileIcon}
-                files={uploadedFiles}
-                handleRemoveUploadedFile={handleRemoveUploadedFile}
-              />
-              {!isSFDEnabled && (
-                <Controller
-                  control={uploadMethods.control}
-                  name="accountId"
-                  render={({ field }) => {
-                    const selectedOption = accountOptionsForSFD.find(
-                      option => option.value === field.value
-                    );
-
-                    return (
-                      <Autocomplete
-                        label="Select Account"
-                        placeholder="Choose an account"
-                        data={accountOptionsForSFD}
-                        value={selectedOption ? selectedOption.label : ''}
-                        onChange={value => {
-                          const matchedOption = accountOptionsForSFD.find(
-                            option =>
-                              option.label === value || option.value === value
-                          );
-                          field.onChange(
-                            matchedOption ? matchedOption.value : ''
-                          );
-                        }}
-                        error={
-                          uploadMethods.formState.errors.accountId?.message
-                        }
-                        required
-                      />
-                    );
-                  }}
-                />
-              )}
-              <Button
-                // onClick={handleFileUpload}
-                type="submit"
-                // loading={uploadFilesLoading}
-                disabled={
-                  uploadedFiles.length === 0
-                  // || uploadFilesLoading
-                  // ||
-                  // (!isSFDEnabled && !uploadMethods.formState.isValid)
-                }
-              >
-                Upload Files
-              </Button>
-            </Stack>
-          </Form>
-        )}
-      </Modal>
-
       {/* delete file/folder modal */}
       <Modal
         opened={deleteModalOpen}
@@ -1056,6 +931,68 @@ const Dashboard = () => {
               {dragDropFiles.length} file{dragDropFiles.length > 1 ? 's' : ''}{' '}
               selected for upload (max 5 files) :
             </Text>
+            <Controller
+              control={uploadMethods.control}
+              name="accountId"
+              render={({ field }) => {
+                const selectedOption = accountOptionsForSFD.find(
+                  option => option.value === field.value
+                );
+
+                return (
+                  <Autocomplete
+                    label="Select Account"
+                    placeholder="Choose an account"
+                    data={accountOptionsForSFD}
+                    value={selectedOption ? selectedOption.label : ''}
+                    leftSection={
+                      selectedOption && 'accountType' in selectedOption ? (
+                        <Box
+                          mt={
+                            selectedOption?.accountType === 'dropbox' ? 0 : -2
+                          }
+                        >
+                          {
+                            accountConfigs[
+                              selectedOption.accountType as keyof typeof accountConfigs
+                            ]?.icon
+                          }
+                        </Box>
+                      ) : null
+                    }
+                    onChange={value => {
+                      const matchedOption = accountOptionsForSFD.find(
+                        option =>
+                          option.label === value || option.value === value
+                      );
+                      field.onChange(matchedOption ? matchedOption.value : '');
+                    }}
+                    error={uploadMethods.formState.errors.accountId?.message}
+                    required
+                    renderOption={({ option }: any) => {
+                      if ('accountType' in option) {
+                        const config =
+                          accountConfigs[
+                            option.accountType as keyof typeof accountConfigs
+                          ];
+                        return (
+                          <Group gap="sm">
+                            <Box
+                              mt={option?.accountType === 'dropbox' ? 0 : -2}
+                            >
+                              {config?.icon}
+                            </Box>
+                            <Text fz="sm">{option.label}</Text>
+                          </Group>
+                        );
+                      }
+
+                      return <Text fz="sm">{option.label}</Text>;
+                    }}
+                  />
+                );
+              }}
+            />
             <Box
               style={{
                 maxHeight: '250px',
@@ -1115,34 +1052,6 @@ const Dashboard = () => {
                 </Text>
               ) : null}
             </Box>
-
-            <Controller
-              control={uploadMethods.control}
-              name="accountId"
-              render={({ field }) => {
-                const selectedOption = accountOptionsForSFD.find(
-                  option => option.value === field.value
-                );
-
-                return (
-                  <Autocomplete
-                    label="Select Account"
-                    placeholder="Choose an account"
-                    data={accountOptionsForSFD}
-                    value={selectedOption ? selectedOption.label : ''}
-                    onChange={value => {
-                      const matchedOption = accountOptionsForSFD.find(
-                        option =>
-                          option.label === value || option.value === value
-                      );
-                      field.onChange(matchedOption ? matchedOption.value : '');
-                    }}
-                    error={uploadMethods.formState.errors.accountId?.message}
-                    required
-                  />
-                );
-              }}
-            />
 
             <Button
               type="submit"

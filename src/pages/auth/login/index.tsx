@@ -1,12 +1,21 @@
-import { Grid, Paper, Stack, Title, Text, Box, Group } from '@mantine/core';
+import {
+  Grid,
+  Paper,
+  Stack,
+  Title,
+  Text,
+  Box,
+  Group,
+  Image,
+} from '@mantine/core';
 import { LoginForm } from './LoginForm';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
 import useLogin from './use-login';
 import { SocialLoginButtons } from './SocialLoginButtons';
-import { ICONS } from '../../../assets/icons';
 import { FeatureList } from '../register/FeatureList';
 import useResponsive from '../../../hooks/use-responsive';
+import AllCloudHubLogo from '../../../assets/svgs/AllCloudHub-Logo.svg';
 
 export default function Login() {
   const { showLoginForm, toggleLoginForm, navigate } = useLogin();
@@ -17,14 +26,15 @@ export default function Login() {
         align="center"
         style={{
           position: 'absolute',
-          top: 24,
-          left: 32,
+          top: 12,
+          left: 100,
           zIndex: 2,
           cursor: 'pointer',
         }}
         onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
-        <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+        <Image src={AllCloudHubLogo} w={150} h={50} fit="contain" />
+        {/* <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
           fw={700}
           fz={20}
@@ -34,7 +44,7 @@ export default function Login() {
           }}
         >
           All Cloud Hub
-        </Text>
+        </Text> */}
       </Group>
       <Grid gutter={0} style={{ minHeight: '100vh' }}>
         <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 1, md: 2 }}>

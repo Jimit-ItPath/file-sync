@@ -17,22 +17,22 @@ const ConnectAccountDescription = () => {
           lineHeight: 1.6,
         }}
       >
-        <li>🔒 We never store, read, or misuse your files or personal data.</li>
+        <li>We never store, read, or misuse your files or personal data.</li>
         <li>
-          ✅ All connections are secured using industry-standard OAuth with your
+          All connections are secured using industry-standard OAuth with your
           explicit permission.
         </li>
         <li>
-          🗂️ Your files always remain in your connected cloud accounts — we do
-          not duplicate or move them.
+          Your files always remain in your connected cloud accounts — we do not
+          duplicate or move them.
         </li>
         <li>
-          📁 All Cloud Hub simply unifies your Google Drive, Dropbox, and
-          OneDrive accounts into one smart dashboard.
+          All Cloud Hub simply unifies your Google Drive, Dropbox, and OneDrive
+          accounts into one smart dashboard.
         </li>
         <li>
-          ✨ Our goal is to help you manage everything in one place — securely
-          and efficiently.
+          Our goal is to help you manage everything in one place — securely and
+          efficiently.
         </li>
       </ul>
     </Text>

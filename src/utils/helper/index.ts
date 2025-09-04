@@ -368,3 +368,100 @@ export const getVideoMimeType = (ext: string) => {
   };
   return map?.[ext?.toLowerCase()] || 'video/mp4';
 };
+
+/**
+ * Returns a human-readable file type label from mime_type
+ */
+export const getFileMimeTypeLabel = (mime_type: string): string => {
+  if (!mime_type) return 'Unknown';
+
+  switch (mime_type) {
+    // -------------------------
+    // Google Drive MIME types
+    // -------------------------
+    case 'application/vnd.google-apps.folder':
+      return 'Google Folder';
+    case 'application/vnd.google-apps.document':
+      return 'Google Document';
+    case 'application/vnd.google-apps.spreadsheet':
+      return 'Google Spreadsheet';
+    case 'application/vnd.google-apps.presentation':
+      return 'Google Presentation';
+    case 'application/vnd.google-apps.form':
+      return 'Google Form';
+    case 'application/vnd.google-apps.drawing':
+      return 'Google Drawing';
+    case 'application/vnd.google-apps.script':
+      return 'Google Script';
+    case 'application/vnd.google-apps.site':
+      return 'Google Site';
+    case 'application/vnd.google-apps.map':
+      return 'Google Map';
+    case 'application/vnd.google-apps.photo':
+      return 'Google Photo';
+    case 'application/vnd.google-apps.audio':
+      return 'Google Audio';
+    case 'application/vnd.google-apps.video':
+      return 'Google Video';
+    case 'application/vnd.google-apps.file':
+      return 'Google File';
+
+    // -------------------------
+    // Dropbox common MIME types
+    // -------------------------
+    case 'application/vnd.dropbox.folder':
+      return 'Dropbox Folder';
+    case 'application/vnd.dropbox-paper':
+      return 'Dropbox Paper Doc';
+
+    // -------------------------
+    // OneDrive MIME types
+    // -------------------------
+    case 'application/vnd.onedrive.folder':
+      return 'OneDrive Folder';
+    case 'application/vnd.onedrive.document':
+      return 'OneDrive Document';
+    case 'application/vnd.onedrive.spreadsheet':
+      return 'OneDrive Spreadsheet';
+    case 'application/vnd.onedrive.presentation':
+      return 'OneDrive Presentation';
+    case 'application/vnd.onedrive.photo':
+      return 'OneDrive Photo';
+    case 'application/vnd.onedrive.audio':
+      return 'OneDrive Audio';
+    case 'application/vnd.onedrive.video':
+      return 'OneDrive Video';
+
+    // -------------------------
+    // Generic MIME groups
+    // -------------------------
+    default:
+      if (mime_type.startsWith('image/')) return 'Image';
+      if (mime_type.startsWith('video/')) return 'Video';
+      if (mime_type.startsWith('audio/')) return 'Audio';
+      if (mime_type.startsWith('text/')) return 'Text File';
+      if (mime_type.includes('pdf')) return 'PDF Document';
+      if (mime_type.includes('zip') || mime_type.includes('compressed'))
+        return 'Archive';
+      if (mime_type.includes('spreadsheet') || mime_type.includes('excel'))
+        return 'Spreadsheet';
+      if (
+        mime_type.includes('presentation') ||
+        mime_type.includes('powerpoint')
+      )
+        return 'Presentation';
+      if (
+        mime_type.includes('document') ||
+        mime_type.includes('word') ||
+        mime_type.includes('msword')
+      )
+        return 'Document';
+      if (mime_type.includes('json')) return 'JSON File';
+      if (mime_type.includes('csv')) return 'CSV File';
+      if (mime_type.includes('xml')) return 'XML File';
+      if (mime_type.includes('html')) return 'HTML File';
+      if (mime_type.includes('script')) return 'Script File';
+
+      return 'Unknown';
+  }
+};

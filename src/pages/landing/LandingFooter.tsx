@@ -8,10 +8,8 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  ThemeIcon,
   Title,
 } from '@mantine/core';
-import { ICONS } from '../../assets/icons';
 import { AUTH_ROUTES } from '../../routing/routes';
 import type { NavigateFunction } from 'react-router';
 
@@ -36,13 +34,13 @@ const LandingFooter: React.FC<FooterProps> = ({
           <Grid.Col span={{ base: 12, md: 3 }}>
             <Stack gap="sm">
               <Group>
-                <ThemeIcon
+                {/* <ThemeIcon
                   size="sm"
                   variant="gradient"
                   gradient={{ from: 'blue', to: 'cyan' }}
                 >
                   <ICONS.IconCloud size={16} />
-                </ThemeIcon>
+                </ThemeIcon> */}
                 <Title order={4} c="white">
                   All Cloud Hub
                 </Title>

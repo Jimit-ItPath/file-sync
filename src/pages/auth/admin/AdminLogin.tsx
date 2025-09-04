@@ -7,12 +7,14 @@ import {
   Box,
   Group,
   ThemeIcon,
+  Image,
 } from '@mantine/core';
 import useAdminLogin from './use-admin-login';
 import { ICONS } from '../../../assets/icons';
 import { Button, Form, Input } from '../../../components';
 import { Link } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
+import AllCloudHubLogo from '../../../assets/svgs/AllCloudHub-Logo.svg';
 
 export default function AdminLogin() {
   const {
@@ -32,14 +34,14 @@ export default function AdminLogin() {
         align="center"
         style={{
           position: 'absolute',
-          top: 24,
-          left: 32,
+          top: 12,
+          left: 100,
           zIndex: 2,
           cursor: 'pointer',
         }}
         onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
-        <ICONS.IconCloud
+        {/* <ICONS.IconCloud
           size={32}
           color={isXs || isSm || isMd ? '#0ea5e9' : '#ffffff'}
         />
@@ -52,7 +54,8 @@ export default function AdminLogin() {
           }}
         >
           All Cloud Hub
-        </Text>
+        </Text> */}
+        <Image src={AllCloudHubLogo} w={150} h={50} fit="contain" />
       </Group>
       <Grid gutter={0} style={{ minHeight: '100vh' }}>
         <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 1, md: 2 }}>
@@ -153,9 +156,10 @@ export default function AdminLogin() {
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 6 }} order={{ xs: 2, md: 1 }}>
           <Paper
-            p={0}
+            p={{ base: 16, md: 56 }}
             style={{
-              background: 'linear-gradient(120deg, #0ea5e9 0%, #0369a1 100%)',
+              // background: 'linear-gradient(120deg, #0ea5e9 0%, #0369a1 100%)',
+              background: 'linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%)',
               borderRight: '1px solid #e5e7eb',
               display: 'flex',
               flexDirection: 'column',
@@ -185,12 +189,13 @@ export default function AdminLogin() {
                 mb={{ base: 16, sm: 20 }}
                 fw={700}
                 fz={{ base: 24, sm: 28, md: 32 }}
-                c="#fff"
+                // c="#fff"
               >
                 Welcome Back to Your Unified Cloud Dashboard
               </Title>
               <Text
-                c="#e0e7ef"
+                // c="#e0e7ef"
+                c="dimmed"
                 mb={{ base: 24, sm: 32 }}
                 fz={{ base: 14, sm: 16 }}
               >
@@ -200,7 +205,8 @@ export default function AdminLogin() {
               <Stack gap={isXs ? 16 : 24}>
                 <Group align="center" gap={isXs ? 12 : 16}>
                   <ThemeIcon
-                    color="white"
+                    // color="white"
+                    color="cyan"
                     size={isXs ? 28 : 36}
                     radius="md"
                     variant="light"
@@ -208,14 +214,20 @@ export default function AdminLogin() {
                     <ICONS.IconLockPassword size={isXs ? 16 : 20} />
                   </ThemeIcon>
                   <Box>
-                    <Text fw={600} fz={{ base: 14, sm: 16 }} mb={2} c="#fff">
+                    <Text
+                      fw={600}
+                      fz={{ base: 14, sm: 16 }}
+                      mb={2}
+                      // c="#fff"
+                    >
                       Secure login & session management
                     </Text>
                   </Box>
                 </Group>
                 <Group align="center" gap={isXs ? 12 : 16}>
                   <ThemeIcon
-                    color="white"
+                    // color="white"
+                    color="cyan"
                     size={isXs ? 28 : 36}
                     radius="md"
                     variant="light"
@@ -223,14 +235,20 @@ export default function AdminLogin() {
                     <ICONS.IconFolder size={isXs ? 16 : 20} />
                   </ThemeIcon>
                   <Box>
-                    <Text fw={600} fz={{ base: 14, sm: 16 }} mb={2} c="#fff">
+                    <Text
+                      fw={600}
+                      fz={{ base: 14, sm: 16 }}
+                      mb={2}
+                      // c="#fff"
+                    >
                       Unified file access across providers
                     </Text>
                   </Box>
                 </Group>
                 <Group align="center" gap={isXs ? 12 : 16}>
                   <ThemeIcon
-                    color="white"
+                    // color="white"
+                    color="cyan"
                     size={isXs ? 28 : 36}
                     radius="md"
                     variant="light"
@@ -238,7 +256,12 @@ export default function AdminLogin() {
                     <ICONS.IconCpu size={isXs ? 16 : 20} />
                   </ThemeIcon>
                   <Box>
-                    <Text fw={600} fz={{ base: 14, sm: 16 }} mb={2} c="#fff">
+                    <Text
+                      fw={600}
+                      fz={{ base: 14, sm: 16 }}
+                      mb={2}
+                      // c="#fff"
+                    >
                       Smart File Distribution (SFD)
                     </Text>
                   </Box>

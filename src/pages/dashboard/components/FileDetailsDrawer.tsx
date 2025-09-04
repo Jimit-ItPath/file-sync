@@ -17,7 +17,7 @@ import {
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { FileType } from '../use-dashboard';
-import { formatDateAndTime, formatFileSize } from '../../../utils/helper';
+import { formatDateAndTime, getFileMimeTypeLabel } from '../../../utils/helper';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OnedriveIcon from '../../../assets/svgs/OneDrive.svg';
@@ -271,11 +271,7 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
             <Stack gap="sm">
               {renderMetadataItem('Type', getFileTypeLabel())}
 
-              {item.size &&
-                renderMetadataItem(
-                  'Size',
-                  formatFileSize(item.size.toString())
-                )}
+              {item.size && renderMetadataItem('Size', item.size)}
 
               {renderMetadataItem(
                 'Modified',
@@ -298,7 +294,29 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
                   item.UserConnectedAccount.account_name
                 )}
 
-              {item.mimeType && renderMetadataItem('MIME Type', item.mimeType)}
+              {/* {item.mimeType && renderMetadataItem('MIME Type', item.mimeType)} */}
+
+              {item.mimeType ? (
+                <Group justify="space-between" wrap="nowrap">
+                  <Group gap="xs" miw={0}>
+                    <Text
+                      size="sm"
+                      c="dimmed"
+                      style={{ minWidth: 'fit-content' }}
+                    >
+                      MIME TYPE
+                    </Text>
+                  </Group>
+                  <Text
+                    size="sm"
+                    fw={500}
+                    ta="right"
+                    style={{ wordBreak: 'break-word' }}
+                  >
+                    {item.mimeType} ({getFileMimeTypeLabel(item.mimeType)})
+                  </Text>
+                </Group>
+              ) : null}
 
               {item.fileExtension &&
                 renderMetadataItem('Extension', item.fileExtension)}

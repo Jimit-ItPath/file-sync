@@ -144,10 +144,8 @@ const ContactUs = () => {
                               {record.user_agent || '--'}
                             </Text>
                           </Group>
-                        </Stack>
 
-                        <Stack gap="sm">
-                          <Group align="center" mb={4}>
+                          <Group gap="xs" align="center">
                             <Text size="sm" fw={600} c="gray.7">
                               📨 Message:
                             </Text>
@@ -160,7 +158,7 @@ const ContactUs = () => {
                             </Text>
                           </Group>
 
-                          <Group align="center">
+                          <Group gap="xs" align="center">
                             <Text size="sm" fw={600} c="gray.7">
                               📝 Notes:
                             </Text>

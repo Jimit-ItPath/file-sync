@@ -1,6 +1,5 @@
 import { NavLink as Link, useLocation } from 'react-router';
 import {
-  Autocomplete,
   Box,
   Group,
   Menu,
@@ -16,7 +15,7 @@ import { PRIVATE_ROUTES } from '../../../routing/routes';
 import Icon from '../../../assets/icons/icon';
 import { useMemo } from 'react';
 import useSidebar from './use-sidebar';
-import { Button, Dropzone, Form, Input, Modal } from '../../../components';
+import { Button, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
 import { formatBytes, removeLocalStorage } from '../../../utils/helper';
 import { ROLES } from '../../../utils/constants';
@@ -36,9 +35,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import SortableCloudAccountItem from './SortableCloudAccountItem';
-import { Controller } from 'react-hook-form';
 // import UploadProgress from '../../../pages/dashboard/components/UploadProgress';
-import { notifications } from '@mantine/notifications';
 
 const DASHBOARD_NAV_ITEMS = [
   {
@@ -65,27 +62,13 @@ const NavBar = ({
   mobileDrawerHandler,
   isSm,
   openModal,
-  modalOpen,
-  closeModal,
-  modalType,
-  folderMethods,
-  handleCreateFolder,
-  isSFDEnabled,
-  accountOptionsForSFD,
-  createFolderLoading,
   // handleFileUpload,
-  uploadMethods,
-  setUploadedFiles,
-  getFileIcon,
-  uploadedFiles,
   // uploadFilesLoading,
   // showUploadProgress,
   // uploadProgress,
   // uploadingFiles,
   // handleCancelUpload,
   // handleCloseUploadProgress,
-  handleRemoveUploadedFile,
-  handleFileUploadV2,
 }: any) => {
   const location = useLocation();
   const {
@@ -1062,145 +1045,6 @@ const NavBar = ({
           onActionComplete={closeNewModal}
         />
       </Modal> */}
-
-      {/* Create folder / upload file modal */}
-      <Modal
-        opened={modalOpen}
-        onClose={closeModal}
-        title={modalType === 'folder' ? 'Create New Folder' : 'Upload Files'}
-      >
-        {modalType === 'folder' ? (
-          <Form methods={folderMethods} onSubmit={handleCreateFolder}>
-            <Stack gap="md">
-              <TextInput
-                placeholder="Folder name"
-                label="Folder Name"
-                {...folderMethods.register('folderName')}
-                error={folderMethods.formState.errors.folderName?.message}
-                withAsterisk
-              />
-              {!isSFDEnabled && (
-                <Controller
-                  control={folderMethods.control}
-                  name="accountId"
-                  render={({ field }) => {
-                    const selectedOption = accountOptionsForSFD.find(
-                      (option: any) => option.value === field.value
-                    );
-
-                    return (
-                      <Autocomplete
-                        label="Select Account"
-                        placeholder="Choose an account"
-                        data={accountOptionsForSFD}
-                        value={selectedOption ? selectedOption.label : ''}
-                        onChange={value => {
-                          const matchedOption = accountOptionsForSFD.find(
-                            (option: any) =>
-                              option.label === value || option.value === value
-                          );
-                          field.onChange(
-                            matchedOption ? matchedOption.value : ''
-                          );
-                        }}
-                        error={
-                          folderMethods.formState.errors.accountId?.message
-                        }
-                        required
-                      />
-                    );
-                  }}
-                />
-              )}
-              <Button
-                type="submit"
-                loading={createFolderLoading}
-                disabled={
-                  !folderMethods.formState.isValid || createFolderLoading
-                }
-                maw={150}
-              >
-                Create Folder
-              </Button>
-            </Stack>
-          </Form>
-        ) : (
-          <Form onSubmit={handleFileUploadV2} methods={uploadMethods}>
-            <Stack gap={'md'}>
-              <Dropzone
-                // onFilesSelected={setUploadedFiles}
-                onFilesSelected={files => {
-                  if (files.length > 5) {
-                    notifications.show({
-                      message: 'You can upload a maximum of 5 files at a time.',
-                      color: 'red',
-                    });
-                    // Only take the first 5 files
-                    const limitedFiles = files.slice(0, 5);
-                    setUploadedFiles(limitedFiles);
-                    uploadMethods.setValue('files', limitedFiles);
-                  } else {
-                    setUploadedFiles(files);
-                    uploadMethods.setValue('files', files);
-                  }
-                }}
-                // maxSize={5 * 1024 ** 2}
-                multiple={true}
-                mb="md"
-                getFileIcon={getFileIcon}
-                files={uploadedFiles}
-                handleRemoveUploadedFile={handleRemoveUploadedFile}
-              />
-              {!isSFDEnabled && (
-                <Controller
-                  control={uploadMethods.control}
-                  name="accountId"
-                  render={({ field }) => {
-                    const selectedOption = accountOptionsForSFD.find(
-                      (option: any) => option.value === field.value
-                    );
-
-                    return (
-                      <Autocomplete
-                        label="Select Account"
-                        placeholder="Choose an account"
-                        data={accountOptionsForSFD}
-                        value={selectedOption ? selectedOption.label : ''}
-                        onChange={value => {
-                          const matchedOption = accountOptionsForSFD.find(
-                            (option: any) =>
-                              option.label === value || option.value === value
-                          );
-                          field.onChange(
-                            matchedOption ? matchedOption.value : ''
-                          );
-                        }}
-                        error={
-                          uploadMethods.formState.errors.accountId?.message
-                        }
-                        required
-                      />
-                    );
-                  }}
-                />
-              )}
-              <Button
-                // onClick={handleFileUpload}
-                type="submit"
-                // loading={uploadFilesLoading}
-                disabled={
-                  uploadedFiles.length === 0
-                  // || uploadFilesLoading
-                  // ||
-                  // (!isSFDEnabled && !uploadMethods.formState.isValid)
-                }
-              >
-                Upload Files
-              </Button>
-            </Stack>
-          </Form>
-        )}
-      </Modal>
 
       {/* Rename Account Modal */}
       <Modal
