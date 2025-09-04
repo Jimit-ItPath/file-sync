@@ -12,6 +12,7 @@ import {
   TextInput,
   Menu as MantineMenu,
   Text,
+  Image,
 } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router';
 import { usePageData } from '../../hooks/use-page-data';
@@ -52,6 +53,10 @@ import {
 import { notifications } from '@mantine/notifications';
 import UploadProgressV2 from '../../pages/dashboard/file-upload-v2/UploadProgressV2';
 import useFileDownloader from '../../pages/dashboard/components/use-file-downloader';
+import GoogleDriveIcon from '../../assets/svgs/GoogleDrive.svg';
+import DropboxIcon from '../../assets/svgs/Dropbox.svg';
+import OneDriveIcon from '../../assets/svgs/OneDrive.svg';
+import AllCloudHubLogo from '../../assets/svgs/AllCloudHub-Logo.svg';
 
 const DashboardLayout = () => {
   usePageData();
@@ -104,6 +109,27 @@ const DashboardLayout = () => {
   const hasCalledOnce = useRef(false);
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
+
+  const accountConfigs = useMemo(
+    () => ({
+      google_drive: {
+        icon: <Image src={GoogleDriveIcon} w={14} h={14} />,
+        color: 'red',
+        label: 'Google Drive',
+      },
+      dropbox: {
+        icon: <Image src={DropboxIcon} w={15} />,
+        color: 'blue',
+        label: 'Dropbox',
+      },
+      onedrive: {
+        icon: <Image src={OneDriveIcon} w={14} h={14} />,
+        color: 'indigo',
+        label: 'OneDrive',
+      },
+    }),
+    []
+  );
 
   const getAccounts = useCallback(async () => {
     await dispatch(getConnectedAccount());
@@ -257,18 +283,19 @@ const DashboardLayout = () => {
                   hiddenFrom="sm"
                   size="sm"
                 />
-                {isXs ? (
+                {/* {isXs ? (
                   <ICONS.IconCloud
                     size={32}
                     color={'#0ea5e9'}
                     onClick={redirectToDashboard}
                   />
-                ) : (
-                  <Group
-                    onClick={redirectToDashboard}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+                ) : ( */}
+                <Group
+                  onClick={redirectToDashboard}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Image src={AllCloudHubLogo} w={185} h="100%" fit="contain" />
+                  {/* <ICONS.IconCloud size={32} color={'#1c7ed6'} />
                     <Box
                       fw={700}
                       fz={22}
@@ -276,9 +303,9 @@ const DashboardLayout = () => {
                       style={{ letterSpacing: -0.5 }}
                     >
                       All Cloud Hub
-                    </Box>
-                  </Group>
-                )}
+                    </Box> */}
+                </Group>
+                {/* )} */}
                 {/* {!isSm ? (
                   <Group
                     align="center"
@@ -702,6 +729,23 @@ const DashboardLayout = () => {
                         placeholder="Choose an account"
                         data={accountOptionsForSFD}
                         value={selectedOption ? selectedOption.label : ''}
+                        leftSection={
+                          selectedOption && 'accountType' in selectedOption ? (
+                            <Box
+                              mt={
+                                selectedOption?.accountType === 'dropbox'
+                                  ? 0
+                                  : -2
+                              }
+                            >
+                              {
+                                accountConfigs[
+                                  selectedOption.accountType as keyof typeof accountConfigs
+                                ]?.icon
+                              }
+                            </Box>
+                          ) : null
+                        }
                         onChange={value => {
                           const matchedOption = accountOptionsForSFD.find(
                             option =>
@@ -715,6 +759,28 @@ const DashboardLayout = () => {
                           folderMethods.formState.errors.accountId?.message
                         }
                         required
+                        renderOption={({ option }: any) => {
+                          if ('accountType' in option) {
+                            const config =
+                              accountConfigs[
+                                option.accountType as keyof typeof accountConfigs
+                              ];
+                            return (
+                              <Group gap="sm">
+                                <Box
+                                  mt={
+                                    option?.accountType === 'dropbox' ? 0 : -2
+                                  }
+                                >
+                                  {config?.icon}
+                                </Box>
+                                <Text fz="sm">{option.label}</Text>
+                              </Group>
+                            );
+                          }
+
+                          return <Text fz="sm">{option.label}</Text>;
+                        }}
                       />
                     );
                   }}
@@ -773,6 +839,23 @@ const DashboardLayout = () => {
                         placeholder="Choose an account"
                         data={accountOptionsForSFD}
                         value={selectedOption ? selectedOption.label : ''}
+                        leftSection={
+                          selectedOption && 'accountType' in selectedOption ? (
+                            <Box
+                              mt={
+                                selectedOption?.accountType === 'dropbox'
+                                  ? 0
+                                  : -2
+                              }
+                            >
+                              {
+                                accountConfigs[
+                                  selectedOption.accountType as keyof typeof accountConfigs
+                                ]?.icon
+                              }
+                            </Box>
+                          ) : null
+                        }
                         onChange={value => {
                           const matchedOption = accountOptionsForSFD.find(
                             option =>
@@ -786,6 +869,28 @@ const DashboardLayout = () => {
                           uploadMethods.formState.errors.accountId?.message
                         }
                         required
+                        renderOption={({ option }: any) => {
+                          if ('accountType' in option) {
+                            const config =
+                              accountConfigs[
+                                option.accountType as keyof typeof accountConfigs
+                              ];
+                            return (
+                              <Group gap="sm" align="center">
+                                <Box
+                                  mt={
+                                    option?.accountType === 'dropbox' ? 0 : -2
+                                  }
+                                >
+                                  {config?.icon}
+                                </Box>
+                                <Text fz="sm">{option.label}</Text>
+                              </Group>
+                            );
+                          }
+
+                          return <Text fz="sm">{option.label}</Text>;
+                        }}
                       />
                     );
                   }}

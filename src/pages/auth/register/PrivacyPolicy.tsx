@@ -1,8 +1,17 @@
-import { Box, Grid, Paper, Stack, Title, Text, Group } from '@mantine/core';
-import { ICONS } from '../../../assets/icons';
+import {
+  Box,
+  Grid,
+  Paper,
+  Stack,
+  Title,
+  Text,
+  Group,
+  Image,
+} from '@mantine/core';
 import useResponsive from '../../../hooks/use-responsive';
 import { useNavigate } from 'react-router';
 import { AUTH_ROUTES } from '../../../routing/routes';
+import AllCloudHubLogo from '../../../assets/svgs/AllCloudHub-Logo.svg';
 
 const PrivacyPolicy = () => {
   const { isXs, isSm } = useResponsive();
@@ -14,14 +23,14 @@ const PrivacyPolicy = () => {
         align="center"
         style={{
           position: !isSm ? 'absolute' : 'relative',
-          top: 24,
-          left: 32,
+          top: 12,
+          left: 100,
           zIndex: 2,
           cursor: 'pointer',
         }}
         onClick={() => navigate(AUTH_ROUTES.REGISTER.url)}
       >
-        <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+        {/* <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
           fw={700}
           fz={20}
@@ -32,7 +41,8 @@ const PrivacyPolicy = () => {
           }}
         >
           All Cloud Hub
-        </Text>
+        </Text> */}
+        <Image src={AllCloudHubLogo} w={150} h={50} fit="contain" />
       </Group>
 
       <Grid gutter={0} style={{ minHeight: '100vh' }}>

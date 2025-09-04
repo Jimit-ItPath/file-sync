@@ -1,4 +1,13 @@
-import { Grid, Paper, Stack, Title, Text, Box, Group } from '@mantine/core';
+import {
+  Grid,
+  Paper,
+  Stack,
+  Title,
+  Text,
+  Box,
+  Group,
+  Image,
+} from '@mantine/core';
 import { FeatureList } from './FeatureList';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { FormFields } from './FormFields';
@@ -8,6 +17,7 @@ import { Button, Form } from '../../../components';
 import useRegister from './use-register';
 import { ICONS } from '../../../assets/icons';
 import useResponsive from '../../../hooks/use-responsive';
+import AllCloudHubLogo from '../../../assets/svgs/AllCloudHub-Logo.svg';
 
 const Register = () => {
   const {
@@ -32,14 +42,14 @@ const Register = () => {
         align="center"
         style={{
           position: 'absolute',
-          top: 24,
-          left: 32,
+          top: 12,
+          left: 100,
           zIndex: 2,
           cursor: 'pointer',
         }}
         onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
-        <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+        {/* <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
           fw={700}
           fz={20}
@@ -49,7 +59,8 @@ const Register = () => {
           }}
         >
           All Cloud Hub
-        </Text>
+        </Text> */}
+        <Image src={AllCloudHubLogo} w={150} h={50} fit="contain" />
       </Group>
       <Grid gutter={0} style={{ minHeight: '100vh' }}>
         <Grid.Col

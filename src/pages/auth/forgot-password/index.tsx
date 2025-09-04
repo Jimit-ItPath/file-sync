@@ -1,11 +1,20 @@
-import { Box, Stack, Title, Text, Group, Grid, Paper } from '@mantine/core';
+import {
+  Box,
+  Stack,
+  Title,
+  Text,
+  Group,
+  Grid,
+  Paper,
+  Image,
+} from '@mantine/core';
 import { Form, Input, Button } from '../../../components';
 import { Link } from 'react-router';
 import useForgotPassword from './use-forgot-password';
 import { AUTH_ROUTES } from '../../../routing/routes';
 import useResponsive from '../../../hooks/use-responsive';
-import { ICONS } from '../../../assets/icons';
 import { FeatureList } from '../register/FeatureList';
+import AllCloudHubLogo from '../../../assets/svgs/AllCloudHub-Logo.svg';
 
 export default function ForgotPassword() {
   const { methods, handleForgotSubmit, isLoading, navigate } =
@@ -18,14 +27,14 @@ export default function ForgotPassword() {
         align="center"
         style={{
           position: 'absolute',
-          top: 24,
-          left: 32,
+          top: 12,
+          left: 100,
           zIndex: 2,
           cursor: 'pointer',
         }}
         onClick={() => navigate(AUTH_ROUTES.LANDING.url)}
       >
-        <ICONS.IconCloud size={32} color={'#0ea5e9'} />
+        {/* <ICONS.IconCloud size={32} color={'#0ea5e9'} />
         <Text
           fw={700}
           fz={20}
@@ -35,7 +44,8 @@ export default function ForgotPassword() {
           }}
         >
           All Cloud Hub
-        </Text>
+        </Text> */}
+        <Image src={AllCloudHubLogo} w={150} h={50} fit="contain" />
       </Group>
       <Grid gutter={0} style={{ minHeight: '100vh' }}>
         <Grid.Col

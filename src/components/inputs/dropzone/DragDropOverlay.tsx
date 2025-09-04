@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text, Center, Stack } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
+import useResponsive from '../../../hooks/use-responsive';
 
 interface DragDropOverlayProps {
   isDragging: boolean;
@@ -13,24 +14,20 @@ const DragDropOverlay: React.FC<DragDropOverlayProps> = ({
   message = 'Drop files here',
   subMessage = 'Release to upload your files',
 }) => {
+  const { isXs } = useResponsive();
   if (!isDragging) return null;
 
   return (
     <Box
       style={{
-        // position: 'absolute',
-        // top: 0,
-        // left: 0,
-        // right: 0,
-        // bottom: 0,
         position: 'fixed',
         top: 60,
-        left: 250,
-        right: 32,
+        left: isXs ? 0 : 250,
+        right: isXs ? 0 : 10,
         bottom: 0,
         backgroundColor: 'rgba(37, 99, 235, 0.1)',
         border: '3px solid #2563eb',
-        borderRadius: '12px',
+        borderRadius: '4px',
         zIndex: 2000,
         pointerEvents: 'none',
         transition: 'all 0.2s ease-in-out',
