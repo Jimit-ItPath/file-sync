@@ -311,13 +311,47 @@ const useDashboard = ({
     [accountOptions]
   );
 
+  // const handleAccountTypeChange = useCallback(
+  //   (value: string | null) => {
+  //     if (value && !checkLocation) {
+  //       dispatch(setAccountId(value));
+  //     }
+  //   },
+  //   [dispatch, checkLocation]
+  // );
+
+  // 2. Fix account change handler to prevent double calls and preserve filters
   const handleAccountTypeChange = useCallback(
     (value: string | null) => {
       if (value && !checkLocation) {
+        // Preserve current filter values before account change
+        const currentTypeFilterValue = typeFilter;
+        const currentModifiedFilterValue = modifiedFilter;
+
         dispatch(setAccountId(value));
+
+        // Immediately call API with preserved filters after account change
+        resetAutoLoadState();
+
+        getCloudStorageFiles(
+          1,
+          {
+            type:
+              currentTypeFilterValue && currentTypeFilterValue.length
+                ? currentTypeFilterValue.join(',')
+                : undefined,
+            after: currentModifiedFilterValue?.after
+              ? dayjs(currentModifiedFilterValue.after).format('MM/DD/YYYY')
+              : undefined,
+            before: currentModifiedFilterValue?.before
+              ? dayjs(currentModifiedFilterValue.before).format('MM/DD/YYYY')
+              : undefined,
+          },
+          value
+        );
       }
     },
-    [dispatch, checkLocation]
+    [dispatch, checkLocation, typeFilter, modifiedFilter]
   );
 
   const handleSearchChange = (value: string) => {
@@ -343,7 +377,8 @@ const useDashboard = ({
   const getCloudStorageFiles = useCallback(
     async (
       page?: number,
-      filters?: { type?: string; after?: string; before?: string }
+      filters?: { type?: string; after?: string; before?: string },
+      account_id?: string | null
     ) => {
       if (checkConnectedAccDetails?.re_authentication_required) return;
       const requestParams: any = {
@@ -356,7 +391,9 @@ const useDashboard = ({
         ...(filters?.before && { end_date: filters.before }),
       };
 
-      if (checkLocation && currentAccountId) {
+      if (account_id && account_id !== 'all') {
+        requestParams.account_id = account_id;
+      } else if (checkLocation && currentAccountId) {
         requestParams.account_id = Number(currentAccountId);
       } else if (!checkLocation && accountId !== 'all') {
         requestParams.account_id = accountId;
@@ -505,6 +542,13 @@ const useDashboard = ({
 
   useEffect(() => {
     isRouteSwitchingRef.current = true;
+
+    // Allow route to settle before enabling auto-load
+    // const timer = setTimeout(() => {
+    //   isRouteSwitchingRef.current = false;
+    // }, 500);
+
+    // return () => clearTimeout(timer);
   }, [checkLocation, location.pathname]);
 
   // **NEW: Setup observers for better DOM change detection**
@@ -811,30 +855,48 @@ const useDashboard = ({
   //     return;
   //   }
 
+  //   // Generate a unique key for the current filter state to detect real changes
+  //   const filterKey = JSON.stringify({
+  //     accountId,
+  //     checkLocation,
+  //     typeFilter: typeFilter?.join(','),
+  //     modifiedFilter: modifiedFilter
+  //       ? {
+  //           after: modifiedFilter.after?.toISOString(),
+  //           before: modifiedFilter.before?.toISOString(),
+  //         }
+  //       : null,
+  //   });
+
   //   // Handle initial mount
   //   if (!hasMountedOnce.current) {
   //     hasMountedOnce.current = true;
 
-  //     // Only initialize on first mount if we have accounts and haven't initialized
   //     if (!initializedRef.current && !hasCalledInitializeAPI.current) {
   //       onInitialize({});
   //       initializedRef.current = true;
   //       hasCalledInitializeAPI.current = true;
+  //       lastFilterKeyRef.current = filterKey;
   //     }
   //     return;
   //   }
 
-  //   // Handle subsequent route/account changes
-  //   // Only trigger API if this is a real change and we're already initialized
-  //   if (initializedRef.current && hasCalledInitializeAPI.current) {
+  //   // Only trigger API if filters actually changed (not just ref values)
+  //   const hasFiltersChanged =
+  //     filterKey !== lastFilterKeyRef.current && !checkLocation;
+  //   const shouldTriggerAPI =
+  //     hasFiltersChanged &&
+  //     initializedRef.current &&
+  //     hasCalledInitializeAPI.current;
+
+  //   if (shouldTriggerAPI) {
   //     resetAutoLoadState();
+
   //     getCloudStorageFiles(
   //       checkLocation || accountId !== 'all' ? 1 : undefined,
   //       {
   //         type:
-  //           typeFilter && typeFilter?.length
-  //             ? typeFilter?.join(',')
-  //             : undefined,
+  //           typeFilter && typeFilter.length ? typeFilter.join(',') : undefined,
   //         after: modifiedFilter?.after
   //           ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
   //           : undefined,
@@ -843,8 +905,18 @@ const useDashboard = ({
   //           : undefined,
   //       }
   //     );
+
+  //     lastFilterKeyRef.current = filterKey;
   //   }
-  // }, [accountId, checkLocation, connectedAccounts?.length]);
+  // }, [
+  //   accountId,
+  //   checkLocation,
+  //   connectedAccounts?.length,
+  //   // typeFilter,
+  //   // modifiedFilter,
+  //   getCloudStorageFiles,
+  //   resetAutoLoadState,
+  // ]);
 
   useEffect(() => {
     // Skip if no accounts
@@ -852,20 +924,7 @@ const useDashboard = ({
       return;
     }
 
-    // Generate a unique key for the current filter state to detect real changes
-    const filterKey = JSON.stringify({
-      accountId,
-      checkLocation,
-      typeFilter: typeFilter?.join(','),
-      modifiedFilter: modifiedFilter
-        ? {
-            after: modifiedFilter.after?.toISOString(),
-            before: modifiedFilter.before?.toISOString(),
-          }
-        : null,
-    });
-
-    // Handle initial mount
+    // Handle initial mount only
     if (!hasMountedOnce.current) {
       hasMountedOnce.current = true;
 
@@ -873,47 +932,10 @@ const useDashboard = ({
         onInitialize({});
         initializedRef.current = true;
         hasCalledInitializeAPI.current = true;
-        lastFilterKeyRef.current = filterKey;
       }
-      return;
     }
-
-    // Only trigger API if filters actually changed (not just ref values)
-    const hasFiltersChanged =
-      filterKey !== lastFilterKeyRef.current && !checkLocation;
-    const shouldTriggerAPI =
-      hasFiltersChanged &&
-      initializedRef.current &&
-      hasCalledInitializeAPI.current;
-
-    if (shouldTriggerAPI) {
-      resetAutoLoadState();
-
-      getCloudStorageFiles(
-        checkLocation || accountId !== 'all' ? 1 : undefined,
-        {
-          type:
-            typeFilter && typeFilter.length ? typeFilter.join(',') : undefined,
-          after: modifiedFilter?.after
-            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-            : undefined,
-          before: modifiedFilter?.before
-            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-            : undefined,
-        }
-      );
-
-      lastFilterKeyRef.current = filterKey;
-    }
-  }, [
-    accountId,
-    checkLocation,
-    connectedAccounts?.length,
-    // typeFilter,
-    // modifiedFilter,
-    getCloudStorageFiles,
-    resetAutoLoadState,
-  ]);
+    // Remove all filter change handling from this effect - it's causing double calls
+  }, [connectedAccounts?.length]); // Only depend on accounts length
 
   useEffect(() => {
     // Reset mounted flag when location type changes to prevent double calls
