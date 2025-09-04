@@ -219,6 +219,10 @@ const useDashboard = ({
   const [previewProgress, setPreviewProgress] = useState<number | null>(null);
   const previewAbortRef = useRef<AbortController | null>(null);
 
+  const preventDuplicateAPIRef = useRef(false);
+  const lastAPICallParamsRef = useRef<string>('');
+  const skipAutoLoadRef = useRef(false);
+
   const {
     cloudStorage,
     loading,
@@ -387,7 +391,9 @@ const useDashboard = ({
       isRouteSwitchingRef.current ||
       !pagination ||
       // pagination.page_no >= pagination.total_pages ||
-      !connectedAccounts?.length
+      !connectedAccounts?.length ||
+      skipAutoLoadRef.current || // Add skip flag check
+      preventDuplicateAPIRef.current // Add duplicate prevention check
     ) {
       return;
     }
@@ -405,6 +411,10 @@ const useDashboard = ({
     if (!hasVerticalScrollbar) {
       // Generate unique request ID to prevent duplicate requests
       const requestId = `${Date.now()}-${Math.random()}`;
+      // Check if we're already loading the next page
+      if (autoLoadRequestIdRef.current && autoLoadRequestIdRef.current !== '') {
+        return;
+      }
       autoLoadRequestIdRef.current = requestId;
       autoLoadInProgressRef.current = true;
       setIsAutoLoading(true);
@@ -416,10 +426,12 @@ const useDashboard = ({
           pagination &&
           pagination.page_no < pagination.total_pages &&
           !isNavigatingRef.current &&
-          !isRouteSwitchingRef.current
+          !isRouteSwitchingRef.current &&
+          !skipAutoLoadRef.current
         ) {
+          const nextPage = pagination.page_no + 1;
           const requestParams: any = {
-            page: pagination.page_no + 1,
+            page: nextPage,
             limit: pagination.page_limit || 20,
             ...(currentFolderId && { id: currentFolderId }),
             searchTerm: debouncedSearchTerm || '',
@@ -444,16 +456,19 @@ const useDashboard = ({
           await dispatch(initializeCloudStorageFromStorage(requestParams));
 
           // Wait a bit for DOM to update, then check again
-          if (pagination.page_no + 1 < pagination.total_pages) {
+          if (nextPage < pagination.total_pages) {
             setTimeout(() => {
               if (
                 autoLoadRequestIdRef.current === requestId &&
                 !isNavigatingRef.current &&
-                !isRouteSwitchingRef.current
+                !isRouteSwitchingRef.current &&
+                !skipAutoLoadRef.current
               ) {
+                // Clear the request ID before recursive call
+                autoLoadRequestIdRef.current = '';
                 checkAndAutoLoad();
               }
-            }, 100);
+            }, 200);
           }
         }
       } catch (error) {
@@ -461,6 +476,7 @@ const useDashboard = ({
       } finally {
         if (autoLoadRequestIdRef.current === requestId) {
           autoLoadInProgressRef.current = false;
+          autoLoadRequestIdRef.current = '';
           setIsAutoLoading(false);
         }
       }
@@ -504,6 +520,12 @@ const useDashboard = ({
 
   useEffect(() => {
     isRouteSwitchingRef.current = true;
+    skipAutoLoadRef.current = true; // Skip auto-load during route changes
+
+    // Reset after route stabilizes
+    setTimeout(() => {
+      skipAutoLoadRef.current = false;
+    }, 1000);
   }, [checkLocation, location.pathname]);
 
   // **NEW: Setup observers for better DOM change detection**
@@ -570,6 +592,10 @@ const useDashboard = ({
   useEffect(() => {
     if (!loading && cloudStorage?.length > 0 && pagination?.page_no === 1) {
       isRouteSwitchingRef.current = false;
+      // Allow some time before enabling auto-load
+      setTimeout(() => {
+        skipAutoLoadRef.current = false;
+      }, 500);
     }
   }, [loading, cloudStorage.length, pagination?.page_no]);
 
@@ -608,6 +634,7 @@ const useDashboard = ({
     autoLoadRequestIdRef.current = '';
     isNavigatingRef.current = false;
     isRouteSwitchingRef.current = false;
+    skipAutoLoadRef.current = false;
     setIsAutoLoading(false);
   }, []);
 
@@ -868,11 +895,20 @@ const useDashboard = ({
       hasMountedOnce.current = true;
 
       if (!initializedRef.current && !hasCalledInitializeAPI.current) {
+        console.log('1st calling');
         onInitialize({});
         initializedRef.current = true;
         hasCalledInitializeAPI.current = true;
         lastFilterKeyRef.current = filterKey;
+        lastAPICallParamsRef.current = filterKey;
       }
+      return;
+    }
+
+    if (
+      filterKey === lastAPICallParamsRef.current ||
+      preventDuplicateAPIRef.current
+    ) {
       return;
     }
 
@@ -885,30 +921,57 @@ const useDashboard = ({
       hasCalledInitializeAPI.current;
 
     if (shouldTriggerAPI) {
+      preventDuplicateAPIRef.current = true;
+      skipAutoLoadRef.current = true;
+      console.log('2nd calling', typeFilter);
       resetAutoLoadState();
+
+      const currentTypeFilter = typeFilter;
+      const currentModifiedFilter = modifiedFilter;
+
+      // getCloudStorageFiles(
+      //   checkLocation || accountId !== 'all' ? 1 : undefined,
+      //   {
+      //     type:
+      //       typeFilter && typeFilter.length ? typeFilter.join(',') : undefined,
+      //     after: modifiedFilter?.after
+      //       ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+      //       : undefined,
+      //     before: modifiedFilter?.before
+      //       ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+      //       : undefined,
+      //   }
+      // );
 
       getCloudStorageFiles(
         checkLocation || accountId !== 'all' ? 1 : undefined,
         {
           type:
-            typeFilter && typeFilter.length ? typeFilter.join(',') : undefined,
-          after: modifiedFilter?.after
-            ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
+            currentTypeFilter && currentTypeFilter.length
+              ? currentTypeFilter.join(',')
+              : undefined,
+          after: currentModifiedFilter?.after
+            ? dayjs(currentModifiedFilter.after).format('MM/DD/YYYY')
             : undefined,
-          before: modifiedFilter?.before
-            ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+          before: currentModifiedFilter?.before
+            ? dayjs(currentModifiedFilter.before).format('MM/DD/YYYY')
             : undefined,
         }
-      );
+      ).finally(() => {
+        // Reset prevention flag after API call completes
+        setTimeout(() => {
+          preventDuplicateAPIRef.current = false;
+          skipAutoLoadRef.current = false;
+        }, 500);
+      });
 
       lastFilterKeyRef.current = filterKey;
+      lastAPICallParamsRef.current = filterKey;
     }
   }, [
     accountId,
     checkLocation,
     connectedAccounts?.length,
-    // typeFilter,
-    // modifiedFilter,
     getCloudStorageFiles,
     resetAutoLoadState,
   ]);
@@ -1294,6 +1357,8 @@ const useDashboard = ({
         }
 
         if (res?.payload?.success) {
+          // Set flag to prevent auto-load during refresh
+          skipAutoLoadRef.current = true;
           resetAutoLoadState();
           await getCloudStorageFiles(1, {
             type:
@@ -1307,6 +1372,12 @@ const useDashboard = ({
               ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
               : undefined,
           });
+
+          // Reset skip flag after a delay to allow proper refresh
+          setTimeout(() => {
+            skipAutoLoadRef.current = false;
+          }, 1000);
+
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
             color: 'green',
@@ -1606,6 +1677,9 @@ const useDashboard = ({
   useEffect(() => {
     return () => {
       uploadsInProgressRef.current = false;
+      preventDuplicateAPIRef.current = false;
+      skipAutoLoadRef.current = false;
+      autoLoadRequestIdRef.current = '';
     };
   }, []);
 
