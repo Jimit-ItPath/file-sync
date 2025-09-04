@@ -41,7 +41,11 @@ const connectAccountSchema = z.object({
 });
 
 const renameAccountSchema = z.object({
-  name: z.string().trim().min(1, 'Account name is required'),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Account name is required')
+    .max(50, 'Maximum 50 characters allowed'),
 });
 
 type RenameAccountFormData = z.infer<typeof renameAccountSchema>;

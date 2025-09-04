@@ -1060,6 +1060,7 @@ const NavBar = ({
               {...renameAccountMethods.register('name')}
               error={renameAccountMethods.formState.errors.name?.message}
               withAsterisk
+              maxLength={50}
             />
             <Button
               type="submit"

@@ -280,7 +280,10 @@ const useUploadManagerV2 = () => {
         };
       } catch (error: any) {
         notifications.show({
-          message: error?.message || 'Failed to start upload',
+          message:
+            typeof error === 'string'
+              ? error
+              : error?.message || 'Failed to start upload',
           color: 'red',
         });
 
