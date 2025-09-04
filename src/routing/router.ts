@@ -1,4 +1,4 @@
-import { createBrowserRouter, redirect } from 'react-router';
+import { createBrowserRouter, redirect, useLoaderData } from 'react-router';
 import { getAuth } from '../auth';
 
 // Routes
@@ -42,6 +42,27 @@ import FaqPage from '../pages/landing/components/FaqPage';
 import ContactForm from '../pages/landing/components/ContactForm';
 import ContactUs from '../pages/admin/contact-us';
 
+const GoogleDriveDashboard = () => {
+  const loaderData = useLoaderData() as { accountId: string };
+  return React.createElement(Dashboard, {
+    key: `google-drive-${loaderData?.accountId}`,
+  });
+};
+
+const DropboxDashboard = () => {
+  const loaderData = useLoaderData() as { accountId: string };
+  return React.createElement(Dashboard, {
+    key: `dropbox-${loaderData?.accountId}`,
+  });
+};
+
+const OnedriveDashboard = () => {
+  const loaderData = useLoaderData() as { accountId: string };
+  return React.createElement(Dashboard, {
+    key: `onedrive-${loaderData?.accountId}`,
+  });
+};
+
 const authLayoutLoader = () => {
   const { isAuthenticated, redirectUrl } = getAuth({});
   if (isAuthenticated) {
@@ -61,7 +82,7 @@ const dashboardLayoutLoader = () => {
   return null;
 };
 
-const dashboardPageLoader = (roles: string[]) => () => {
+const dashboardPageLoader = (roles: string[]) => (args: any) => {
   const { role } = getAuth({});
 
   if (!roles?.includes(role)) {
@@ -71,8 +92,9 @@ const dashboardPageLoader = (roles: string[]) => () => {
   // if (isAuthenticated && !roles.includes(role)) {
   //   return redirect('/404');
   // }
+  return { accountId: args.params.id };
 
-  return null;
+  // return null;
 };
 
 export const router = createBrowserRouter([
@@ -150,22 +172,22 @@ export const router = createBrowserRouter([
       {
         ...PRIVATE_ROUTES.GOOGLE_DRIVE,
         // Component: GoogleDrive,
-        // Component: Dashboard,
-        element: React.createElement(Dashboard, { key: 'google-drive' }),
+        Component: GoogleDriveDashboard,
+        // element: React.createElement(Dashboard, { key: `google-drive` }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.GOOGLE_DRIVE.roles),
       },
       {
         ...PRIVATE_ROUTES.DROPBOX,
         // Component: Dropbox,
-        // Component: Dashboard,
-        element: React.createElement(Dashboard, { key: 'dropbox' }),
+        Component: DropboxDashboard,
+        // element: React.createElement(Dashboard, { key: 'dropbox' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.DROPBOX.roles),
       },
       {
         ...PRIVATE_ROUTES.ONEDRIVE,
         // Component: OneDrive,
-        // Component: Dashboard,
-        element: React.createElement(Dashboard, { key: 'onedrive' }),
+        Component: OnedriveDashboard,
+        // element: React.createElement(Dashboard, { key: 'onedrive' }),
         loader: dashboardPageLoader(PRIVATE_ROUTES.ONEDRIVE.roles),
       },
       {
