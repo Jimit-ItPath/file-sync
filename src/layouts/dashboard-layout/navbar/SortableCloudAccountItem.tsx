@@ -226,6 +226,19 @@ const SortableCloudAccountItem = ({
           <ICONS.IconRefresh size={16} stroke={2} />
           Re-authenticate Account
         </Text>
+      ) : account?.storageInfo?.usageInWorkspace &&
+        account?.storageInfo?.isWorkspaceAccount ? (
+        <Box
+          px={8}
+          mt={4}
+          style={{
+            transition: 'margin-left 0.2s ease',
+          }}
+        >
+          <Text size="xs" mt={4} c="dimmed">
+            {formatBytes(Number(account.storageInfo.usageInWorkspace))} used
+          </Text>
+        </Box>
       ) : account.storageInfo && account.storageInfo.total ? (
         <Box
           px={8}

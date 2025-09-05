@@ -21,6 +21,8 @@ export type ConnectedAccountType = {
 type StorageDetailsType = {
   total: number;
   used: number;
+  isWorkspaceAccount?: boolean;
+  usageInWorkspace: number;
 };
 
 type CheckStorageDetailsType = {
