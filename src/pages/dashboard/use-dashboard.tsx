@@ -214,8 +214,6 @@ const useDashboard = ({
   const isNavigatingRef = useRef(false);
   const isRouteSwitchingRef = useRef(false);
   const prevLocationRef = useRef<string | null>(null);
-  // Use ref to track the last filter state
-  const lastFilterKeyRef = useRef<string>('');
 
   const [previewProgress, setPreviewProgress] = useState<number | null>(null);
   const previewAbortRef = useRef<AbortController | null>(null);
