@@ -21,7 +21,10 @@ import { formatDateAndTime, getFileMimeTypeLabel } from '../../../utils/helper';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../../assets/svgs/Dropbox.svg';
 import OnedriveIcon from '../../../assets/svgs/OneDrive.svg';
-import { IMAGE_FILE_TYPES } from '../../../utils/constants';
+import {
+  DOCUMENT_FILE_TYPES,
+  IMAGE_FILE_TYPES,
+} from '../../../utils/constants';
 
 interface FileDetailsDrawerProps {
   opened: boolean;
@@ -149,15 +152,16 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
         <Center>
           {detailsFileLoading ? (
             <Loader />
-          ) : detailsFile && IMAGE_FILE_TYPES.includes(detailsFile?.type) ? (
-            <Stack
-              align="center"
-              style={{ cursor: 'pointer' }}
-              onClick={() => onPreview?.(item)}
-            >
-              <Image src={detailsFile.url} alt={detailsFile.name} w={200} />
-            </Stack>
           ) : (
+            // detailsFile && IMAGE_FILE_TYPES.includes(detailsFile?.type) ? (
+            //   <Stack
+            //     align="center"
+            //     style={{ cursor: 'pointer' }}
+            //     onClick={() => onPreview?.(item)}
+            //   >
+            //     <Image src={detailsFile.url} alt={detailsFile.name} w={200} />
+            //   </Stack>
+            // ) :
             <Stack align="center" gap="sm">
               <ThemeIcon size="xl" variant="light" radius="xl">
                 {item.icon(48)}
@@ -165,13 +169,17 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
               <Text size="sm" c="dimmed" ta="center">
                 {getFileTypeLabel()}
               </Text>
-              <Box onClick={() => onPreview?.(item)}>
-                <Group gap="sm">
-                  <Badge color="blue" style={{ cursor: 'pointer' }}>
-                    Preview
-                  </Badge>
-                </Group>
-              </Box>
+              {detailsFile &&
+              (IMAGE_FILE_TYPES.includes(detailsFile.type) ||
+                DOCUMENT_FILE_TYPES.includes(detailsFile.type)) ? (
+                <Box onClick={() => onPreview?.(item)}>
+                  <Group gap="sm">
+                    <Badge color="blue" style={{ cursor: 'pointer' }}>
+                      Preview
+                    </Badge>
+                  </Group>
+                </Box>
+              ) : null}
             </Stack>
           )}
         </Center>
