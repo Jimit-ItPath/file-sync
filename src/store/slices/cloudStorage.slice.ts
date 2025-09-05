@@ -609,31 +609,31 @@ const cloudStorageSlice = createSlice({
       //   .addCase(createGoogleDriveFolder.pending, state => {
       //     state.isLoading = true;
       //   })
-      .addCase(createCloudStorageFolder.fulfilled, (state, action) => {
-        // state.isLoading = false;
-        state.cloudStorage = [
-          ...state.cloudStorage,
-          { ...(action.payload?.data || []) },
-        ];
-      })
-      .addCase(createCloudStorageFolder.rejected, (state, action) => {
-        // state.isLoading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(uploadCloudStorageFiles.pending, state => {
-        state.uploadLoading = true;
-      })
-      .addCase(uploadCloudStorageFiles.fulfilled, (state, action) => {
-        state.uploadLoading = false;
-        state.cloudStorage = [
-          ...state.cloudStorage,
-          { ...(action.payload?.data || []) },
-        ];
-      })
-      .addCase(uploadCloudStorageFiles.rejected, (state, action) => {
-        state.uploadLoading = false;
-        state.error = action.payload as string;
-      })
+      // .addCase(createCloudStorageFolder.fulfilled, (state, action) => {
+      //   // state.isLoading = false;
+      //   state.cloudStorage = [
+      //     ...state.cloudStorage,
+      //     { ...(action.payload?.data || []) },
+      //   ];
+      // })
+      // .addCase(createCloudStorageFolder.rejected, (state, action) => {
+      //   // state.isLoading = false;
+      //   state.error = action.payload as string;
+      // })
+      // .addCase(uploadCloudStorageFiles.pending, state => {
+      //   state.uploadLoading = true;
+      // })
+      // .addCase(uploadCloudStorageFiles.fulfilled, (state, action) => {
+      //   state.uploadLoading = false;
+      //   state.cloudStorage = [
+      //     ...state.cloudStorage,
+      //     { ...(action.payload?.data || []) },
+      //   ];
+      // })
+      // .addCase(uploadCloudStorageFiles.rejected, (state, action) => {
+      //   state.uploadLoading = false;
+      //   state.error = action.payload as string;
+      // })
       .addCase(fetchMoveModalFolders.pending, state => {
         state.moveModal.loading = true;
         state.moveModal.error = null;
