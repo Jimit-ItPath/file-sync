@@ -258,7 +258,16 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
                 {getFileTypeLabel()}
               </Badge>
               {storageProvider && (
-                <Badge variant="light" color="gray" size="sm">
+                <Badge
+                  variant="light"
+                  color="gray"
+                  size="sm"
+                  style={{ cursor: item.web_view_url ? 'pointer' : 'default' }}
+                  onClick={() => {
+                    if (!item.web_view_url) return;
+                    window.open(item.web_view_url, '_blank');
+                  }}
+                >
                   <Group gap={4}>
                     {/* <storageProvider.icon size={12} /> */}
                     {storageProvider.icon}

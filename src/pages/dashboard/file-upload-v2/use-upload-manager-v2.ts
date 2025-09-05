@@ -84,12 +84,13 @@ const useUploadManagerV2 = () => {
               uploadedBytes = end + 1;
             } else if (res.payload?.status >= 400) {
               throw new Error(
-                `Upload failed with status ${res.payload?.status}: ${res.payload?.statusText}`
+                res?.payload?.message ||
+                  `Upload failed with status ${res.payload?.status}: ${res.payload?.statusText}`
               );
             }
           } catch (error: any) {
             if (controller.signal.aborted) {
-              return { success: false, fileData: null };
+              return { success: false, fileData: null, error };
             }
             throw error;
           }
@@ -146,7 +147,7 @@ const useUploadManagerV2 = () => {
                 : error?.message || 'Upload failed',
           },
         }));
-        return { success: false };
+        return { success: false, error };
       }
     },
     [dispatch]
@@ -245,6 +246,12 @@ const useUploadManagerV2 = () => {
                   error: 'Upload failed',
                 },
               }));
+              if (result?.error?.message) {
+                notifications.show({
+                  message: result?.error?.message,
+                  color: 'red',
+                });
+              }
             }
           } catch (err: any) {
             setUploadingFiles(prev => ({
@@ -268,12 +275,13 @@ const useUploadManagerV2 = () => {
             message: `${completedFiles} of ${files.length} files uploaded successfully`,
             color: 'yellow',
           });
-        } else {
-          notifications.show({
-            message: 'Failed to upload files',
-            color: 'red',
-          });
         }
+        // else {
+        //   notifications.show({
+        //     message: 'Failed to upload files',
+        //     color: 'red',
+        //   });
+        // }
         return {
           originalFiles: result?.originalFiles,
           response: result?.response,

@@ -32,6 +32,7 @@ import { Image } from '@mantine/core';
 import { useViewportSize } from '@mantine/hooks';
 import { type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { NAME_REGEX } from '../../../utils/constants';
 
 const connectAccountSchema = z.object({
   accountName: z.string().trim().min(1, 'Account name is required'),
@@ -45,7 +46,8 @@ const renameAccountSchema = z.object({
     .string()
     .trim()
     .min(1, 'Account name is required')
-    .max(50, 'Maximum 50 characters allowed'),
+    .max(50, 'Maximum 50 characters allowed')
+    .regex(NAME_REGEX, "Letters only (spaces, - and ' allowed)"),
 });
 
 type RenameAccountFormData = z.infer<typeof renameAccountSchema>;

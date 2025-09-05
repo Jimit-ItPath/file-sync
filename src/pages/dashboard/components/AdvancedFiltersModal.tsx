@@ -158,10 +158,6 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
   activeModifiedFilter,
   allowFolder = true,
 }) => {
-  const combobox = useCombobox({
-    onDropdownClose: () => combobox.resetSelectedOption(),
-    onDropdownOpen: () => combobox.updateSelectedOptionIndex('active'),
-  });
   const { isXs } = useResponsive();
   const [selectedTypes, setSelectedTypes] = useState<string[]>(
     activeTypeFilter || []
@@ -177,6 +173,14 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
     before: activeModifiedFilter?.before,
   });
   const [search, setSearch] = useState('');
+
+  const combobox = useCombobox({
+    onDropdownClose: () => {
+      combobox.resetSelectedOption();
+      setSearch('');
+    },
+    onDropdownOpen: () => combobox.updateSelectedOptionIndex('active'),
+  });
 
   const typeOptions = useMemo(
     () => [
@@ -423,6 +427,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                       onBlur={() => combobox.closeDropdown()}
                       value={search}
                       placeholder="Select file types"
+                      readOnly
                       onChange={event => {
                         combobox.updateSelectedOptionIndex();
                         setSearch(event.currentTarget.value);

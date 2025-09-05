@@ -1201,6 +1201,20 @@ const useDashboard = ({
         dispatch(resetCloudStorageFolder());
       }
 
+      if (typeFilter && typeFilter?.length) {
+        requestParams.type = typeFilter?.join(',');
+      }
+      if (modifiedFilter?.after) {
+        requestParams.start_date = dayjs(modifiedFilter.after).format(
+          'MM/DD/YYYY'
+        );
+      }
+      if (modifiedFilter?.before) {
+        requestParams.end_date = dayjs(modifiedFilter.before).format(
+          'MM/DD/YYYY'
+        );
+      }
+
       if (checkLocation && currentAccountId) {
         requestParams.account_id = Number(currentAccountId);
       }
@@ -1210,21 +1224,30 @@ const useDashboard = ({
         setLastSelectedIndex(null);
       }
 
-      const navigationPromise = dispatch(
-        navigateToFolder(
-          folder
-            ? requestParams
-            : checkLocation && currentAccountId
-              ? { account_id: Number(currentAccountId) }
-              : null
-        )
-      );
+      // const navigationPromise = dispatch(
+      //   navigateToFolder(
+      //     folder
+      //       ? requestParams
+      //       : checkLocation && currentAccountId
+      //         ? { account_id: Number(currentAccountId) }
+      //         : null
+      //   )
+      // );
+      const navigationPromise = dispatch(navigateToFolder(requestParams));
 
       navigationPromise.finally(() => {
         isNavigatingRef.current = false;
       });
     },
-    [dispatch, isMoveMode, checkLocation, currentAccountId, resetAutoLoadState]
+    [
+      dispatch,
+      isMoveMode,
+      checkLocation,
+      currentAccountId,
+      resetAutoLoadState,
+      typeFilter,
+      modifiedFilter,
+    ]
   );
 
   const handleRowDoubleClick = useCallback(
@@ -1478,7 +1501,7 @@ const useDashboard = ({
 
         const res = await dispatch(createCloudStorageFolder(requestParams));
 
-        if (res?.payload?.status === 400) {
+        if (res?.payload?.status === 400 || res?.payload?.status === 500) {
           notifications.show({
             message: res?.payload?.message || 'Failed to create folder',
             color: 'red',
