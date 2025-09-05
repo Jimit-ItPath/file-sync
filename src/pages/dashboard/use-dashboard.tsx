@@ -217,6 +217,9 @@ const useDashboard = ({
 
   const [previewProgress, setPreviewProgress] = useState<number | null>(null);
   const previewAbortRef = useRef<AbortController | null>(null);
+  const currentRouteRef = useRef<string>('');
+  const loadedPagesRef = useRef<Set<number>>(new Set());
+  const lastSuccessfulPageRef = useRef<number>(0);
 
   const {
     cloudStorage,
@@ -412,6 +415,111 @@ const useDashboard = ({
   );
 
   // **NEW: Improved auto-load logic with better state management**
+  // const checkAndAutoLoad = useCallback(async () => {
+  //   if (
+  //     checkConnectedAccDetails?.re_authentication_required ||
+  //     !scrollBoxRef.current ||
+  //     loading ||
+  //     isAutoLoading ||
+  //     autoLoadInProgressRef.current ||
+  //     isNavigatingRef.current ||
+  //     isRouteSwitchingRef.current ||
+  //     !pagination ||
+  //     // pagination.page_no >= pagination.total_pages ||
+  //     !connectedAccounts?.length
+  //   ) {
+  //     return;
+  //   }
+
+  //   if (pagination?.page_no >= pagination?.total_pages) {
+  //     autoLoadInProgressRef.current = false;
+  //     setIsAutoLoading(false);
+  //     return;
+  //   }
+
+  //   const container = scrollBoxRef.current;
+  //   const hasVerticalScrollbar =
+  //     container.scrollHeight > container.clientHeight;
+
+  //   if (!hasVerticalScrollbar) {
+  //     // Generate unique request ID to prevent duplicate requests
+  //     const requestId = `${Date.now()}-${Math.random()}`;
+  //     autoLoadRequestIdRef.current = requestId;
+  //     autoLoadInProgressRef.current = true;
+  //     setIsAutoLoading(true);
+
+  //     try {
+  //       // Double-check conditions before making the request
+  //       if (
+  //         autoLoadRequestIdRef.current === requestId &&
+  //         pagination &&
+  //         pagination.page_no < pagination.total_pages &&
+  //         !isNavigatingRef.current &&
+  //         !isRouteSwitchingRef.current
+  //       ) {
+  //         const requestParams: any = {
+  //           page: pagination.page_no + 1,
+  //           limit: pagination.page_limit || 20,
+  //           ...(currentFolderId && { id: currentFolderId }),
+  //           searchTerm: debouncedSearchTerm || '',
+  //           ...(typeFilter &&
+  //             typeFilter.length && {
+  //               type: typeFilter.join(','),
+  //             }),
+  //           ...(modifiedFilter?.after && {
+  //             start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
+  //           }),
+  //           ...(modifiedFilter?.before && {
+  //             end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
+  //           }),
+  //         };
+
+  //         if (checkLocation && currentAccountId) {
+  //           requestParams.account_id = Number(currentAccountId);
+  //         } else if (!checkLocation && accountId !== 'all') {
+  //           requestParams.account_id = accountId;
+  //         }
+
+  //         await dispatch(initializeCloudStorageFromStorage(requestParams));
+
+  //         // Wait a bit for DOM to update, then check again
+  //         if (pagination.page_no + 1 < pagination.total_pages) {
+  //           setTimeout(() => {
+  //             if (
+  //               autoLoadRequestIdRef.current === requestId &&
+  //               !isNavigatingRef.current &&
+  //               !isRouteSwitchingRef.current
+  //             ) {
+  //               checkAndAutoLoad();
+  //             }
+  //           }, 100);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('Auto-load failed:', error);
+  //     } finally {
+  //       if (autoLoadRequestIdRef.current === requestId) {
+  //         autoLoadInProgressRef.current = false;
+  //         setIsAutoLoading(false);
+  //       }
+  //     }
+  //   }
+  // }, [
+  //   loading,
+  //   isAutoLoading,
+  //   pagination,
+  //   connectedAccounts,
+  //   currentFolderId,
+  //   debouncedSearchTerm,
+  //   typeFilter,
+  //   modifiedFilter,
+  //   checkLocation,
+  //   currentAccountId,
+  //   accountId,
+  //   dispatch,
+  //   checkConnectedAccDetails?.re_authentication_required,
+  // ]);
+
   const checkAndAutoLoad = useCallback(async () => {
     if (
       checkConnectedAccDetails?.re_authentication_required ||
@@ -422,7 +530,6 @@ const useDashboard = ({
       isNavigatingRef.current ||
       isRouteSwitchingRef.current ||
       !pagination ||
-      // pagination.page_no >= pagination.total_pages ||
       !connectedAccounts?.length
     ) {
       return;
@@ -439,23 +546,49 @@ const useDashboard = ({
       container.scrollHeight > container.clientHeight;
 
     if (!hasVerticalScrollbar) {
+      const nextPage = pagination.page_no + 1;
+
+      // Generate route key to track current context
+      const currentRouteKey = `${location.pathname}-${currentAccountId || accountId}`;
+
+      // Check if route changed - if so, reset loaded pages
+      if (currentRouteRef.current !== currentRouteKey) {
+        currentRouteRef.current = currentRouteKey;
+        loadedPagesRef.current = new Set([pagination.page_no]); // Include current page
+        lastSuccessfulPageRef.current = pagination.page_no;
+      }
+
+      // Prevent duplicate page requests
+      if (loadedPagesRef.current.has(nextPage)) {
+        return;
+      }
+
+      // Ensure we're requesting the correct next page
+      if (nextPage !== lastSuccessfulPageRef.current + 1) {
+        return;
+      }
+
       // Generate unique request ID to prevent duplicate requests
-      const requestId = `${Date.now()}-${Math.random()}`;
+      const requestId = `${currentRouteKey}-${nextPage}-${Date.now()}`;
       autoLoadRequestIdRef.current = requestId;
       autoLoadInProgressRef.current = true;
       setIsAutoLoading(true);
+
+      // Mark this page as being loaded
+      loadedPagesRef.current.add(nextPage);
 
       try {
         // Double-check conditions before making the request
         if (
           autoLoadRequestIdRef.current === requestId &&
+          currentRouteRef.current === currentRouteKey &&
           pagination &&
-          pagination.page_no < pagination.total_pages &&
+          nextPage <= pagination.total_pages &&
           !isNavigatingRef.current &&
           !isRouteSwitchingRef.current
         ) {
           const requestParams: any = {
-            page: pagination.page_no + 1,
+            page: nextPage,
             limit: pagination.page_limit || 20,
             ...(currentFolderId && { id: currentFolderId }),
             searchTerm: debouncedSearchTerm || '',
@@ -477,23 +610,39 @@ const useDashboard = ({
             requestParams.account_id = accountId;
           }
 
-          await dispatch(initializeCloudStorageFromStorage(requestParams));
+          const result: any = await dispatch(
+            initializeCloudStorageFromStorage(requestParams)
+          );
 
-          // Wait a bit for DOM to update, then check again
-          if (pagination.page_no + 1 < pagination.total_pages) {
-            setTimeout(() => {
-              if (
-                autoLoadRequestIdRef.current === requestId &&
-                !isNavigatingRef.current &&
-                !isRouteSwitchingRef.current
-              ) {
-                checkAndAutoLoad();
-              }
-            }, 100);
+          // Only update lastSuccessfulPageRef if the request was successful and route hasn't changed
+          if (
+            result.payload?.success !== false &&
+            currentRouteRef.current === currentRouteKey
+          ) {
+            lastSuccessfulPageRef.current = nextPage;
+
+            // Continue auto-loading if there are more pages and no scrollbar
+            if (nextPage < pagination.total_pages) {
+              setTimeout(() => {
+                if (
+                  autoLoadRequestIdRef.current === requestId &&
+                  currentRouteRef.current === currentRouteKey &&
+                  !isNavigatingRef.current &&
+                  !isRouteSwitchingRef.current
+                ) {
+                  checkAndAutoLoad();
+                }
+              }, 100);
+            }
+          } else {
+            // Remove failed page from loaded set
+            loadedPagesRef.current.delete(nextPage);
           }
         }
       } catch (error) {
         console.error('Auto-load failed:', error);
+        // Remove failed page from loaded set
+        loadedPagesRef.current.delete(nextPage);
       } finally {
         if (autoLoadRequestIdRef.current === requestId) {
           autoLoadInProgressRef.current = false;
@@ -515,6 +664,7 @@ const useDashboard = ({
     accountId,
     dispatch,
     checkConnectedAccDetails?.re_authentication_required,
+    location.pathname, // Add to dependencies
   ]);
 
   useEffect(() => {
@@ -541,13 +691,15 @@ const useDashboard = ({
   useEffect(() => {
     isRouteSwitchingRef.current = true;
 
-    // Allow route to settle before enabling auto-load
-    // const timer = setTimeout(() => {
-    //   isRouteSwitchingRef.current = false;
-    // }, 500);
+    resetAutoLoadState();
 
-    // return () => clearTimeout(timer);
-  }, [checkLocation, location.pathname]);
+    // Allow route to settle before enabling auto-load
+    const timer = setTimeout(() => {
+      isRouteSwitchingRef.current = false;
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [checkLocation, location.pathname, currentAccountId]);
 
   // **NEW: Setup observers for better DOM change detection**
   useEffect(() => {
@@ -628,10 +780,20 @@ const useDashboard = ({
       pagination &&
       pagination.page_no < pagination.total_pages
     ) {
+      const currentRouteKey = `${location.pathname}-${currentAccountId || accountId}`;
+      if (currentRouteRef.current !== currentRouteKey) {
+        currentRouteRef.current = currentRouteKey;
+        loadedPagesRef.current = new Set([pagination.page_no]);
+        lastSuccessfulPageRef.current = pagination.page_no;
+      }
       // Use RAF to ensure DOM has updated
       requestAnimationFrame(() => {
         setTimeout(() => {
-          if (!isNavigatingRef.current && !isRouteSwitchingRef.current) {
+          if (
+            !isNavigatingRef.current &&
+            !isRouteSwitchingRef.current &&
+            currentRouteRef.current === currentRouteKey
+          ) {
             checkAndAutoLoad();
           }
         }, 100);
@@ -643,6 +805,9 @@ const useDashboard = ({
     checkAndAutoLoad,
     connectedAccounts,
     pagination,
+    location.pathname,
+    currentAccountId,
+    accountId,
   ]);
 
   // **NEW: Reset auto-load state on context changes**
@@ -652,6 +817,11 @@ const useDashboard = ({
     isNavigatingRef.current = false;
     isRouteSwitchingRef.current = false;
     setIsAutoLoading(false);
+
+    // Reset page tracking for new context
+    loadedPagesRef.current = new Set();
+    lastSuccessfulPageRef.current = 0;
+    currentRouteRef.current = '';
   }, []);
 
   const handleAdvancedFilter = useCallback(
