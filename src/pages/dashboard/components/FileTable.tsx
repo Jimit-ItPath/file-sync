@@ -95,7 +95,7 @@ const FileTable: React.FC<FileTableProps> = ({
             style={{ overflow: 'hidden' }}
           >
             <div style={{ flexShrink: 0 }}>{row.icon(iconSize)}</div>
-            <Tooltip label={row.name} fz={'xs'}>
+            <Tooltip label={row.name} fz={'xs'} withinPortal={false}>
               <Text
                 fw={600}
                 fz={'sm'}
@@ -136,7 +136,7 @@ const FileTable: React.FC<FileTableProps> = ({
         render: (row: FileType) => (
           <>
             {row.lastModified ? (
-              <Tooltip label={formatDateAndTime(row.lastModified)} fz={'xs'}>
+              <Tooltip label={formatDateAndTime(row.lastModified)} fz={'xs'} withinPortal={false}>
                 <Text size="sm">{formatDate(row.lastModified)}</Text>
               </Tooltip>
             ) : (
