@@ -310,7 +310,12 @@ const FileGrid: React.FC<FileGridProps> = ({
                   style={{ width: '100%', flexWrap: 'nowrap' }}
                 >
                   {folder?.icon(responsiveIconSize)}
-                  <Tooltip label={folder.name} withArrow={false} fz={'xs'}>
+                  <Tooltip
+                    label={folder.name}
+                    withArrow={false}
+                    fz={'xs'}
+                    withinPortal={false}
+                  >
                     <Text
                       fw={600}
                       fz={responsiveFontSize}
@@ -398,7 +403,12 @@ const FileGrid: React.FC<FileGridProps> = ({
                 >
                   <Group gap={8} flex={1} miw={0} align="center">
                     {file.icon(responsiveIconSize)}
-                    <Tooltip label={file.name} withArrow={false} fz={'xs'}>
+                    <Tooltip
+                      label={file.name}
+                      withArrow={false}
+                      fz={'xs'}
+                      withinPortal={false}
+                    >
                       <Text
                         fw={600}
                         fz={responsiveFontSize}
@@ -462,6 +472,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     <Tooltip
                       label={formatDateAndTime(file.lastModified)}
                       fz={'xs'}
+                      withinPortal={false}
                     >
                       <Text size="xs" c="gray.6">
                         {formatDate(file.lastModified)}
