@@ -7,10 +7,19 @@ interface DownloadProgress {
   totalSize: number;
   downloadedSize: number;
   percentage: number;
-  status: 'downloading' | 'completed' | 'failed' | 'cancelled' | 'paused';
+  status: 'downloading' | 'completed' | 'failed' | 'cancelled' | 'paused' | 'queued';
   startTime: number;
   speed?: number; // bytes per second
   timeRemaining?: number; // seconds
+  fileCount: number;
+  queuePosition?: number;
+  totalInQueue?: number;
+  queuedFiles?: QueuedDownload[];
+}
+
+interface QueuedDownload {
+  ids: string[];
+  fileName: string;
   fileCount: number;
 }
 
@@ -34,6 +43,10 @@ const useFileDownloader = () => {
   const selectedIdsRef = useRef<string[]>([]);
   const isPausedRef = useRef<boolean>(false);
   const pumpRef = useRef<any>(null);
+  const downloadQueue = useRef<QueuedDownload[]>([]);
+  const isProcessingQueue = useRef<boolean>(false);
+  const downloadedIds = useRef<Set<string>>(new Set());
+  const processingIds = useRef<Set<string>>(new Set());
 
   const calculateSpeed = (
     downloadedBytes: number,
@@ -238,7 +251,35 @@ const useFileDownloader = () => {
   //   [updateProgress, dispatch]
   // );
 
-  const downloadFile = useCallback(
+  const processDownloadQueue = useCallback(async () => {
+    if (isProcessingQueue.current || downloadQueue.current.length === 0) {
+      return;
+    }
+
+    isProcessingQueue.current = true;
+    const nextDownload = downloadQueue.current.shift()!;
+    
+    // Update queue display
+    setDownloadProgress(prev => prev ? {
+      ...prev,
+      queuedFiles: [...downloadQueue.current],
+      totalInQueue: downloadQueue.current.length,
+    } : null);
+    
+    try {
+      await executeDownload(nextDownload.ids);
+    } catch (error) {
+      console.error('Download failed:', error);
+    } finally {
+      isProcessingQueue.current = false;
+      // Process next in queue
+      if (downloadQueue.current.length > 0) {
+        setTimeout(processDownloadQueue, 100);
+      }
+    }
+  }, []);
+
+  const executeDownload = useCallback(
     async (selectedIds: string[]) => {
       try {
         selectedIdsRef.current = selectedIds;
@@ -254,7 +295,6 @@ const useFileDownloader = () => {
 
         const initialProgress: DownloadProgress = {
           isDownloading: true,
-          // fileName,
           totalSize: 0,
           downloadedSize: 0,
           percentage: 0,
@@ -264,6 +304,18 @@ const useFileDownloader = () => {
         };
 
         setDownloadProgress(initialProgress);
+        
+        // Mark files as being processed only when download starts
+        selectedIds.forEach(id => processingIds.current.add(id));
+        
+        // Update queue info if there are items in queue
+        if (downloadQueue.current.length > 0) {
+          setDownloadProgress(prev => ({
+            ...prev!,
+            queuedFiles: [...downloadQueue.current],
+            totalInQueue: downloadQueue.current.length,
+          }));
+        }
 
         // Request download stream
         const response = await fetch(urlRef.current, {
@@ -333,7 +385,7 @@ const useFileDownloader = () => {
 
               const percentage =
                 totalSize > 0
-                  ? Math.round((downloadedSizeRef.current / totalSize) * 100)
+                  ? Math.min(100, Math.round((downloadedSizeRef.current / totalSize) * 100))
                   : 0;
 
               const speed = calculateSpeed(
@@ -356,8 +408,23 @@ const useFileDownloader = () => {
             }
 
             await writer.close();
+            // Remove from processing and clear downloaded IDs immediately
+            selectedIds.forEach(id => {
+              processingIds.current.delete(id);
+              downloadedIds.current.delete(id);
+            });
             updateProgress({ percentage: 100, status: 'completed' });
+            
+            // Process next in queue after completion
+            setTimeout(() => {
+              if (downloadQueue.current.length > 0) {
+                processDownloadQueue();
+              }
+            }, 1000);
           } catch (err: any) {
+            // Remove from processing on error
+            selectedIds.forEach(id => processingIds.current.delete(id));
+            
             if (err?.name === 'AbortError') {
               updateProgress({ status: 'cancelled' });
             } else {
@@ -369,6 +436,9 @@ const useFileDownloader = () => {
         pumpRef.current = pump;
         pump();
       } catch (error: any) {
+        // Remove from processing on error
+        selectedIds.forEach(id => processingIds.current.delete(id));
+        
         if (error?.name === 'AbortError') {
           updateProgress({ status: 'cancelled' });
           notifications.show({
@@ -386,7 +456,65 @@ const useFileDownloader = () => {
         abortController.current = null;
       }
     },
-    [updateProgress]
+    [updateProgress, processDownloadQueue]
+  );
+
+  const downloadFile = useCallback(
+    async (selectedIds: string[]) => {
+      // Check if exact same request is already in queue or currently downloading
+      const sortedIds = [...selectedIds].sort().join(',');
+      const currentDownloadIds = selectedIdsRef.current ? [...selectedIdsRef.current].sort().join(',') : '';
+      const isDuplicateInQueue = downloadQueue.current.some(item => 
+        [...item.ids].sort().join(',') === sortedIds
+      );
+      
+      // Block if same files are currently downloading
+      if (currentDownloadIds === sortedIds && (isProcessingQueue.current || downloadProgress?.status === 'downloading')) {
+        notifications.show({
+          message: 'Download already in progress for selected files',
+          color: 'orange',
+        });
+        return;
+      }
+      
+      // Block if exact same request is already in queue
+      if (isDuplicateInQueue) {
+        notifications.show({
+          message: 'Same files already queued for download',
+          color: 'orange',
+        });
+        return;
+      }
+
+      const fileName = selectedIds.length > 1 ? `files-${Date.now()}.zip` : `download-${Date.now()}.zip`;
+      
+      // If currently downloading, add to queue
+      if (isProcessingQueue.current || downloadProgress?.status === 'downloading') {
+        downloadQueue.current.push({
+          ids: selectedIds,
+          fileName,
+          fileCount: selectedIds.length,
+        });
+        
+        setDownloadProgress(prev => ({
+          ...prev!,
+          status: 'queued',
+          queuePosition: downloadQueue.current.length,
+          totalInQueue: downloadQueue.current.length,
+          queuedFiles: [...downloadQueue.current],
+        }));
+        
+        notifications.show({
+          message: `Download queued (${downloadQueue.current.length} in queue)`,
+          color: 'blue',
+        });
+        return;
+      }
+
+      // Start download immediately
+      await executeDownload(selectedIds);
+    },
+    [downloadProgress, executeDownload, processDownloadQueue]
   );
 
   const pauseDownload = useCallback(() => {
@@ -427,7 +555,12 @@ const useFileDownloader = () => {
   const clearDownload = useCallback(() => {
     cancelDownload();
     setDownloadProgress(null);
-  }, []);
+    // Clear queue and tracking
+    downloadQueue.current = [];
+    downloadedIds.current.clear();
+    processingIds.current.clear();
+    isProcessingQueue.current = false;
+  }, [cancelDownload]);
 
   const fetchPreviewFileWithProgress = async (
     url: string,
@@ -472,7 +605,7 @@ const useFileDownloader = () => {
 
         if (onProgress) {
           if (total > 0) {
-            const percent = Math.round((loaded / total) * 100);
+            const percent = Math.min(100, Math.round((loaded / total) * 100));
             onProgress(percent);
           } else {
             // fallback: just tick up, never reach 100 until finished
