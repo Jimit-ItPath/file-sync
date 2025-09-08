@@ -53,7 +53,13 @@ interface DownloadProgress {
   totalSize: number;
   downloadedSize: number;
   percentage: number;
-  status: 'downloading' | 'completed' | 'failed' | 'cancelled' | 'paused' | 'queued';
+  status:
+    | 'downloading'
+    | 'completed'
+    | 'failed'
+    | 'cancelled'
+    | 'paused'
+    | 'queued';
   startTime: number;
   speed?: number; // bytes per second
   timeRemaining?: number; // seconds
