@@ -714,7 +714,7 @@ const NavBar = ({
           {checkStorageDetails?.storage_details &&
           checkStorageDetails?.storage_details?.total ? (
             // && checkStorageDetails?.storage_details?.used
-            <Box mt="auto" style={{ width: '100%', padding: '16px 0' }}>
+            <Box mt="auto" style={{ width: '100%' }}>
               <Text size="sm" fw={500} mb={8}>
                 Storage Usage
               </Text>
