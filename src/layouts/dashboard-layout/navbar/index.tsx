@@ -739,10 +739,10 @@ const NavBar = ({
                 {formatBytes(
                   Number(checkStorageDetails?.storage_details?.used)
                 )}{' '}
-                of{' '}
+                {/* of{' '}
                 {formatBytes(
                   Number(checkStorageDetails?.storage_details?.total)
-                )}{' '}
+                )}{' '} */}
                 used
               </Text>
             </Box>
