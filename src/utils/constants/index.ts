@@ -98,11 +98,11 @@ export const IMAGE_FILE_TYPES = [
   'jpg',
   'jpeg',
   'png',
-  'gif',
-  'bmp',
+  // 'gif',
+  // 'bmp',
   'webp',
-  'svg',
-  'ico',
+  // 'svg',
+  // 'ico',
 ];
 
 export const VIDEO_FILE_TYPES = [
@@ -112,7 +112,8 @@ export const VIDEO_FILE_TYPES = [
   // 'wmv',
   // 'flv',
   // 'mkv',
-  // 'webm',
+  'webm',
+  'ogg',
 ];
 
 export const DOCUMENT_FILE_TYPES = [

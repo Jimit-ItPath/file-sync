@@ -358,7 +358,7 @@ const useFileDownloader = () => {
             await writer.close();
             updateProgress({ percentage: 100, status: 'completed' });
           } catch (err: any) {
-            if (err.name === 'AbortError') {
+            if (err?.name === 'AbortError') {
               updateProgress({ status: 'cancelled' });
             } else {
               updateProgress({ status: 'failed' });
