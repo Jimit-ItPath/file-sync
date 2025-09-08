@@ -54,7 +54,8 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
             {isFailed && 'Download Failed'}
             {isCancelled && 'Download Cancelled'}
             {isPaused && 'Download Paused'}
-            {isQueued && `Queued (${downloadProgress?.queuePosition} of ${downloadProgress?.totalInQueue})`}
+            {isQueued &&
+              `Queued (${downloadProgress?.queuePosition} of ${downloadProgress?.totalInQueue})`}
             {isDownloading &&
               `Downloading ${downloadProgress?.fileCount} file${
                 downloadProgress?.fileCount > 1 ? 's' : ''
@@ -206,7 +207,8 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
                     : 'blue'
           }
           style={{
-            opacity: isComplete || isFailed || isCancelled || isQueued ? 0.7 : 1,
+            opacity:
+              isComplete || isFailed || isCancelled || isQueued ? 0.7 : 1,
           }}
         />
 
@@ -228,30 +230,34 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
         ) : null}
 
         {/* Queue Display */}
-        {downloadProgress?.queuedFiles && downloadProgress.queuedFiles.length > 0 && (
-          <Box mt={12} pt={12} style={{ borderTop: '1px solid #e5e7eb' }}>
-            <Text size="xs" fw={500} c="gray.7" mb={8}>
-              Queue ({downloadProgress.queuedFiles.length} files)
-            </Text>
-            <Box style={{ maxHeight: 120, overflowY: 'auto' }}>
-              {downloadProgress.queuedFiles.slice(0, 3).map((queuedFile: any, index: number) => (
-                <Group key={index} justify="space-between" mb={4}>
-                  <Text size="xs" c="gray.6" truncate style={{ flex: 1 }}>
-                    {index + 1}. {queuedFile.fileName}
+        {downloadProgress?.queuedFiles &&
+          downloadProgress.queuedFiles.length > 0 && (
+            <Box mt={12} pt={12} style={{ borderTop: '1px solid #e5e7eb' }}>
+              <Text size="xs" fw={500} c="gray.7" mb={8}>
+                Queue ({downloadProgress.queuedFiles.length} files)
+              </Text>
+              <Box style={{ maxHeight: 120, overflowY: 'auto' }}>
+                {downloadProgress.queuedFiles
+                  .slice(0, 3)
+                  .map((queuedFile: any, index: number) => (
+                    <Group key={index} justify="space-between" mb={4}>
+                      <Text size="xs" c="gray.6" truncate style={{ flex: 1 }}>
+                        {index + 1}. {queuedFile.fileName}
+                      </Text>
+                      <Text size="xs" c="gray.5">
+                        {queuedFile.fileCount} file
+                        {queuedFile.fileCount > 1 ? 's' : ''}
+                      </Text>
+                    </Group>
+                  ))}
+                {downloadProgress.queuedFiles.length > 3 && (
+                  <Text size="xs" c="gray.5" ta="center" mt={4}>
+                    +{downloadProgress.queuedFiles.length - 3} more
                   </Text>
-                  <Text size="xs" c="gray.5">
-                    {queuedFile.fileCount} file{queuedFile.fileCount > 1 ? 's' : ''}
-                  </Text>
-                </Group>
-              ))}
-              {downloadProgress.queuedFiles.length > 3 && (
-                <Text size="xs" c="gray.5" ta="center" mt={4}>
-                  +{downloadProgress.queuedFiles.length - 3} more
-                </Text>
-              )}
+                )}
+              </Box>
             </Box>
-          </Box>
-        )}
+          )}
 
         {/* Buttons */}
         {/* {(isDownloading || isPaused) && (
