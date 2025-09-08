@@ -121,7 +121,7 @@ export const fetchCloudStorageFiles = createAsyncThunk(
       const response = await api.cloudStorage.getFiles(params);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error?.message || 'Failed to fetch files');
+      return rejectWithValue(error || 'Failed to fetch files');
     }
   }
 );

@@ -23,6 +23,7 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
   const isCancelled = downloadProgress?.status === 'cancelled';
   const isDownloading = downloadProgress?.status === 'downloading';
   const isPaused = downloadProgress?.status === 'paused';
+  const isQueued = downloadProgress?.status === 'queued';
   const { isXs } = useResponsive();
 
   return (
@@ -53,6 +54,7 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
             {isFailed && 'Download Failed'}
             {isCancelled && 'Download Cancelled'}
             {isPaused && 'Download Paused'}
+            {isQueued && `Queued (${downloadProgress?.queuePosition} of ${downloadProgress?.totalInQueue})`}
             {isDownloading &&
               `Downloading ${downloadProgress?.fileCount} file${
                 downloadProgress?.fileCount > 1 ? 's' : ''
@@ -105,6 +107,10 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
                   return 'Download cancelled';
                 }
 
+                if (downloadProgress.status === 'queued') {
+                  return `${downloadProgress.fileCount} file${downloadProgress.fileCount > 1 ? 's' : ''} • Waiting in queue`;
+                }
+
                 return null;
               })()}
             </Text>
@@ -153,6 +159,20 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
               >
                 <ICONS.IconX size={12} color="white" />
               </Box>
+            ) : isQueued ? (
+              <Box
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  backgroundColor: '#6b7280',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ICONS.IconClock size={12} color="white" />
+              </Box>
             ) : (
               <>
                 <Text size="xs" c="gray.6">
@@ -172,7 +192,7 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
         </Group>
 
         <Progress
-          value={downloadProgress?.percentage}
+          value={isQueued ? 0 : downloadProgress?.percentage}
           size="sm"
           color={
             isComplete
@@ -181,10 +201,12 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
                 ? 'red'
                 : isCancelled
                   ? 'orange'
-                  : 'blue'
+                  : isQueued
+                    ? 'gray'
+                    : 'blue'
           }
           style={{
-            opacity: isComplete || isFailed || isCancelled ? 0.7 : 1,
+            opacity: isComplete || isFailed || isCancelled || isQueued ? 0.7 : 1,
           }}
         />
 
@@ -204,6 +226,32 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
             </Text>
           </Group>
         ) : null}
+
+        {/* Queue Display */}
+        {downloadProgress?.queuedFiles && downloadProgress.queuedFiles.length > 0 && (
+          <Box mt={12} pt={12} style={{ borderTop: '1px solid #e5e7eb' }}>
+            <Text size="xs" fw={500} c="gray.7" mb={8}>
+              Queue ({downloadProgress.queuedFiles.length} files)
+            </Text>
+            <Box style={{ maxHeight: 120, overflowY: 'auto' }}>
+              {downloadProgress.queuedFiles.slice(0, 3).map((queuedFile: any, index: number) => (
+                <Group key={index} justify="space-between" mb={4}>
+                  <Text size="xs" c="gray.6" truncate style={{ flex: 1 }}>
+                    {index + 1}. {queuedFile.fileName}
+                  </Text>
+                  <Text size="xs" c="gray.5">
+                    {queuedFile.fileCount} file{queuedFile.fileCount > 1 ? 's' : ''}
+                  </Text>
+                </Group>
+              ))}
+              {downloadProgress.queuedFiles.length > 3 && (
+                <Text size="xs" c="gray.5" ta="center" mt={4}>
+                  +{downloadProgress.queuedFiles.length - 3} more
+                </Text>
+              )}
+            </Box>
+          </Box>
+        )}
 
         {/* Buttons */}
         {/* {(isDownloading || isPaused) && (
