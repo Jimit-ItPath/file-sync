@@ -4,7 +4,6 @@ import {
   Group,
   Menu,
   NavLink,
-  Progress,
   rem,
   Stack,
   Text,
@@ -719,7 +718,7 @@ const NavBar = ({
               <Text size="sm" fw={500} mb={8}>
                 Storage Usage
               </Text>
-              <Progress
+              {/* <Progress
                 value={
                   (Number(checkStorageDetails?.storage_details?.used) /
                     Number(checkStorageDetails?.storage_details?.total)) *
@@ -735,7 +734,7 @@ const NavBar = ({
                     backgroundColor: theme.colors.blue[6],
                   },
                 })}
-              />
+              /> */}
               <Text size="xs" mt={8} c="dimmed">
                 {formatBytes(
                   Number(checkStorageDetails?.storage_details?.used)

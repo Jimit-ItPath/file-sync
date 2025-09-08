@@ -1,5 +1,5 @@
 import { useSortable } from '@dnd-kit/sortable';
-import { Box, Group, Progress, Stack, Text } from '@mantine/core';
+import { Box, Group, Stack, Text } from '@mantine/core';
 import { ICONS } from '../../../assets/icons';
 import { NavLink as Link } from 'react-router';
 import {
@@ -247,7 +247,7 @@ const SortableCloudAccountItem = ({
             transition: 'margin-left 0.2s ease', // Smooth transition for margin changes
           }}
         >
-          <Progress
+          {/* <Progress
             value={
               (Number(account.storageInfo.used) /
                 Number(account.storageInfo.total)) *
@@ -263,7 +263,7 @@ const SortableCloudAccountItem = ({
                 backgroundColor: theme.colors.blue[6],
               },
             })}
-          />
+          /> */}
           <Text size="xs" mt={4} c="dimmed">
             {formatBytes(Number(account.storageInfo.used))} of{' '}
             {formatBytes(Number(account.storageInfo.total))} used
