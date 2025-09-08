@@ -2,6 +2,8 @@ import { Box, Text, Card, Stack, SimpleGrid } from '@mantine/core';
 import useResponsive from '../../../hooks/use-responsive';
 import useAdminDashboard from './use-admin-dashboard';
 import AdminDashboardSkeleton from '../../../components/skeleton/AdminDashboardSkeleton';
+import { Tooltip } from '../../../components';
+import { ICONS } from '../../../assets/icons';
 
 const AdminDashboard = () => {
   const { isXs } = useResponsive();
@@ -71,8 +73,21 @@ const AdminDashboard = () => {
                     <Text fw={700} size="xl">
                       {item.value.toLocaleString()}
                     </Text>
-                    <Text size="sm" c="dimmed">
+                    {/* <Text size="sm" c="dimmed">
                       {item.label}
+                    </Text> */}
+                    <Text
+                      size="sm"
+                      c="dimmed"
+                      style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                    >
+                      {item.label}
+                      <Tooltip label={item.description} fz={'xs'} withArrow>
+                        <ICONS.IconInfoCircle
+                          size={16}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </Tooltip>
                     </Text>
                   </Stack>
                 </Card>
@@ -89,7 +104,7 @@ const AdminDashboard = () => {
               spacing="lg"
               mb={20}
               style={{
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
               }}
             >
               {connectedAccountAnalytics?.map((item, index) => (
@@ -113,8 +128,21 @@ const AdminDashboard = () => {
                     <Text fw={700} size="xl">
                       {item.value.toLocaleString()}
                     </Text>
-                    <Text size="sm" c="dimmed">
+                    {/* <Text size="sm" c="dimmed">
                       {item.label}
+                    </Text> */}
+                    <Text
+                      size="sm"
+                      c="dimmed"
+                      style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                    >
+                      {item.label}
+                      <Tooltip label={item.description} fz={'xs'} withArrow>
+                        <ICONS.IconInfoCircle
+                          size={16}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </Tooltip>
                     </Text>
                   </Stack>
                 </Card>
@@ -155,8 +183,21 @@ const AdminDashboard = () => {
                     <Text fw={700} size="xl">
                       {item.value.toLocaleString()}
                     </Text>
-                    <Text size="sm" c="dimmed">
+                    {/* <Text size="sm" c="dimmed">
                       {item.label}
+                    </Text> */}
+                    <Text
+                      size="sm"
+                      c="dimmed"
+                      style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                    >
+                      {item.label}
+                      <Tooltip label={item.description} fz={'xs'} withArrow>
+                        <ICONS.IconInfoCircle
+                          size={16}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </Tooltip>
                     </Text>
                   </Stack>
                 </Card>
