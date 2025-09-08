@@ -397,6 +397,7 @@ const RecentFiles = () => {
                             label={file.name}
                             withArrow={false}
                             fz={'xs'}
+                            withinPortal={false}
                           >
                             <Text
                               fw={600}
@@ -442,6 +443,7 @@ const RecentFiles = () => {
                             <Tooltip
                               label={formatDateAndTime(file.lastModified)}
                               fz={'xs'}
+                              withinPortal={false}
                             >
                               <Text size="xs">
                                 {formatDate(file.lastModified)}
