@@ -141,3 +141,12 @@ export const CONTACT_US_STATUS = {
   RESOLVED: 'resolved',
   REJECTED: 'rejected',
 };
+
+// Google Apps MIME types that should not have download option
+export const GOOGLE_APPS_MIME_TYPES = [
+  'application/vnd.google-apps.drawing',
+  'application/vnd.google-apps.form',
+  'application/vnd.google-apps.map',
+  'application/vnd.google-apps.script',
+  'application/vnd.google-apps.site',
+];

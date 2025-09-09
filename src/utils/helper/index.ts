@@ -1,5 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
 import { API } from '../../configs/env';
+import { GOOGLE_APPS_MIME_TYPES } from '../constants';
 
 export interface LogError {
   (error: unknown): void;
@@ -466,4 +467,17 @@ export const getFileMimeTypeLabel = (mime_type: string): string => {
 
       return 'Unknown';
   }
+};
+
+// Helper function to check if download should be disabled
+export const shouldDisableDownload = (mimeType: string | null): boolean => {
+  if (mimeType && GOOGLE_APPS_MIME_TYPES.includes(mimeType)) {
+    return true;
+  }
+
+  if (mimeType === null) {
+    return true;
+  }
+
+  return false;
 };

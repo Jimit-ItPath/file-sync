@@ -4,7 +4,11 @@ import { Menu, Table, Tooltip } from '../../../components';
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core';
 import type { FileType } from '../use-dashboard';
 import { PREVIEW_FILE_TYPES } from '../../../utils/constants';
-import { formatDate, formatDateAndTime } from '../../../utils/helper';
+import {
+  formatDate,
+  formatDateAndTime,
+  shouldDisableDownload,
+} from '../../../utils/helper';
 
 const MENU_ITEMS: {
   id: string;
@@ -163,7 +167,7 @@ const FileTable: React.FC<FileTableProps> = ({
         // width: '10%',
         render: (row: FileType) => {
           const menuItems = [...MENU_ITEMS];
-          if (row.type === 'file') {
+          if (row.type === 'file' && !shouldDisableDownload(row.mimeType!)) {
             menuItems.push({
               id: 'download',
               label: 'Download',

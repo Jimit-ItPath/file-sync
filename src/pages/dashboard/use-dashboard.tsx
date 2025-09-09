@@ -12,6 +12,7 @@ import {
   getLocalStorage,
   removeLocalStorage,
   setLocalStorage,
+  shouldDisableDownload,
 } from '../../utils/helper';
 import useDragDrop from '../../components/inputs/dropzone/use-drag-drop';
 // import { v4 as uuidv4 } from 'uuid';
@@ -174,6 +175,7 @@ const useDashboard = ({
     isVideo?: boolean;
     isDocument?: boolean;
     share?: string | null;
+    mimeType?: string;
   } | null>(null);
   const [detailsFileLoading, setDetailsFileLoading] = useState(false);
   const [detailsFile, setDetailsFile] = useState<{
@@ -184,6 +186,7 @@ const useDashboard = ({
     isVideo?: boolean;
     isDocument?: boolean;
     share?: string | null;
+    mimeType?: string;
   } | null>(null);
 
   const [moveModalOpen, setMoveModalOpen] = useState(false);
@@ -1466,6 +1469,7 @@ const useDashboard = ({
                 ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
                 : undefined,
               share: row.web_view_url ?? null,
+              mimeType: row.mimeType,
             });
             setPreviewFileLoading(false);
           } else {
@@ -1477,6 +1481,7 @@ const useDashboard = ({
                 ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
                 : undefined,
               share: row.web_view_url ?? null,
+              mimeType: row.mimeType,
             });
             setDetailsFileLoading(false);
           }
@@ -1510,6 +1515,7 @@ const useDashboard = ({
             row.fileExtension?.toLowerCase() || ''
           ),
           share: row.web_view_url ?? null,
+          mimeType: row.mimeType,
         });
       } catch (err: any) {
         if (err.name !== 'AbortError') {
@@ -2319,8 +2325,13 @@ const useDashboard = ({
   }, [selectedIds, files, checkLocation, folderId]);
 
   const displayDownloadIcon = useMemo(() => {
-    const checkFiles = files.find(file => selectedIds.includes(file.id));
-    return checkFiles?.type === 'file' ? true : false;
+    const selectedFiles = files.filter(file => selectedIds.includes(file.id));
+    return (
+      selectedFiles.length > 0 &&
+      selectedFiles.every(
+        file => file.type === 'file' && !shouldDisableDownload(file.mimeType)
+      )
+    );
   }, [selectedIds, files]);
 
   const displayShareIcon = useMemo(() => {
