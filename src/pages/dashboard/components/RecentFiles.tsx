@@ -398,6 +398,8 @@ const RecentFiles = () => {
                             withArrow={false}
                             fz={'xs'}
                             withinPortal={false}
+                            multiline
+                            style={{ zIndex: 1000 }}
                           >
                             <Text
                               fw={600}
