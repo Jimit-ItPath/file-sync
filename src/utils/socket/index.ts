@@ -12,18 +12,17 @@ let socket: TypedSocket | null = null;
 export const initSocket = (url: string, token?: string): TypedSocket => {
   if (!socket) {
     socket = io(url, {
-      autoConnect: false,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 20000,
-      transports: ['websocket', 'polling'], // Added polling as fallback
-      auth: {
-        token,
-      },
-      extraHeaders: {
-        ...(token && { token }), // Only add token if it exists
-      },
+    auth: {
+      token,
+    },
+    autoConnect: true,
+    path: '/socket.io',
+    transports: ['polling'],
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 2000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000,
     });
 
     // Add connection event listeners
