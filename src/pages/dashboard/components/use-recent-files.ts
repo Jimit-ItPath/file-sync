@@ -1,6 +1,7 @@
 import {
   downloadFilesEnhanced,
   formatBytes,
+  shouldDisableDownload,
 } from './../../../utils/helper/index';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
@@ -735,10 +736,15 @@ const useRecentFiles = ({
   }, [syncStorage]);
 
   const displayDownloadIcon = useMemo(() => {
-    const checkFiles = recentFilesData.find(file =>
+    const selectedFiles = recentFilesData.filter(file =>
       selectedIds.includes(file.id)
     );
-    return checkFiles?.type === 'file' ? true : false;
+    return (
+      selectedFiles.length > 0 &&
+      selectedFiles.every(
+        file => file.type === 'file' && !shouldDisableDownload(file.mimeType)
+      )
+    );
   }, [selectedIds, recentFilesData]);
 
   const displayShareIcon = useMemo(() => {

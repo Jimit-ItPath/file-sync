@@ -141,6 +141,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
     isVideo?: boolean;
     isDocument?: boolean;
     share?: string | null;
+    mimeType?: string;
   } | null>(null);
   const [previewProgress, setPreviewProgress] = useState<number | null>(null);
   const previewAbortRef = useRef<AbortController | null>(null);
@@ -421,6 +422,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
             ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
             : undefined,
           share: row.web_view_url ?? null,
+          mimeType: row.mimeType,
         });
         setPreviewFileLoading(false);
         return;
@@ -453,6 +455,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
           row.fileExtension?.toLowerCase() || ''
         ),
         share: row.web_view_url ?? null,
+        mimeType: row.mimeType,
       });
     } catch (err: any) {
       if (err.name !== 'AbortError') {

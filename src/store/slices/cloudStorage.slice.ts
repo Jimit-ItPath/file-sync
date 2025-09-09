@@ -231,7 +231,7 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
       // Navigate to the last folder in the path
       const lastFolder = savedPath[savedPath.length - 1];
       if (lastFolder.id) {
-        await dispatch(
+        return await dispatch(
           navigateToFolder({
             id: lastFolder.id,
             account_id: lastFolder.account_id,
@@ -247,7 +247,7 @@ export const initializeCloudStorageFromStorage = createAsyncThunk(
       }
     } else {
       // Load root if no saved path
-      await dispatch(
+      return await dispatch(
         fetchCloudStorageFiles({
           id: data.id,
           page: data.page ?? defaultPage,

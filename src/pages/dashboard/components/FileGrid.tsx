@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Group,
   Text,
@@ -17,7 +11,11 @@ import { ICONS } from '../../../assets/icons';
 import type { FileType } from '../use-dashboard';
 import { Card, Menu, Tooltip } from '../../../components';
 import { useMediaQuery } from '@mantine/hooks';
-import { formatDate, formatDateAndTime } from '../../../utils/helper';
+import {
+  formatDate,
+  formatDateAndTime,
+  shouldDisableDownload,
+} from '../../../utils/helper';
 
 const FILE_CARD_HEIGHT = 200;
 const MIN_CARD_WIDTH = 220;
@@ -93,54 +91,52 @@ const FileGrid: React.FC<FileGridProps> = ({
   const isXs = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
   const isSm = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
 
-  const filteredMenuItems = useMemo(() => {
-    const menuItems = [...MENU_ITEMS];
-    if (displayDownloadIcon) {
+  const getFilteredMenuItems = useCallback(
+    (file: FileType) => {
+      const menuItems = [...MENU_ITEMS];
+      if (displayDownloadIcon && !shouldDisableDownload(file.mimeType!)) {
+        menuItems.push({
+          id: 'download',
+          label: 'Download',
+          icon: ICONS.IconDownload,
+        });
+      }
+      if (displayPreviewIcon) {
+        menuItems.push({
+          id: 'preview',
+          label: 'Preview',
+          icon: ICONS.IconLiveView,
+        });
+      }
+      if (displayShareIcon) {
+        menuItems.push({
+          id: 'share',
+          label: 'Share',
+          icon: ICONS.IconShare,
+        });
+      }
+      if (displayMoveIcon) {
+        // menuItems.push({
+        //   id: 'move',
+        //   label: 'Move',
+        //   icon: ICONS.IconFolderShare,
+        // });
+        menuItems.push({
+          id: 'move',
+          label: 'Move',
+          icon: ICONS.IconFolderShare,
+        });
+      }
       menuItems.push({
-        id: 'download',
-        label: 'Download',
-        icon: ICONS.IconDownload,
+        id: 'delete',
+        label: 'Delete',
+        icon: ICONS.IconTrash,
+        color: 'red',
       });
-    }
-    if (displayPreviewIcon) {
-      menuItems.push({
-        id: 'preview',
-        label: 'Preview',
-        icon: ICONS.IconLiveView,
-      });
-    }
-    if (displayShareIcon) {
-      menuItems.push({
-        id: 'share',
-        label: 'Share',
-        icon: ICONS.IconShare,
-      });
-    }
-    if (displayMoveIcon) {
-      // menuItems.push({
-      //   id: 'move',
-      //   label: 'Move',
-      //   icon: ICONS.IconFolderShare,
-      // });
-      menuItems.push({
-        id: 'move',
-        label: 'Move',
-        icon: ICONS.IconFolderShare,
-      });
-    }
-    menuItems.push({
-      id: 'delete',
-      label: 'Delete',
-      icon: ICONS.IconTrash,
-      color: 'red',
-    });
-    return menuItems;
-  }, [
-    displayDownloadIcon,
-    displayShareIcon,
-    displayMoveIcon,
-    displayPreviewIcon,
-  ]);
+      return menuItems;
+    },
+    [displayDownloadIcon, displayShareIcon, displayMoveIcon, displayPreviewIcon]
+  );
 
   useEffect(() => {
     const updateColumnsCount = () => {
@@ -327,7 +323,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     </Text>
                   </Tooltip>
                   <Menu
-                    items={filteredMenuItems}
+                    items={getFilteredMenuItems(folder)}
                     onItemClick={actionId =>
                       handleMenuItemClick(actionId, folder)
                     }
@@ -423,7 +419,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     </Tooltip>
                   </Group>
                   <Menu
-                    items={filteredMenuItems}
+                    items={getFilteredMenuItems(file)}
                     onItemClick={actionId =>
                       handleMenuItemClick(actionId, file)
                     }

@@ -20,7 +20,7 @@ import {
   VIDEO_FILE_TYPES,
   DOCUMENT_FILE_TYPES,
 } from '../../../utils/constants';
-import { getVideoMimeType } from '../../../utils/helper';
+import { getVideoMimeType, shouldDisableDownload } from '../../../utils/helper';
 import useResponsive from '../../../hooks/use-responsive';
 
 // PDF worker
@@ -37,6 +37,7 @@ type PreviewFileType = {
   isVideo?: boolean;
   isDocument?: boolean;
   share?: string | null;
+  mimeType?: string;
 };
 
 interface FullScreenPreviewProps {
@@ -337,14 +338,16 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
       <Text size="lg" c="#fff">
         {message}
       </Text>
-      <Button
-        variant="filled"
-        size="md"
-        onClick={onDownload}
-        leftSection={<ICONS.IconDownload size={16} />}
-      >
-        Download
-      </Button>
+      {!shouldDisableDownload(previewFile?.mimeType!) && (
+        <Button
+          variant="filled"
+          size="md"
+          onClick={onDownload}
+          leftSection={<ICONS.IconDownload size={16} />}
+        >
+          Download
+        </Button>
+      )}
     </Box>
   );
 
@@ -387,7 +390,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
             Failed to load preview
           </Text>
           <Group>
-            {onDownload && (
+            {onDownload && !shouldDisableDownload(previewFile?.mimeType!) && (
               <Button
                 variant="filled"
                 onClick={onDownload}
@@ -401,9 +404,10 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
       );
     }
     if (isFileTooLarge()) {
-      return renderUnsupportedPreview(
-        'File is too large to preview. Please download it.'
-      );
+      const message = shouldDisableDownload(previewFile?.mimeType!)
+        ? 'File is too large to preview.'
+        : 'File is too large to preview. Please download it.';
+      return renderUnsupportedPreview(message);
     }
     if (isImageFile()) {
       return (
@@ -513,9 +517,10 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
     if (isVideoFile()) {
       const mimeType = getVideoMimeType(previewFile.type);
       if (!mimeType) {
-        return renderUnsupportedPreview(
-          'Preview not supported for this video format. Please download it.'
-        );
+        const message = shouldDisableDownload(previewFile?.mimeType!)
+          ? 'Preview not supported for this video format.'
+          : 'Preview not supported for this video format. Please download it.';
+        return renderUnsupportedPreview(message);
       }
 
       return (
@@ -778,9 +783,10 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
         </Box>
       );
     }
-    return renderUnsupportedPreview(
-      'Preview is not supported for this file. Please download it.'
-    );
+    const message = shouldDisableDownload(previewFile?.mimeType!)
+      ? 'Preview is not supported for this file.'
+      : 'Preview is not supported for this file. Please download it.';
+    return renderUnsupportedPreview(message);
   };
 
   if (!previewModalOpen) return null;
@@ -847,7 +853,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               </ActionIcon>
             </Tooltip>
           )}
-          {onDownload && (
+          {onDownload && !shouldDisableDownload(previewFile?.mimeType!) && (
             <Tooltip label="Download" fz={'xs'} zIndex={1000}>
               <ActionIcon
                 variant="subtle"
