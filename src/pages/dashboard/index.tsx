@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActionIcon,
   Autocomplete,
@@ -51,6 +51,14 @@ import ReAuthenticateAccount from './ReAuthenticateAccount';
 import GoogleDriveIcon from '../../assets/svgs/GoogleDrive.svg';
 import DropboxIcon from '../../assets/svgs/Dropbox.svg';
 import OneDriveIcon from '../../assets/svgs/OneDrive.svg';
+import dayjs from 'dayjs';
+import {
+  connectSocket,
+  initSocket,
+  subscribeToEvent,
+  unsubscribeFromEvent,
+} from '../../utils/socket';
+import { initializeCloudStorageFromStorage } from '../../store/slices/cloudStorage.slice';
 
 const iconStyle = {
   borderRadius: 999,
@@ -60,6 +68,11 @@ const iconStyle = {
     background: '#e0e7ff',
   },
 };
+
+// Global socket state to prevent multiple initializations
+let globalSocketInitialized = false;
+let globalWebhookTimeout: NodeJS.Timeout | null = null;
+let currentDashboardHandler: ((data: any) => void) | null = null;
 
 const Dashboard = () => {
   const {
@@ -205,6 +218,8 @@ const Dashboard = () => {
     connectErrorModalOpen,
     connectErrorMessage,
     closeConnectErrorModal,
+    dispatch,
+    params,
   } = useDashboard({ downloadFile, fetchPreviewFileWithProgress });
 
   const {
@@ -218,6 +233,87 @@ const Dashboard = () => {
     loading: connectedAccountLoading,
     handleReAuthenticate,
   } = useSidebar();
+
+  const [socketDataLoading, setSocketDataLoading] = useState(false);
+
+  // Socket setup with global state management
+  useEffect(() => {
+    if (globalSocketInitialized || !connectedAccounts?.length) return;
+
+    globalSocketInitialized = true;
+    const token = localStorage.getItem('token');
+
+    initSocket(
+      import.meta.env.VITE_SOCKET_URL || 'ws://localhost:3001',
+      token!
+    );
+    connectSocket();
+  }, [connectedAccounts?.length]);
+
+  // Update webhook handler when values change
+  useEffect(() => {
+    if (!globalSocketInitialized) return;
+
+    // Remove old handler
+    if (currentDashboardHandler) {
+      unsubscribeFromEvent('webhook_processed', currentDashboardHandler);
+    }
+
+    // Create new handler with current values
+    const webhookHandler = (data: any) => {
+      if (globalWebhookTimeout) {
+        clearTimeout(globalWebhookTimeout);
+      }
+
+      globalWebhookTimeout = setTimeout(async () => {
+        if (!data?.accountId) return;
+
+        const isSpecificRoute =
+          location.pathname.startsWith('/google-drive') ||
+          location.pathname.startsWith('/dropbox') ||
+          location.pathname.startsWith('/onedrive');
+
+        if (isSpecificRoute) {
+          if (String(data.accountId) !== String(params?.id)) {
+            return;
+          }
+        }
+
+        const requestParams: any = {
+          ...(folderId && data?.parent_id === folderId && { id: folderId }),
+          limit: 20,
+          page: 1,
+          ...(typeFilter &&
+            typeFilter.length && { type: typeFilter.join(',') }),
+          ...(modifiedFilter?.after && {
+            start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
+          }),
+          ...(modifiedFilter?.before && {
+            end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
+          }),
+        };
+
+        if (isSpecificRoute) {
+          requestParams.account_id = data.accountId;
+        }
+
+        setSocketDataLoading(true);
+        await dispatch(initializeCloudStorageFromStorage(requestParams));
+        setSocketDataLoading(false);
+      }, 150);
+    };
+
+    currentDashboardHandler = webhookHandler;
+    subscribeToEvent('webhook_processed', webhookHandler);
+  }, [
+    params?.id,
+    currentAccountId,
+    location.pathname,
+    folderId,
+    typeFilter,
+    modifiedFilter,
+    dispatch,
+  ]);
 
   const accountConfigs = useMemo(
     () => ({
@@ -732,7 +828,7 @@ const Dashboard = () => {
             subMessage="Upload up to 5 files"
           />
         </Box>
-        {isInitialLoading && hasPaginationData ? (
+        {isInitialLoading && hasPaginationData && !socketDataLoading ? (
           layout === 'list' ? (
             <FileTableSkeleton />
           ) : (

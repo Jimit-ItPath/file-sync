@@ -30,7 +30,6 @@ import {
   syncCloudStorage,
   resetPagination,
   setMoveModalPath,
-  fetchCloudStorageFiles,
 } from '../../store/slices/cloudStorage.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import { z } from 'zod';
@@ -401,7 +400,7 @@ const useDashboard = ({
         requestParams.account_id = accountId;
       }
 
-      await dispatch(initializeCloudStorageFromStorage(requestParams));
+      return await dispatch(initializeCloudStorageFromStorage(requestParams));
     },
     [
       dispatch,
@@ -1093,44 +1092,59 @@ const useDashboard = ({
       return;
     }
 
-    const fetchCloudStorageFilesData = async () => {
-      // Handle initial mount only
-      if (!hasMountedOnce.current) {
-        hasMountedOnce.current = true;
-
-        if (!initializedRef.current && !hasCalledInitializeAPI.current) {
-          const requestParams: any = {
-            page: 1,
-            limit: pagination?.page_limit || 20,
-            ...(currentFolderId && { id: currentFolderId }),
-            searchTerm: debouncedSearchTerm || '',
-            ...(typeFilter &&
-              typeFilter.length && {
-                type: typeFilter.join(','),
-              }),
-            ...(modifiedFilter?.after && {
-              start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
-            }),
-            ...(modifiedFilter?.before && {
-              end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
-            }),
-          };
-
-          if (checkLocation && currentAccountId) {
-            requestParams.account_id = Number(currentAccountId);
-          } else if (!checkLocation && accountId !== 'all') {
-            requestParams.account_id = accountId;
-          }
-          const res = await dispatch(fetchCloudStorageFiles(requestParams));
-          initializedRef.current = true;
-          hasCalledInitializeAPI.current = true;
-          if (res?.payload?.status === 404) {
-            navigate(PRIVATE_ROUTES.DASHBOARD.url);
-          }
+    if (!initializedRef.current && !hasCalledInitializeAPI.current) {
+      // onInitialize({});
+      getCloudStorageFiles(1).then((res: any) => {
+        if (
+          res?.payload?.status === 404 ||
+          res?.payload?.payload?.status === 404
+        ) {
+          navigate(PRIVATE_ROUTES.DASHBOARD.url);
         }
-      }
-    };
-    fetchCloudStorageFilesData();
+      });
+      initializedRef.current = true;
+      hasCalledInitializeAPI.current = true;
+    }
+    return;
+
+    // const fetchCloudStorageFilesData = async () => {
+    //   // Handle initial mount only
+    //   if (!hasMountedOnce.current) {
+    //     hasMountedOnce.current = true;
+
+    //     if (!initializedRef.current && !hasCalledInitializeAPI.current) {
+    //       const requestParams: any = {
+    //         page: 1,
+    //         limit: pagination?.page_limit || 20,
+    //         ...(currentFolderId && { id: currentFolderId }),
+    //         searchTerm: debouncedSearchTerm || '',
+    //         ...(typeFilter &&
+    //           typeFilter.length && {
+    //             type: typeFilter.join(','),
+    //           }),
+    //         ...(modifiedFilter?.after && {
+    //           start_date: dayjs(modifiedFilter.after).format('MM/DD/YYYY'),
+    //         }),
+    //         ...(modifiedFilter?.before && {
+    //           end_date: dayjs(modifiedFilter.before).format('MM/DD/YYYY'),
+    //         }),
+    //       };
+
+    //       if (checkLocation && currentAccountId) {
+    //         requestParams.account_id = Number(currentAccountId);
+    //       } else if (!checkLocation && accountId !== 'all') {
+    //         requestParams.account_id = accountId;
+    //       }
+    //       const res = await dispatch(fetchCloudStorageFiles(requestParams));
+    //       initializedRef.current = true;
+    //       hasCalledInitializeAPI.current = true;
+    //       if (res?.payload?.status === 404) {
+    //         navigate(PRIVATE_ROUTES.DASHBOARD.url);
+    //       }
+    //     }
+    //   }
+    // };
+    // fetchCloudStorageFilesData();
     // Remove all filter change handling from this effect - it's causing double calls
   }, [connectedAccounts?.length]); // Only depend on accounts length
 
@@ -2693,6 +2707,8 @@ const useDashboard = ({
     connectErrorModalOpen,
     connectErrorMessage,
     closeConnectErrorModal,
+    dispatch,
+    params,
   };
 };
 
