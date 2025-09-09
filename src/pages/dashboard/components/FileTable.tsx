@@ -136,7 +136,11 @@ const FileTable: React.FC<FileTableProps> = ({
         render: (row: FileType) => (
           <>
             {row.lastModified ? (
-              <Tooltip label={formatDateAndTime(row.lastModified)} fz={'xs'} withinPortal={false}>
+              <Tooltip
+                label={formatDateAndTime(row.lastModified)}
+                fz={'xs'}
+                withinPortal={false}
+              >
                 <Text size="sm">{formatDate(row.lastModified)}</Text>
               </Tooltip>
             ) : (

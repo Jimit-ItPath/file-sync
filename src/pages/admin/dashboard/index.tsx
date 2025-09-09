@@ -82,7 +82,12 @@ const AdminDashboard = () => {
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
                       {item.label}
-                      <Tooltip label={item.description} fz={'xs'} withArrow position='bottom'>
+                      <Tooltip
+                        label={item.description}
+                        fz={'xs'}
+                        withArrow
+                        position="bottom"
+                      >
                         <ICONS.IconInfoCircle
                           size={16}
                           style={{ cursor: 'pointer' }}
@@ -137,7 +142,12 @@ const AdminDashboard = () => {
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
                       {item.label}
-                      <Tooltip label={item.description} fz={'xs'} withArrow position='bottom'>
+                      <Tooltip
+                        label={item.description}
+                        fz={'xs'}
+                        withArrow
+                        position="bottom"
+                      >
                         <ICONS.IconInfoCircle
                           size={16}
                           style={{ cursor: 'pointer' }}
@@ -192,7 +202,12 @@ const AdminDashboard = () => {
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
                       {item.label}
-                      <Tooltip label={item.description} fz={'xs'} withArrow position='bottom'>
+                      <Tooltip
+                        label={item.description}
+                        fz={'xs'}
+                        withArrow
+                        position="bottom"
+                      >
                         <ICONS.IconInfoCircle
                           size={16}
                           style={{ cursor: 'pointer' }}

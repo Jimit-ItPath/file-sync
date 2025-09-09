@@ -314,7 +314,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                     label={folder.name}
                     withArrow={false}
                     fz={'xs'}
-                    withinPortal={false}
+                    // withinPortal={false}
                   >
                     <Text
                       fw={600}
@@ -408,6 +408,8 @@ const FileGrid: React.FC<FileGridProps> = ({
                       withArrow={false}
                       fz={'xs'}
                       withinPortal={false}
+                      multiline
+                      style={{ zIndex: 1000 }}
                     >
                       <Text
                         fw={600}
