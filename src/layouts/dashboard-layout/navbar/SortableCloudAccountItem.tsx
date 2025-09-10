@@ -7,6 +7,7 @@ import {
   getLocalStorage,
   removeLocalStorage,
 } from '../../../utils/helper';
+import { encryptRouteParam } from '../../../utils/helper/encryption';
 import { Tooltip } from '../../../components';
 import { CSS } from '@dnd-kit/utilities';
 import useResponsive from '../../../hooks/use-responsive';
@@ -94,7 +95,10 @@ const SortableCloudAccountItem = ({
           )}
 
           <Link
-            to={account.url}
+            to={account.url.replace(
+              ':encryptedId',
+              encryptRouteParam(account.id.toString())
+            )}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -239,7 +243,7 @@ const SortableCloudAccountItem = ({
             {formatBytes(Number(account.storageInfo.usageInWorkspace))} used
           </Text>
         </Box>
-      ) : account.storageInfo && account.storageInfo.total ? (
+      ) : account.storageInfo && account.storageInfo.total >= 0 ? (
         <Box
           px={8}
           mt={4}

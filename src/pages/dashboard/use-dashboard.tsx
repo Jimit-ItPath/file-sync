@@ -50,6 +50,7 @@ import {
 } from '../../utils/constants';
 import dayjs from 'dayjs';
 import useUploadManagerV2 from './file-upload-v2/use-upload-manager-v2';
+import { decryptRouteParam } from '../../utils/helper/encryption';
 
 type UseDashboardProps = {
   downloadFile?: (ids: string[]) => Promise<void>;
@@ -255,7 +256,15 @@ const useDashboard = ({
       location.pathname.startsWith('/onedrive'),
     [location.pathname]
   );
-  const currentAccountId = checkLocation ? params.id : accountId;
+
+  const decryptedParamId = useMemo(() => {
+    if (params.encryptedId) {
+      return decryptRouteParam(params.encryptedId);
+    }
+    return null;
+  }, [params.encryptedId]);
+
+  const currentAccountId = checkLocation ? decryptedParamId : accountId;
 
   const isSFDEnabled = useMemo(() => {
     return checkLocation
@@ -398,7 +407,7 @@ const useDashboard = ({
       if (account_id && account_id !== 'all') {
         requestParams.account_id = account_id;
       } else if (checkLocation && currentAccountId) {
-        requestParams.account_id = Number(currentAccountId);
+        requestParams.account_id = currentAccountId;
       } else if (!checkLocation && accountId !== 'all') {
         requestParams.account_id = accountId;
       }
@@ -478,7 +487,7 @@ const useDashboard = ({
   //         };
 
   //         if (checkLocation && currentAccountId) {
-  //           requestParams.account_id = Number(currentAccountId);
+  //           requestParams.account_id = currentAccountId;
   //         } else if (!checkLocation && accountId !== 'all') {
   //           requestParams.account_id = accountId;
   //         }
@@ -608,7 +617,7 @@ const useDashboard = ({
           };
 
           if (checkLocation && currentAccountId) {
-            requestParams.account_id = Number(currentAccountId);
+            requestParams.account_id = currentAccountId;
           } else if (!checkLocation && accountId !== 'all') {
             requestParams.account_id = accountId;
           }
@@ -925,7 +934,7 @@ const useDashboard = ({
       };
 
       if (checkLocation && currentAccountId) {
-        requestParams.account_id = Number(currentAccountId);
+        requestParams.account_id = currentAccountId;
       } else if (!checkLocation && accountId !== 'all') {
         requestParams.account_id = accountId;
       }
@@ -1100,7 +1109,8 @@ const useDashboard = ({
       getCloudStorageFiles(1).then((res: any) => {
         if (
           res?.payload?.status === 404 ||
-          res?.payload?.payload?.status === 404
+          res?.payload?.payload?.status === 404 ||
+          res?.payload?.payload?.status === 422
         ) {
           navigate(PRIVATE_ROUTES.DASHBOARD.url);
         }
@@ -1134,7 +1144,7 @@ const useDashboard = ({
     //       };
 
     //       if (checkLocation && currentAccountId) {
-    //         requestParams.account_id = Number(currentAccountId);
+    //         requestParams.account_id = currentAccountId;
     //       } else if (!checkLocation && accountId !== 'all') {
     //         requestParams.account_id = accountId;
     //       }
@@ -1262,7 +1272,7 @@ const useDashboard = ({
       }
 
       if (checkLocation && currentAccountId) {
-        requestParams.account_id = Number(currentAccountId);
+        requestParams.account_id = currentAccountId;
       }
 
       if (!isMoveMode) {
@@ -1275,7 +1285,7 @@ const useDashboard = ({
       //     folder
       //       ? requestParams
       //       : checkLocation && currentAccountId
-      //         ? { account_id: Number(currentAccountId) }
+      //         ? { account_id: currentAccountId }
       //         : null
       //   )
       // );
@@ -1543,7 +1553,7 @@ const useDashboard = ({
         };
 
         if (checkLocation && currentAccountId) {
-          requestParams.account_id = Number(currentAccountId);
+          requestParams.account_id = currentAccountId;
         } else if (!checkLocation && !isSFDEnabled && data.accountId) {
           requestParams.account_id = data.accountId;
         }

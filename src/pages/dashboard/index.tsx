@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { decryptRouteParam } from '../../utils/helper/encryption';
 import {
   ActionIcon,
   Autocomplete,
@@ -274,7 +275,10 @@ const Dashboard = () => {
           location.pathname.startsWith('/onedrive');
 
         if (isSpecificRoute) {
-          if (String(data.accountId) !== String(params?.id)) {
+          const decryptedParamId = params?.encryptedId
+            ? decryptRouteParam(params.encryptedId)
+            : null;
+          if (String(data.accountId) !== String(decryptedParamId)) {
             return;
           }
         }
@@ -306,7 +310,7 @@ const Dashboard = () => {
     currentDashboardHandler = webhookHandler;
     subscribeToEvent('webhook_processed', webhookHandler);
   }, [
-    params?.id,
+    params?.encryptedId,
     currentAccountId,
     location.pathname,
     folderId,
@@ -1209,8 +1213,8 @@ const Dashboard = () => {
         onMoveConfirm={handleMoveModalConfirm}
         currentFolderId={folderId}
         checkLocation={checkLocation}
-        accountId={accountId}
-        currentAccountId={currentAccountId}
+        accountId={accountId!}
+        currentAccountId={currentAccountId!}
       />
 
       {/* File Details Drawer */}
