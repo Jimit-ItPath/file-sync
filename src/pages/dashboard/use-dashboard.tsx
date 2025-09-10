@@ -1560,7 +1560,11 @@ const useDashboard = ({
 
         const res = await dispatch(createCloudStorageFolder(requestParams));
 
-        if (res?.payload?.status === 400 || res?.payload?.status === 500) {
+        if (
+          res?.payload?.status === 400 ||
+          res?.payload?.status === 500 ||
+          res?.payload?.status === 403
+        ) {
           notifications.show({
             message: res?.payload?.message || 'Failed to create folder',
             color: 'red',
