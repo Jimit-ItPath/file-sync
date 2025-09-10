@@ -302,8 +302,20 @@ const Dashboard = () => {
         }
 
         setSocketDataLoading(true);
-        await dispatch(initializeCloudStorageFromStorage(requestParams));
+        const result: any = await dispatch(
+          initializeCloudStorageFromStorage(requestParams)
+        );
         setSocketDataLoading(false);
+
+        // Trigger auto-load after webhook API response
+        if (result?.payload?.payload?.data?.paging) {
+          setTimeout(() => {
+            checkAutoLoadAfterWebhook(
+              result?.payload?.payload?.data?.paging,
+              requestParams
+            );
+          }, 100);
+        }
       }, 150);
     };
 
@@ -318,6 +330,47 @@ const Dashboard = () => {
     modifiedFilter,
     dispatch,
   ]);
+
+  // Auto-load function using fresh pagination data from API response
+  const checkAutoLoadAfterWebhook = async (
+    paginationData: any,
+    baseParams: any
+  ) => {
+    if (!scrollBoxRef.current || !paginationData) return;
+
+    const container = scrollBoxRef.current;
+    const hasVerticalScrollbar =
+      container.scrollHeight > container.clientHeight;
+
+    if (
+      !hasVerticalScrollbar &&
+      paginationData?.page_no < paginationData?.total_pages
+    ) {
+      const nextPage = paginationData.page_no + 1;
+      const nextParams = { ...baseParams, page: nextPage };
+
+      try {
+        const nextResult: any = await dispatch(
+          initializeCloudStorageFromStorage(nextParams)
+        );
+
+        // Continue auto-loading if still no scrollbar and more pages available
+        if (
+          nextResult?.payload?.payload?.data?.paging &&
+          nextPage < paginationData?.total_pages
+        ) {
+          setTimeout(() => {
+            checkAutoLoadAfterWebhook(
+              nextResult?.payload?.payload?.data?.paging,
+              baseParams
+            );
+          }, 100);
+        }
+      } catch (error) {
+        console.error('Auto-load after webhook failed:', error);
+      }
+    }
+  };
 
   const accountConfigs = useMemo(
     () => ({
