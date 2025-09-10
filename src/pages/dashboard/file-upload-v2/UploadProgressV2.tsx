@@ -160,7 +160,7 @@ const getStatusIcon = (status: FileUploadStatus, progress?: number) => {
 };
 
 const getFileIcon = (fileName: string) => {
-  const extension = fileName.split('.').pop()?.toLowerCase();
+  const extension = fileName?.split('.')?.pop()?.toLowerCase();
 
   switch (extension) {
     case 'pdf':
@@ -210,21 +210,21 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
   }
 
   const completedCount = fileEntries.filter(
-    ([, file]) => file.status === 'completed'
+    ([, file]) => file?.status === 'completed'
   ).length;
   const errorCount = fileEntries.filter(
-    ([, file]) => file.status === 'error'
+    ([, file]) => file?.status === 'error'
   ).length;
   const cancelledCount = fileEntries.filter(
-    ([, file]) => file.status === 'cancelled'
+    ([, file]) => file?.status === 'cancelled'
   ).length;
   const totalCount = fileEntries.length;
   const hasActiveUploads = fileEntries.some(
-    ([, file]) => file.status === 'uploading' || file.status === 'pending'
+    ([, file]) => file?.status === 'uploading' || file?.status === 'pending'
   );
 
   const overallProgress =
-    fileEntries.reduce((acc, [, file]) => acc + file.progress, 0) / totalCount;
+    fileEntries.reduce((acc, [, file]) => acc + file?.progress, 0) / totalCount;
 
   const getHeaderText = () => {
     if (hasActiveUploads) {
@@ -338,7 +338,7 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
                 cursor: 'default',
               }}
               onMouseEnter={e => {
-                if (file.status !== 'uploading') {
+                if (file?.status !== 'uploading') {
                   e.currentTarget.style.backgroundColor = '#f9fafb';
                 }
               }}
@@ -348,7 +348,7 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
             >
               <Group gap="sm" align="flex-start">
                 {/* File Icon */}
-                <Box mt={2}>{getFileIcon(file.file.name)}</Box>
+                <Box mt={2}>{getFileIcon(file?.file?.name)}</Box>
 
                 {/* File Info */}
                 <Box style={{ flex: 1, minWidth: 0 }}>
@@ -363,51 +363,51 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                         }}
-                        title={file.file.name}
+                        title={file?.file?.name}
                       >
-                        {file.file.name}
+                        {file?.file?.name}
                       </Text>
 
                       <Text size="xs" c="dimmed" mt={2}>
-                        {formatFileSize(file.file.size.toString())}
+                        {formatFileSize(file?.file?.size?.toString())}
                       </Text>
 
                       {/* Status Messages */}
-                      {file.status === 'uploading' && (
+                      {file?.status === 'uploading' && (
                         <Text size="xs" c="blue" mt={4}>
-                          Uploading... {file.progress}%
+                          Uploading... {file?.progress}%
                         </Text>
                       )}
 
-                      {file.status === 'pending' && (
+                      {file?.status === 'pending' && (
                         <Text size="xs" c="gray" mt={4}>
                           Waiting to upload...
                         </Text>
                       )}
 
-                      {file.status === 'completed' && (
+                      {file?.status === 'completed' && (
                         <Text size="xs" c="green" mt={4} fw={500}>
                           Upload complete
                         </Text>
                       )}
 
-                      {file.status === 'error' && (
+                      {file?.status === 'error' && (
                         <Text size="xs" c="red" mt={4}>
-                          {file.error || 'Upload failed'}
+                          {file?.error || 'Upload failed'}
                         </Text>
                       )}
 
-                      {file.status === 'cancelled' && (
+                      {file?.status === 'cancelled' && (
                         <Text size="xs" c="gray" mt={4}>
                           Upload cancelled
                         </Text>
                       )}
 
                       {/* Progress Bar for Uploading Files */}
-                      {file.status === 'uploading' && (
+                      {file?.status === 'uploading' && (
                         <Box mt="xs">
                           <Progress
-                            value={file.progress}
+                            value={file?.progress}
                             size={4}
                             radius="xl"
                             color="blue"
@@ -419,11 +419,11 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
 
                     {/* Status Icon and Actions */}
                     <Flex align="center" gap="xs">
-                      {getStatusIcon(file.status, file.progress)}
+                      {getStatusIcon(file?.status, file?.progress)}
 
                       {/* Action Buttons */}
-                      {(file.status === 'uploading' ||
-                        file.status === 'pending') && (
+                      {(file?.status === 'uploading' ||
+                        file?.status === 'pending') && (
                         <Tooltip label="Cancel upload" fz={'xs'} zIndex={1000}>
                           <ActionIcon
                             variant="subtle"
@@ -437,9 +437,9 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
                         </Tooltip>
                       )}
 
-                      {(file.status === 'completed' ||
-                        file.status === 'error' ||
-                        file.status === 'cancelled') && (
+                      {(file?.status === 'completed' ||
+                        file?.status === 'error' ||
+                        file?.status === 'cancelled') && (
                         <Tooltip
                           label="Remove from list"
                           fz={'xs'}
