@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 
-const SECRET_KEY = 'your-secret-key-here'; // Move this to env variables in production
+const SECRET_KEY = import.meta.env.VITE_REACT_APP_ROUTE_SECRET_KEY;
 
 export const encryptRouteParam = (value: string): string => {
   const encrypted = CryptoJS.AES.encrypt(value, SECRET_KEY).toString();
