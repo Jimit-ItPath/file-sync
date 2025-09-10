@@ -33,6 +33,7 @@ import { useViewportSize } from '@mantine/hooks';
 import { type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { NAME_REGEX } from '../../../utils/constants';
+import { encryptRouteParam } from '../../../utils/helper/encryption';
 
 const connectAccountSchema = z.object({
   accountName: z.string().trim().min(1, 'Account name is required'),
@@ -171,9 +172,10 @@ const useSidebar = () => {
         );
 
         const config = accountTypeConfig[account.account_type];
+        const encryptedId = encryptRouteParam(account?.id?.toString());
         return {
           id: account.id,
-          url: generatePath(config.url, { id: account.id }),
+          url: generatePath(config.url, { encryptedId }),
           icon: config.icon,
           title: account.account_name || config.title,
           storageInfo: storageInfo?.storage_details,

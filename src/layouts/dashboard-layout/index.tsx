@@ -62,7 +62,12 @@ const DashboardLayout = () => {
   usePageData();
   const [mobileDrawerOpened, mobileDrawerHandler] = useDisclosure();
   const [logoutConfirmOpened, logoutConfirmHandler] = useDisclosure();
-  const { isSm, isXs } = useResponsive();
+  const { isSm, isXs, orientationKey } = useResponsive();
+
+  // Detect mobile landscape mode - recalculates on orientation change
+  const isMobileLandscape = useMemo(() => {
+    return isXs && window.innerHeight < window.innerWidth;
+  }, [isXs, orientationKey]);
   const {
     downloadFile,
     cancelDownload,
@@ -744,6 +749,13 @@ const DashboardLayout = () => {
                           folderMethods.formState.errors.accountId?.message
                         }
                         required
+                        comboboxProps={{
+                          zIndex: 3001,
+                          position: isMobileLandscape
+                            ? 'top-start'
+                            : 'bottom-start',
+                          middlewares: { flip: true, shift: true, size: true },
+                        }}
                         renderOption={({ option }: any) => {
                           if ('accountType' in option) {
                             const config =
@@ -788,18 +800,28 @@ const DashboardLayout = () => {
             <Stack gap={'md'}>
               <Dropzone
                 onFilesSelected={files => {
-                  if (files.length > 5) {
+                  const currentFiles = uploadedFiles || [];
+                  const uniqueFiles = files.filter(
+                    newFile =>
+                      !currentFiles.some(
+                        existingFile =>
+                          existingFile.name === newFile.name &&
+                          existingFile.size === newFile.size
+                      )
+                  );
+                  const newFiles = [...currentFiles, ...uniqueFiles];
+
+                  if (newFiles.length > 5) {
                     notifications.show({
                       message: 'You can upload a maximum of 5 files at a time.',
                       color: 'red',
                     });
-                    // Only take the first 5 files
-                    const limitedFiles = files.slice(0, 5);
+                    const limitedFiles = newFiles.slice(0, 5);
                     setUploadedFiles(limitedFiles);
                     uploadMethods.setValue('files', limitedFiles);
                   } else {
-                    setUploadedFiles(files);
-                    uploadMethods.setValue('files', files);
+                    setUploadedFiles(newFiles);
+                    uploadMethods.setValue('files', newFiles);
                   }
                 }}
                 // maxSize={5 * 1024 ** 2}
@@ -854,6 +876,13 @@ const DashboardLayout = () => {
                           uploadMethods.formState.errors.accountId?.message
                         }
                         required
+                        comboboxProps={{
+                          zIndex: 3001,
+                          position: isMobileLandscape
+                            ? 'top-start'
+                            : 'bottom-start',
+                          middlewares: { flip: true, shift: true, size: true },
+                        }}
                         renderOption={({ option }: any) => {
                           if ('accountType' in option) {
                             const config =
