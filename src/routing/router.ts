@@ -1,5 +1,6 @@
 import { createBrowserRouter, redirect, useLoaderData } from 'react-router';
 import { getAuth } from '../auth';
+import { decryptRouteParam } from '../utils/helper/encryption';
 
 // Routes
 import { AUTH_ROUTES, PRIVATE_ROUTES } from './routes';
@@ -92,9 +93,14 @@ const dashboardPageLoader = (roles: string[]) => (args: any) => {
   // if (isAuthenticated && !roles.includes(role)) {
   //   return redirect('/404');
   // }
-  return { accountId: args.params.id };
 
-  // return null;
+  // Handle both encrypted and non-encrypted routes
+  if (args.params.encryptedId) {
+    const decryptedId = decryptRouteParam(args.params.encryptedId);
+    return { accountId: decryptedId };
+  }
+
+  return { accountId: args.params.id };
 };
 
 export const router = createBrowserRouter([
