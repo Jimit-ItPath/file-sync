@@ -16,6 +16,7 @@ import {
   Loader,
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import { useMobileResponsive } from '../../../hooks/use-mobile-responsive';
 import type { FileType } from '../use-dashboard';
 import { formatDateAndTime, getFileMimeTypeLabel } from '../../../utils/helper';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
@@ -54,6 +55,8 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
   detailsFileLoading = false,
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const { shouldShowMobileMenu } = useMobileResponsive();
+  const isMobileView = shouldShowMobileMenu || isMobile;
 
   if (!item) return null;
 
@@ -211,7 +214,7 @@ const FileDetailsDrawer: React.FC<FileDetailsDrawerProps> = ({
       onClose={onClose}
       position="right"
       title={`${item.name}`}
-      size={isMobile ? '100%' : 480}
+      size={isMobileView ? '100%' : 480}
       transitionProps={{
         // transition: 'slide-left',
         duration: 300,

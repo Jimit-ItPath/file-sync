@@ -8,6 +8,7 @@ import { notifications } from '@mantine/notifications';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import {
   fetchProfile,
+  fetchProfilePicture,
   removeProfileImage,
   updateSFDPreference,
 } from '../../../store/slices/user.slice';
@@ -54,7 +55,9 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 const UseProfile = () => {
-  const { isLoading, userProfile } = useAppSelector(state => state.user);
+  const { isLoading, userProfile, profilePicture } = useAppSelector(
+    state => state.user
+  );
   const { connectedAccounts, loading, user } = useAppSelector(
     state => state.auth
   );
@@ -88,7 +91,12 @@ const UseProfile = () => {
     await dispatch(fetchProfile());
   }, [dispatch]);
 
+  const getUserProfilePicture = useCallback(async () => {
+    await dispatch(fetchProfilePicture());
+  }, [dispatch]);
+
   const [getProfile] = useAsyncOperation(getUserProfile);
+  const [getProfilePicture] = useAsyncOperation(getUserProfilePicture);
 
   const getAccounts = useCallback(async () => {
     await dispatch(getConnectedAccount());
@@ -104,9 +112,21 @@ const UseProfile = () => {
 
   useEffect(() => {
     getProfile({});
-    if (user?.user?.role === ROLES.USER) {
+    getProfilePicture({});
+  }, []);
+
+  useEffect(() => {
+    if (user?.role === ROLES.USER) {
       onInitialize({});
     }
+  }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (profilePicture) {
+        URL.revokeObjectURL(profilePicture);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -165,6 +185,7 @@ const UseProfile = () => {
           color: 'green',
         });
         await getProfile({});
+        await getProfilePicture({});
       }
     }
   );
@@ -272,6 +293,7 @@ const UseProfile = () => {
           color: 'green',
         });
         await getProfile({});
+        await getProfilePicture({});
         closeRemoveProfilePicModal();
         setPreview(null);
       } else {
@@ -342,6 +364,7 @@ const UseProfile = () => {
     isXs,
     isSm,
     isMd,
+    profilePicture,
   };
 };
 

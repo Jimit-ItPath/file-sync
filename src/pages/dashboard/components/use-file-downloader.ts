@@ -53,6 +53,7 @@ const useFileDownloader = () => {
   const isProcessingQueue = useRef<boolean>(false);
   const downloadedIds = useRef<Set<string>>(new Set());
   const processingIds = useRef<Set<string>>(new Set());
+  // const token = getCookie('access_token');
 
   const calculateSpeed = (
     downloadedBytes: number,
@@ -330,9 +331,11 @@ const useFileDownloader = () => {
         // Request download stream
         const response = await fetch(urlRef.current, {
           method: 'POST',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            // Authorization: `Bearer ${localStorage.getItem('token')}`,
+            // Cookie: `access_token=${token}`,
           },
           body: JSON.stringify({ ids: selectedIds }),
           signal: controller.signal,
@@ -367,7 +370,7 @@ const useFileDownloader = () => {
         writer.closed?.catch(() => {
           setDownloadProgress(null);
           notifications.show({
-            message: 'Download was cancelled from browser',
+            message: 'Download cancelled',
             color: 'orange',
           });
         });
@@ -598,9 +601,11 @@ const useFileDownloader = () => {
     const response = await fetch(url, {
       signal,
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        // Authorization: `Bearer ${localStorage.getItem('token')}`,
+        // Cookie: `access_token=${token}`,
       },
       body: JSON.stringify({ ids: selectedIds }),
     });

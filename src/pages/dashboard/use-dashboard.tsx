@@ -43,6 +43,7 @@ import getFileIcon from '../../components/file-icon';
 // import { downloadFiles as downloadFilesHelper } from '../../utils/helper';
 import { PRIVATE_ROUTES } from '../../routing/routes';
 import {
+  AUDIO_FILE_TYPES,
   DOCUMENT_FILE_TYPES,
   IMAGE_FILE_TYPES,
   PREVIEW_FILE_TYPES,
@@ -86,7 +87,21 @@ export type FileType = {
 };
 
 const folderSchema = z.object({
-  folderName: z.string().trim().min(1, 'Folder name is required'),
+  folderName: z
+    .string()
+    .trim()
+    .min(1, 'Folder name is required')
+    .refine(
+      value => {
+        const invalidChars =
+          /[\/<>:"|?*\\\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+        return !invalidChars.test(value);
+      },
+      {
+        message:
+          'Name cannot contain emojis, path symbols (/ \\ < > : " | ? *), or other special characters',
+      }
+    ),
   accountId: z.string().min(1, 'Account selection is required').optional(),
 });
 
@@ -96,7 +111,21 @@ const uploadSchema = z.object({
 });
 
 const renameSchema = z.object({
-  newName: z.string().trim().min(1, 'New name is required'),
+  newName: z
+    .string()
+    .trim()
+    .min(1, 'New name is required')
+    .refine(
+      value => {
+        const invalidChars =
+          /[\/<>:"|?*\\\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+        return !invalidChars.test(value);
+      },
+      {
+        message:
+          'Name cannot contain emojis, path symbols (/ \\ < > : " | ? *), or other special characters',
+      }
+    ),
 });
 
 type FolderFormData = z.infer<typeof folderSchema>;
@@ -175,6 +204,7 @@ const useDashboard = ({
     size?: number;
     isVideo?: boolean;
     isDocument?: boolean;
+    isAudio?: boolean;
     share?: string | null;
     mimeType?: string;
   } | null>(null);
@@ -186,6 +216,7 @@ const useDashboard = ({
     size?: number;
     isVideo?: boolean;
     isDocument?: boolean;
+    isAudio?: boolean;
     share?: string | null;
     mimeType?: string;
   } | null>(null);
@@ -391,12 +422,14 @@ const useDashboard = ({
     async (
       page?: number,
       filters?: { type?: string; after?: string; before?: string },
-      account_id?: string | null
+      account_id?: string | null,
+      pageLimit?: number | null
     ) => {
       if (checkConnectedAccDetails?.re_authentication_required) return;
       const requestParams: any = {
         ...(folderId && { id: folderId }),
-        limit: pagination?.page_limit || 20,
+        limit: pageLimit && typeof pageLimit === 'number' ? pageLimit : 20,
+        // : pagination?.page_limit || 20,
         page: typeof page === 'number' ? page : 1,
         searchTerm: debouncedSearchTerm || '',
         ...(filters?.type && { type: filters.type }),
@@ -988,8 +1021,15 @@ const useDashboard = ({
   }, [moveModalOpen, currentPath, dispatch]);
 
   useEffect(() => {
+    // Don't redirect during page refresh when accounts might still be loading
+    // Only redirect if we're sure there are no accounts after some time
     if (checkLocation && !connectedAccounts?.length) {
-      navigate(PRIVATE_ROUTES.DASHBOARD.url);
+      const timer = setTimeout(() => {
+        if (!connectedAccounts?.length) {
+          navigate(PRIVATE_ROUTES.DASHBOARD.url);
+        }
+      }, 4000);
+      return () => clearTimeout(timer);
     }
   }, [checkLocation, navigate, connectedAccounts]);
 
@@ -1330,7 +1370,14 @@ const useDashboard = ({
     } else if (actionId === 'rename') {
       setItemToRename(row);
       setRenameModalOpen(true);
-      resetRenameForm({ newName: row.name });
+
+      // For files, show only filename without extension
+      const displayName =
+        row.type === 'file' && row.fileExtension
+          ? row.name.slice(0, -(row.fileExtension.length + 1))
+          : row.name;
+
+      resetRenameForm({ newName: displayName });
     } else if (actionId === 'delete') {
       setItemToDelete(row);
       setDeleteModalOpen(true);
@@ -1524,6 +1571,7 @@ const useDashboard = ({
           isDocument: DOCUMENT_FILE_TYPES.includes(
             row.fileExtension?.toLowerCase() || ''
           ),
+          isAudio: AUDIO_FILE_TYPES.includes(ext),
           share: row.web_view_url ?? null,
           mimeType: row.mimeType,
         });
@@ -1574,18 +1622,23 @@ const useDashboard = ({
 
         if (res?.payload?.success) {
           resetAutoLoadState();
-          await getCloudStorageFiles(1, {
-            type:
-              typeFilter && typeFilter?.length
-                ? typeFilter?.join(',')
+          await getCloudStorageFiles(
+            1,
+            {
+              type:
+                typeFilter && typeFilter?.length
+                  ? typeFilter?.join(',')
+                  : undefined,
+              after: modifiedFilter?.after
+                ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
                 : undefined,
-            after: modifiedFilter?.after
-              ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-              : undefined,
-            before: modifiedFilter?.before
-              ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-              : undefined,
-          });
+              before: modifiedFilter?.before
+                ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+                : undefined,
+            },
+            currentAccountId,
+            60
+          );
           notifications.show({
             message: res?.payload?.message || 'Folder created successfully',
             color: 'green',
@@ -1759,7 +1812,20 @@ const useDashboard = ({
 
   const handleRenameConfirm = renameMethods.handleSubmit(data => {
     if (itemToRename?.id) {
-      renameFile({ fileId: itemToRename.id, newName: data.newName });
+      let newName = data.newName;
+      if (itemToRename.type === 'file') {
+        // Remove any extension user might have added
+        if (newName.endsWith('.')) {
+          newName = newName.slice(0, -1);
+        }
+        // Add back the original extension
+        if (itemToRename.fileExtension) {
+          newName = `${newName}.${itemToRename.fileExtension}`;
+        }
+      }
+      const finalName = newName;
+
+      renameFile({ fileId: itemToRename.id, newName: finalName });
     }
   });
 
@@ -1943,6 +2009,14 @@ const useDashboard = ({
     async (files: File[], formData?: UploadFormData) => {
       if (files.length === 0) return;
 
+      if (files.length > 5) {
+        notifications.show({
+          message: 'You can upload a maximum of 5 files at a time',
+          color: 'red',
+        });
+        files = files.slice(0, 5);
+      }
+
       const uploadOptions: { id?: string; account_id?: string } = {};
 
       if (currentFolderId) {
@@ -1967,18 +2041,23 @@ const useDashboard = ({
 
         if (res?.response?.success === 1) {
           setTimeout(async () => {
-            await getCloudStorageFiles(1, {
-              type:
-                typeFilter && typeFilter?.length
-                  ? typeFilter?.join(',')
+            await getCloudStorageFiles(
+              1,
+              {
+                type:
+                  typeFilter && typeFilter?.length
+                    ? typeFilter?.join(',')
+                    : undefined,
+                after: modifiedFilter?.after
+                  ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
                   : undefined,
-              after: modifiedFilter?.after
-                ? dayjs(modifiedFilter.after).format('MM/DD/YYYY')
-                : undefined,
-              before: modifiedFilter?.before
-                ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
-                : undefined,
-            });
+                before: modifiedFilter?.before
+                  ? dayjs(modifiedFilter.before).format('MM/DD/YYYY')
+                  : undefined,
+              },
+              currentAccountId,
+              60
+            );
           }, 1000);
         }
       } catch (error: any) {
@@ -2006,6 +2085,25 @@ const useDashboard = ({
   // Replace the handleFileDrop
   const handleFileDropV2 = useCallback(
     async (files: File[]) => {
+      // Check for folders (directories)
+      const hasFolder = files.some(file => file.type === '' && file.size === 0);
+      if (hasFolder) {
+        notifications.show({
+          message:
+            'Folder upload is not supported. Please select individual files only.',
+          color: 'red',
+        });
+        return;
+      }
+
+      if (files.length > 5) {
+        notifications.show({
+          message: 'You can upload a maximum of 5 files at a time',
+          color: 'red',
+        });
+        files = files.slice(0, 5);
+      }
+
       if (!isSFDEnabled) {
         setDragDropFiles(files);
         setDragDropModalOpen(true);
@@ -2343,7 +2441,8 @@ const useDashboard = ({
     return (
       selectedFiles.length > 0 &&
       selectedFiles.every(
-        file => file.type === 'file' && !shouldDisableDownload(file.mimeType)
+        file =>
+          file.type === 'file' && !shouldDisableDownload(file.mimeType, file)
       )
     );
   }, [selectedIds, files]);

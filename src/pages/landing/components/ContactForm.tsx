@@ -23,7 +23,10 @@ const ContactForm = () => {
   } = useContact();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   return (

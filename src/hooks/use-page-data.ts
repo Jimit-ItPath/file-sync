@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AUTH_ROUTES, PRIVATE_ROUTES } from '../routing/routes';
+import { AUTH_ROUTES, PLAIN_ROUTES, PRIVATE_ROUTES } from '../routing/routes';
 import { APP_TITLE } from '../utils/constants';
 import { useLocation } from 'react-router';
 import { useDocumentTitle } from '@mantine/hooks';
@@ -22,7 +22,7 @@ export const usePageData = () => {
     };
 
     const routes = [
-      // ...transformRoutes(PLAIN_ROUTES),
+      ...transformRoutes(PLAIN_ROUTES),
       ...transformRoutes(AUTH_ROUTES),
       ...transformRoutes(PRIVATE_ROUTES),
     ];

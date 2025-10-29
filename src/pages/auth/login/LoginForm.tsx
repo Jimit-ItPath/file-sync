@@ -2,7 +2,7 @@ import { Stack, Group, Text } from '@mantine/core';
 import { Button, Form, Input } from '../../../components';
 import useLogin from './use-login';
 import { Link } from 'react-router';
-import { AUTH_ROUTES } from '../../../routing/routes';
+import { AUTH_ROUTES, PLAIN_ROUTES } from '../../../routing/routes';
 import { ICONS } from '../../../assets/icons';
 
 interface LoginFormProps {
@@ -89,6 +89,41 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, isXs }) => {
             Sign up
           </Link>
         </Text>
+
+        <Group justify="center" gap={5} mt={-5}>
+          <Text ta="center" fz={isXs ? 12 : 14} c="dimmed">
+            <Stack
+              style={{
+                color: '#0284c7',
+                textDecoration: 'none',
+                cursor: 'pointer',
+              }}
+              fw={500}
+              onClick={e => {
+                e.stopPropagation();
+                window.open(PLAIN_ROUTES.TERMS_OF_SERVICE.url, '_blank');
+              }}
+            >
+              Terms and Conditions |
+            </Stack>
+          </Text>
+          <Text ta="center" fz={isXs ? 12 : 14} c="dimmed">
+            <Stack
+              style={{
+                textDecoration: 'none',
+                color: '#0284c7',
+                cursor: 'pointer',
+              }}
+              fw={500}
+              onClick={e => {
+                e.stopPropagation();
+                window.open(PLAIN_ROUTES.PRIVACY_POLICY.url, '_blank');
+              }}
+            >
+              Privacy Policy
+            </Stack>
+          </Text>
+        </Group>
       </Stack>
     </Form>
   );

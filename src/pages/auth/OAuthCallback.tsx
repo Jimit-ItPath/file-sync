@@ -1,21 +1,71 @@
 // pages/auth/oauth-callback.tsx
 import { useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
+import { useAppDispatch } from '../../store';
+import { updateUser } from '../../store/slices/auth.slice';
+import { getCookie } from '../../utils/helper';
 
 export default function OAuthCallback() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const accessToken = searchParams.get('access_token');
+    // Increased delay to ensure cookies are set
+    const checkAuthStatus = async () => {
+      let retryCount = 0;
+      const maxRetries = 5;
 
-    if (accessToken) {
-      localStorage.setItem('token', accessToken);
-      navigate('/dashboard', { replace: true });
-    } else {
-      navigate('/login', { replace: true });
-    }
-  }, [searchParams, navigate]);
+      const checkCookies = () => {
+        const authStatus = getCookie('auth_status');
+        const userRole = getCookie('user_role');
+
+        if (authStatus === 'logged_in') {
+          // Update Redux state
+          dispatch(
+            updateUser({
+              isLoggedIn: true,
+              user: {
+                role: userRole || 'user',
+              },
+              activeUI: '',
+            })
+          );
+
+          // Show success notification
+          // notifications.show({
+          //   message: 'Successfully logged in',
+          //   color: 'green',
+          // });
+
+          // Navigate to dashboard
+          navigate('/dashboard', { replace: true });
+          return true;
+        }
+
+        return false;
+      };
+
+      const attemptCheck = () => {
+        if (checkCookies()) return;
+
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(attemptCheck, 500); // Retry every 500ms
+        } else {
+          // Fallback if cookies never appear
+          // notifications.show({
+          //   message: 'Login failed. Please try again.',
+          //   color: 'red',
+          // });
+          navigate('/', { replace: true });
+        }
+      };
+
+      attemptCheck();
+    };
+
+    checkAuthStatus();
+  }, [navigate, dispatch]);
 
   return <div>Processing login...</div>;
 }

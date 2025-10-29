@@ -25,7 +25,11 @@ import { ConfirmModal } from '../../components/confirm-modal';
 import Icon from '../../assets/icons/icon';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { fetchProfile, resetUserProfile } from '../../store/slices/user.slice';
+import {
+  fetchProfile,
+  fetchProfilePicture,
+  resetUserProfile,
+} from '../../store/slices/user.slice';
 import useAsyncOperation from '../../hooks/use-async-operation';
 import {
   fetchStorageDetails,
@@ -36,14 +40,10 @@ import {
   updateUser,
 } from '../../store/slices/auth.slice';
 import useResponsive from '../../hooks/use-responsive';
+import { useMobileResponsive } from '../../hooks/use-mobile-responsive';
 import { ROLES } from '../../utils/constants';
-import {
-  decodeToken,
-  getLocalStorage,
-  removeLocalStorage,
-} from '../../utils/helper';
+import { getLocalStorage, removeLocalStorage } from '../../utils/helper';
 import GlobalSearchBar from './GlobalSearchBar';
-import TawkToWidget from '../../widget/TawkToWidget';
 import useDashboard from '../../pages/dashboard/use-dashboard';
 import { Controller } from 'react-hook-form';
 import {
@@ -63,11 +63,29 @@ const DashboardLayout = () => {
   const [mobileDrawerOpened, mobileDrawerHandler] = useDisclosure();
   const [logoutConfirmOpened, logoutConfirmHandler] = useDisclosure();
   const { isSm, isXs, orientationKey } = useResponsive();
+  const { shouldShowMobileMenu, isMobileDevice, isLandscape } =
+    useMobileResponsive();
+
+  // Auto-close drawer when switching to landscape on mobile with larger screen
+  useEffect(() => {
+    if (mobileDrawerOpened && isMobileDevice && isLandscape && !isSm) {
+      mobileDrawerHandler.close();
+    }
+  }, [
+    mobileDrawerOpened,
+    isMobileDevice,
+    isLandscape,
+    isSm,
+    mobileDrawerHandler,
+  ]);
 
   // Detect mobile landscape mode - recalculates on orientation change
   const isMobileLandscape = useMemo(() => {
-    return isXs && window.innerHeight < window.innerWidth;
-  }, [isXs, orientationKey]);
+    return (
+      (isXs && window.innerHeight < window.innerWidth) ||
+      (isMobileDevice && isLandscape)
+    );
+  }, [isXs, orientationKey, isMobileDevice, isLandscape]);
   const {
     downloadFile,
     cancelDownload,
@@ -107,9 +125,9 @@ const DashboardLayout = () => {
 
   const { logout } = useAuth() as any;
   const dispatch = useAppDispatch();
-  const { userProfile } = useAppSelector(state => state.user);
+  const { userProfile, profilePicture } = useAppSelector(state => state.user);
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  // const token = localStorage.getItem('token');
   const hasCalledOnce = useRef(false);
   // const location = useLocation();
   // const hasRedirectedRef = useRef(false);
@@ -149,19 +167,25 @@ const DashboardLayout = () => {
 
   const getUserProfile = useCallback(async () => {
     const res = await dispatch(fetchProfile());
-    if (res?.payload?.data?.role === ROLES.USER && token) {
-      const decodeData: any = decodeToken(token);
+    if (res?.payload?.data) {
+      // const decodeData: any = decodeToken(token);
       dispatch(
         updateUser({
-          token,
           activeUI: '',
-          user: { ...decodeData },
+          // user: { ...decodeData },
+          user: res?.payload?.data,
+          isLoggedIn: true,
         })
       );
     }
   }, [dispatch]);
 
+  const getUserProfilePic = useCallback(async () => {
+    await dispatch(fetchProfilePicture());
+  }, [dispatch]);
+
   const [getProfile] = useAsyncOperation(getUserProfile);
+  const [getProfilePic] = useAsyncOperation(getUserProfilePic);
 
   // useEffect(() => {
   //   if (!hasRedirectedRef.current) {
@@ -182,6 +206,14 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     getProfile({});
+    getProfilePic({});
+
+    return () => {
+      if (profilePicture) {
+        URL.revokeObjectURL(profilePicture);
+      }
+    };
+
     // const handleBeforeUnload = () => {
     //   removeLocalStorage('googleDrivePath');
     // };
@@ -221,19 +253,26 @@ const DashboardLayout = () => {
     }
   };
 
-  const onLogoutConfirm = () => {
-    logout();
-    if (userProfile?.role === ROLES.ADMIN) {
-      navigate(AUTH_ROUTES.ADMIN_LOGIN.url);
-    } else {
-      // navigate(AUTH_ROUTES.LOGIN.url);
+  const onLogoutConfirm = async () => {
+    const res = await logout();
+    if (res?.status === 200) {
+      notifications.show({
+        message: 'Logged out successfully',
+        color: 'green',
+      });
       navigate(AUTH_ROUTES.LANDING.url);
+      // if (userProfile?.role === ROLES.ADMIN) {
+      //   navigate(AUTH_ROUTES.ADMIN_LOGIN.url);
+      // } else {
+      //   // navigate(AUTH_ROUTES.LOGIN.url);
+      //   navigate(AUTH_ROUTES.LANDING.url);
+      // }
+      setTimeout(() => {
+        dispatch(resetUser());
+        dispatch(resetUserProfile());
+      }, 1000);
+      logoutConfirmHandler.close();
     }
-    setTimeout(() => {
-      dispatch(resetUser());
-      dispatch(resetUserProfile());
-    }, 1000);
-    logoutConfirmHandler.close();
   };
 
   const redirectToDashboard = useCallback(() => {
@@ -265,7 +304,10 @@ const DashboardLayout = () => {
         navbar={{
           width: 250,
           breakpoint: 'sm',
-          collapsed: { mobile: !mobileDrawerOpened },
+          collapsed: {
+            mobile: !mobileDrawerOpened,
+            // desktop: shouldShowMobileMenu ? true : false,
+          },
         }}
         padding="md"
       >
@@ -281,12 +323,14 @@ const DashboardLayout = () => {
                 // maw={600}
                 w={!isXs ? '90%' : 'max-content'}
               >
-                <Burger
-                  opened={mobileDrawerOpened}
-                  onClick={mobileDrawerHandler.toggle}
-                  hiddenFrom="sm"
-                  size="sm"
-                />
+                {shouldShowMobileMenu && (
+                  <Burger
+                    opened={mobileDrawerOpened}
+                    onClick={mobileDrawerHandler.toggle}
+                    hiddenFrom="sm"
+                    size="sm"
+                  />
+                )}
                 {/* {isXs ? (
                   <ICONS.IconCloud
                     size={32}
@@ -362,7 +406,10 @@ const DashboardLayout = () => {
                 ) : null}
               </Group>
 
-              {isSm && userProfile?.role === ROLES.USER ? (
+              {isSm &&
+              userProfile?.role === ROLES.USER &&
+              location.pathname !== PRIVATE_ROUTES.PROFILE.url &&
+              location.pathname !== PRIVATE_ROUTES.RECENT_FILES.url ? (
                 <MantineMenu
                   position="top-end"
                   withArrow
@@ -614,9 +661,18 @@ const DashboardLayout = () => {
                     radius="xl"
                     aria-label="User"
                   >
-                    {userProfile?.profile ? (
+                    {/* {userProfile?.profile ? (
                       <Avatar
                         src={`${import.meta.env.VITE_REACT_APP_BASE_URL}/user-profile/${userProfile.profile}`}
+                        alt={fullName}
+                        radius="xl"
+                        color="#fff"
+                        size="md"
+                        style={{ objectFit: 'contain' }}
+                      /> */}
+                    {profilePicture ? (
+                      <Avatar
+                        src={profilePicture}
                         alt={fullName}
                         radius="xl"
                         color="#fff"
@@ -755,6 +811,14 @@ const DashboardLayout = () => {
                             ? 'top-start'
                             : 'bottom-start',
                           middlewares: { flip: true, shift: true, size: true },
+                          ...(isMobileLandscape && {
+                            styles: {
+                              dropdown: {
+                                maxHeight: '150px',
+                                overflowY: 'auto',
+                              },
+                            },
+                          }),
                         }}
                         renderOption={({ option }: any) => {
                           if ('accountType' in option) {
@@ -882,6 +946,14 @@ const DashboardLayout = () => {
                             ? 'top-start'
                             : 'bottom-start',
                           middlewares: { flip: true, shift: true, size: true },
+                          ...(isMobileLandscape && {
+                            styles: {
+                              dropdown: {
+                                maxHeight: '150px',
+                                overflowY: 'auto',
+                              },
+                            },
+                          }),
                         }}
                         renderOption={({ option }: any) => {
                           if ('accountType' in option) {
@@ -949,8 +1021,6 @@ const DashboardLayout = () => {
           }
         }
       `}</style>
-
-      <TawkToWidget />
     </>
   );
 };

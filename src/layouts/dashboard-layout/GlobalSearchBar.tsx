@@ -129,6 +129,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { accountId } = useAppSelector(state => state.cloudStorage);
+  const { connectedAccounts } = useAppSelector(state => state.auth);
 
   const [previewFileLoading, setPreviewFileLoading] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -684,6 +685,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         onFocus={handleInputFocus}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        disabled={connectedAccounts?.length === 0}
         field={{
           value: searchValue,
           onChange: handleInputChange,
@@ -692,6 +694,7 @@ const GlobalSearchBar: React.FC<SearchBarProps> = ({
         size="sm"
         w="100%"
         pl={36}
+        maxLength={100}
         leftSection={
           searchLoading ? (
             <Loader size={16} />

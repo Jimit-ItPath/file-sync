@@ -1,16 +1,19 @@
 import { ROLES } from '../utils/constants';
 
-// export const PLAIN_ROUTES = {
-//   root: { path: '/', url: '/', title: APP_TITLE },
-//   layout: {
-//     path: '/',
-//   },
-//   HOME: {
-//     index: true,
-//     title: 'Home',
-//     url: '/',
-//   }
-// };
+export const PLAIN_ROUTES = {
+  // root: { path: '/', url: '/', title: APP_TITLE },
+  layout: {},
+  PRIVACY_POLICY: {
+    title: 'Privacy Policy',
+    path: '/privacy-policy',
+    url: '/privacy-policy',
+  },
+  TERMS_OF_SERVICE: {
+    title: 'Terms of Service',
+    path: '/terms-of-service',
+    url: '/terms-of-service',
+  },
+};
 
 export const AUTH_ROUTES = {
   layout: {},
@@ -53,16 +56,6 @@ export const AUTH_ROUTES = {
     title: 'Complete Profile',
     path: '/complete-profile',
     url: '/complete-profile',
-  },
-  PRIVACY_POLICY: {
-    title: 'Privacy Policy',
-    path: '/privacy-policy',
-    url: '/privacy-policy',
-  },
-  TERMS_OF_SERVICE: {
-    title: 'Terms of Service',
-    path: '/terms-of-service',
-    url: '/terms-of-service',
   },
   LANDING: {
     title: 'Landing',

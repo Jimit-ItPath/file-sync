@@ -27,9 +27,25 @@ import {
   VIDEO_FILE_TYPES,
 } from '../../../utils/constants';
 import dayjs from 'dayjs';
+import { PRIVATE_ROUTES } from '../../../routing/routes';
+import { useNavigate } from 'react-router';
 
 const renameSchema = z.object({
-  newName: z.string().trim().min(1, 'New name is required'),
+  newName: z
+    .string()
+    .trim()
+    .min(1, 'New name is required')
+    .refine(
+      value => {
+        const invalidChars =
+          /[\/<>:"|?*\\\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+        return !invalidChars.test(value);
+      },
+      {
+        message:
+          'Name cannot contain emojis, path symbols (/ \\ < > : " | ? *), or other special characters',
+      }
+    ),
 });
 
 type RenameFormData = z.infer<typeof renameSchema>;
@@ -53,6 +69,7 @@ const useRecentFiles = ({
     recentFiles,
     recentFilesPagination: pagination,
   } = useAppSelector(state => state.cloudStorage);
+  const { connectedAccounts, isLoggedIn } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -70,6 +87,7 @@ const useRecentFiles = ({
     isVideo?: boolean;
     isDocument?: boolean;
     share?: string | null;
+    mimeType?: string;
   } | null>(null);
   const [detailsFileLoading, setDetailsFileLoading] = useState(false);
   const [detailsFile, setDetailsFile] = useState<{
@@ -105,6 +123,7 @@ const useRecentFiles = ({
     before?: Date;
   } | null>(null);
   const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const renameMethods = useForm<RenameFormData>({
     resolver: zodResolver(renameSchema),
@@ -172,6 +191,20 @@ const useRecentFiles = ({
       account_type: item?.account_type,
     }));
   }, [recentFiles]);
+
+  useEffect(() => {
+    // Don't redirect during initial load/page refresh when accounts might still be loading
+    // Only redirect if we're sure there are no accounts after auth state is loaded
+    if (isLoggedIn && !connectedAccounts.length) {
+      // Give some time for accounts to load after authentication
+      const timer = setTimeout(() => {
+        if (!connectedAccounts.length) {
+          navigate(PRIVATE_ROUTES.DASHBOARD.url);
+        }
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [connectedAccounts.length, navigate, isLoggedIn]);
 
   useEffect(() => {
     onGetRecentFiles({});
@@ -296,7 +329,12 @@ const useRecentFiles = ({
     } else if (actionId === 'rename') {
       setItemToRename(row);
       setRenameModalOpen(true);
-      resetRenameForm({ newName: row.name });
+      // For files, show only filename without extension
+      const displayName =
+        row.type === 'file' && row.fileExtension
+          ? row.name.slice(0, -(row.fileExtension.length + 1))
+          : row.name;
+      resetRenameForm({ newName: displayName });
     } else if (actionId === 'delete') {
       setItemToDelete(row);
       setDeleteModalOpen(true);
@@ -335,7 +373,19 @@ const useRecentFiles = ({
 
   const handleRenameConfirm = renameMethods.handleSubmit(data => {
     if (itemToRename?.id) {
-      renameFile({ fileId: itemToRename.id, newName: data.newName });
+      let newName = data.newName;
+      if (itemToRename.type === 'file') {
+        // Remove any extension user might have added
+        if (newName.endsWith('.')) {
+          newName = newName.slice(0, -1);
+        }
+        // Add back the original extension
+        if (itemToRename.fileExtension) {
+          newName = `${newName}.${itemToRename.fileExtension}`;
+        }
+      }
+      const finalName = newName;
+      renameFile({ fileId: itemToRename.id, newName: finalName });
     }
   });
 
@@ -628,6 +678,7 @@ const useRecentFiles = ({
               ? parseInt(row.size.replace(/[^0-9]/g, '')) * 1024
               : undefined,
             share: row.web_view_url ?? null,
+            mimeType: row.mimeType,
           });
           setPreviewFileLoading(false);
         } else {
@@ -672,6 +723,7 @@ const useRecentFiles = ({
           row.fileExtension?.toLowerCase() || ''
         ),
         share: row.web_view_url ?? null,
+        mimeType: row.mimeType,
       });
     } catch (err: any) {
       if (err.name !== 'AbortError') {
@@ -742,7 +794,8 @@ const useRecentFiles = ({
     return (
       selectedFiles.length > 0 &&
       selectedFiles.every(
-        file => file.type === 'file' && !shouldDisableDownload(file.mimeType)
+        file =>
+          file.type === 'file' && !shouldDisableDownload(file.mimeType, file)
       )
     );
   }, [selectedIds, recentFilesData]);

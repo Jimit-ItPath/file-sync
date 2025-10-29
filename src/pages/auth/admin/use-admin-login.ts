@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router';
 import { api } from '../../../api';
-import { decodeToken } from '../../../utils/helper';
+import { setCookie } from '../../../utils/helper';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import useAsyncOperation from '../../../hooks/use-async-operation';
 import { updateUser } from '../../../store/slices/auth.slice';
@@ -59,21 +59,25 @@ const useAdminLogin = () => {
       },
     });
     if (response?.data?.success || response?.status === 200) {
-      const decodeData: any = decodeToken(response?.data?.data?.access_token);
-      if (decodeData?.user?.role === ROLES.USER) {
+      // const decodeData: any = decodeToken(response?.data?.data?.access_token);
+      if (response?.data?.data?.role === ROLES.USER) {
         notifications.show({
           message: 'Invalid credentials',
           color: 'red',
         });
         return;
       } else {
-        localStorage.setItem('token', response?.data?.data?.access_token);
+        // Set auth status cookies for refresh scenarios
+        setCookie('auth_status', 'logged_in', 7);
+        setCookie('user_role', 'admin', 7);
+
         dispatch(
           updateUser({
-            token: response?.data?.data?.access_token,
+            // token: response?.data?.data?.access_token,
             activeUI: '',
             isTemporary: response?.data?.data?.isTemporary || false,
-            user: { ...decodeData },
+            user: response?.data?.data,
+            isLoggedIn: true,
           })
         );
         notifications.show({

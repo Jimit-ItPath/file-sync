@@ -16,6 +16,14 @@ export const api = {
         data,
         ...configs,
       }),
+    logout: () =>
+      client({
+        url: '/user/logout',
+        method: METHODS.POST,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
     forgotPassword: ({ data, ...configs }: { data: any; [key: string]: any }) =>
       client({
         url: '/auth/forgot-password',
@@ -166,6 +174,12 @@ export const api = {
       client({
         url: `/user/profile`,
         method: METHODS.GET,
+      }),
+    fetchProfilePicture: (configs?: Record<string, any>) =>
+      client({
+        url: `/user/profile-picture`,
+        method: METHODS.GET,
+        ...configs,
       }),
     updateProfile: ({
       data,

@@ -11,7 +11,7 @@ import { PRIVATE_ROUTES } from '../../../../routing/routes';
 import { useMantineTheme } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { ICONS } from '../../../../assets/icons';
-import { decodeToken } from '../../../../utils/helper';
+import { setCookie } from '../../../../utils/helper';
 import { useAppDispatch } from '../../../../store';
 import { updateUser } from '../../../../store/slices/auth.slice';
 
@@ -117,22 +117,26 @@ const useCompleteProfile = () => {
       });
 
       if (res?.data?.success || res.status === 200) {
-        const decodeData: any = decodeToken(res?.data?.data?.access_token);
-        localStorage.setItem('token', res?.data?.data?.access_token);
+        // const decodeData: any = decodeToken(res?.data?.data?.access_token);
+        // Set auth status cookies for refresh scenarios
+        setCookie('auth_status', 'logged_in', 7);
+        setCookie('user_role', res?.data?.data?.role || 'user', 7);
+
         dispatch(
           updateUser({
-            token: res?.data?.data?.access_token,
+            // token: res?.data?.data?.access_token,
             activeUI: '',
             isTemporary: res?.data?.data?.isTemporary || false,
-            user: { ...decodeData },
+            user: res?.data?.data,
+            isLoggedIn: true,
           })
         );
         notifications.show({
           message: res?.data?.message || 'Profile completed successfully',
           color: 'green',
         });
-        navigate(PRIVATE_ROUTES.DASHBOARD.url);
         reset();
+        navigate(PRIVATE_ROUTES.DASHBOARD.url);
       }
     }
   );

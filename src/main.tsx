@@ -10,7 +10,16 @@ import { Provider } from 'react-redux';
 import { persistor, store } from './store/index.ts';
 import { PersistGate } from 'redux-persist/integration/react';
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')!, {
+  onCaughtError: (error, componentStack) => {
+    // global error caught in a boundary
+    console.log('Global onCaughtError:', error, componentStack);
+  },
+  onUncaughtError: error => {
+    // error not caught by any boundary
+    console.log('Global onUncaughtError:', error);
+  },
+}).render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <App />

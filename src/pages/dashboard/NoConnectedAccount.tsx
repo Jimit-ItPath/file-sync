@@ -497,7 +497,9 @@ const NoConnectedAccount: React.FC<NoConnectedAccountProps> = ({
                 type="submit"
                 maw="fit-content"
                 loading={Boolean(connectAccountLoading)}
-                disabled={Boolean(connectAccountLoading)}
+                disabled={
+                  Boolean(connectAccountLoading) || !methods.formState.isValid
+                }
                 radius="md"
                 style={{
                   fontWeight: 500,

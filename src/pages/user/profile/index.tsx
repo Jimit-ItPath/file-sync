@@ -48,6 +48,7 @@ const Profile = () => {
     removeAccessModalOpen,
     handleSFDToggle,
     userProfile,
+    profilePicture,
   } = useProfile();
 
   const {
@@ -102,8 +103,11 @@ const Profile = () => {
                             preview
                               ? preview?.includes('data:image/')
                                 ? preview
-                                : `${import.meta.env.VITE_REACT_APP_BASE_URL}/user-profile/${preview}`
-                              : null
+                                : profilePicture
+                                  ? profilePicture
+                                  : null
+                              : // : `${import.meta.env.VITE_REACT_APP_BASE_URL}/user-profile/${preview}`
+                                null
                           }
                           style={theme => ({
                             border: `2px solid ${theme.colors.blue[4]}`,
@@ -230,7 +234,7 @@ const Profile = () => {
                 </Box>
 
                 {/* Smart File Distribution */}
-                {user?.user?.role === ROLES.USER && (
+                {user?.role === ROLES.USER && (
                   <Card radius="md" p="lg" shadow="xs" withBorder>
                     <Stack gap="md">
                       <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
@@ -283,7 +287,7 @@ const Profile = () => {
                 )}
 
                 {/* Connected Services */}
-                {user?.user?.role === ROLES.USER && (
+                {user?.role === ROLES.USER && (
                   <Card radius="md" p="lg" shadow="xs" withBorder>
                     <Stack gap="sm">
                       <Title order={4} fw={600} fz={isXs ? 'md' : 'lg'}>
@@ -536,7 +540,10 @@ const Profile = () => {
                 type="submit"
                 maw="fit-content"
                 loading={Boolean(connectAccountLoading)}
-                disabled={Boolean(connectAccountLoading)}
+                disabled={
+                  Boolean(connectAccountLoading) ||
+                  !connectAccountMethods.formState.isValid
+                }
                 radius="md"
                 style={{
                   fontWeight: 500,

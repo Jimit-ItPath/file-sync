@@ -5,23 +5,9 @@
     <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
     <link rel="icon" type="image/x-icon" href="/src/assets/svgs/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta property="og:site_name" content="All Cloud Hub" />
     <title>All Cloud Hub</title>
-    <script>
-      // Pre-configure StreamSaver before loading the script
-      window.streamSaverConfig = {
-        mitm: 'https://jimmywarting.github.io/StreamSaver.js/mitm.html',
-        // Fallback for HTTPS sites
-        writableStrategy: undefined,
-        readableStrategy: undefined,
-      };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/streamsaver@2.0.6/StreamSaver.min.js"></script>
-    <script>
-      // Ensure StreamSaver is properly configured
-      if (window.streamSaver) {
-        window.streamSaver.mitm = window.streamSaverConfig.mitm;
-      }
-    </script>
+    <script src="/js/streamSaverConfig.js"></script>
   </head>
   <body>
     <div id="root"></div>

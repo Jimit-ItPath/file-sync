@@ -2,6 +2,7 @@ import axios from 'axios';
 import { ERROR_MESSAGES } from '../utils/constants';
 import { API } from '../configs/env';
 import { AUTH_ROUTES } from '../routing/routes';
+import { removeCookie } from '../utils/helper';
 
 export const METHODS = {
   POST: 'post',
@@ -26,12 +27,10 @@ const axiosInstance = axios.create(axiosConfig);
 
 // Set up request interceptor
 axiosInstance.interceptors.request.use(config => {
-  // const token = getLocalStorage(LOCAL_STORAGE_KEY);
-  // const token = getLocalStorage("token");
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  // const token = getCookie('access_token');
+  // if (token) {
+  //   config.headers['Cookie'] = `access_token=${token}`;
+  // }
   return config;
 });
 
@@ -59,6 +58,9 @@ axiosInstance.interceptors.response.use(
     };
 
     if ([401].includes(status)) {
+      // Clear auth cookies on unauthorized
+      removeCookie('auth_status');
+      removeCookie('user_role');
       localStorage.clear();
       // window.location.href = AUTH_ROUTES.LOGIN.url;
       window.location.href = AUTH_ROUTES.LANDING.url;

@@ -3,7 +3,7 @@ import { ICONS } from '../../../assets/icons';
 import { Button } from '../../../components';
 import useSocialLogin from '../useSocialLogin';
 import GoogleDriveIcon from '../../../assets/svgs/GoogleDrive.svg';
-import FacebookIcon from '../../../assets/svgs/Facebook.svg';
+// import FacebookIcon from '../../../assets/svgs/Facebook.svg';
 
 interface SocialLoginButtonsProps {
   onEmailClick: () => void;
@@ -14,7 +14,10 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
   onEmailClick,
   isXs,
 }) => {
-  const { handleFacebookLogin, handleGoogleLogin } = useSocialLogin();
+  const {
+    // handleFacebookLogin,
+    handleGoogleLogin,
+  } = useSocialLogin();
 
   return (
     <Stack gap={isXs ? 'xs' : 'sm'} mb={isXs ? 'xs' : 'sm'}>
@@ -30,11 +33,11 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         radius="md"
         fw={500}
         type="button"
-        disabled
+        // disabled
       >
         Continue with Google
       </Button>
-      <Button
+      {/* <Button
         onClick={handleFacebookLogin}
         variant="default"
         // leftSection={<ICONS.IconBrandFacebook size={18} color="#1877f3" />}
@@ -47,7 +50,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         disabled
       >
         Continue with Facebook
-      </Button>
+      </Button> */}
       <Button
         onClick={onEmailClick}
         variant="default"

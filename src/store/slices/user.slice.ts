@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api';
+import { getCookie, setCookie } from '../../utils/helper';
+import { ROLES } from '../../utils/constants';
 
 type UserProfileType = {
   id: string;
@@ -19,12 +21,16 @@ interface UserState {
   isLoading: boolean;
   error: string | null;
   userProfile: UserProfileType | null;
+  profilePicture: string | null;
+  profilePictureLoading: boolean;
 }
 
 const initialState: UserState = {
   isLoading: false,
   error: null,
   userProfile: null,
+  profilePicture: null,
+  profilePictureLoading: false,
 };
 
 export const fetchProfile = createAsyncThunk(
@@ -35,6 +41,25 @@ export const fetchProfile = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue('Failed to fetch user profile');
+    }
+  }
+);
+
+export const fetchProfilePicture = createAsyncThunk(
+  'user/fetchProfilePicture',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.user.fetchProfilePicture({
+        responseType: 'blob',
+      });
+      if (response?.status === 200) {
+        const imageUrl = URL.createObjectURL(response?.data);
+        return imageUrl;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return rejectWithValue('Failed to fetch profile picture');
     }
   }
 );
@@ -105,6 +130,15 @@ const userSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
+        const isLoggedIn = getCookie('auth_status') === 'logged_in';
+        if (!isLoggedIn) {
+          setCookie('auth_status', 'logged_in');
+          if (action.payload?.data?.role === ROLES.USER) {
+            setCookie('user_role', action.payload?.data?.role || 'user', 7);
+          } else {
+            setCookie('user_role', action.payload?.data?.role || 'admin', 7);
+          }
+        }
         state.isLoading = false;
         state.userProfile = action.payload?.data;
       })
@@ -112,6 +146,19 @@ const userSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
         state.userProfile = null;
+      })
+      .addCase(fetchProfilePicture.pending, state => {
+        state.profilePictureLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchProfilePicture.fulfilled, (state, action) => {
+        state.profilePictureLoading = false;
+        state.profilePicture = action.payload;
+      })
+      .addCase(fetchProfilePicture.rejected, (state, action) => {
+        state.profilePictureLoading = false;
+        state.error = action.payload as string;
+        state.profilePicture = null;
       })
       .addCase(updateProfile.pending, state => {
         state.isLoading = true;

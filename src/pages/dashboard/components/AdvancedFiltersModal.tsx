@@ -304,6 +304,7 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
     setSelectedTypes(current =>
       current.includes(val) ? current.filter(v => v !== val) : [...current, val]
     );
+    combobox.closeDropdown();
   };
 
   const handleValueRemove = (val: string) => {
@@ -450,7 +451,9 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
               </PillsInput>
             </Combobox.DropdownTarget>
 
-            <Combobox.Dropdown>
+            <Combobox.Dropdown
+              style={{ maxHeight: '250px', overflowY: 'auto' }}
+            >
               <Combobox.Options>
                 {options.length > 0 ? (
                   options
@@ -559,6 +562,29 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                 }
                 clearable
                 maxDate={customDateRange.before || new Date()}
+                popoverProps={{
+                  withinPortal: true,
+                  position: isXs ? 'top' : 'bottom-start',
+                  styles: {
+                    dropdown: {
+                      maxHeight: isXs ? '280px' : '400px',
+                      overflowY: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      zIndex: 9999,
+                      border: '1px solid #dadce0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      ...(isXs && {
+                        position: 'fixed',
+                        top: '10%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '90vw',
+                        maxWidth: '320px',
+                      }),
+                    },
+                  },
+                }}
                 styles={{
                   label: {
                     fontSize: '14px',
@@ -571,11 +597,36 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                     borderRadius: '4px',
                     fontSize: '14px',
                     height: '40px',
+                    cursor: 'pointer',
                     '&:focus': {
                       borderColor: '#1a73e8',
                       boxShadow: '0 0 0 1px #1a73e8',
                     },
+                    ...(isXs && {
+                      caretColor: 'transparent',
+                      userSelect: 'none',
+                    }),
                   },
+                }}
+                onFocus={e => {
+                  if (isXs) {
+                    e.preventDefault();
+                    e.target.blur();
+                    // Force the calendar to open without focusing the input
+                    setTimeout(() => {
+                      const event = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window,
+                      });
+                      e.target.dispatchEvent(event);
+                    }, 10);
+                  }
+                }}
+                onClick={(e: any) => {
+                  if (isXs) {
+                    e.target?.blur?.();
+                  }
                 }}
               />
               <DateInput
@@ -593,6 +644,29 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                 clearable
                 minDate={customDateRange.after}
                 maxDate={new Date()}
+                popoverProps={{
+                  withinPortal: true,
+                  position: isXs ? 'top' : 'bottom-start',
+                  styles: {
+                    dropdown: {
+                      maxHeight: isXs ? '280px' : '400px',
+                      overflowY: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      zIndex: 9999,
+                      border: '1px solid #dadce0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      ...(isXs && {
+                        position: 'fixed',
+                        top: '10%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '90vw',
+                        maxWidth: '320px',
+                      }),
+                    },
+                  },
+                }}
                 styles={{
                   label: {
                     fontSize: '14px',
@@ -605,11 +679,36 @@ const AdvancedFiltersModal: React.FC<AdvancedFiltersModalProps> = ({
                     borderRadius: '4px',
                     fontSize: '14px',
                     height: '40px',
+                    cursor: 'pointer',
                     '&:focus': {
                       borderColor: '#1a73e8',
                       boxShadow: '0 0 0 1px #1a73e8',
                     },
+                    ...(isXs && {
+                      caretColor: 'transparent',
+                      userSelect: 'none',
+                    }),
                   },
+                }}
+                onFocus={e => {
+                  if (isXs) {
+                    e.preventDefault();
+                    e.target.blur();
+                    // Force the calendar to open without focusing the input
+                    setTimeout(() => {
+                      const event = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window,
+                      });
+                      e.target.dispatchEvent(event);
+                    }, 10);
+                  }
+                }}
+                onClick={(e: any) => {
+                  if (isXs) {
+                    e.target?.blur?.();
+                  }
                 }}
               />
             </Group>

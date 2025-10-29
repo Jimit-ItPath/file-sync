@@ -38,15 +38,11 @@ type CheckStorageDetailsType = {
 };
 
 type UserType = {
-  user: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    role: string;
-  };
-  iat: number;
-  exp: number;
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: string;
 };
 
 type AuthState = {
@@ -61,7 +57,7 @@ type AuthState = {
     result: CheckStorageDetailsType[];
     storage_details: StorageDetailsType;
   } | null;
-  token: string | null;
+  // token: string | null;
   hasInitializedAccounts: boolean;
 };
 
@@ -74,7 +70,7 @@ const initialState: AuthState = {
   checkStorageDetails: null,
   loading: true,
   error: null,
-  token: null,
+  // token: null,
   hasInitializedAccounts: false,
 };
 
@@ -223,15 +219,15 @@ const authSlice = createSlice({
         ...data,
       };
     },
-    logout: () => {
-      return { ...initialState };
-    },
+    // logout: () => {
+    //   return { ...initialState };
+    // },
     resetUser: state => {
       state.user = null;
       state.connectedAccounts = [];
       state.checkStorageDetails = null;
       state.isLoggedIn = false;
-      state.token = null;
+      // state.token = null;
       state.hasInitializedAccounts = false;
     },
   },
@@ -268,5 +264,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, updateUser, resetUser } = authSlice.actions;
+export const { updateUser, resetUser } = authSlice.actions;
 export default authSlice.reducer;

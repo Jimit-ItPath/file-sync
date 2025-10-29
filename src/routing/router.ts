@@ -3,7 +3,7 @@ import { getAuth } from '../auth';
 import { decryptRouteParam } from '../utils/helper/encryption';
 
 // Routes
-import { AUTH_ROUTES, PRIVATE_ROUTES } from './routes';
+import { AUTH_ROUTES, PLAIN_ROUTES, PRIVATE_ROUTES } from './routes';
 
 // Pages
 import { PageNotFound } from '../components';
@@ -42,6 +42,7 @@ import PricingPage from '../pages/landing/components/PricingPage';
 import FaqPage from '../pages/landing/components/FaqPage';
 import ContactForm from '../pages/landing/components/ContactForm';
 import ContactUs from '../pages/admin/contact-us';
+import { getCookie } from '../utils/helper';
 
 const GoogleDriveDashboard = () => {
   const loaderData = useLoaderData() as { accountId: string };
@@ -73,6 +74,11 @@ const authLayoutLoader = () => {
 };
 
 const dashboardLayoutLoader = () => {
+  // Don't check auth during OAuth callback
+  if (window.location.pathname === PRIVATE_ROUTES.DASHBOARD.url) {
+    return null;
+  }
+
   const { isAuthenticated, redirectUrl } = getAuth({
     isCacheRedirection: true,
   });
@@ -84,9 +90,23 @@ const dashboardLayoutLoader = () => {
 };
 
 const dashboardPageLoader = (roles: string[]) => (args: any) => {
-  const { role } = getAuth({});
+  if (window.location.pathname === PRIVATE_ROUTES.DASHBOARD.url) {
+    return null;
+  }
+  const { role, isAuthenticated } = getAuth({});
 
-  if (!roles?.includes(role)) {
+  // Check auth_status cookie as fallback
+  const authStatus = getCookie('auth_status');
+  const userRole = getCookie('user_role');
+
+  // Allow access if either Redux state or cookies indicate authentication
+  if (!isAuthenticated && authStatus !== 'logged_in') {
+    return redirect('/');
+  }
+
+  const effectiveRole = role || userRole;
+
+  if (!roles?.includes(effectiveRole as string)) {
     return redirect('/');
   }
 
@@ -150,11 +170,10 @@ export const router = createBrowserRouter([
       { ...AUTH_ROUTES.FORGOT_PASSWORD, Component: ForgotPassword },
       { ...AUTH_ROUTES.RESET_PASSWORD, Component: ResetPassword },
       { ...AUTH_ROUTES.VERIFY_USER, Component: VerifyUser },
-      { ...AUTH_ROUTES.OAUTH_CALLBACK, Component: OAuthCallback },
+
       { ...AUTH_ROUTES.ADMIN_LOGIN, Component: AdminLogin },
       { ...AUTH_ROUTES.COMPLETE_PROFILE, Component: CompleteProfile },
-      { ...AUTH_ROUTES.PRIVACY_POLICY, Component: PrivacyPolicy },
-      { ...AUTH_ROUTES.TERMS_OF_SERVICE, Component: TermsAndConditions },
+
       { ...AUTH_ROUTES.PRICING, Component: PricingPage },
       { ...AUTH_ROUTES.FAQ, Component: FaqPage },
       { ...AUTH_ROUTES.CONTACT, Component: ContactForm },
@@ -222,6 +241,18 @@ export const router = createBrowserRouter([
         loader: dashboardPageLoader(PRIVATE_ROUTES.CONTACT_US.roles),
       },
     ],
+  },
+  {
+    ...AUTH_ROUTES.OAUTH_CALLBACK,
+    Component: OAuthCallback,
+  },
+  {
+    path: PLAIN_ROUTES.PRIVACY_POLICY.path,
+    Component: PrivacyPolicy,
+  },
+  {
+    path: PLAIN_ROUTES.TERMS_OF_SERVICE.path,
+    Component: TermsAndConditions,
   },
   { path: '*', Component: PageNotFound },
 ]);

@@ -22,6 +22,10 @@ export default tseslint.config([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        project: './tsconfig.app.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 0,

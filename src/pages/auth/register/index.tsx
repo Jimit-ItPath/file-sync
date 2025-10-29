@@ -12,7 +12,7 @@ import { FeatureList } from './FeatureList';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { FormFields } from './FormFields';
 import { Link } from 'react-router';
-import { AUTH_ROUTES } from '../../../routing/routes';
+import { AUTH_ROUTES, PLAIN_ROUTES } from '../../../routing/routes';
 import { Button, Form } from '../../../components';
 import useRegister from './use-register';
 import { ICONS } from '../../../assets/icons';
@@ -233,6 +233,46 @@ const Register = () => {
                           Log in
                         </Link>
                       </Text>
+                      <Group justify="center" gap={5} mt={-20}>
+                        <Text ta="center" fz={isXs ? 12 : 14} c="dimmed">
+                          <Stack
+                            style={{
+                              color: '#0284c7',
+                              textDecoration: 'none',
+                              cursor: 'pointer',
+                            }}
+                            fw={500}
+                            onClick={e => {
+                              e.stopPropagation();
+                              window.open(
+                                PLAIN_ROUTES.TERMS_OF_SERVICE.url,
+                                '_blank'
+                              );
+                            }}
+                          >
+                            Terms and Conditions |
+                          </Stack>
+                        </Text>
+                        <Text ta="center" fz={isXs ? 12 : 14} c="dimmed">
+                          <Stack
+                            style={{
+                              textDecoration: 'none',
+                              color: '#0284c7',
+                              cursor: 'pointer',
+                            }}
+                            fw={500}
+                            onClick={e => {
+                              e.stopPropagation();
+                              window.open(
+                                PLAIN_ROUTES.PRIVACY_POLICY.url,
+                                '_blank'
+                              );
+                            }}
+                          >
+                            Privacy Policy
+                          </Stack>
+                        </Text>
+                      </Group>
                     </>
                   )}
                 </Stack>

@@ -19,6 +19,7 @@ import {
   IMAGE_FILE_TYPES,
   VIDEO_FILE_TYPES,
   DOCUMENT_FILE_TYPES,
+  AUDIO_FILE_TYPES,
 } from '../../../utils/constants';
 import { getVideoMimeType, shouldDisableDownload } from '../../../utils/helper';
 import useResponsive from '../../../hooks/use-responsive';
@@ -36,6 +37,7 @@ type PreviewFileType = {
   size?: number;
   isVideo?: boolean;
   isDocument?: boolean;
+  isAudio?: boolean;
   share?: string | null;
   mimeType?: string;
 };
@@ -216,6 +218,16 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
     );
   }, [previewFile]);
 
+  const isAudioFile = useCallback(() => {
+    return (
+      previewFile?.isAudio ||
+      (previewFile?.type &&
+        AUDIO_FILE_TYPES.some(ext =>
+          previewFile.type.toLowerCase().includes(ext.replace('.', ''))
+        ))
+    );
+  }, [previewFile]);
+
   const handleZoomIn = useCallback(() => {
     if (isImageFile()) {
       setImageZoom(prev => Math.min(prev * 1.2, maxZoom));
@@ -323,6 +335,8 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
     setPdfScale(prev => Math.min(Math.max(prev + delta, 0.5), 3));
   }, []);
 
+  if (!previewFile) return null;
+
   const renderUnsupportedPreview = (message: string) => (
     <Box
       style={{
@@ -338,7 +352,7 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
       <Text size="lg" c="#fff">
         {message}
       </Text>
-      {!shouldDisableDownload(previewFile?.mimeType!) && (
+      {!shouldDisableDownload(previewFile?.mimeType!, previewFile) && (
         <Button
           variant="filled"
           size="md"
@@ -390,21 +404,22 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
             Failed to load preview
           </Text>
           <Group>
-            {onDownload && !shouldDisableDownload(previewFile?.mimeType!) && (
-              <Button
-                variant="filled"
-                onClick={onDownload}
-                leftSection={<ICONS.IconDownload size={16} />}
-              >
-                Download
-              </Button>
-            )}
+            {onDownload &&
+              !shouldDisableDownload(previewFile?.mimeType!, previewFile) && (
+                <Button
+                  variant="filled"
+                  onClick={onDownload}
+                  leftSection={<ICONS.IconDownload size={16} />}
+                >
+                  Download
+                </Button>
+              )}
           </Group>
         </Box>
       );
     }
     if (isFileTooLarge()) {
-      const message = shouldDisableDownload(previewFile?.mimeType!)
+      const message = shouldDisableDownload(previewFile?.mimeType!, previewFile)
         ? 'File is too large to preview.'
         : 'File is too large to preview. Please download it.';
       return renderUnsupportedPreview(message);
@@ -517,7 +532,10 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
     if (isVideoFile()) {
       const mimeType = getVideoMimeType(previewFile.type);
       if (!mimeType) {
-        const message = shouldDisableDownload(previewFile?.mimeType!)
+        const message = shouldDisableDownload(
+          previewFile?.mimeType!,
+          previewFile
+        )
           ? 'Preview not supported for this video format.'
           : 'Preview not supported for this video format. Please download it.';
         return renderUnsupportedPreview(message);
@@ -783,7 +801,89 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
         </Box>
       );
     }
-    const message = shouldDisableDownload(previewFile?.mimeType!)
+    if (isAudioFile()) {
+      return (
+        <Box
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            gap: '20px',
+            padding: '40px',
+          }}
+        >
+          {/* Audio Visualization/Icon */}
+          <Box
+            style={{
+              width: isXs ? '150px' : '200px',
+              height: isXs ? '150px' : '200px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              marginBottom: '20px',
+            }}
+          >
+            <ICONS.IconVolume
+              size={isXs ? 60 : 80}
+              style={{ color: 'white' }}
+            />
+          </Box>
+
+          {/* File Name */}
+          <Text
+            size={isXs ? 'md' : 'xl'}
+            fw={600}
+            c="white"
+            ta="center"
+            style={{ marginBottom: '20px', maxWidth: '80%' }}
+          >
+            {previewFile.name}
+          </Text>
+
+          {/* Audio Player */}
+          <Box
+            style={{
+              width: '100%',
+              maxWidth: '500px',
+              padding: '20px',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <audio
+              controls
+              style={{
+                width: '100%',
+                height: '54px',
+                borderRadius: '8px',
+              }}
+              onError={() => setLoadError(true)}
+            >
+              <source src={previewFile.url} type="audio/mpeg" />
+              <source src={previewFile.url} type="audio/wav" />
+              <source src={previewFile.url} type="audio/mp4" />
+              <source src={previewFile.url} type="audio/aac" />
+              <source src={previewFile.url} type="audio/ogg" />
+              Your browser does not support the audio element.
+            </audio>
+          </Box>
+
+          {/* Additional Info */}
+          {/* {previewFile.size && (
+            <Text size="sm" c="rgba(255, 255, 255, 0.7)">
+              {Math.round((previewFile.size / 1024 / 1024) * 100) / 100} MB
+            </Text>
+          )} */}
+        </Box>
+      );
+    }
+    const message = shouldDisableDownload(previewFile?.mimeType!, previewFile)
       ? 'Preview is not supported for this file.'
       : 'Preview is not supported for this file. Please download it.';
     return renderUnsupportedPreview(message);
@@ -853,26 +953,27 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               </ActionIcon>
             </Tooltip>
           )}
-          {onDownload && !shouldDisableDownload(previewFile?.mimeType!) && (
-            <Tooltip label="Download" fz={'xs'} zIndex={1000}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={onDownload}
-                radius={'xl'}
-                size={'lg'}
-                style={{ color: 'white', transition: 'transform 0.15s ease' }}
-                onMouseEnter={e =>
-                  (e.currentTarget.style.transform = 'scale(1.1)')
-                }
-                onMouseLeave={e =>
-                  (e.currentTarget.style.transform = 'scale(1)')
-                }
-              >
-                <ICONS.IconDownload size={20} />
-              </ActionIcon>
-            </Tooltip>
-          )}
+          {onDownload &&
+            !shouldDisableDownload(previewFile?.mimeType!, previewFile) && (
+              <Tooltip label="Download" fz={'xs'} zIndex={1000}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={onDownload}
+                  radius={'xl'}
+                  size={'lg'}
+                  style={{ color: 'white', transition: 'transform 0.15s ease' }}
+                  onMouseEnter={e =>
+                    (e.currentTarget.style.transform = 'scale(1.1)')
+                  }
+                  onMouseLeave={e =>
+                    (e.currentTarget.style.transform = 'scale(1)')
+                  }
+                >
+                  <ICONS.IconDownload size={20} />
+                </ActionIcon>
+              </Tooltip>
+            )}
           <Tooltip label="Close (Esc)" fz={'xs'} zIndex={1000}>
             <ActionIcon
               variant="subtle"

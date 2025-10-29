@@ -129,6 +129,10 @@ import {
   IconFocus2,
   IconAddressBook,
   IconStatusChange,
+  IconApi,
+  IconRocket,
+  IconBuilding,
+  IconVolume,
 } from '@tabler/icons-react';
 
 export const ICONS = {
@@ -262,4 +266,8 @@ export const ICONS = {
   IconFocus2,
   IconAddressBook,
   IconStatusChange,
+  IconApi,
+  IconRocket,
+  IconBuilding,
+  IconVolume,
 };

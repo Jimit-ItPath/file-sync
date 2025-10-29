@@ -10,7 +10,7 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { AUTH_ROUTES } from '../../routing/routes';
+import { AUTH_ROUTES, PLAIN_ROUTES } from '../../routing/routes';
 import type { NavigateFunction } from 'react-router';
 
 interface FooterProps {
@@ -63,6 +63,29 @@ const LandingFooter: React.FC<FooterProps> = ({
                   onClick={() => {
                     if (location.pathname !== AUTH_ROUTES.LANDING.url) {
                       navigate(AUTH_ROUTES.LANDING.url, {
+                        state: { scrollTo: 'about' },
+                      });
+                    } else {
+                      const element = document.getElementById('about');
+                      if (element) {
+                        const yOffset = -70;
+                        const y =
+                          element.getBoundingClientRect().top +
+                          window.scrollY +
+                          yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                >
+                  About
+                </Anchor>
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => {
+                    if (location.pathname !== AUTH_ROUTES.LANDING.url) {
+                      navigate(AUTH_ROUTES.LANDING.url, {
                         state: { scrollTo: 'powerful-features' },
                       });
                     } else {
@@ -80,13 +103,6 @@ const LandingFooter: React.FC<FooterProps> = ({
                   }}
                 >
                   Features
-                </Anchor>
-                <Anchor
-                  size="sm"
-                  c="dimmed"
-                  onClick={() => navigate(AUTH_ROUTES.PRICING.url)}
-                >
-                  Pricing
                 </Anchor>
                 <Anchor
                   size="sm"
@@ -111,6 +127,36 @@ const LandingFooter: React.FC<FooterProps> = ({
                   }}
                 >
                   Security
+                </Anchor>
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => {
+                    if (location.pathname !== AUTH_ROUTES.LANDING.url) {
+                      navigate(AUTH_ROUTES.LANDING.url, {
+                        state: { scrollTo: 'data-usage' },
+                      });
+                    } else {
+                      const element = document.getElementById('data-usage');
+                      if (element) {
+                        const yOffset = -70;
+                        const y =
+                          element.getBoundingClientRect().top +
+                          window.scrollY +
+                          yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                >
+                  Data Usage
+                </Anchor>
+                <Anchor
+                  size="sm"
+                  c="dimmed"
+                  onClick={() => navigate(AUTH_ROUTES.PRICING.url)}
+                >
+                  Pricing
                 </Anchor>
               </Stack>
               <Stack gap="sm">
@@ -143,7 +189,7 @@ const LandingFooter: React.FC<FooterProps> = ({
                   size="sm"
                   c="dimmed"
                   onClick={() =>
-                    window.open(AUTH_ROUTES.PRIVACY_POLICY.url, '_blank')
+                    window.open(PLAIN_ROUTES.PRIVACY_POLICY.url, '_blank')
                   }
                 >
                   Privacy Policy
@@ -152,7 +198,7 @@ const LandingFooter: React.FC<FooterProps> = ({
                   size="sm"
                   c="dimmed"
                   onClick={() =>
-                    window.open(AUTH_ROUTES.TERMS_OF_SERVICE.url, '_blank')
+                    window.open(PLAIN_ROUTES.TERMS_OF_SERVICE.url, '_blank')
                   }
                 >
                   Terms of Service

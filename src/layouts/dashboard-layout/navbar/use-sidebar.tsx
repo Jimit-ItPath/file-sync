@@ -14,11 +14,7 @@ import {
   updateSequence,
   type ConnectedAccountType,
 } from '../../../store/slices/auth.slice';
-import {
-  decodeToken,
-  getLocalStorage,
-  setLocalStorage,
-} from '../../../utils/helper';
+import { getLocalStorage, setLocalStorage } from '../../../utils/helper';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import { generatePath, useNavigate } from 'react-router';
 import {
@@ -36,7 +32,11 @@ import { NAME_REGEX } from '../../../utils/constants';
 import { encryptRouteParam } from '../../../utils/helper/encryption';
 
 const connectAccountSchema = z.object({
-  accountName: z.string().trim().min(1, 'Account name is required'),
+  accountName: z
+    .string()
+    .trim()
+    .min(1, 'Account name is required')
+    .regex(NAME_REGEX, "Letters only (spaces, - and ' allowed)"),
   accountType: z.enum(['google_drive', 'dropbox', 'onedrive'], {
     errorMap: () => ({ message: 'Please select an account type' }),
   }),
@@ -78,6 +78,7 @@ const useSidebar = () => {
   const navigate = useNavigate();
   const { connectedAccounts, loading, checkStorageDetails, user } =
     useAppSelector(state => state.auth);
+  const { userProfile } = useAppSelector(state => state.user);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState(false);
   const [renameAccountModalOpen, setRenameAccountModalOpen] = useState(false);
@@ -283,12 +284,17 @@ const useSidebar = () => {
 
   const [connectAccount, connectAccountLoading] = useAsyncOperation(
     async (data: ConnectAccountFormData) => {
-      const token = localStorage.getItem('token') || null;
-      const decodedToken: any = decodeToken(token);
+      // const token = localStorage.getItem('token') || null;
+      // const decodedToken: any = decodeToken(token);
       try {
         const res = await dispatch(
           connectCloudAccount({
-            id: Number(decodedToken?.user?.id),
+            // id: Number(decodedToken?.user?.id),
+            id: user?.id
+              ? Number(user.id)
+              : userProfile?.id
+                ? Number(userProfile.id)
+                : undefined,
             account_name: data.accountName,
             account_type: data.accountType,
           })
@@ -318,11 +324,16 @@ const useSidebar = () => {
   const [handleReAuthenticate] = useAsyncOperation(
     async (account: ConnectedAccountType) => {
       try {
-        const token = localStorage.getItem('token') || null;
-        const decodedToken: any = decodeToken(token);
+        // const token = localStorage.getItem('token') || null;
+        // const decodedToken: any = decodeToken(token);
         const res = await dispatch(
           connectCloudAccount({
-            id: Number(decodedToken?.user?.id),
+            // id: Number(decodedToken?.user?.id),
+            id: user?.id
+              ? Number(user.id)
+              : userProfile?.id
+                ? Number(userProfile.id)
+                : undefined,
             account_name: account.account_name,
             account_type: account.account_type,
             account_id: account.id,
@@ -435,6 +446,12 @@ const useSidebar = () => {
           });
           setRenameAccountModalOpen(false);
           onInitialize({});
+        } else {
+          notifications.show({
+            message:
+              res?.message || res?.data?.error || 'Failed to rename item',
+            color: 'red',
+          });
         }
       } catch (error: any) {
         notifications.show({

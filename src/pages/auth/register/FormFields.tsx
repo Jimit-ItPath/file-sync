@@ -2,7 +2,7 @@ import { Group, Stack, Checkbox } from '@mantine/core';
 import { Input } from '../../../components';
 import { useMemo } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { AUTH_ROUTES } from '../../../routing/routes';
+import { PLAIN_ROUTES } from '../../../routing/routes';
 
 type FormFieldsProps = {
   methods: any;
@@ -113,7 +113,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
                 style={{ color: '#0284c7', textDecoration: 'none' }}
                 onClick={e => {
                   e.stopPropagation();
-                  window.open(AUTH_ROUTES.TERMS_OF_SERVICE.url, '_blank');
+                  window.open(PLAIN_ROUTES.TERMS_OF_SERVICE.url, '_blank');
                 }}
                 ml={-10}
               >
@@ -126,6 +126,20 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             errors?.[termsAcceptedField.name]?.message ||
             termsAcceptedField.error
           }
+          // styles={{
+          //   input: {
+          //     backgroundColor: '#ffffff',
+          //     borderColor: '#333333',
+          //     borderWidth: '2px',
+          //     '&:checked': {
+          //       backgroundColor: '#0284c7',
+          //       borderColor: '#0284c7',
+          //     },
+          //   },
+          //   label: {
+          //     fontSize: isXs ? 14 : 16,
+          //   },
+          // }}
           radius="md"
           size="md"
         />
@@ -139,6 +153,15 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             newsletterSubscribedField.error
           }
           styles={{
+            // input: {
+            //   backgroundColor: '#ffffff',
+            //   borderColor: '#333333',
+            //   borderWidth: '2px',
+            //   '&:checked': {
+            //     backgroundColor: '#0284c7',
+            //     borderColor: '#0284c7',
+            //   },
+            // },
             label: {
               fontSize: isXs ? 14 : 16,
             },
@@ -148,11 +171,20 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           pl={30}
         />
       )}
-      <ReCAPTCHA
-        ref={recaptchaRef}
-        sitekey={import.meta.env.VITE_REACT_APP_CAPTCHA_SITE_KEY || ''}
-        onChange={onCaptchaChange}
-      />
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          // overflow: 'auto',
+          minHeight: '78px',
+        }}
+      >
+        <ReCAPTCHA
+          ref={recaptchaRef}
+          sitekey={import.meta.env.VITE_REACT_APP_CAPTCHA_SITE_KEY || ''}
+          onChange={onCaptchaChange}
+        />
+      </div>
     </Stack>
   );
 };

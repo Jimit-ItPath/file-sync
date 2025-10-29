@@ -52,28 +52,61 @@ export default defineConfig(({ mode }: { mode: string }) => {
     server: {
       open: true,
       host: true,
-      port: parseInt(env.VITE_PORT || '3000', 10),
+      // port: parseInt(env.VITE_PORT || '3000', 10),
+      port: 5000,
     },
 
     // Preview configuration
     preview: {
       open: true,
       host: true,
-      port: parseInt(env.VITE_PORT || '3000', 10),
-    }, // Build options
+      // port: parseInt(env.VITE_PORT || '3000', 10),
+      port: 5000,
+    },
     build: {
       outDir: 'build',
       sourcemap: mode !== 'production',
-      ...(mode === 'production'
-        ? {
-            minify: true,
-            rollupOptions: {
-              output: {
-                manualChunks: undefined,
-              },
-            },
-          }
-        : {}),
+      // Add these build options
+      rollupOptions: {
+        output: {
+          // Remove timestamps from chunk names
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash][extname]',
+          // Ensure deterministic builds
+          // preserveModules: false,
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+          },
+          experimentalMinChunkSize: 1000,
+        },
+      },
+      // Add build metadata
+      manifest: true,
+      // Remove timestamps from metadata
+      write: true,
+      // Minimize output
+      minify: mode === 'production' ? 'esbuild' : false,
+      // Remove source file names from output
+      reportCompressedSize: false,
+      target: 'esnext',
+      assetsInlineLimit: 4096,
+      chunkSizeWarningLimit: 1000,
+      modulePreload: {
+        polyfill: true,
+      },
+      // ...(mode === 'production'
+      //   ? {
+      //       minify: true,
+      //       rollupOptions: {
+      //         output: {
+      //           manualChunks: undefined,
+      //         },
+      //       },
+      //     }
+      //   : {}),
     },
   };
 });

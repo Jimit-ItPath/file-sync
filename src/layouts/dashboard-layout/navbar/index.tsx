@@ -13,6 +13,7 @@ import { ICONS } from '../../../assets/icons';
 import { PRIVATE_ROUTES } from '../../../routing/routes';
 import Icon from '../../../assets/icons/icon';
 import { useMemo } from 'react';
+import { useMobileResponsive } from '../../../hooks/use-mobile-responsive';
 import useSidebar from './use-sidebar';
 import { Button, Form, Input, Modal } from '../../../components';
 import AccountTypeSelector from './AccountTypeSelector';
@@ -117,6 +118,8 @@ const NavBar = ({
   );
 
   const accessibleNavItems = DASHBOARD_NAV_ITEMS;
+  const { isMobileDevice, isLandscape } = useMobileResponsive();
+  const isMobileLandscape = isMobileDevice && isLandscape;
 
   // Configure sensors with more restrictive activation constraints
   const sensors = useSensors(
@@ -131,9 +134,16 @@ const NavBar = ({
   );
 
   return (
-    <Box display={'flex'} h={'100%'} style={{ flexDirection: 'column' }}>
+    <Box
+      display="flex"
+      h="100%"
+      style={{
+        flexDirection: 'column',
+        overflowY: isMobileLandscape ? 'auto' : 'visible',
+      }}
+    >
       {/* <LoaderOverlay visible={loading} opacity={1} /> */}
-      {user?.user?.role !== ROLES.ADMIN ? (
+      {user?.role !== ROLES.ADMIN ? (
         <>
           {sortedCloudAccounts?.length && !isSm ? (
             <Menu
@@ -452,7 +462,9 @@ const NavBar = ({
               const url = PRIVATE_ROUTES.RECENT_FILES.url;
               const isActive = location?.pathname === url;
 
-              if (!sortedCloudAccounts?.length) return null;
+              if (!sortedCloudAccounts?.length) {
+                return null;
+              }
 
               return (
                 <NavLink
@@ -522,8 +534,9 @@ const NavBar = ({
                   modifiers={[
                     // Custom modifier to restrict drag area
                     ({ transform, containerNodeRect, draggingNodeRect }) => {
-                      if (!containerNodeRect || !draggingNodeRect)
+                      if (!containerNodeRect || !draggingNodeRect) {
                         return transform;
+                      }
 
                       // Constrain horizontal movement
                       const constrainedX = Math.max(
@@ -987,7 +1000,9 @@ const NavBar = ({
               type="submit"
               maw="fit-content"
               loading={Boolean(connectAccountLoading)}
-              disabled={Boolean(connectAccountLoading)}
+              disabled={
+                Boolean(connectAccountLoading) || !methods.formState.isValid
+              }
               radius="md"
               style={{
                 fontWeight: 500,
@@ -1049,17 +1064,26 @@ const NavBar = ({
       <Modal
         opened={renameAccountModalOpen}
         onClose={closeRenameAccountModal}
-        title={`Rename Account`}
+        title="Rename Account"
       >
         <Form methods={renameAccountMethods} onSubmit={handleRenameConfirm}>
           <Stack gap="md">
             <TextInput
-              placeholder={`Account name`}
-              label={`Account Name`}
+              placeholder="Account name"
+              label="Account Name"
               {...renameAccountMethods.register('name')}
               error={renameAccountMethods.formState.errors.name?.message}
               withAsterisk
               maxLength={50}
+              onFocus={e => {
+                const input = e.target as HTMLInputElement;
+                setTimeout(() => {
+                  input.setSelectionRange(
+                    input.value.length,
+                    input.value.length
+                  );
+                }, 0);
+              }}
             />
             <Button
               type="submit"

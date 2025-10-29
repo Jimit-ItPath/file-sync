@@ -231,7 +231,8 @@ const UploadProgressV2: React.FC<UploadProgressV2Props> = ({
       return `Uploading ${totalCount} item${totalCount > 1 ? 's' : ''}`;
     }
     if (errorCount > 0) {
-      return `Upload completed with ${errorCount} error${errorCount > 1 ? 's' : ''}`;
+      // return `Upload completed with ${errorCount} error${errorCount > 1 ? 's' : ''}`;
+      return `${errorCount} upload cancelled or failed`;
     }
     return 'Upload completed';
   };

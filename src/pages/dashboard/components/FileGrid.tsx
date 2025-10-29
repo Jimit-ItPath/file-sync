@@ -94,7 +94,7 @@ const FileGrid: React.FC<FileGridProps> = ({
   const getFilteredMenuItems = useCallback(
     (file: FileType) => {
       const menuItems = [...MENU_ITEMS];
-      if (displayDownloadIcon && !shouldDisableDownload(file.mimeType!)) {
+      if (displayDownloadIcon && !shouldDisableDownload(file.mimeType!, file)) {
         menuItems.push({
           id: 'download',
           label: 'Download',

@@ -22,7 +22,10 @@ const FaqPage = () => {
   const [opened, { open, close }] = useDisclosure(false);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   const faqs = [
@@ -32,7 +35,7 @@ const FaqPage = () => {
     },
     {
       q: 'Do you store my files?',
-      a: 'No. Your files always remain in your own cloud provider accounts. We only manage secure access and never copy or permanently store your files on our servers.',
+      a: 'No. Your files always remain in your own cloud provider accounts. We only manage secure access and never copy or store your files on our servers.',
     },
     {
       q: 'Which cloud services do you support?',

@@ -1,6 +1,11 @@
 import { jwtDecode } from 'jwt-decode';
 import { API } from '../../configs/env';
-import { GOOGLE_APPS_MIME_TYPES } from '../constants';
+import {
+  DROPBOX_RESTRICTED_FILES,
+  GOOGLE_APPS_MIME_TYPES,
+  ONEDRIVE_RESTRICTED_FILES,
+} from '../constants';
+import { getCookie, setCookie, removeCookie } from './cookie';
 
 export interface LogError {
   (error: unknown): void;
@@ -44,6 +49,8 @@ export const getLocalStorage = (key: string) => {
 export const removeLocalStorage = (key: string) => {
   localStorage.removeItem(key);
 };
+
+export { getCookie, setCookie, removeCookie };
 
 export const capitalize = (text: string) => {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -189,25 +196,34 @@ export const formatFileSize = (bytes?: string) => {
   return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 };
 
-export const formatDate = (
+export const formatLocalDateTime = (
   dateString: string,
-  includeTime: boolean = false
-) => {
+  format: 'date' | 'datetime' = 'date'
+): string => {
+  // Create a date object - it will automatically use the user's timezone
   const date = new Date(dateString);
 
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    hour12: true,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Use user's system timezone
   };
 
-  if (includeTime) {
+  if (format === 'datetime') {
     options.hour = '2-digit';
     options.minute = '2-digit';
-    options.hour12 = true;
   }
 
-  return date.toLocaleDateString('en-US', options);
+  return new Intl.DateTimeFormat('en-US', options).format(date);
+};
+
+export const formatDate = (
+  dateString: string,
+  includeTime: boolean = false
+) => {
+  return formatLocalDateTime(dateString, includeTime ? 'datetime' : 'date');
 };
 
 export const formatTime = (seconds: number): string => {
@@ -230,39 +246,7 @@ export const formatDateAndTime = (
   dateString: string,
   includeTime: boolean = true
 ): string => {
-  const date = new Date(dateString);
-
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const month = months[date.getMonth()];
-  const day = date.getDate();
-  const year = date.getFullYear();
-
-  let formattedDate = `${month} ${day}, ${year}`;
-
-  if (includeTime) {
-    let hours = date.getHours();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-
-    formattedDate += ` ${hours}:${minutes} ${ampm}`;
-  }
-
-  return formattedDate;
+  return formatLocalDateTime(dateString, includeTime ? 'datetime' : 'date');
 };
 
 export const getMimeTypeFromExtension = (extension?: string) => {
@@ -470,13 +454,34 @@ export const getFileMimeTypeLabel = (mime_type: string): string => {
 };
 
 // Helper function to check if download should be disabled
-export const shouldDisableDownload = (mimeType: string | null): boolean => {
+export const shouldDisableDownload = (
+  mimeType: string | null,
+  file?: any
+): boolean => {
   if (mimeType && GOOGLE_APPS_MIME_TYPES.includes(mimeType)) {
     return true;
   }
 
-  if (mimeType === null) {
-    return true;
+  // if (mimeType === null) {
+  //   return true;
+  // }
+
+  if (file) {
+    if (
+      // file?.UserConnectedAccount?.account_type === 'onedrive' &&
+      file.name &&
+      ONEDRIVE_RESTRICTED_FILES.includes(file.name)
+    ) {
+      return true;
+    }
+
+    if (
+      file?.UserConnectedAccount?.account_type === 'dropbox' &&
+      file.name &&
+      DROPBOX_RESTRICTED_FILES.includes(file.name)
+    ) {
+      return true;
+    }
   }
 
   return false;

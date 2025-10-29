@@ -167,7 +167,10 @@ const FileTable: React.FC<FileTableProps> = ({
         // width: '10%',
         render: (row: FileType) => {
           const menuItems = [...MENU_ITEMS];
-          if (row.type === 'file' && !shouldDisableDownload(row.mimeType!)) {
+          if (
+            row.type === 'file' &&
+            !shouldDisableDownload(row.mimeType!, row)
+          ) {
             menuItems.push({
               id: 'download',
               label: 'Download',

@@ -126,10 +126,13 @@ export const DOCUMENT_FILE_TYPES = [
   'pdf',
 ];
 
+export const AUDIO_FILE_TYPES = ['mp3', 'wav', 'm4a', 'aac', 'ogg'];
+
 export const PREVIEW_FILE_TYPES = [
   ...IMAGE_FILE_TYPES,
   ...VIDEO_FILE_TYPES,
   ...DOCUMENT_FILE_TYPES,
+  ...AUDIO_FILE_TYPES,
   'txt',
 ];
 
@@ -150,3 +153,7 @@ export const GOOGLE_APPS_MIME_TYPES = [
   'application/vnd.google-apps.script',
   'application/vnd.google-apps.site',
 ];
+
+export const ONEDRIVE_RESTRICTED_FILES = ['Personal Vault'];
+
+export const DROPBOX_RESTRICTED_FILES: string[] = [];

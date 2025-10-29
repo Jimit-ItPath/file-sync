@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { decryptRouteParam } from '../../utils/helper/encryption';
 import {
   ActionIcon,
@@ -55,6 +55,7 @@ import OneDriveIcon from '../../assets/svgs/OneDrive.svg';
 import dayjs from 'dayjs';
 import {
   connectSocket,
+  getSocket,
   initSocket,
   subscribeToEvent,
   unsubscribeFromEvent,
@@ -69,11 +70,6 @@ const iconStyle = {
     background: '#e0e7ff',
   },
 };
-
-// Global socket state to prevent multiple initializations
-let globalSocketInitialized = false;
-let globalWebhookTimeout: NodeJS.Timeout | null = null;
-let currentDashboardHandler: ((data: any) => void) | null = null;
 
 const Dashboard = () => {
   const {
@@ -236,38 +232,71 @@ const Dashboard = () => {
   } = useSidebar();
 
   const [socketDataLoading, setSocketDataLoading] = useState(false);
+  const [socketReady, setSocketReady] = useState(false);
+  const webhookTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handlerRef = useRef<((data: any) => void) | null>(null);
 
   // Socket setup with global state management
   useEffect(() => {
-    if (globalSocketInitialized || !connectedAccounts?.length) return;
+    if (!connectedAccounts?.length) return;
 
-    globalSocketInitialized = true;
-    const token = localStorage.getItem('token');
+    let socket = getSocket();
 
-    initSocket(
-      import.meta.env.VITE_SOCKET_URL || 'ws://localhost:3001',
-      token!
-    );
-    connectSocket();
+    if (!socket) {
+      socket = initSocket(
+        import.meta.env.VITE_SOCKET_URL || 'ws://localhost:3051'
+      );
+    }
+
+    // Connect if not connected
+    if (!socket.connected) {
+      connectSocket();
+    }
+
+    // Set up connection listener
+    const handleConnect = () => {
+      // console.log('✅ Socket connected, ready for subscriptions');
+      setSocketReady(true);
+    };
+
+    const handleDisconnect = () => {
+      // console.log('🔴 Socket disconnected');
+      setSocketReady(false);
+    };
+
+    // Add listeners
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+
+    // Check if already connected
+    if (socket.connected) {
+      setSocketReady(true);
+    }
+
+    // Cleanup
+    return () => {
+      socket?.off('connect', handleConnect);
+      socket?.off('disconnect', handleDisconnect);
+    };
   }, [connectedAccounts?.length]);
 
   // Update webhook handler when values change
   useEffect(() => {
-    if (!globalSocketInitialized) return;
-
-    // Remove old handler
-    if (currentDashboardHandler) {
-      unsubscribeFromEvent('webhook_processed', currentDashboardHandler);
+    if (!socketReady || !connectedAccounts?.length) {
+      return;
     }
 
-    // Create new handler with current values
+    // Create webhook handler with current values
     const webhookHandler = (data: any) => {
-      if (globalWebhookTimeout) {
-        clearTimeout(globalWebhookTimeout);
+      // Clear existing timeout
+      if (webhookTimeoutRef.current) {
+        clearTimeout(webhookTimeoutRef.current);
       }
 
-      globalWebhookTimeout = setTimeout(async () => {
-        if (!data?.accountId) return;
+      webhookTimeoutRef.current = setTimeout(async () => {
+        if (!data?.accountId) {
+          return;
+        }
 
         const isSpecificRoute =
           location.pathname.startsWith('/google-drive') ||
@@ -302,26 +331,47 @@ const Dashboard = () => {
         }
 
         setSocketDataLoading(true);
-        const result: any = await dispatch(
-          initializeCloudStorageFromStorage(requestParams)
-        );
-        setSocketDataLoading(false);
+        try {
+          const result: any = await dispatch(
+            initializeCloudStorageFromStorage(requestParams)
+          );
 
-        // Trigger auto-load after webhook API response
-        if (result?.payload?.payload?.data?.paging) {
-          setTimeout(() => {
-            checkAutoLoadAfterWebhook(
-              result?.payload?.payload?.data?.paging,
-              requestParams
-            );
-          }, 100);
+          // Trigger auto-load after webhook API response
+          if (result?.payload?.payload?.data?.paging) {
+            setTimeout(() => {
+              checkAutoLoadAfterWebhook(
+                result?.payload?.payload?.data?.paging,
+                requestParams
+              );
+            }, 100);
+          }
+        } catch (error) {
+          console.error('❌ Error fetching webhook data:', error);
+        } finally {
+          setSocketDataLoading(false);
         }
       }, 150);
     };
 
-    currentDashboardHandler = webhookHandler;
+    // Store handler reference for cleanup
+    handlerRef.current = webhookHandler;
+
+    // Subscribe to the event
     subscribeToEvent('webhook_processed', webhookHandler);
+
+    // Cleanup function
+    return () => {
+      if (webhookTimeoutRef.current) {
+        clearTimeout(webhookTimeoutRef.current);
+      }
+      if (handlerRef.current) {
+        unsubscribeFromEvent('webhook_processed', handlerRef.current);
+        handlerRef.current = null;
+      }
+    };
   }, [
+    socketReady, // Add this dependency
+    connectedAccounts?.length,
     params?.encryptedId,
     currentAccountId,
     location.pathname,

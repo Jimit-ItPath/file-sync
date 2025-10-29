@@ -2,27 +2,33 @@ import { io, Socket } from 'socket.io-client';
 
 // Define server-to-client events
 interface ServerToClientEvents {
-  webhook_processed: (data: { fileId: string }) => void;
+  webhook_processed: (data: {
+    accountId: string;
+    parent_id?: string;
+    [key: string]: any;
+  }) => void;
 }
 
 type TypedSocket = Socket<ServerToClientEvents>;
 
 let socket: TypedSocket | null = null;
 
-export const initSocket = (url: string, token?: string): TypedSocket => {
+export const initSocket = (url: string): TypedSocket => {
   if (!socket) {
     socket = io(url, {
-      auth: {
-        token,
-      },
-      autoConnect: true,
+      // auth: {
+      //   token,
+      // },
+      autoConnect: false,
       path: '/socket.io',
-      transports: ['polling'],
+      // transports: ['polling'], // transports: ['websocket'],
+      transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
       reconnectionDelayMax: 5000,
       timeout: 10000,
+      withCredentials: true,
     });
 
     // Add connection event listeners
@@ -48,6 +54,11 @@ export const initSocket = (url: string, token?: string): TypedSocket => {
 
     // socket.on('reconnect_failed', () => {
     //   console.error('Socket failed to reconnect after maximum attempts');
+    // });
+
+    // Add a test listener to verify events are being received
+    // socket.onAny((eventName, ...args) => {
+    //   console.log('📨 Socket event received:', eventName, args);
     // });
   }
   return socket;

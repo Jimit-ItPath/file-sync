@@ -1,3 +1,9 @@
+# Disable directory browsing
+Options -Indexes
+
+# Redirect /assets/ (or /assets without slash) to homepage
+RedirectMatch 301 ^/assets/?$ /
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
