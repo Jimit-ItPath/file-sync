@@ -52,17 +52,17 @@ export class TestHelpers {
   }
 
   // Navigation helpers
-  async navigateToModule(module: string) {
-    const moduleMap = {
-      dashboard: '/dashboard',
-      'recent-files': '/recent-files',
-      profile: '/profile',
-      admin: '/admin/dashboard',
-      users: '/users',
-      logs: '/logs',
-    };
-    await this.page.goto(moduleMap[module] || module);
-  }
+  // async navigateToModule(module: string) {
+  //   const moduleMap = {
+  //     dashboard: '/dashboard',
+  //     'recent-files': '/recent-files',
+  //     profile: '/profile',
+  //     admin: '/admin/dashboard',
+  //     users: '/users',
+  //     logs: '/logs',
+  //   };
+  //   await this.page.goto(moduleMap[module] || module);
+  // }
 
   // Assertion helpers
   async expectToBeOnPage(path: string) {
