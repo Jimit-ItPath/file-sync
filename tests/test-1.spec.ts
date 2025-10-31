@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  await page.goto('http://localhost:5000/');
+  // await page.goto('http://localhost:5000/');
+  await page.goto('https://allcloudhub.project-demo.info/');
   await expect(
     page.getByRole('heading', { name: 'One Platform.' })
   ).toBeVisible();
@@ -29,4 +30,3 @@ test('test', async ({ page }) => {
     page.getByRole('textbox', { name: 'Search files and folders...' })
   ).toBeVisible();
 });
-

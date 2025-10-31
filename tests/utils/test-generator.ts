@@ -23,7 +23,7 @@ export class AutoTestGenerator {
   async initialize() {
     this.browser = await chromium.launch({ headless: false });
     this.page = await this.browser.newPage();
-    
+
     // Record user interactions
     await this.page.exposeFunction('recordAction', (action: TestAction) => {
       this.actions.push(action);
@@ -32,18 +32,18 @@ export class AutoTestGenerator {
     // Inject recording script
     await this.page.addInitScript(() => {
       // Record clicks
-      document.addEventListener('click', (e) => {
+      document.addEventListener('click', e => {
         const target = e.target as HTMLElement;
         const selector = this.generateSelector(target);
         window.recordAction({
           type: 'click',
           selector,
-          description: `Click on ${target.textContent || target.tagName}`
+          description: `Click on ${target.textContent || target.tagName}`,
         });
       });
 
       // Record form fills
-      document.addEventListener('input', (e) => {
+      document.addEventListener('input', e => {
         const target = e.target as HTMLInputElement;
         if (target.type !== 'password') {
           const selector = this.generateSelector(target);
@@ -51,7 +51,7 @@ export class AutoTestGenerator {
             type: 'fill',
             selector,
             value: target.value,
-            description: `Fill ${target.placeholder || target.name || 'input'}`
+            description: `Fill ${target.placeholder || target.name || 'input'}`,
           });
         }
       });
@@ -68,10 +68,10 @@ export class AutoTestGenerator {
   async generateTestFile() {
     const testContent = this.generateTestCode();
     const fileName = `tests/modules/${this.currentModule}.spec.ts`;
-    
+
     await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
     await fs.promises.writeFile(fileName, testContent);
-    
+
     console.log(`✅ Test file generated: ${fileName}`);
   }
 
@@ -125,11 +125,11 @@ import { TestHelpers, TEST_USERS } from '../utils/test-helpers';
   private generateTestName(actions: TestAction[]): string {
     const firstAction = actions[0];
     const lastAction = actions[actions.length - 1];
-    
+
     if (firstAction?.url) {
       return `${this.currentModule} - ${firstAction.url} flow`;
     }
-    
+
     return `${this.currentModule} - ${firstAction?.description || 'user interaction'}`;
   }
 
@@ -164,12 +164,16 @@ if (require.main === module) {
   }
 
   const generator = new AutoTestGenerator(moduleName);
-  
-  generator.initialize().then(() => {
-    return generator.startRecording(startUrl);
-  }).then(() => {
-    return generator.generateTestFile();
-  }).finally(() => {
-    return generator.cleanup();
-  });
+
+  generator
+    .initialize()
+    .then(() => {
+      return generator.startRecording(startUrl);
+    })
+    .then(() => {
+      return generator.generateTestFile();
+    })
+    .finally(() => {
+      return generator.cleanup();
+    });
 }
