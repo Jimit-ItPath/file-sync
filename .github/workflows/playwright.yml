@@ -24,8 +24,8 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run Playwright tests
-        # run: npx playwright test -c playwright.config.enhanced.ts
-        run: npx playwright test -c playwright.config.enhanced.ts tests/test-1.spec.ts tests/example.spec.ts
+        # run: npx playwright test -c playwright.config.enhanced.ts "./tests/test-1.spec.ts" "./tests/example.spec.ts"
+        run: npx playwright test tests/test-1.spec.ts tests/example.spec.ts --project=chromium --project=firefox --project="Microsoft Edge" --project="Google Chrome"
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
