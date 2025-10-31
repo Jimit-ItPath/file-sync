@@ -9,9 +9,9 @@ export default defineConfig({
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results/results.json' }],
-    ['junit', { outputFile: 'test-results/results.xml' }]
+    ['junit', { outputFile: 'test-results/results.xml' }],
   ],
-  
+
   use: {
     baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',
@@ -27,7 +27,7 @@ export default defineConfig({
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
     },
-    
+
     // Authenticated user tests
     {
       name: 'authenticated',
@@ -38,7 +38,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
       },
     },
-    
+
     // Admin authenticated tests
     {
       name: 'admin-authenticated',
@@ -49,14 +49,14 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
       },
     },
-    
+
     // Public/unauthenticated tests
     {
       name: 'public',
       testMatch: /.*\.public\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
-    
+
     // Mobile tests
     {
       name: 'mobile',
